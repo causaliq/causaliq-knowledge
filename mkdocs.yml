@@ -1,0 +1,137 @@
+site_name: causaliq-repo-template
+theme:
+  name: material
+  toc:
+    title: "on this page"
+  palette:
+    # Light mode
+    - scheme: light
+      primary: teal
+      accent: orange
+      toggle:
+        icon: material/weather-night
+        name: Switch to dark mode
+
+    # Dark mode
+    - scheme: slate
+      primary: teal
+      accent: orange
+      toggle:
+        icon: material/weather-sunny
+        name: Switch to light mode
+
+
+  font:
+    text: Inter
+    code: Fira Code
+  features:
+    - navigation.tabs           # Top-level navigation tabs
+    - navigation.tabs.sticky    # Sticky navigation tabs
+    - navigation.sections       # Group navigation items
+    - navigation.expand         # Expand all sections by default
+    - navigation.top            # Back to top button
+    - navigation.footer         # Previous/next navigation
+    - search.highlight          # Highlight search terms
+    - search.share              # Share search results
+    - content.code.copy         # Copy code button
+    - content.tabs.link         # Link tabs across pages
+
+
+
+extra_css:
+  - http://causaliq.org/css/mkdocs.css
+
+nav:
+  - Home: index.md
+  - Roadmap: roadmap.md
+  - User Guide:
+    - User Guide Introduction: userguide/introduction.md
+    - Creating a new repo: userguide/template.md
+  - Architecture: 
+    - Architectural Overview: architecture/overview.md
+    - Design Notes: 
+      - Example: architecture/example_design_note.md
+  - API Reference: 
+    - API Overview: api/overview.md
+    - CLI: api/cli.md
+
+plugins:
+  - search
+  - mkdocstrings:
+      handlers:
+        python:
+          # setup_commands: Not needed anymore - paths option does same?
+          #   - import sys; sys.path.insert(0, "src")
+          paths: [src]
+          options:
+            show_source: false
+            docstring_options:
+              ignore_init_summary: true
+            docstring_section_style: list
+            relative_crossrefs: true
+            scoped_crossrefs: true
+            signature_crossrefs: true
+            unwrap_annotated: true
+            filters: public
+            inherited_members: true
+            summary: true
+            heading_level: 2
+            parameter_headings: true
+            type_parameter_headings: true
+            show_root_heading: true
+            show_root_full_path: false
+            show_symbol_type_heading: true
+            show_symbol_type_toc: false
+            line_length: 88
+            merge_init_into_class: true
+            separate_signature: true
+            show_signature_annotations: true
+            show_signature_type_parameters: true
+            backlinks: tree
+            show_bases: false
+            show_inheritance_diagram: true
+
+markdown_extensions:
+  - abbr
+  - admonition
+  - attr_list
+  - def_list
+  - footnotes
+  - md_in_html
+  - toc:
+      permalink: true
+      title: On this page
+  - pymdownx.arithmatex:
+      generic: true
+  - pymdownx.betterem:
+      smart_enable: all
+  - pymdownx.caret
+  - pymdownx.details
+  - pymdownx.emoji:
+      emoji_generator: !!python/name:material.extensions.emoji.to_svg
+      emoji_index: !!python/name:material.extensions.emoji.twemoji
+  - pymdownx.highlight:
+      anchor_linenums: true
+      line_spans: __span
+      pygments_lang_class: true
+  - pymdownx.inlinehilite
+  - pymdownx.keys
+  - pymdownx.magiclink:
+      repo_url_shorthand: true
+      user: causaliq
+      repo: causaliq
+  - pymdownx.mark
+  - pymdownx.smartsymbols
+  - pymdownx.superfences:
+      custom_fences:
+        - name: mermaid
+          class: mermaid
+          format: !!python/name:pymdownx.superfences.fence_code_format
+  - pymdownx.tabbed:
+      alternate_style: true
+  - pymdownx.tasklist:
+      custom_checkbox: true
+  - pymdownx.tilde
+
+copyright: |
+  &copy; 2025 CausalIQ Research.

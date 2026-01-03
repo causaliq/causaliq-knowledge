@@ -1,0 +1,15 @@
+name: CI
+
+on:
+  push:
+    branches: [ main, develop ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  ci:
+    uses: causaliq/causaliq/.github/workflows/shared-ci.yml@main
+    with:
+      python-versions: '["3.11"]'
+      operating-systems: '["ubuntu-latest"]'
+      package-name: "causaliq-repo-template"

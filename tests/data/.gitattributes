@@ -1,0 +1,8 @@
+
+# Ensure test textual data files always have lf line endings so that
+# checksums are the same across all OSs.
+
+*.txt text eol=lf
+*.md  text eol=lf
+*.csv text eol=lf
+*.json text eol=lf
