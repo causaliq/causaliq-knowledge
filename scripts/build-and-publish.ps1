@@ -5,13 +5,13 @@ $CurrentVersion = "0.1.0"
 $Version = Read-Host "Enter version number (current: $CurrentVersion)"
 if (-not $Version) { $Version = $CurrentVersion }
 
-Write-Host "Building causaliq-repo-template version $Version..." -ForegroundColor Blue
+Write-Host "Building causaliq-knowledge version $Version..." -ForegroundColor Blue
 
 # Clean previous builds
 Write-Host "Cleaning previous builds..." -ForegroundColor Yellow
 if (Test-Path "dist") { Remove-Item -Recurse -Force "dist" }
 if (Test-Path "build") { Remove-Item -Recurse -Force "build" }
-if (Test-Path "src\causaliq-repo-template.egg-info") { Remove-Item -Recurse -Force "src\causaliq-repo-template.egg-info" }
+if (Test-Path "src\causaliq-knowledge.egg-info") { Remove-Item -Recurse -Force "src\causaliq-knowledge.egg-info" }
 
 # Build package
 Write-Host "Building package..." -ForegroundColor Blue

@@ -92,9 +92,9 @@ if (-not $Fast) {
 if ($Fast) {
     $testResult = Test-Command "python -m pytest -v tests/unit/ tests/functional/" "Fast tests"
 } elseif ($IncludeSlow) {
-    $testResult = Test-Command "python -m pytest -v --cov=src/causaliq_repo_template --cov-report=term-missing" "Full test suite with slow tests"
+    $testResult = Test-Command "python -m pytest -v --cov=src/causaliq_knowledge --cov-report=term-missing" "Full test suite with slow tests"
 } else {
-    $testResult = Test-Command "python -m pytest -v --cov=src/causaliq_repo_template --cov-report=term-missing -m 'not slow'" "Full test suite (excluding slow tests)"
+    $testResult = Test-Command "python -m pytest -v --cov=src/causaliq_knowledge --cov-report=term-missing -m 'not slow'" "Full test suite (excluding slow tests)"
 }
 $allPassed = $allPassed -and $testResult
 

@@ -1,4 +1,4 @@
-site_name: causaliq-repo-template
+site_name: causaliq-knowledge
 theme:
   name: material
   toc:
@@ -46,7 +46,6 @@ nav:
   - Roadmap: roadmap.md
   - User Guide:
     - User Guide Introduction: userguide/introduction.md
-    - Creating a new repo: userguide/template.md
   - Architecture: 
     - Architectural Overview: architecture/overview.md
     - Design Notes: 

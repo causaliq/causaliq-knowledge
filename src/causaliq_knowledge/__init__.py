@@ -1,5 +1,5 @@
 """
-causaliq-repo-template: Template package for CausalIQ repos
+causaliq-knowledge: Incorporating LLM and human knowledge into causal discovery
 """
 
 __version__ = "0.1.0"
@@ -7,10 +7,10 @@ __author__ = "CausalIQ"
 __email__ = "info@causaliq.com"
 
 # Package metadata
-__title__ = "causaliq-repo-template"
-__description__ = "Template package for CausalIQ repos"
+__title__ = "causaliq-knowledge"
+__description__ = "Incorporating LLM and human knowledge into causal discovery"
 
-__url__ = "https://github.com/causaliq/causaliq-repo-template"
+__url__ = "https://github.com/causaliq/causaliq-knowledge"
 __license__ = "MIT"
 
 # Version tuple for programmatic access

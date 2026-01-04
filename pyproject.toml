@@ -3,9 +3,9 @@ requires = ["setuptools>=61.0", "wheel"]
 build-backend = "setuptools.build_meta"
 
 [project]
-name = "causaliq-repo-template"
+name = "causaliq-knowledge"
 dynamic = ["version"]
-description = "A template for CausalIQ repos"
+description = "Incorporating LLM and human knowledge into causal discovery"
 readme = "README.md"
 license = {text = "MIT"}
 authors = [
@@ -60,17 +60,17 @@ docs = [
 ]
 
 [project.urls]
-Homepage = "https://github.com/causaliq/causaliq-repo-template"
-Documentation = "https://github.com/causaliq/causaliq-repo-template#readme"
-Repository = "https://github.com/causaliq/causaliq-repo-template"
-"Bug Tracker" = "https://github.com/causaliq/causaliq-repo-template/issues"
+Homepage = "https://github.com/causaliq/causaliq-knowledge"
+Documentation = "https://github.com/causaliq/causaliq-knowledge#readme"
+Repository = "https://github.com/causaliq/causaliq-knowledge"
+"Bug Tracker" = "https://github.com/causaliq/causaliq-knowledge/issues"
 
 [project.scripts]
-causaliq-repo-template = "causaliq_repo_template.cli:main"
-cqcrt = "causaliq_repo_template.cli:main"
+causaliq-knowledge = "causaliq_knowledge.cli:main"
+cqknow = "causaliq_knowledge.cli:main"
 
 [tool.setuptools.dynamic]
-version = {attr = "causaliq_repo_template.__version__"}
+version = {attr = "causaliq_knowledge.__version__"}
 
 [tool.setuptools.packages.find]
 where = ["src"]
@@ -79,11 +79,11 @@ where = ["src"]
 "" = "src"
 
 [tool.setuptools.package-data]
-causaliq_repo_template = ["py.typed"]
+causaliq_knowledge = ["py.typed"]
 
 [tool.pytest.ini_options]
 minversion = "7.0"
-addopts = "-ra -q --strict-markers --cov=causaliq_repo_template --cov-report=term-missing --cov-report=html  -m 'not slow'"
+addopts = "-ra -q --strict-markers --cov=causaliq_knowledge --cov-report=term-missing --cov-report=html  -m 'not slow'"
 testpaths = [
     "tests",
 ]
@@ -105,7 +105,7 @@ markers = [
 ]
 
 [tool.coverage.run]
-source = ["src/causaliq_repo_template"]
+source = ["src/causaliq_knowledge"]
 omit = [
     "*/tests/*",
     "*/test_*.py",
@@ -149,7 +149,7 @@ extend-exclude = '''
 profile = "black"
 multi_line_output = 3
 line_length = 79
-known_first_party = ["causaliq_repo_template"]
+known_first_party = ["causaliq_knowledge"]
 
 [tool.mypy]
 python_version = "3.9"

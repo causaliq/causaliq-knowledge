@@ -1,1 +1,1 @@
-"""Unit tests for causaliq-repo-template."""
+"""Unit tests for causaliq-knowledge."""

@@ -1,1 +1,1 @@
-"""Functional tests for causaliq-repo-template."""
+"""Functional tests for causaliq-knowledge."""

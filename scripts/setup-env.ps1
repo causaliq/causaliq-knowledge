@@ -1,8 +1,8 @@
-# Comprehensive Python environment management for causaliq-repo-template
+# Comprehensive Python environment management for causaliq-knowledge
 # Usage: .\scripts\setup-env.ps1 [options]
 
 param(
-    [switch]$Install,           # Install causaliq-repo-template package after creating environments
+    [switch]$Install,           # Install causaliq-knowledge package after creating environments
     [switch]$InstallOnly,       # Only install packages (skip environment creation)
     [switch]$Help               # Show help information
 )
@@ -16,14 +16,14 @@ function Show-Help {
     Write-Host ""
     Write-Host "OPTIONS:" -ForegroundColor Yellow
     Write-Host "  (no args)        Create Python 3.9-3.12 virtual environments" -ForegroundColor White
-    Write-Host "  -Install         Create environments AND install causaliq-repo-template package" -ForegroundColor White
-    Write-Host "  -InstallOnly     Install causaliq-repo-template package in existing environments" -ForegroundColor White
+    Write-Host "  -Install         Create environments AND install causaliq-knowledge package" -ForegroundColor White
+    Write-Host "  -InstallOnly     Install causaliq-knowledge package in existing environments" -ForegroundColor White
     Write-Host "  -Help            Show this help message" -ForegroundColor White
     Write-Host ""
     Write-Host "EXAMPLES:" -ForegroundColor Yellow
     Write-Host "  .\scripts\setup-env.ps1                    # Create environments only" -ForegroundColor Gray
-    Write-Host "  .\scripts\setup-env.ps1 -Install           # Create + install causaliq-repo-template" -ForegroundColor Gray
-    Write-Host "  .\scripts\setup-env.ps1 -InstallOnly       # Install causaliq-repo-template in existing envs" -ForegroundColor Gray
+    Write-Host "  .\scripts\setup-env.ps1 -Install           # Create + install causaliq-knowledge" -ForegroundColor Gray
+    Write-Host "  .\scripts\setup-env.ps1 -InstallOnly       # Install causaliq-knowledge in existing envs" -ForegroundColor Gray
     Write-Host ""
     Write-Host "WORKFLOW:" -ForegroundColor Yellow
     Write-Host "  1. First run: .\scripts\setup-env.ps1 -Install" -ForegroundColor Gray
@@ -68,7 +68,7 @@ function Install-InEnvironment {
         & $PythonExe -m pip install  --upgrade pip setuptools wheel --quiet
         
         # Install the package with dependencies
-        Write-Host "  Installing causaliq-repo-template with dev dependencies..." -ForegroundColor Gray
+        Write-Host "  Installing causaliq-knowledge with dev dependencies..." -ForegroundColor Gray
         & $PythonExe -m pip install --force-reinstall -e ".[dev,test,docs]"
         
         deactivate
@@ -119,7 +119,7 @@ function Setup-PythonEnv {
 # Handle different modes
 if ($InstallOnly) {
     # Only install packages, don't create environments
-    Write-Host "Installing causaliq-repo-template in all environments..." -ForegroundColor Blue
+    Write-Host "Installing causaliq-knowledge in all environments..." -ForegroundColor Blue
     
     Install-InEnvironment -EnvName "py39" -DisplayName "Python 3.9"
     Install-InEnvironment -EnvName "py310" -DisplayName "Python 3.10"
@@ -129,7 +129,7 @@ if ($InstallOnly) {
     # Create environments (and optionally install)
     Write-Host "Setting up Python virtual environments..." -ForegroundColor Blue
     if ($Install) {
-        Write-Host "(Will also install causaliq-repo-template package)" -ForegroundColor Gray
+        Write-Host "(Will also install causaliq-knowledge package)" -ForegroundColor Gray
     }
     
     # Setup all Python environments
@@ -155,7 +155,7 @@ if (-not $InstallOnly) {
 }
 
 if (-not ($Install -or $InstallOnly)) {
-    Write-Host "To install causaliq-repo-template in all environments:" -ForegroundColor White
+    Write-Host "To install causaliq-knowledge in all environments:" -ForegroundColor White
     Write-Host "  .\scripts\setup-env.ps1 -InstallOnly" -ForegroundColor Gray
     Write-Host ""
 }
