@@ -12,7 +12,7 @@
         <link rel="prev" href="../../userguide/introduction/">
       
       
-        <link rel="next" href="../example_design_note/">
+        <link rel="next" href="../llm_integration/">
       
       
         
@@ -633,6 +633,56 @@
     </span>
   </a>
   
+    <nav class="md-nav" aria-label="Architectural Principles">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#simplicity-first" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Simplicity First
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#cost-efficiency" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Cost Efficiency
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#transparency-and-reproducibility" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Transparency and Reproducibility
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#clean-interfaces" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Clean Interfaces
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
 </li>
       
         <li class="md-nav__item">
@@ -644,13 +694,119 @@
     </span>
   </a>
   
+    <nav class="md-nav" aria-label="Architecture Components">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#core-components-v010" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Core Components (v0.1.0)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#data-flow" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Data Flow
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
 </li>
       
         <li class="md-nav__item">
-  <a href="#other-sections" class="md-nav__link">
+  <a href="#technology-choices" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Other Sections
+        Technology Choices
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Technology Choices">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#litellm-over-langchain-for-v010-v030" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        LiteLLM over LangChain (for v0.1.0 - v0.3.0)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#key-dependencies" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Key Dependencies
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#integration-points" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Integration Points
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Integration Points">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#with-causaliq-analysis" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        With causaliq-analysis
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#with-causaliq-discovery" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        With causaliq-discovery
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#see-also" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        See Also
       
     </span>
   </a>
@@ -730,14 +886,42 @@
   
   
     <li class="md-nav__item">
-      <a href="../example_design_note/" class="md-nav__link">
+      <a href="../llm_integration/" class="md-nav__link">
         
   
   
   <span class="md-ellipsis">
     
   
-    Example
+    LLM Integration
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../testing_strategy/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Testing Strategy
   
 
     
@@ -931,6 +1115,56 @@
     </span>
   </a>
   
+    <nav class="md-nav" aria-label="Architectural Principles">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#simplicity-first" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Simplicity First
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#cost-efficiency" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Cost Efficiency
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#transparency-and-reproducibility" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Transparency and Reproducibility
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#clean-interfaces" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Clean Interfaces
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
 </li>
       
         <li class="md-nav__item">
@@ -942,13 +1176,119 @@
     </span>
   </a>
   
+    <nav class="md-nav" aria-label="Architecture Components">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#core-components-v010" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Core Components (v0.1.0)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#data-flow" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Data Flow
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
 </li>
       
         <li class="md-nav__item">
-  <a href="#other-sections" class="md-nav__link">
+  <a href="#technology-choices" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Other Sections
+        Technology Choices
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Technology Choices">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#litellm-over-langchain-for-v010-v030" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        LiteLLM over LangChain (for v0.1.0 - v0.3.0)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#key-dependencies" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Key Dependencies
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#integration-points" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Integration Points
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Integration Points">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#with-causaliq-analysis" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        With causaliq-analysis
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#with-causaliq-discovery" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        With causaliq-discovery
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#see-also" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        See Also
       
     </span>
   </a>
@@ -975,9 +1315,141 @@
 <h1 id="architecture-vision-for-causaliq-knowledge">Architecture Vision for causaliq-knowledge<a class="headerlink" href="#architecture-vision-for-causaliq-knowledge" title="Permanent link">&para;</a></h1>
 <h2 id="causaliq-ecosystem">CausalIQ Ecosystem<a class="headerlink" href="#causaliq-ecosystem" title="Permanent link">&para;</a></h2>
 <p>causaliq-knowledge is a component of the overall <a href="https://causaliq.org/projects/ecosystem_architecture/">CausalIQ ecosystem architecture</a>.</p>
+<p>This package provides <strong>knowledge services</strong> to other CausalIQ packages, enabling them to incorporate LLM-derived and human-specified knowledge into causal discovery and inference workflows.</p>
 <h2 id="architectural-principles">Architectural Principles<a class="headerlink" href="#architectural-principles" title="Permanent link">&para;</a></h2>
+<h3 id="simplicity-first">Simplicity First<a class="headerlink" href="#simplicity-first" title="Permanent link">&para;</a></h3>
+<ul>
+<li>Use lightweight libraries over heavy frameworks</li>
+<li>Start with minimal viable features, extend incrementally</li>
+<li>Prefer explicit code over framework "magic"</li>
+</ul>
+<h3 id="cost-efficiency">Cost Efficiency<a class="headerlink" href="#cost-efficiency" title="Permanent link">&para;</a></h3>
+<ul>
+<li>Built-in cost tracking and budget management (critical for independent research)</li>
+<li>Caching of LLM queries and responses to avoid redundant API calls</li>
+<li>Support for cheap/free local models alongside cloud providers</li>
+</ul>
+<h3 id="transparency-and-reproducibility">Transparency and Reproducibility<a class="headerlink" href="#transparency-and-reproducibility" title="Permanent link">&para;</a></h3>
+<ul>
+<li>Cache all LLM interactions for experiment reproducibility</li>
+<li>Provide reasoning/explanations with all knowledge outputs</li>
+<li>Log confidence levels to enable uncertainty-aware decisions</li>
+</ul>
+<h3 id="clean-interfaces">Clean Interfaces<a class="headerlink" href="#clean-interfaces" title="Permanent link">&para;</a></h3>
+<ul>
+<li>Abstract <code>KnowledgeProvider</code> interface allows multiple implementations</li>
+<li>LLM-based, rule-based, and human-input knowledge sources use same interface</li>
+<li>Easy integration with causaliq-analysis and causaliq-discovery</li>
+</ul>
 <h2 id="architecture-components">Architecture Components<a class="headerlink" href="#architecture-components" title="Permanent link">&para;</a></h2>
-<h2 id="other-sections">Other Sections<a class="headerlink" href="#other-sections" title="Permanent link">&para;</a></h2>
+<h3 id="core-components-v010">Core Components (v0.1.0)<a class="headerlink" href="#core-components-v010" title="Permanent link">&para;</a></h3>
+<div class="language-text highlight"><pre><span></span><code><span id="__span-0-1"><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>causaliq_knowledge/
+</span><span id="__span-0-2"><a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a>├── __init__.py              # Package exports
+</span><span id="__span-0-3"><a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a>├── cli.py                   # Command-line interface
+</span><span id="__span-0-4"><a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a>├── base.py                  # Abstract KnowledgeProvider interface
+</span><span id="__span-0-5"><a id="__codelineno-0-5" name="__codelineno-0-5" href="#__codelineno-0-5"></a>├── models.py                # Pydantic models (EdgeKnowledge, etc.)
+</span><span id="__span-0-6"><a id="__codelineno-0-6" name="__codelineno-0-6" href="#__codelineno-0-6"></a>├── llm/
+</span><span id="__span-0-7"><a id="__codelineno-0-7" name="__codelineno-0-7" href="#__codelineno-0-7"></a>│   ├── __init__.py
+</span><span id="__span-0-8"><a id="__codelineno-0-8" name="__codelineno-0-8" href="#__codelineno-0-8"></a>│   ├── client.py            # LiteLLM wrapper with configuration
+</span><span id="__span-0-9"><a id="__codelineno-0-9" name="__codelineno-0-9" href="#__codelineno-0-9"></a>│   ├── prompts.py           # Prompt templates for edge queries
+</span><span id="__span-0-10"><a id="__codelineno-0-10" name="__codelineno-0-10" href="#__codelineno-0-10"></a>│   └── providers.py         # LLMKnowledge implementation
+</span><span id="__span-0-11"><a id="__codelineno-0-11" name="__codelineno-0-11" href="#__codelineno-0-11"></a>└── utils/
+</span><span id="__span-0-12"><a id="__codelineno-0-12" name="__codelineno-0-12" href="#__codelineno-0-12"></a>    └── __init__.py
+</span></code></pre></div>
+<h3 id="data-flow">Data Flow<a class="headerlink" href="#data-flow" title="Permanent link">&para;</a></h3>
+<div class="language-text highlight"><pre><span></span><code><span id="__span-1-1"><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a>┌─────────────────────────────────────────────────────────────────┐
+</span><span id="__span-1-2"><a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a>│                 Consuming Package (e.g., causaliq-analysis)     │
+</span><span id="__span-1-3"><a id="__codelineno-1-3" name="__codelineno-1-3" href="#__codelineno-1-3"></a>│                                                                 │
+</span><span id="__span-1-4"><a id="__codelineno-1-4" name="__codelineno-1-4" href="#__codelineno-1-4"></a>│   uncertain_edges = df[df[&quot;entropy&quot;] &gt; threshold]               │
+</span><span id="__span-1-5"><a id="__codelineno-1-5" name="__codelineno-1-5" href="#__codelineno-1-5"></a>│                          │                                      │
+</span><span id="__span-1-6"><a id="__codelineno-1-6" name="__codelineno-1-6" href="#__codelineno-1-6"></a>│                          ▼                                      │
+</span><span id="__span-1-7"><a id="__codelineno-1-7" name="__codelineno-1-7" href="#__codelineno-1-7"></a>│   ┌─────────────────────────────────────────────────────────┐   │
+</span><span id="__span-1-8"><a id="__codelineno-1-8" name="__codelineno-1-8" href="#__codelineno-1-8"></a>│   │              causaliq-knowledge                          │   │
+</span><span id="__span-1-9"><a id="__codelineno-1-9" name="__codelineno-1-9" href="#__codelineno-1-9"></a>│   │                                                          │   │
+</span><span id="__span-1-10"><a id="__codelineno-1-10" name="__codelineno-1-10" href="#__codelineno-1-10"></a>│   │   knowledge.query_edge(&quot;smoking&quot;, &quot;cancer&quot;)              │   │
+</span><span id="__span-1-11"><a id="__codelineno-1-11" name="__codelineno-1-11" href="#__codelineno-1-11"></a>│   │       │                                                  │   │
+</span><span id="__span-1-12"><a id="__codelineno-1-12" name="__codelineno-1-12" href="#__codelineno-1-12"></a>│   │       ▼                                                  │   │
+</span><span id="__span-1-13"><a id="__codelineno-1-13" name="__codelineno-1-13" href="#__codelineno-1-13"></a>│   │   ┌───────────┐    ┌───────────┐    ┌───────────┐       │   │
+</span><span id="__span-1-14"><a id="__codelineno-1-14" name="__codelineno-1-14" href="#__codelineno-1-14"></a>│   │   │  LLM 1    │    │  LLM 2    │    │  Cache    │       │   │
+</span><span id="__span-1-15"><a id="__codelineno-1-15" name="__codelineno-1-15" href="#__codelineno-1-15"></a>│   │   │ (GPT-4o)  │    │ (Llama3)  │    │ (disk)    │       │   │
+</span><span id="__span-1-16"><a id="__codelineno-1-16" name="__codelineno-1-16" href="#__codelineno-1-16"></a>│   │   └───────────┘    └───────────┘    └───────────┘       │   │
+</span><span id="__span-1-17"><a id="__codelineno-1-17" name="__codelineno-1-17" href="#__codelineno-1-17"></a>│   │       │                 │                │               │   │
+</span><span id="__span-1-18"><a id="__codelineno-1-18" name="__codelineno-1-18" href="#__codelineno-1-18"></a>│   │       └─────────────────┴────────────────┘               │   │
+</span><span id="__span-1-19"><a id="__codelineno-1-19" name="__codelineno-1-19" href="#__codelineno-1-19"></a>│   │                         │                                │   │
+</span><span id="__span-1-20"><a id="__codelineno-1-20" name="__codelineno-1-20" href="#__codelineno-1-20"></a>│   │                         ▼                                │   │
+</span><span id="__span-1-21"><a id="__codelineno-1-21" name="__codelineno-1-21" href="#__codelineno-1-21"></a>│   │               EdgeKnowledge(                             │   │
+</span><span id="__span-1-22"><a id="__codelineno-1-22" name="__codelineno-1-22" href="#__codelineno-1-22"></a>│   │                   exists=True,                           │   │
+</span><span id="__span-1-23"><a id="__codelineno-1-23" name="__codelineno-1-23" href="#__codelineno-1-23"></a>│   │                   direction=&quot;a_to_b&quot;,                    │   │
+</span><span id="__span-1-24"><a id="__codelineno-1-24" name="__codelineno-1-24" href="#__codelineno-1-24"></a>│   │                   confidence=0.85,                       │   │
+</span><span id="__span-1-25"><a id="__codelineno-1-25" name="__codelineno-1-25" href="#__codelineno-1-25"></a>│   │                   reasoning=&quot;Established medical...&quot;     │   │
+</span><span id="__span-1-26"><a id="__codelineno-1-26" name="__codelineno-1-26" href="#__codelineno-1-26"></a>│   │               )                                          │   │
+</span><span id="__span-1-27"><a id="__codelineno-1-27" name="__codelineno-1-27" href="#__codelineno-1-27"></a>│   └─────────────────────────────────────────────────────────┘   │
+</span><span id="__span-1-28"><a id="__codelineno-1-28" name="__codelineno-1-28" href="#__codelineno-1-28"></a>│                          │                                      │
+</span><span id="__span-1-29"><a id="__codelineno-1-29" name="__codelineno-1-29" href="#__codelineno-1-29"></a>│                          ▼                                      │
+</span><span id="__span-1-30"><a id="__codelineno-1-30" name="__codelineno-1-30" href="#__codelineno-1-30"></a>│   Combine with statistical probabilities                        │
+</span><span id="__span-1-31"><a id="__codelineno-1-31" name="__codelineno-1-31" href="#__codelineno-1-31"></a>└─────────────────────────────────────────────────────────────────┘
+</span></code></pre></div>
+<h2 id="technology-choices">Technology Choices<a class="headerlink" href="#technology-choices" title="Permanent link">&para;</a></h2>
+<h3 id="litellm-over-langchain-for-v010-v030">LiteLLM over LangChain (for v0.1.0 - v0.3.0)<a class="headerlink" href="#litellm-over-langchain-for-v010-v030" title="Permanent link">&para;</a></h3>
+<table>
+<thead>
+<tr>
+<th>Requirement</th>
+<th>LiteLLM</th>
+<th>LangChain</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Multi-provider unified API</td>
+<td>✅ 100+ providers</td>
+<td>✅ Many providers</td>
+</tr>
+<tr>
+<td>Built-in cost tracking</td>
+<td>✅ Yes</td>
+<td>❌ OpenAI only</td>
+</tr>
+<tr>
+<td>Built-in caching</td>
+<td>✅ disk/redis/semantic</td>
+<td>✅ Various</td>
+</tr>
+<tr>
+<td>Complexity</td>
+<td>Low</td>
+<td>High</td>
+</tr>
+<tr>
+<td>Package size</td>
+<td>~5MB</td>
+<td>~100MB+</td>
+</tr>
+</tbody>
+</table>
+<p><strong>Rationale</strong>: For simple, structured queries about edge existence/orientation, LiteLLM provides everything needed with less complexity. LangChain may be added in v0.4.0+ when RAG capabilities are needed for literature context.</p>
+<h3 id="key-dependencies">Key Dependencies<a class="headerlink" href="#key-dependencies" title="Permanent link">&para;</a></h3>
+<ul>
+<li><strong>litellm</strong>: Unified LLM API with cost tracking</li>
+<li><strong>pydantic</strong>: Structured response validation</li>
+<li><strong>diskcache</strong> (v0.3.0): Persistent query caching</li>
+</ul>
+<h2 id="integration-points">Integration Points<a class="headerlink" href="#integration-points" title="Permanent link">&para;</a></h2>
+<h3 id="with-causaliq-analysis">With causaliq-analysis<a class="headerlink" href="#with-causaliq-analysis" title="Permanent link">&para;</a></h3>
+<p>The primary integration point is the <code>average()</code> function which produces edge probability tables. Future versions will accept a <code>knowledge</code> parameter:</p>
+<div class="language-python highlight"><pre><span></span><code><span id="__span-2-1"><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a><span class="c1"># Future usage (v0.5.0 of causaliq-analysis)</span>
+</span><span id="__span-2-2"><a id="__codelineno-2-2" name="__codelineno-2-2" href="#__codelineno-2-2"></a><span class="kn">from</span><span class="w"> </span><span class="nn">causaliq_knowledge</span><span class="w"> </span><span class="kn">import</span> <span class="n">LLMKnowledge</span>
+</span><span id="__span-2-3"><a id="__codelineno-2-3" name="__codelineno-2-3" href="#__codelineno-2-3"></a>
+</span><span id="__span-2-4"><a id="__codelineno-2-4" name="__codelineno-2-4" href="#__codelineno-2-4"></a><span class="n">knowledge</span> <span class="o">=</span> <span class="n">LLMKnowledge</span><span class="p">(</span><span class="n">models</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;gpt-4o-mini&quot;</span><span class="p">])</span>
+</span><span id="__span-2-5"><a id="__codelineno-2-5" name="__codelineno-2-5" href="#__codelineno-2-5"></a><span class="n">df</span> <span class="o">=</span> <span class="n">average</span><span class="p">(</span><span class="n">traces</span><span class="p">,</span> <span class="n">sample_size</span><span class="o">=</span><span class="mi">1000</span><span class="p">,</span> <span class="n">knowledge</span><span class="o">=</span><span class="n">knowledge</span><span class="p">)</span>
+</span></code></pre></div>
+<h3 id="with-causaliq-discovery">With causaliq-discovery<a class="headerlink" href="#with-causaliq-discovery" title="Permanent link">&para;</a></h3>
+<p>Structure learning algorithms will use knowledge to guide search in uncertain areas of the graph space.</p>
+<h2 id="see-also">See Also<a class="headerlink" href="#see-also" title="Permanent link">&para;</a></h2>
+<ul>
+<li><a href="../llm_integration/">LLM Integration Design Note</a> - Detailed design for LLM queries</li>
+<li><a href="../../roadmap/">Roadmap</a> - Release planning</li>
+</ul>
 
 
 
@@ -1032,13 +1504,13 @@
         
         
           
-          <a href="../example_design_note/" class="md-footer__link md-footer__link--next" aria-label="Next: Example">
+          <a href="../llm_integration/" class="md-footer__link md-footer__link--next" aria-label="Next: LLM Integration">
             <div class="md-footer__title">
               <span class="md-footer__direction">
                 Next
               </span>
               <div class="md-ellipsis">
-                Example
+                LLM Integration
               </div>
             </div>
             <div class="md-footer__button md-icon">
