@@ -3,7 +3,6 @@ causaliq-knowledge: LLM and human knowledge for causal discovery.
 """
 
 from causaliq_knowledge.base import KnowledgeProvider
-from causaliq_knowledge.llm import LLMClient, LLMConfig, LLMResponse
 from causaliq_knowledge.models import EdgeDirection, EdgeKnowledge
 
 __version__ = "0.1.0"
@@ -30,8 +29,4 @@ __all__ = [
     "EdgeDirection",
     # Abstract interface
     "KnowledgeProvider",
-    # LLM client
-    "LLMClient",
-    "LLMConfig",
-    "LLMResponse",
 ]
