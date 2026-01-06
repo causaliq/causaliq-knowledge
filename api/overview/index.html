@@ -12,7 +12,7 @@
         <link rel="prev" href="../../architecture/testing_strategy/">
       
       
-        <link rel="next" href="../cli/">
+        <link rel="next" href="../models/">
       
       
         
@@ -833,6 +833,39 @@
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
+  <a href="#models" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Models
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#base" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Base
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#llm-client" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        LLM Client
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
   <a href="#cli" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -852,6 +885,90 @@
   
 </nav>
       
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../models/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Models
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../base/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Base
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../llm/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    LLM Client
+  
+
+    
+  </span>
+  
+  
+
+      </a>
     </li>
   
 
@@ -933,6 +1050,39 @@
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
+  <a href="#models" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Models
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#base" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Base
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#llm-client" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        LLM Client
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
   <a href="#cli" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -966,12 +1116,28 @@
 
 
 <h1 id="causaliq-knowledge-api-reference">CausalIQ Knowledge API Reference<a class="headerlink" href="#causaliq-knowledge-api-reference" title="Permanent link">&para;</a></h1>
-<p>This is the entry point for the API documentation. It is suggested to split the 
-documentation by module, and briefly describe each module here, to ease navigation
-of the API and avoid overlong pages.</p>
+<p>API documentation for causaliq-knowledge, organized by module.</p>
 <h2 id="modules">Modules<a class="headerlink" href="#modules" title="Permanent link">&para;</a></h2>
+<h3 id="models"><a href="../models/">Models</a><a class="headerlink" href="#models" title="Permanent link">&para;</a></h3>
+<p>Core Pydantic models for representing causal knowledge:</p>
+<ul>
+<li><strong>EdgeDirection</strong> - Enum for causal edge direction (a_to_b, b_to_a, undirected)</li>
+<li><strong>EdgeKnowledge</strong> - Structured knowledge about a potential causal edge</li>
+</ul>
+<h3 id="base"><a href="../base/">Base</a><a class="headerlink" href="#base" title="Permanent link">&para;</a></h3>
+<p>Abstract interfaces for knowledge providers:</p>
+<ul>
+<li><strong>KnowledgeProvider</strong> - Abstract base class that all knowledge sources implement</li>
+</ul>
+<h3 id="llm-client"><a href="../llm/">LLM Client</a><a class="headerlink" href="#llm-client" title="Permanent link">&para;</a></h3>
+<p>LiteLLM wrapper for making LLM calls:</p>
+<ul>
+<li><strong>LLMConfig</strong> - Configuration for LLM client (model, temperature, etc.)</li>
+<li><strong>LLMResponse</strong> - Response from an LLM call with content and usage stats</li>
+<li><strong>LLMClient</strong> - Client for making LLM calls with cost tracking</li>
+</ul>
 <h3 id="cli"><a href="../cli/">CLI</a><a class="headerlink" href="#cli" title="Permanent link">&para;</a></h3>
-<p>This provides a skeleton CLI implementation.</p>
+<p>Command-line interface for testing and querying.</p>
 
 
 
@@ -1026,13 +1192,13 @@ of the API and avoid overlong pages.</p>
         
         
           
-          <a href="../cli/" class="md-footer__link md-footer__link--next" aria-label="Next: CLI">
+          <a href="../models/" class="md-footer__link md-footer__link--next" aria-label="Next: Models">
             <div class="md-footer__title">
               <span class="md-footer__direction">
                 Next
               </span>
               <div class="md-ellipsis">
-                CLI
+                Models
               </div>
             </div>
             <div class="md-footer__button md-icon">
