@@ -58,53 +58,62 @@ class KnowledgeProvider(ABC):
 
 ```python
 class LLMKnowledge(KnowledgeProvider):
-    """LLM-based knowledge provider using LiteLLM."""
+    """LLM-based knowledge provider using vendor-specific API clients."""
     
     def __init__(
         self,
-        models: list[str] = ["gpt-4o-mini"],
+        models: list[str] = ["groq/llama-3.1-8b-instant"],
         consensus_strategy: str = "weighted_vote",
-        cache_dir: str | None = None,
+        temperature: float = 0.1,
+        max_tokens: int = 500,
     ):
         """
         Initialize LLM knowledge provider.
         
         Args:
-            models: List of LiteLLM model identifiers
-                   e.g., ["gpt-4o-mini", "ollama/llama3", "claude-3-haiku"]
+            models: List of model identifiers with provider prefix.
+                   e.g., ["groq/llama-3.1-8b-instant", "gemini/gemini-2.5-flash"]
             consensus_strategy: How to combine multi-model responses
                                "weighted_vote" or "highest_confidence"
-            cache_dir: Directory for caching responses (None = no cache)
+            temperature: LLM temperature (0.0-1.0)
+            max_tokens: Maximum tokens in response
         """
         ...
 ```
 
 ## LLM Provider Configuration
 
-### Supported Providers (via LiteLLM)
+### Architectural Decision: Vendor-Specific APIs
 
-| Provider | Model Examples | API Key Environment Variable |
-|----------|---------------|------------------------------|
-| OpenAI | `gpt-4o`, `gpt-4o-mini` | `OPENAI_API_KEY` |
-| Anthropic | `claude-3-sonnet`, `claude-3-haiku` | `ANTHROPIC_API_KEY` |
-| Google | `gemini-pro`, `gemini-flash` | `GEMINI_API_KEY` |
-| Groq | `groq/llama3-70b` | `GROQ_API_KEY` |
-| Ollama (local) | `ollama/llama3`, `ollama/mistral` | None (local) |
-| Together AI | `together_ai/mistral-7b` | `TOGETHER_API_KEY` |
+We use **direct vendor-specific API clients** rather than wrapper libraries like LiteLLM or LangChain. Each provider has a dedicated client class that uses httpx for HTTP communication.
+
+**Benefits of this approach:**
+
+- **Reliability**: No wrapper bugs or version conflicts
+- **Minimal dependencies**: Only httpx required for HTTP
+- **Full control**: Direct access to vendor-specific features
+- **Better debugging**: Clear stack traces without abstraction layers
+- **Predictable behavior**: No surprises from wrapper library updates
+
+### Supported Providers
+
+| Provider | Client Class | Model Examples | API Key Variable |
+|----------|--------------|----------------|------------------|
+| Groq | `GroqClient` | `groq/llama-3.1-8b-instant` | `GROQ_API_KEY` |
+| Google Gemini | `GeminiClient` | `gemini/gemini-2.5-flash` | `GEMINI_API_KEY` |
+
+Additional providers (OpenAI, Anthropic) can be added by implementing new client classes following the same pattern.
 
 ### Cost Considerations
 
 For edge queries (~500 tokens each):
 
-| Model | Cost per 1000 queries | Quality | Speed |
-|-------|----------------------|---------|-------|
-| GPT-4o-mini | ~$0.08 | Good | Fast |
-| Claude 3 Haiku | ~$0.13 | Good | Fast |
-| Gemini Flash | Free tier | Good | Fast |
-| Groq Llama3 | Free tier | Good | Very fast |
-| Ollama (local) | $0 | Varies | Depends on hardware |
+| Provider | Model | Cost per 1000 queries | Quality | Speed |
+|----------|-------|----------------------|---------|-------|
+| Groq | llama-3.1-8b-instant | Free tier | Good | Very fast |
+| Google | gemini-2.5-flash | Free tier | Good | Fast |
 
-**Recommendation**: Start with Groq free tier or local Ollama for development, use GPT-4o-mini for production quality.
+**Recommendation**: Use Groq free tier for development and testing. Both Groq and Gemini offer generous free tiers suitable for most research use cases.
 
 ## Prompt Design
 
@@ -179,7 +188,7 @@ df["entropy"] = df.apply(edge_entropy, axis=1)
 uncertain_edges = df[df["entropy"] > 1.5]  # High uncertainty
 
 # Query LLM for uncertain edges
-knowledge = LLMKnowledge(models=["gpt-4o-mini"])
+knowledge = LLMKnowledge(models=["groq/llama-3.1-8b-instant"])
 for _, row in uncertain_edges.iterrows():
     result = knowledge.query_edge(row.node_a, row.node_b)
     # Combine statistical and LLM probabilities...
@@ -187,12 +196,14 @@ for _, row in uncertain_edges.iterrows():
 
 ## Design Rationale
 
-### Why LiteLLM?
+### Why Vendor-Specific APIs (not LiteLLM/LangChain)?
 
-1. **Unified API**: Single interface for 100+ providers
-2. **Built-in cost tracking**: Essential for budget-conscious research
-3. **Lightweight**: ~5MB vs ~100MB+ for LangChain
-4. **Simple**: No complex abstractions for straightforward queries
+1. **Minimal dependencies**: Only httpx for HTTP, no wrapper libraries
+2. **Reliability**: No wrapper bugs or version conflicts to debug
+3. **Full control**: Direct access to vendor-specific features and error handling
+4. **Predictable**: Behavior doesn't change when wrapper library updates
+5. **Debuggable**: Clear stack traces without abstraction layers
+6. **Lightweight**: ~5KB of client code vs ~50MB of wrapper dependencies
 
 ### Why structured JSON responses?
 
@@ -210,7 +221,7 @@ for _, row in uncertain_edges.iterrows():
 
 ### API Failures
 
-- Automatic retry with exponential backoff (LiteLLM built-in)
+- Automatic retry with timeout handling
 - Fallback to next model in list if primary fails
 - Return `EdgeKnowledge(exists=None, confidence=0.0)` if all fail
 
@@ -222,8 +233,8 @@ for _, row in uncertain_edges.iterrows():
 
 ### Rate Limiting
 
-- LiteLLM handles rate limit errors with automatic retry
-- Configure `max_retries` and `timeout` per model
+- Vendor clients handle rate limit errors gracefully
+- Configure timeout per client
 
 ## Performance
 
@@ -241,15 +252,23 @@ for _, row in uncertain_edges.iterrows():
 
 ## Future Extensions
 
+### v0.2.0: Additional Providers
+
+- OpenAI client for GPT-4 models
+- Anthropic client for Claude models
+
 ### v0.3.0: Caching
+
 - Disk-based cache keyed by (node_a, node_b, context_hash)
 - Semantic similarity cache for similar variable names
 
 ### v0.4.0: Rich Context
+
 - Variable descriptions and roles
 - Domain-specific literature retrieval (RAG)
 - Conversation history for follow-up queries
 
 ### v0.5.0: Algorithm Integration
+
 - Direct integration with structure learning search
 - Knowledge-guided constraint generation

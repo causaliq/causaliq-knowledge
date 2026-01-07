@@ -9,21 +9,26 @@ This package provides **knowledge services** to other CausalIQ packages, enablin
 ## Architectural Principles 
 
 ### Simplicity First
+
 - Use lightweight libraries over heavy frameworks
 - Start with minimal viable features, extend incrementally
 - Prefer explicit code over framework "magic"
+- Use vendor-specific APIs rather than abstraction wrappers
 
 ### Cost Efficiency
+
 - Built-in cost tracking and budget management (critical for independent research)
 - Caching of LLM queries and responses to avoid redundant API calls
-- Support for cheap/free local models alongside cloud providers
+- Support for cheap/free providers (Groq, Gemini free tiers)
 
 ### Transparency and Reproducibility
+
 - Cache all LLM interactions for experiment reproducibility
 - Provide reasoning/explanations with all knowledge outputs
 - Log confidence levels to enable uncertainty-aware decisions
 
 ### Clean Interfaces
+
 - Abstract `KnowledgeProvider` interface allows multiple implementations
 - LLM-based, rule-based, and human-input knowledge sources use same interface
 - Easy integration with causaliq-analysis and causaliq-discovery
@@ -38,13 +43,12 @@ causaliq_knowledge/
 ├── cli.py                   # Command-line interface
 ├── base.py                  # Abstract KnowledgeProvider interface
 ├── models.py                # Pydantic models (EdgeKnowledge, etc.)
-├── llm/
-│   ├── __init__.py
-│   ├── client.py            # LiteLLM wrapper with configuration
-│   ├── prompts.py           # Prompt templates for edge queries
-│   └── providers.py         # LLMKnowledge implementation
-└── utils/
-    └── __init__.py
+└── llm/
+    ├── __init__.py          # LLM module exports
+    ├── groq_client.py       # Direct Groq API client
+    ├── gemini_client.py     # Direct Google Gemini API client
+    ├── prompts.py           # Prompt templates for edge queries
+    └── provider.py          # LLMKnowledge implementation
 ```
 
 ### Data Flow
@@ -85,22 +89,42 @@ causaliq_knowledge/
 
 ## Technology Choices
 
-### LiteLLM over LangChain (for v0.1.0 - v0.3.0)
+### Vendor-Specific APIs over Wrapper Libraries
 
-| Requirement | LiteLLM | LangChain |
-|-------------|---------|-----------|
-| Multi-provider unified API | ✅ 100+ providers | ✅ Many providers |
-| Built-in cost tracking | ✅ Yes | ❌ OpenAI only |
-| Built-in caching | ✅ disk/redis/semantic | ✅ Various |
-| Complexity | Low | High |
-| Package size | ~5MB | ~100MB+ |
+We use **direct vendor-specific API clients** rather than wrapper libraries like LiteLLM or LangChain. This architectural decision provides:
 
-**Rationale**: For simple, structured queries about edge existence/orientation, LiteLLM provides everything needed with less complexity. LangChain may be added in v0.4.0+ when RAG capabilities are needed for literature context.
+| Aspect | Direct APIs | Wrapper Libraries |
+|--------|-------------|-------------------|
+| Reliability | ✅ Full control, predictable | ❌ Wrapper bugs, version drift |
+| Debugging | ✅ Clear stack traces | ❌ Abstraction layers |
+| Dependencies | ✅ Minimal (httpx only) | ❌ Heavy transitive deps |
+| API Coverage | ✅ Full vendor features | ❌ Lowest common denominator |
+| Maintenance | ✅ We control updates | ❌ Wait for wrapper updates |
+
+**Why Not LiteLLM?**
+
+- Adds 50+ transitive dependencies
+- Version conflicts with other packages
+- Wrapper bugs mask vendor API issues
+- We only need 2-3 providers, not 100+
+
+**Why Not LangChain?**
+
+- Massive dependency footprint (~100MB+)
+- Over-engineered for simple structured queries  
+- Rapid breaking changes between versions
+- May reconsider for v0.4.0+ RAG features only
+
+### Current Provider Clients
+
+- **GroqClient**: Direct Groq API via httpx (free tier, fast inference)
+- **GeminiClient**: Direct Google Gemini API via httpx (generous free tier)
 
 ### Key Dependencies
 
-- **litellm**: Unified LLM API with cost tracking
+- **httpx**: HTTP client for API calls
 - **pydantic**: Structured response validation
+- **click**: Command-line interface
 - **diskcache** (v0.3.0): Persistent query caching
 
 ## Integration Points

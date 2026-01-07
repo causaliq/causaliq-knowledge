@@ -1,7 +1,8 @@
 # causaliq-knowledge
 
-[![Python Support](https://img.shields.io/pypi/pyversions/zenodo-sync.svg)](https://pypi.org/project/zenodo-sync/)
+![Python Versions](https://img.shields.io/badge/python-3.9%20%7C%203.10%20%7C%203.11%20%7C%203.12%20%7C%203.13-blue)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+![Coverage](https://img.shields.io/badge/coverage-100%25-brightgreen)
 
 The CausalIQ Knowledge project represents a novel approach to causal discovery by combining the traditional statistical structure learning algorithms with the contextual understanding and reasoning capabilities of Large Language Models. This integration enables more interpretable, domain-aware, and human-friendly causal discovery workflows. It is part of the [CausalIQ ecosystem](https://causaliq.org/) for intelligent causal discovery.
 
@@ -9,18 +10,18 @@ The CausalIQ Knowledge project represents a novel approach to causal discovery b
 
 🚧 **Active Development** - this repository is currently in active development, which involves:
 
-- adding new knowledge features, in particular knowledge from LLMs
-- migrating functionality which provides knowledge based on standard reference networks from the legacy monolithic discovery repo
-- ensure CausalIQ development standards are met
+- Adding new knowledge features, in particular knowledge from LLMs
+- Migrating functionality which provides knowledge based on standard reference networks from the legacy monolithic discovery repo
+- Ensuring CausalIQ development standards are met
 
 
 ## Quick Start
 
 ```python
-from causaliq_knowledge import LLMKnowledge
+from causaliq_knowledge.llm import LLMKnowledge
 
 # Query an LLM about a potential causal relationship
-knowledge = LLMKnowledge(models=["gpt-4o-mini"])
+knowledge = LLMKnowledge(models=["groq/llama-3.1-8b-instant"])
 result = knowledge.query_edge("smoking", "lung_cancer")
 
 print(f"Exists: {result.exists}, Direction: {result.direction}")
@@ -32,64 +33,68 @@ print(f"Reasoning: {result.reasoning}")
 
 Under development:
 
-- **Release v0.1.0 - Foundation LLM**: simple LLM queries to 1 or 2 LLMs about edge existence and orientation to support graph averaging
+- **Release v0.1.0 - Foundation LLM**: Simple LLM queries to 1 or 2 LLMs about edge existence and orientation to support graph averaging
 
 Currently implemented releases:
 
-- none
+- None
 
-Planned 
+Planned:
 
-- **Release v0.2.0 - Additional LLMs**: support for more LLMs
-- **Release v0.3.0 - LLM Caching**: caching of LLM query and responses
-- **Release v0.4.0 - LLM Context**: variable/role/literature etc context
-- **Release v0.5.0 - Algorithm integration**: integration into structure learning algorithms
-- **Release v0.6.0 - Legacy Reference**: support for legacy approaches of deriving knowledge from reference networks
+- **Release v0.2.0 - Additional LLMs**: Support for more LLM providers (OpenAI, Anthropic)
+- **Release v0.3.0 - LLM Caching**: Caching of LLM queries and responses
+- **Release v0.4.0 - LLM Context**: Variable/role/literature etc context
+- **Release v0.5.0 - Algorithm integration**: Integration into structure learning algorithms
+- **Release v0.6.0 - Legacy Reference**: Support for legacy approaches of deriving knowledge from reference networks
 
 ## Implementation Approach
 
 ### Technology Stack
 
-- **[LiteLLM](https://github.com/BerriAI/litellm)**: Unified API for 100+ LLM providers with built-in cost tracking
+- **Vendor-Specific API Clients**: Direct integration with LLM providers using httpx
 - **[Pydantic](https://docs.pydantic.dev/)**: Structured response validation
-- **LangChain** (v0.4.0+): RAG capabilities for literature context
+- **[Click](https://click.palletsprojects.com/)**: Command-line interface
 
-### Why LiteLLM?
+### Why Vendor-Specific APIs (not LiteLLM/LangChain)?
 
-| Requirement | LiteLLM | LangChain |
-|-------------|---------|-----------|
-| Multi-provider unified API | ✅ | ✅ |
-| Built-in cost tracking | ✅ | ❌ |
-| Lightweight | ✅ (~5MB) | ❌ (~100MB+) |
-| Complexity | Low | High |
+We use **direct vendor-specific API clients** rather than wrapper libraries:
 
-For v0.1.0-v0.3.0 (simple edge queries), LiteLLM provides everything needed. LangChain will be added in v0.4.0 for RAG/context features.
+| Aspect | Direct APIs | Wrapper Libraries |
+|--------|-------------|-------------------|
+| Reliability | ✅ Full control | ❌ Wrapper bugs |
+| Dependencies | ✅ Minimal (httpx) | ❌ Heavy (~50-100MB) |
+| Debugging | ✅ Clear traces | ❌ Abstraction layers |
+| Maintenance | ✅ We control | ❌ Wait for updates |
+
+This approach keeps the package lightweight, reliable, and easy to debug.
 
 ### Supported LLM Providers
 
-| Provider | Models | Free Tier |
-|----------|--------|-----------|
-| **Ollama** (local) | llama3, mistral, etc. | ✅ Free |
-| **Groq** | llama3-70b, mixtral | ✅ Limited |
-| **Google** | gemini-pro, gemini-flash | ✅ Generous |
-| **OpenAI** | gpt-4o, gpt-4o-mini | ❌ Pay-per-use |
-| **Anthropic** | claude-3-sonnet, haiku | ❌ Pay-per-use |
+| Provider | Client | Models | Free Tier |
+|----------|--------|--------|-----------|
+| **Groq** | `GroqClient` | llama-3.1-8b-instant | ✅ Generous |
+| **Google Gemini** | `GeminiClient` | gemini-2.5-flash | ✅ Generous |
+
+Additional providers (OpenAI, Anthropic) can be added in future releases.
 
 ## Upcoming Key Innovations
 
 ### 🧠 LLMs support Causal Discovery and Inference
-- initially LLM will work with **graph averaging** to resolve uncertain edges (use entropy to decide edges with uncertain existence or direction)
-- integration into **structure learning** algorithms to provide knowledge for "uncertain" areas of the graph
+
+- Initially LLM will work with **graph averaging** to resolve uncertain edges (use entropy to decide edges with uncertain existence or direction)
+- Integration into **structure learning** algorithms to provide knowledge for "uncertain" areas of the graph
 - LLMs analyse learning process and errors to **suggest improved algorithms**
 - LLMs used to preprocess **text and visual data** so they can be used as inputs to structure learning
 
 ### 🤝 Human Engagement
+
 - **Natural language constraints**: Specify domain knowledge in plain English
 - **Expert knowledge incorporation** by converting expert understanding into algorithmic constraints
 - LLMs convert **natural language questions** to causal queries
 - **Interactive causal discovery** where structure learning or LLMs identify areas of causal uncertainty and can test causal hypotheses through dialogue
 
 ### 🪟 Transparency and interpretability
+
 - LLMs **interpret structure learning process** and outputs, including their uncertainties
 - LLMs **interpret causal inference** results including uncertainties
 - **Contextual graph interpretation** to explain variable meanings and relationships
@@ -97,12 +102,14 @@ For v0.1.0-v0.3.0 (simple edge queries), LiteLLM provides everything needed. Lan
 - **Report generation** including automated research summaries and methodology descriptions
 
 ### 🔒 Stability and reproducibility
-- **cache queries and responses** so that experiments are stable and repeatable even if LLMs themselves are not
-- **stable randomisation** of e.g. data sub-sampling
+
+- **Cache queries and responses** so that experiments are stable and repeatable even if LLMs themselves are not
+- **Stable randomisation** of e.g. data sub-sampling
 
 ### 💰 Efficient use of LLM resources (important as an independent researcher)
-- **cache queries and results** so that knowledge can be re-used
-- evaluation and development of **simple context-adapted LLMs**
+
+- **Cache queries and results** so that knowledge can be re-used
+- Evaluation and development of **simple context-adapted LLMs**
 
 
 ## Upcoming Integration with CausalIQ Ecosystem
@@ -120,5 +127,5 @@ For v0.1.0-v0.3.0 (simple edge queries), LiteLLM provides everything needed. Lan
 
 ---
 
-**Supported Python Versions**: 3.9, 3.10, 3.11, 3.12  
+**Supported Python Versions**: 3.9, 3.10, 3.11, 3.12, 3.13  
 **Default Python Version**: 3.11

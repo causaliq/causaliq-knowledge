@@ -35,42 +35,47 @@ Unit tests mock all LLM calls, making them:
 ```python
 # tests/unit/test_llm_providers.py
 import pytest
-from types import SimpleNamespace
-
-
-def _make_mock_response(content: str):
-    """Helper to create a mock LLM response object."""
-    return SimpleNamespace(
-        choices=[SimpleNamespace(message=SimpleNamespace(content=content))]
-    )
+from unittest.mock import MagicMock
 
 
 def test_query_edge_parses_valid_response(monkeypatch):
     """Test that valid LLM JSON is correctly parsed."""
-    mock_response = _make_mock_response('''
-    {"exists": true, "direction": "a_to_b", "confidence": 0.85, 
-     "reasoning": "Smoking causes lung cancer via carcinogens."}
-    ''')
+    from causaliq_knowledge.llm import LLMKnowledge
+    from causaliq_knowledge.llm.groq_client import GroqClient
+
+    # Mock the Groq client's complete_json method
+    mock_json = {
+        "exists": True,
+        "direction": "a_to_b",
+        "confidence": 0.85,
+        "reasoning": "Smoking causes lung cancer via carcinogens."
+    }
     
-    import litellm
-    monkeypatch.setattr(litellm, "completion", lambda *args, **kwargs: mock_response)
+    mock_client = MagicMock(spec=GroqClient)
+    mock_client.complete_json.return_value = (mock_json, MagicMock())
     
-    knowledge = LLMKnowledge(models=["gpt-4o-mini"])
+    knowledge = LLMKnowledge(models=["groq/llama-3.1-8b-instant"])
+    knowledge._clients["groq/llama-3.1-8b-instant"] = mock_client
+    
     result = knowledge.query_edge("smoking", "lung_cancer")
     
     assert result.exists is True
-    assert result.direction == "a_to_b"
+    assert result.direction.value == "a_to_b"
     assert result.confidence == 0.85
 
 
 def test_query_edge_handles_malformed_json(monkeypatch):
     """Test graceful handling of invalid LLM response."""
-    mock_response = _make_mock_response("This is not JSON")
+    from causaliq_knowledge.llm import LLMKnowledge
+    from causaliq_knowledge.llm.groq_client import GroqClient
+
+    # Mock returning None (failed parse)
+    mock_client = MagicMock(spec=GroqClient)
+    mock_client.complete_json.return_value = (None, MagicMock())
     
-    import litellm
-    monkeypatch.setattr(litellm, "completion", lambda *args, **kwargs: mock_response)
+    knowledge = LLMKnowledge(models=["groq/llama-3.1-8b-instant"])
+    knowledge._clients["groq/llama-3.1-8b-instant"] = mock_client
     
-    knowledge = LLMKnowledge(models=["gpt-4o-mini"])
     result = knowledge.query_edge("A", "B")
     
     assert result.exists is None  # Uncertain
@@ -81,7 +86,7 @@ def test_query_edge_handles_malformed_json(monkeypatch):
 
 Integration tests use real LLM APIs to validate actual behavior:
 
-- **Expensive**: Costs money per call
+- **Expensive**: May cost money per call (though free tiers available)
 - **Non-deterministic**: LLM responses vary
 - **Slow**: Network latency
 - **Validates real integration**: Catches API changes
@@ -92,15 +97,17 @@ import pytest
 import os
 
 pytestmark = pytest.mark.skipif(
-    not os.getenv("OPENAI_API_KEY"),
-    reason="OPENAI_API_KEY not set"
+    not os.getenv("GROQ_API_KEY"),
+    reason="GROQ_API_KEY not set"
 )
 
 @pytest.mark.slow
 @pytest.mark.integration
-def test_openai_returns_valid_response():
-    """Validate real OpenAI API returns parseable response."""
-    knowledge = LLMKnowledge(models=["gpt-4o-mini"])
+def test_groq_returns_valid_response():
+    """Validate real Groq API returns parseable response."""
+    from causaliq_knowledge.llm import LLMKnowledge
+    
+    knowledge = LLMKnowledge(models=["groq/llama-3.1-8b-instant"])
     result = knowledge.query_edge("smoking", "lung_cancer")
     
     # Don't assert specific values - LLM may vary
@@ -154,7 +161,7 @@ CACHE_DIR = Path(__file__).parent / "data" / "cache"
 def cached_knowledge():
     """LLMKnowledge using only cached responses."""
     return LLMKnowledge(
-        models=["gpt-4o-mini"],
+        models=["groq/llama-3.1-8b-instant"],
         cache_dir=str(CACHE_DIR),
         cache_only=True  # Fail if cache miss, don't call API
     )
@@ -171,7 +178,7 @@ def test_smoking_cancer_relationship(cached_knowledge):
 def test_consensus_across_models(cached_knowledge):
     """Test multi-model consensus with cached responses."""
     knowledge = LLMKnowledge(
-        models=["gpt-4o-mini", "claude-3-haiku"],
+        models=["groq/llama-3.1-8b-instant", "gemini/gemini-2.5-flash"],
         cache_dir=str(CACHE_DIR),
         cache_only=True
     )
@@ -188,7 +195,7 @@ def test_consensus_across_models(cached_knowledge):
 Run this script manually to generate/update cached responses for functional tests.
 Requires API keys for all models being tested.
 """
-from causaliq_knowledge import LLMKnowledge
+from causaliq_knowledge.llm import LLMKnowledge
 from pathlib import Path
 
 CACHE_DIR = Path("tests/data/functional/cache")
@@ -201,7 +208,7 @@ TEST_EDGES = [
 
 def generate_fixtures():
     knowledge = LLMKnowledge(
-        models=["gpt-4o-mini", "claude-3-haiku"],
+        models=["groq/llama-3.1-8b-instant", "gemini/gemini-2.5-flash"],
         cache_dir=str(CACHE_DIR)
     )
     
@@ -280,10 +287,10 @@ tests/
 └── data/
     └── functional/
         └── cache/              # Committed to git
-            ├── gpt-4o-mini/
+            ├── groq/
             │   ├── smoking_lung_cancer.json
             │   └── exercise_heart_health.json
-            └── claude-3-haiku/
+            └── gemini/
                 └── ...
 ```
 
@@ -296,7 +303,7 @@ tests/
     "node_b": "lung_cancer",
     "context": {"domain": "epidemiology"}
   },
-  "model": "gpt-4o-mini",
+  "model": "groq/llama-3.1-8b-instant",
   "timestamp": "2026-01-05T10:30:00Z",
   "response": {
     "exists": true,

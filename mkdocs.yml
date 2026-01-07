@@ -53,6 +53,12 @@ nav:
       - Testing Strategy: architecture/testing_strategy.md
   - API Reference: 
     - API Overview: api/overview.md
+    - Models: api/models.md
+    - Base: api/base.md
+    - LLM Provider: api/provider.md
+    - Groq Client: api/groq_client.md
+    - Gemini Client: api/gemini_client.md
+    - Prompts: api/prompts.md
     - CLI: api/cli.md
 
 plugins:

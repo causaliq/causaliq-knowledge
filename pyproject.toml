@@ -7,7 +7,7 @@ name = "causaliq-knowledge"
 dynamic = ["version"]
 description = "Incorporating LLM and human knowledge into causal discovery"
 readme = "README.md"
-license = {text = "MIT"}
+license = "MIT"
 authors = [
     {name = "CausalIQ", email = "info@causaliq.com"},
 ]
@@ -15,9 +15,8 @@ maintainers = [
     {name = "CausalIQ", email = "info@causaliq.com"},
 ]
 classifiers = [
-    "Development Status :: 2 - Pre-Alpha",
+    "Development Status :: 3 - Alpha",
     "Intended Audience :: Science/Research",
-    "License :: OSI Approved :: MIT License",
     "Operating System :: OS Independent",
     "Programming Language :: Python :: 3",
     "Programming Language :: Python :: 3.9",
