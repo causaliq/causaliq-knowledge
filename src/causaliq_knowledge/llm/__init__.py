@@ -1,6 +1,15 @@
 """LLM integration module for causaliq-knowledge."""
 
-from causaliq_knowledge.llm.client import LLMClient, LLMConfig, LLMResponse
+from causaliq_knowledge.llm.gemini_client import (
+    GeminiClient,
+    GeminiConfig,
+    GeminiResponse,
+)
+from causaliq_knowledge.llm.groq_client import (
+    GroqClient,
+    GroqConfig,
+    GroqResponse,
+)
 from causaliq_knowledge.llm.prompts import EdgeQueryPrompt, parse_edge_response
 from causaliq_knowledge.llm.provider import (
     CONSENSUS_STRATEGIES,
@@ -12,10 +21,13 @@ from causaliq_knowledge.llm.provider import (
 __all__ = [
     "CONSENSUS_STRATEGIES",
     "EdgeQueryPrompt",
-    "LLMClient",
-    "LLMConfig",
+    "GeminiClient",
+    "GeminiConfig",
+    "GeminiResponse",
+    "GroqClient",
+    "GroqConfig",
+    "GroqResponse",
     "LLMKnowledge",
-    "LLMResponse",
     "highest_confidence",
     "parse_edge_response",
     "weighted_vote",

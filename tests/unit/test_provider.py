@@ -1,5 +1,6 @@
 """Unit tests for llm.provider module."""
 
+import pytest
 from causaliq_core.utils import values_same
 
 from causaliq_knowledge.llm.provider import (
@@ -255,26 +256,35 @@ def test_consensus_strategies_mapping():
 
 
 # Test LLMKnowledge default initialization.
-def test_llm_knowledge_default_init():
+def test_llm_knowledge_default_init(monkeypatch):
+    monkeypatch.setenv("GROQ_API_KEY", "test-key")
     provider = LLMKnowledge()
 
-    assert provider.models == ["gpt-4o-mini"]
+    assert provider.models == ["groq/llama-3.1-8b-instant"]
     assert provider.consensus_strategy == "weighted_vote"
     assert "LLMKnowledge" in provider.name
-    assert "gpt-4o-mini" in provider.name
+    assert "groq/llama-3.1-8b-instant" in provider.name
 
 
 # Test LLMKnowledge with custom models.
-def test_llm_knowledge_custom_models():
-    provider = LLMKnowledge(models=["gpt-4", "claude-3-haiku-20240307"])
+def test_llm_knowledge_custom_models(monkeypatch):
+    monkeypatch.setenv("GROQ_API_KEY", "test-key")
+    monkeypatch.setenv("GEMINI_API_KEY", "test-key")
+    provider = LLMKnowledge(
+        models=["groq/llama-3.1-8b-instant", "gemini/gemini-2.5-flash"]
+    )
 
-    assert provider.models == ["gpt-4", "claude-3-haiku-20240307"]
-    assert "gpt-4" in provider.name
-    assert "claude-3-haiku-20240307" in provider.name
+    assert provider.models == [
+        "groq/llama-3.1-8b-instant",
+        "gemini/gemini-2.5-flash",
+    ]
+    assert "groq/llama-3.1-8b-instant" in provider.name
+    assert "gemini/gemini-2.5-flash" in provider.name
 
 
 # Test LLMKnowledge with custom consensus strategy.
-def test_llm_knowledge_custom_strategy():
+def test_llm_knowledge_custom_strategy(monkeypatch):
+    monkeypatch.setenv("GROQ_API_KEY", "test-key")
     provider = LLMKnowledge(consensus_strategy="highest_confidence")
 
     assert provider.consensus_strategy == "highest_confidence"
@@ -291,46 +301,46 @@ def test_llm_knowledge_invalid_strategy():
 
 
 # Test LLMKnowledge models property returns copy.
-def test_llm_knowledge_models_returns_copy():
-    provider = LLMKnowledge(models=["gpt-4"])
+def test_llm_knowledge_models_returns_copy(monkeypatch):
+    # Mock environment for API keys
+    monkeypatch.setenv("GROQ_API_KEY", "test-key")
+    provider = LLMKnowledge(models=["groq/llama-3.1-8b-instant"])
 
     models = provider.models
     models.append("other")
 
-    assert provider.models == ["gpt-4"]
+    assert provider.models == ["groq/llama-3.1-8b-instant"]
 
 
 # Test LLMKnowledge get_stats returns combined stats.
 def test_llm_knowledge_get_stats(monkeypatch):
-    provider = LLMKnowledge(models=["m1", "m2"])
+    # Mock environment for API keys
+    monkeypatch.setenv("GROQ_API_KEY", "test-key")
+    monkeypatch.setenv("GEMINI_API_KEY", "test-key")
+    provider = LLMKnowledge(
+        models=["groq/llama-3.1-8b-instant", "gemini/gemini-2.5-flash"]
+    )
 
-    # Mock client get_stats
-    def mock_stats():
-        return {
-            "call_count": 5,
-            "total_cost": 0.01,
-            "total_input_tokens": 100,
-            "total_output_tokens": 50,
-            "model": "test",
-        }
-
+    # Mock the _total_calls attribute that call_count property uses
     for client in provider._clients.values():
-        monkeypatch.setattr(client, "get_stats", mock_stats)
+        monkeypatch.setattr(client, "_total_calls", 5)
 
     stats = provider.get_stats()
 
     assert stats["total_calls"] == 10  # 5 + 5
-    assert stats["total_cost"] == 0.02  # 0.01 + 0.01
-    assert "m1" in stats["per_model"]
-    assert "m2" in stats["per_model"]
+    assert stats["total_cost"] == 0.0  # Free tier
+    assert "groq/llama-3.1-8b-instant" in stats["per_model"]
+    assert "gemini/gemini-2.5-flash" in stats["per_model"]
 
 
 # Test LLMKnowledge query_edge calls client and parses response.
 def test_llm_knowledge_query_edge_success(monkeypatch):
-    provider = LLMKnowledge(models=["test-model"])
+    # Mock environment for API keys
+    monkeypatch.setenv("GROQ_API_KEY", "test-key")
+    provider = LLMKnowledge(models=["groq/llama-3.1-8b-instant"])
 
     # Mock the complete_json method
-    def mock_complete_json(system, user):
+    def mock_complete_json(messages, **kwargs):
         return (
             {
                 "exists": True,
@@ -341,7 +351,7 @@ def test_llm_knowledge_query_edge_success(monkeypatch):
             None,  # LLMResponse not needed
         )
 
-    client = provider._clients["test-model"]
+    client = provider._clients["groq/llama-3.1-8b-instant"]
     monkeypatch.setattr(client, "complete_json", mock_complete_json)
 
     result = provider.query_edge("X", "Y")
@@ -353,16 +363,18 @@ def test_llm_knowledge_query_edge_success(monkeypatch):
 
 # Test LLMKnowledge query_edge with context.
 def test_llm_knowledge_query_edge_with_context(monkeypatch):
-    provider = LLMKnowledge(models=["test-model"])
+    # Mock environment for API keys
+    monkeypatch.setenv("GROQ_API_KEY", "test-key")
+    provider = LLMKnowledge(models=["groq/llama-3.1-8b-instant"])
 
     captured_prompts = {}
 
-    def mock_complete_json(system, user):
-        captured_prompts["system"] = system
-        captured_prompts["user"] = user
+    def mock_complete_json(messages, **kwargs):
+        # messages is a list of dicts with role/content
+        captured_prompts["messages"] = messages
         return ({"exists": True, "confidence": 0.5, "reasoning": "ok"}, None)
 
-    client = provider._clients["test-model"]
+    client = provider._clients["groq/llama-3.1-8b-instant"]
     monkeypatch.setattr(client, "complete_json", mock_complete_json)
 
     provider.query_edge(
@@ -371,37 +383,75 @@ def test_llm_knowledge_query_edge_with_context(monkeypatch):
         context={"domain": "medicine"},
     )
 
-    assert "medicine" in captured_prompts["user"]
+    # Check that domain context was included in the user message
+    user_content = captured_prompts["messages"][1]["content"]
+    assert "medicine" in user_content
 
 
 # Test LLMKnowledge query_edge handles client error.
 def test_llm_knowledge_query_edge_handles_error(monkeypatch):
-    provider = LLMKnowledge(models=["test-model"])
+    # Mock environment for API keys
+    monkeypatch.setenv("GROQ_API_KEY", "test-key")
+    provider = LLMKnowledge(models=["groq/llama-3.1-8b-instant"])
 
-    def mock_complete_json(system, user):
+    def mock_complete_json(messages, **kwargs):
         raise Exception("API Error")
 
-    client = provider._clients["test-model"]
+    client = provider._clients["groq/llama-3.1-8b-instant"]
     monkeypatch.setattr(client, "complete_json", mock_complete_json)
 
     result = provider.query_edge("X", "Y")
 
     assert result.exists is None
-    assert "Error querying test-model" in result.reasoning
+    assert "Error querying groq/llama-3.1-8b-instant" in result.reasoning
     assert "API Error" in result.reasoning
+
+
+# Test unsupported client type error in query_edge
+def test_llm_knowledge_query_edge_unsupported_client(monkeypatch):
+    # Mock environment for API keys
+    monkeypatch.setenv("GROQ_API_KEY", "test-key")
+    provider = LLMKnowledge(models=["groq/llama-3.1-8b-instant"])
+
+    # Create a mock client that's not GroqClient or GeminiClient
+    class UnsupportedClient:
+        pass
+
+    # Replace the client with an unsupported type after construction
+    provider._clients["groq/llama-3.1-8b-instant"] = UnsupportedClient()
+
+    result = provider.query_edge("X", "Y")
+
+    # Should return uncertain response with error message
+    assert result.exists is None
+    assert result.confidence == 0.0
+    assert "Unsupported client type" in result.reasoning
 
 
 # Test LLMKnowledge query_edge multi-model consensus.
 def test_llm_knowledge_query_edge_multi_model(monkeypatch):
-    provider = LLMKnowledge(models=["m1", "m2"])
+    # Mock environment for API keys
+    monkeypatch.setenv("GROQ_API_KEY", "test-key")
+    monkeypatch.setenv("GEMINI_API_KEY", "test-key")
+    provider = LLMKnowledge(
+        models=["groq/llama-3.1-8b-instant", "gemini/gemini-2.5-flash"]
+    )
 
     responses = {
-        "m1": {"exists": True, "confidence": 0.9, "reasoning": "R1"},
-        "m2": {"exists": True, "confidence": 0.8, "reasoning": "R2"},
+        "groq/llama-3.1-8b-instant": {
+            "exists": True,
+            "confidence": 0.9,
+            "reasoning": "R1",
+        },
+        "gemini/gemini-2.5-flash": {
+            "exists": True,
+            "confidence": 0.8,
+            "reasoning": "R2",
+        },
     }
 
     def make_mock(model):
-        def mock_complete_json(system, user):
+        def mock_complete_json(messages, **kwargs):
             return (responses[model], None)
 
         return mock_complete_json
@@ -417,18 +467,29 @@ def test_llm_knowledge_query_edge_multi_model(monkeypatch):
 
 # Test LLMKnowledge query_edge with highest_confidence strategy.
 def test_llm_knowledge_query_edge_highest_confidence(monkeypatch):
+    # Mock environment for API keys
+    monkeypatch.setenv("GROQ_API_KEY", "test-key")
+    monkeypatch.setenv("GEMINI_API_KEY", "test-key")
     provider = LLMKnowledge(
-        models=["m1", "m2"],
+        models=["groq/llama-3.1-8b-instant", "gemini/gemini-2.5-flash"],
         consensus_strategy="highest_confidence",
     )
 
     responses = {
-        "m1": {"exists": True, "confidence": 0.6, "reasoning": "Low"},
-        "m2": {"exists": False, "confidence": 0.95, "reasoning": "High"},
+        "groq/llama-3.1-8b-instant": {
+            "exists": True,
+            "confidence": 0.6,
+            "reasoning": "Low",
+        },
+        "gemini/gemini-2.5-flash": {
+            "exists": False,
+            "confidence": 0.95,
+            "reasoning": "High",
+        },
     }
 
     def make_mock(model):
-        def mock_complete_json(system, user):
+        def mock_complete_json(messages, **kwargs):
             return (responses[model], None)
 
         return mock_complete_json
@@ -438,6 +499,74 @@ def test_llm_knowledge_query_edge_highest_confidence(monkeypatch):
 
     result = provider.query_edge("X", "Y")
 
-    # highest_confidence should pick m2's response
+    # highest_confidence should pick gemini's response
     assert result.exists is False
     assert result.confidence == 0.95
+
+
+# Test unsupported client type error in get_stats
+def test_llm_knowledge_get_stats_unsupported_client(monkeypatch):
+    # Mock environment for API keys
+    monkeypatch.setenv("GROQ_API_KEY", "test-key")
+    provider = LLMKnowledge(models=["groq/llama-3.1-8b-instant"])
+
+    # Create a mock client that's not GroqClient or GeminiClient
+    class UnsupportedClient:
+        pass
+
+    # Replace the client with an unsupported type after construction
+    provider._clients["groq/llama-3.1-8b-instant"] = UnsupportedClient()
+
+    with pytest.raises(ValueError, match="Unsupported client type"):
+        provider.get_stats()
+
+
+# Test LLMKnowledge unsupported model prefix raises error.
+def test_llm_knowledge_unsupported_model():
+    with pytest.raises(ValueError) as exc_info:
+        LLMKnowledge(models=["unsupported/model"])
+
+    assert "Model 'unsupported/model' not supported" in str(exc_info.value)
+    assert "groq/" in str(exc_info.value)
+    assert "gemini/" in str(exc_info.value)
+
+
+def test_llm_knowledge_unsupported_client_in_query_edge(monkeypatch):
+    """Test that query_edge handles unsupported client type gracefully."""
+    # Mock environment for API keys
+    monkeypatch.setenv("GROQ_API_KEY", "test-key")
+
+    # Create a provider with a valid model
+    provider = LLMKnowledge(models=["groq/llama-3.1-8b-instant"])
+
+    # Replace the client with an unsupported mock object
+    class UnsupportedClient:
+        pass
+
+    provider._clients["groq/llama-3.1-8b-instant"] = UnsupportedClient()
+
+    # Should return uncertain response due to exception handling
+    result = provider.query_edge("A", "B")
+    assert result.exists is None
+    assert "Error querying groq/llama-3.1-8b-instant" in result.reasoning
+
+
+def test_llm_knowledge_unsupported_client_in_get_stats(monkeypatch):
+    """Test that get_stats raises error for unsupported client type."""
+    # Mock environment for API keys
+    monkeypatch.setenv("GROQ_API_KEY", "test-key")
+
+    # Create a provider with a valid model
+    provider = LLMKnowledge(models=["groq/llama-3.1-8b-instant"])
+
+    # Replace the client with an unsupported mock object
+    class UnsupportedClient:
+        pass
+
+    provider._clients["groq/llama-3.1-8b-instant"] = UnsupportedClient()
+
+    with pytest.raises(
+        ValueError,
+        match="Unsupported client type for model groq/llama-3.1-8b-instant",
+    ):
+        provider.get_stats()

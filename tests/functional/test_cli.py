@@ -1,67 +1,49 @@
 """
 Functional tests for the CLI.
 
-These tests use Click's CliRunner to invoke the CLI commands
-
-monkeypatch only works on curent process, so CLI runner must be invoked
-using standalone=False
+These tests use Click's CliRunner to invoke the CLI commands.
 """
 
 from click.testing import CliRunner
-from pytest import fixture
 
 from causaliq_knowledge.cli import cli
 
-CLI_BASE_DIR = "tests/data/functional/cli"
 
-
-# Provide a CLI runner for testing
-@fixture
-def cli_runner():
-    return CliRunner()
-
-
-# Test missing required NAME argument
-def test_cli_missing_name_argument():
-    runner = CliRunner()
-    result = runner.invoke(cli, [])
-    assert result.exit_code != 0  # Should fail
-    assert "Missing argument" in result.output or "Usage:" in result.output
-
-
-# Test help is shown when no arguments provided
+# Test no args shows usage with available commands.
 def test_cli_no_args_shows_usage():
     runner = CliRunner()
     result = runner.invoke(cli, [])
+
+    # Click shows usage info when no command provided
+    assert "Usage:" in result.output
+    assert "query" in result.output
+    assert "models" in result.output
+
+
+# Test query command requires node arguments.
+def test_cli_query_requires_nodes():
+    runner = CliRunner()
+    result = runner.invoke(cli, ["query"])
+
     assert result.exit_code != 0
-    assert "NAME" in result.output  # Should show usage info
+    assert "Missing argument" in result.output
 
 
-# Test with NAME argument only
-def test_cli_with_name_only():
+# Test models command lists supported LLMs.
+def test_cli_models_lists_providers():
     runner = CliRunner()
-    result = runner.invoke(cli, ["Alice"])
+    result = runner.invoke(cli, ["models"])
+
     assert result.exit_code == 0
-    assert "Hello, Alice!" in result.output
+    assert "Groq" in result.output
+    assert "Gemini" in result.output
+    assert "groq/llama-3.1-8b-instant" in result.output
 
 
-# Test with NAME and --greet option
-def test_cli_with_name_and_greet():
+# Test version flag shows version.
+def test_cli_version():
     runner = CliRunner()
-    result = runner.invoke(cli, ["--greet", "Hi", "Bob"])
+    result = runner.invoke(cli, ["--version"])
+
     assert result.exit_code == 0
-    assert "Hi, Bob!" in result.output
-
-
-# Test that invoking script directly will run the CLI
-def test_main_function(monkeypatch):
-    called = {}
-
-    def fake_cli(*args, **kwargs):
-        called["cli"] = args != kwargs
-
-    monkeypatch.setattr("causaliq_knowledge.cli.cli", fake_cli)
-    from causaliq_knowledge.cli import main
-
-    main()
-    assert called.get("cli") is True
+    assert "0.1.0" in result.output

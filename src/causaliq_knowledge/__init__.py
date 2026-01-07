@@ -29,4 +29,5 @@ __all__ = [
     "EdgeDirection",
     # Abstract interface
     "KnowledgeProvider",
+    # Note: Import LLMKnowledge from causaliq_knowledge.llm
 ]

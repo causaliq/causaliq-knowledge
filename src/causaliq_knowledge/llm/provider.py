@@ -1,11 +1,15 @@
 """LLM-based knowledge provider with multi-model consensus."""
 
-from typing import Optional
+import logging
+from typing import Any, Dict, Optional, Union
 
 from causaliq_knowledge.base import KnowledgeProvider
-from causaliq_knowledge.llm.client import LLMClient, LLMConfig
+from causaliq_knowledge.llm.gemini_client import GeminiClient, GeminiConfig
+from causaliq_knowledge.llm.groq_client import GroqClient, GroqConfig
 from causaliq_knowledge.llm.prompts import EdgeQueryPrompt, parse_edge_response
 from causaliq_knowledge.models import EdgeDirection, EdgeKnowledge
+
+logger = logging.getLogger(__name__)
 
 
 def weighted_vote(responses: list[EdgeKnowledge]) -> EdgeKnowledge:
@@ -119,24 +123,28 @@ CONSENSUS_STRATEGIES = {
 
 
 class LLMKnowledge(KnowledgeProvider):
-    """LLM-based knowledge provider using LiteLLM.
+    """LLM-based knowledge provider using direct API clients.
 
     This provider queries one or more LLMs about causal relationships
     and combines their responses using a configurable consensus strategy.
+    Uses direct API clients for reliability and control.
 
     Attributes:
-        models: List of LiteLLM model identifiers.
+        models: List of model identifiers (e.g., "groq/llama-3.1-8b-instant").
         consensus_strategy: Strategy for combining multi-model responses.
-        clients: Dict mapping model names to LLMClient instances.
+        clients: Dict mapping model names to direct client instances.
 
     Example:
-        >>> provider = LLMKnowledge(models=["gpt-4o-mini"])
+        >>> provider = LLMKnowledge(models=["groq/llama-3.1-8b-instant"])
         >>> result = provider.query_edge("smoking", "lung_cancer")
         >>> print(f"Exists: {result.exists}, Confidence: {result.confidence}")
 
         # Multi-model consensus
         >>> provider = LLMKnowledge(
-        ...     models=["gpt-4o-mini", "claude-3-haiku-20240307"],
+        ...     models=[
+        ...         "groq/llama-3.1-8b-instant",
+        ...         "gemini/gemini-2.5-flash"
+        ...     ],
         ...     consensus_strategy="weighted_vote"
         ... )
     """
@@ -153,20 +161,23 @@ class LLMKnowledge(KnowledgeProvider):
         """Initialize LLM knowledge provider.
 
         Args:
-            models: List of LiteLLM model identifiers. Defaults to
-                ["gpt-4o-mini"].
+            models: List of model identifiers. Supported formats:
+                - "groq/llama-3.1-8b-instant" (Groq API)
+                - "gemini/gemini-2.5-flash" (Google Gemini API)
+                Defaults to ["groq/llama-3.1-8b-instant"].
             consensus_strategy: How to combine multi-model responses.
                 Options: "weighted_vote", "highest_confidence".
             temperature: LLM temperature (lower = more deterministic).
             max_tokens: Maximum tokens in LLM response.
             timeout: Request timeout in seconds.
-            max_retries: Number of retries on failure.
+            max_retries: Number of retries on failure (unused for direct APIs).
 
         Raises:
-            ValueError: If consensus_strategy is not recognized.
+            ValueError: If consensus_strategy is not recognized or
+                       unsupported model.
         """
         if models is None:
-            models = ["gpt-4o-mini"]
+            models = ["groq/llama-3.1-8b-instant"]
 
         if consensus_strategy not in CONSENSUS_STRATEGIES:
             raise ValueError(
@@ -178,17 +189,36 @@ class LLMKnowledge(KnowledgeProvider):
         self._consensus_strategy = consensus_strategy
         self._consensus_fn = CONSENSUS_STRATEGIES[consensus_strategy]
 
-        # Create a client for each model
-        self._clients: dict[str, LLMClient] = {}
+        # Create a client for each model - use direct APIs only
+        self._clients: dict[str, Union[GroqClient, GeminiClient]] = {}
         for model in models:
-            config = LLMConfig(
-                model=model,
-                temperature=temperature,
-                max_tokens=max_tokens,
-                timeout=timeout,
-                max_retries=max_retries,
-            )
-            self._clients[model] = LLMClient(config=config)
+            if model.startswith("groq/"):
+                # Use direct Groq client - more reliable than litellm
+                groq_model = model.split("/", 1)[1]  # Extract model name
+                config = GroqConfig(
+                    model=groq_model,
+                    temperature=temperature,
+                    max_tokens=max_tokens,
+                    timeout=timeout,
+                )
+                self._clients[model] = GroqClient(config=config)
+            elif model.startswith("gemini/"):
+                # Use direct Gemini client - more reliable than litellm
+                gemini_model = model.split("/", 1)[1]  # Extract model name
+                gemini_config = GeminiConfig(
+                    model=gemini_model,
+                    temperature=temperature,
+                    max_tokens=max_tokens,
+                    timeout=timeout,
+                )
+                self._clients[model] = GeminiClient(config=gemini_config)
+            else:
+                # Only direct API clients are supported
+                supported_prefixes = ["groq/", "gemini/"]
+                raise ValueError(
+                    f"Model '{model}' not supported. "
+                    f"Supported prefixes: {supported_prefixes}."
+                )
 
     @property
     def name(self) -> str:
@@ -232,12 +262,35 @@ class LLMKnowledge(KnowledgeProvider):
         responses: list[EdgeKnowledge] = []
         for model, client in self._clients.items():
             try:
-                json_data, _ = client.complete_json(
-                    system=system_prompt,
-                    user=user_prompt,
-                )
-                knowledge = parse_edge_response(json_data, model=model)
-                responses.append(knowledge)
+                if isinstance(client, GroqClient):
+                    # Direct Groq API call
+                    messages = []
+                    if system_prompt:
+                        messages.append(
+                            {"role": "system", "content": system_prompt}
+                        )
+                    messages.append({"role": "user", "content": user_prompt})
+
+                    json_data, _ = client.complete_json(messages)
+                    knowledge = parse_edge_response(json_data, model=model)
+                    responses.append(knowledge)
+                elif isinstance(client, GeminiClient):
+                    # Direct Gemini API call
+                    messages = []
+                    if system_prompt:
+                        messages.append(
+                            {"role": "system", "content": system_prompt}
+                        )
+                    messages.append({"role": "user", "content": user_prompt})
+
+                    json_data, _ = client.complete_json(messages)
+                    knowledge = parse_edge_response(json_data, model=model)
+                    responses.append(knowledge)
+                else:
+                    # Should never reach here due to constructor validation
+                    raise ValueError(
+                        f"Unsupported client type for model {model}"
+                    )
             except Exception as e:
                 # On error, add uncertain response
                 responses.append(
@@ -250,18 +303,33 @@ class LLMKnowledge(KnowledgeProvider):
         # Combine responses using consensus strategy
         return self._consensus_fn(responses)
 
-    def get_stats(self) -> dict:
+    def get_stats(self) -> Dict[str, Any]:
         """Get combined statistics from all clients.
 
         Returns:
             Dict with total_calls, total_cost, and per-model stats.
         """
-        total_calls = 0
-        total_cost = 0.0
-        per_model: dict[str, dict] = {}
+        total_calls: int = 0
+        total_cost: float = 0.0
+        per_model: Dict[str, Dict[str, Any]] = {}
 
         for model, client in self._clients.items():
-            stats = client.get_stats()
+            if isinstance(client, GroqClient):
+                # Direct Groq client stats
+                stats: Dict[str, Any] = {
+                    "call_count": client.call_count,
+                    "total_cost": 0.0,  # Free tier
+                }
+            elif isinstance(client, GeminiClient):
+                # Direct Gemini client stats
+                stats = {
+                    "call_count": client.call_count,
+                    "total_cost": 0.0,  # Free tier
+                }
+            else:
+                # Should never reach here due to constructor validation
+                raise ValueError(f"Unsupported client type for model {model}")
+
             total_calls += stats["call_count"]
             total_cost += stats["total_cost"]
             per_model[model] = stats
