@@ -9,7 +9,7 @@
       
       
       
-        <link rel="prev" href="../llm/">
+        <link rel="prev" href="../prompts/">
       
       
       
@@ -841,14 +841,98 @@
   
   
     <li class="md-nav__item">
-      <a href="../llm/" class="md-nav__link">
+      <a href="../provider/" class="md-nav__link">
         
   
   
   <span class="md-ellipsis">
     
   
-    LLM Client
+    LLM Provider
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../groq_client/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Groq Client
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../gemini_client/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Gemini Client
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../prompts/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Prompts
   
 
     
@@ -931,15 +1015,87 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
-  <a href="#cli-entry-point" class="md-nav__link">
+  <a href="#installation" class="md-nav__link">
     <span class="md-ellipsis">
       
-        CLI entry point
+        Installation
       
     </span>
   </a>
   
-    <nav class="md-nav" aria-label="CLI entry point">
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#usage" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Usage
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Usage">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#basic-query" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Basic Query
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#multiple-models" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Multiple Models
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#json-output" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        JSON Output
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#options" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Options
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#cli-entry-point" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        CLI Entry Point
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="CLI Entry Point">
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
@@ -966,10 +1122,32 @@
 </li>
         
           <li class="md-nav__item">
+  <a href="#causaliq_knowledge.cli.list_models" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        list_models
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
   <a href="#causaliq_knowledge.cli.main" class="md-nav__link">
     <span class="md-ellipsis">
       
         main
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#causaliq_knowledge.cli.query_edge" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        query_edge
       
     </span>
   </a>
@@ -1031,15 +1209,87 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
-  <a href="#cli-entry-point" class="md-nav__link">
+  <a href="#installation" class="md-nav__link">
     <span class="md-ellipsis">
       
-        CLI entry point
+        Installation
       
     </span>
   </a>
   
-    <nav class="md-nav" aria-label="CLI entry point">
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#usage" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Usage
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Usage">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#basic-query" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Basic Query
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#multiple-models" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Multiple Models
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#json-output" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        JSON Output
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#options" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Options
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#cli-entry-point" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        CLI Entry Point
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="CLI Entry Point">
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
@@ -1066,10 +1316,32 @@
 </li>
         
           <li class="md-nav__item">
+  <a href="#causaliq_knowledge.cli.list_models" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        list_models
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
   <a href="#causaliq_knowledge.cli.main" class="md-nav__link">
     <span class="md-ellipsis">
       
         main
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#causaliq_knowledge.cli.query_edge" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        query_edge
       
     </span>
   </a>
@@ -1104,7 +1376,66 @@
 
 
 <h1 id="causaliq-knowledge-cli">CausalIQ Knowledge CLI<a class="headerlink" href="#causaliq-knowledge-cli" title="Permanent link">&para;</a></h1>
-<h2 id="cli-entry-point">CLI entry point<a class="headerlink" href="#cli-entry-point" title="Permanent link">&para;</a></h2>
+<p>The command-line interface provides a quick way to test LLM queries about
+causal relationships.</p>
+<h2 id="installation">Installation<a class="headerlink" href="#installation" title="Permanent link">&para;</a></h2>
+<p>The CLI is automatically installed when you install the package:</p>
+<div class="language-bash highlight"><pre><span></span><code><span id="__span-0-1"><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>pip<span class="w"> </span>install<span class="w"> </span>causaliq-knowledge
+</span></code></pre></div>
+<h2 id="usage">Usage<a class="headerlink" href="#usage" title="Permanent link">&para;</a></h2>
+<h3 id="basic-query">Basic Query<a class="headerlink" href="#basic-query" title="Permanent link">&para;</a></h3>
+<div class="language-bash highlight"><pre><span></span><code><span id="__span-1-1"><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a><span class="c1"># Query using default model (Groq)</span>
+</span><span id="__span-1-2"><a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a>cqknow<span class="w"> </span>query<span class="w"> </span>smoking<span class="w"> </span>lung_cancer
+</span><span id="__span-1-3"><a id="__codelineno-1-3" name="__codelineno-1-3" href="#__codelineno-1-3"></a>
+</span><span id="__span-1-4"><a id="__codelineno-1-4" name="__codelineno-1-4" href="#__codelineno-1-4"></a><span class="c1"># With domain context</span>
+</span><span id="__span-1-5"><a id="__codelineno-1-5" name="__codelineno-1-5" href="#__codelineno-1-5"></a>cqknow<span class="w"> </span>query<span class="w"> </span>smoking<span class="w"> </span>lung_cancer<span class="w"> </span>--domain<span class="w"> </span>medicine
+</span></code></pre></div>
+<h3 id="multiple-models">Multiple Models<a class="headerlink" href="#multiple-models" title="Permanent link">&para;</a></h3>
+<div class="language-bash highlight"><pre><span></span><code><span id="__span-2-1"><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a><span class="c1"># Query multiple models for consensus</span>
+</span><span id="__span-2-2"><a id="__codelineno-2-2" name="__codelineno-2-2" href="#__codelineno-2-2"></a>cqknow<span class="w"> </span>query<span class="w"> </span>X<span class="w"> </span>Y<span class="w"> </span>--model<span class="w"> </span>groq/llama-3.1-8b-instant<span class="w"> </span>--model<span class="w"> </span>gemini/gemini-2.5-flash
+</span></code></pre></div>
+<h3 id="json-output">JSON Output<a class="headerlink" href="#json-output" title="Permanent link">&para;</a></h3>
+<div class="language-bash highlight"><pre><span></span><code><span id="__span-3-1"><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a><span class="c1"># Get structured JSON output</span>
+</span><span id="__span-3-2"><a id="__codelineno-3-2" name="__codelineno-3-2" href="#__codelineno-3-2"></a>cqknow<span class="w"> </span>query<span class="w"> </span>smoking<span class="w"> </span>lung_cancer<span class="w"> </span>--json
+</span></code></pre></div>
+<h3 id="options">Options<a class="headerlink" href="#options" title="Permanent link">&para;</a></h3>
+<table>
+<thead>
+<tr>
+<th>Option</th>
+<th>Short</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>--model</code></td>
+<td><code>-m</code></td>
+<td>LLM model to query (can be repeated)</td>
+</tr>
+<tr>
+<td><code>--domain</code></td>
+<td><code>-d</code></td>
+<td>Domain context (e.g., "medicine")</td>
+</tr>
+<tr>
+<td><code>--strategy</code></td>
+<td><code>-s</code></td>
+<td>Consensus strategy: weighted_vote or highest_confidence</td>
+</tr>
+<tr>
+<td><code>--json</code></td>
+<td></td>
+<td>Output as JSON</td>
+</tr>
+<tr>
+<td><code>--temperature</code></td>
+<td><code>-t</code></td>
+<td>LLM temperature (0.0-1.0)</td>
+</tr>
+</tbody>
+</table>
+<h2 id="cli-entry-point">CLI Entry Point<a class="headerlink" href="#cli-entry-point" title="Permanent link">&para;</a></h2>
 
 
 <div class="doc doc-object doc-module">
@@ -1139,7 +1470,14 @@
             <b><code><a class="autorefs autorefs-internal" title="            cli (causaliq_knowledge.cli.cli)" href="#causaliq_knowledge.cli.cli">cli</a></code></b>
             –
             <div class="doc-md-description">
-              <p>Simple CLI example.</p>
+              <p>CausalIQ Knowledge - LLM knowledge for causal discovery.</p>
+            </div>
+          </li>
+          <li class="doc-section-item field-body">
+            <b><code><a class="autorefs autorefs-internal" title="            list_models (causaliq_knowledge.cli.list_models)" href="#causaliq_knowledge.cli.list_models">list_models</a></code></b>
+            –
+            <div class="doc-md-description">
+              <p>List supported LLM models.</p>
             </div>
           </li>
           <li class="doc-section-item field-body">
@@ -1147,6 +1485,13 @@
             –
             <div class="doc-md-description">
               <p>Entry point for the CLI.</p>
+            </div>
+          </li>
+          <li class="doc-section-item field-body">
+            <b><code><a class="autorefs autorefs-internal" title="            query_edge (causaliq_knowledge.cli.query_edge)" href="#causaliq_knowledge.cli.query_edge">query_edge</a></code></b>
+            –
+            <div class="doc-md-description">
+              <p>Query LLMs about a causal relationship between two variables.</p>
             </div>
           </li>
     </ul>
@@ -1174,13 +1519,36 @@
 
 
 <a href="#causaliq_knowledge.cli.cli" class="headerlink" title="Permanent link">&para;</a></h4>
-<div class="language-python doc-signature highlight"><pre><span></span><code><span id="__span-0-1"><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="nf">cli</span><span class="p">(</span><span class="n"><span title="causaliq_knowledge.cli.cli(name)">name</span></span><span class="p">:</span> <span class="n"><span title="str">str</span></span><span class="p">,</span> <span class="n"><span title="causaliq_knowledge.cli.cli(greet)">greet</span></span><span class="p">:</span> <span class="n"><span title="str">str</span></span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span>
+<div class="language-python doc-signature highlight"><pre><span></span><code><span id="__span-0-1"><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="nf">cli</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="kc">None</span>
 </span></code></pre></div>
 
     <div class="doc doc-contents ">
 
-        <p>Simple CLI example.</p>
-<p>NAME is the person to greet</p>
+        <p>CausalIQ Knowledge - LLM knowledge for causal discovery.</p>
+<p>Query LLMs about causal relationships between variables.</p>
+
+          
+
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-function">
+
+
+<h4 id="causaliq_knowledge.cli.list_models" class="doc doc-heading">
+<code class="doc-symbol doc-symbol-heading doc-symbol-function"></code>            <span class="doc doc-object-name doc-function-name">list_models</span>
+
+
+<a href="#causaliq_knowledge.cli.list_models" class="headerlink" title="Permanent link">&para;</a></h4>
+<div class="language-python doc-signature highlight"><pre><span></span><code><span id="__span-0-1"><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="nf">list_models</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="kc">None</span>
+</span></code></pre></div>
+
+    <div class="doc doc-contents ">
+
+        <p>List supported LLM models.</p>
+<p>These are model identifiers that work with our direct API clients.
+Only models with direct API support are listed.</p>
 
           
 
@@ -1209,13 +1577,50 @@
 
 </div>
 
+<div class="doc doc-object doc-function">
+
+
+<h4 id="causaliq_knowledge.cli.query_edge" class="doc doc-heading">
+<code class="doc-symbol doc-symbol-heading doc-symbol-function"></code>            <span class="doc doc-object-name doc-function-name">query_edge</span>
+
+
+<a href="#causaliq_knowledge.cli.query_edge" class="headerlink" title="Permanent link">&para;</a></h4>
+<div class="language-python doc-signature highlight"><pre><span></span><code><span id="__span-0-1"><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="nf">query_edge</span><span class="p">(</span>
+</span><span id="__span-0-2"><a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a>    <span class="n"><span title="causaliq_knowledge.cli.query_edge(node_a)">node_a</span></span><span class="p">:</span> <span class="n"><span title="str">str</span></span><span class="p">,</span>
+</span><span id="__span-0-3"><a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a>    <span class="n"><span title="causaliq_knowledge.cli.query_edge(node_b)">node_b</span></span><span class="p">:</span> <span class="n"><span title="str">str</span></span><span class="p">,</span>
+</span><span id="__span-0-4"><a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a>    <span class="n"><span title="causaliq_knowledge.cli.query_edge(model)">model</span></span><span class="p">:</span> <span class="n"><span title="tuple">tuple</span></span><span class="p">[</span><span class="n"><span title="str">str</span></span><span class="p">,</span> <span class="o">...</span><span class="p">],</span>
+</span><span id="__span-0-5"><a id="__codelineno-0-5" name="__codelineno-0-5" href="#__codelineno-0-5"></a>    <span class="n"><span title="causaliq_knowledge.cli.query_edge(domain)">domain</span></span><span class="p">:</span> <span class="n"><span title="typing.Optional">Optional</span></span><span class="p">[</span><span class="n"><span title="str">str</span></span><span class="p">],</span>
+</span><span id="__span-0-6"><a id="__codelineno-0-6" name="__codelineno-0-6" href="#__codelineno-0-6"></a>    <span class="n"><span title="causaliq_knowledge.cli.query_edge(strategy)">strategy</span></span><span class="p">:</span> <span class="n"><span title="str">str</span></span><span class="p">,</span>
+</span><span id="__span-0-7"><a id="__codelineno-0-7" name="__codelineno-0-7" href="#__codelineno-0-7"></a>    <span class="n"><span title="causaliq_knowledge.cli.query_edge(output_json)">output_json</span></span><span class="p">:</span> <span class="n"><span title="bool">bool</span></span><span class="p">,</span>
+</span><span id="__span-0-8"><a id="__codelineno-0-8" name="__codelineno-0-8" href="#__codelineno-0-8"></a>    <span class="n"><span title="causaliq_knowledge.cli.query_edge(temperature)">temperature</span></span><span class="p">:</span> <span class="n"><span title="float">float</span></span><span class="p">,</span>
+</span><span id="__span-0-9"><a id="__codelineno-0-9" name="__codelineno-0-9" href="#__codelineno-0-9"></a><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span>
+</span></code></pre></div>
+
+    <div class="doc doc-contents ">
+
+        <p>Query LLMs about a causal relationship between two variables.</p>
+<p>NODE_A and NODE_B are the variable names to query about.</p>
+<p>Examples:</p>
+<div class="language-text highlight"><pre><span></span><code>cqknow query smoking lung_cancer
+
+cqknow query smoking lung_cancer --domain medicine
+
+cqknow query X Y --model groq/llama-3.1-8b-instant                          --model gemini/gemini-2.5-flash
+</code></pre></div>
+
+          
+
+    </div>
+
+</div>
+
 
 
   </div>
 
     </div>
 
-</div><p>This is the entry point for the CLI logic.</p>
+</div>
 
 
 
@@ -1253,7 +1658,7 @@
       <nav class="md-footer__inner md-grid" aria-label="Footer" >
         
           
-          <a href="../llm/" class="md-footer__link md-footer__link--prev" aria-label="Previous: LLM Client">
+          <a href="../prompts/" class="md-footer__link md-footer__link--prev" aria-label="Previous: Prompts">
             <div class="md-footer__button md-icon">
               
               <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11z"/></svg>
@@ -1263,7 +1668,7 @@
                 Previous
               </span>
               <div class="md-ellipsis">
-                LLM Client
+                Prompts
               </div>
             </div>
           </a>

@@ -492,10 +492,10 @@
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
-  <a href="#release-v020-additional-llms" class="md-nav__link">
+  <a href="#release-v020-additional-llm-providers" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Release v0.2.0 - Additional LLMs
+        Release v0.2.0 - Additional LLM Providers
       
     </span>
   </a>
@@ -1011,14 +1011,98 @@
   
   
     <li class="md-nav__item">
-      <a href="../api/llm/" class="md-nav__link">
+      <a href="../api/provider/" class="md-nav__link">
         
   
   
   <span class="md-ellipsis">
     
   
-    LLM Client
+    LLM Provider
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../api/groq_client/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Groq Client
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../api/gemini_client/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Gemini Client
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../api/prompts/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Prompts
   
 
     
@@ -1147,10 +1231,10 @@
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
-  <a href="#release-v020-additional-llms" class="md-nav__link">
+  <a href="#release-v020-additional-llm-providers" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Release v0.2.0 - Additional LLMs
+        Release v0.2.0 - Additional LLM Providers
       
     </span>
   </a>
@@ -1235,7 +1319,7 @@
 
 
 <h1 id="causaliq-knowledge-development-roadmap">CausalIQ Knowledge - Development Roadmap<a class="headerlink" href="#causaliq-knowledge-development-roadmap" title="Permanent link">&para;</a></h1>
-<p><strong>Last updated</strong>: January 06, 2026  </p>
+<p><strong>Last updated</strong>: January 07, 2026  </p>
 <p>This project roadmap fits into the <a href="https://causaliq.org/projects/ecosystem_roadmap/">overall ecosystem roadmap</a></p>
 <h2 id="current-release">🎯 Current Release<a class="headerlink" href="#current-release" title="Permanent link">&para;</a></h2>
 <h3 id="release-v010-foundation-llm-january-2026">Release v0.1.0 - Foundation LLM [January 2026]<a class="headerlink" href="#release-v010-foundation-llm-january-2026" title="Permanent link">&para;</a></h3>
@@ -1244,11 +1328,19 @@
 <ul>
 <li>Abstract <code>KnowledgeProvider</code> interface</li>
 <li><code>EdgeKnowledge</code> Pydantic model for structured responses</li>
-<li><code>LLMKnowledge</code> implementation using LiteLLM</li>
-<li>Support for OpenAI, Anthropic, Google, Groq, and Ollama (local)</li>
+<li><code>LLMKnowledge</code> implementation using vendor-specific API clients</li>
+<li>Direct API clients for Groq and Google Gemini</li>
 <li>Single-model and multi-model consensus queries</li>
 <li>Basic prompt templates for edge existence/orientation</li>
 <li>CLI for testing queries</li>
+</ul>
+<p><strong>Architecture Decision:</strong></p>
+<p>We use <strong>vendor-specific API clients</strong> (GroqClient, GeminiClient) rather than wrapper libraries like LiteLLM or LangChain. This provides:</p>
+<ul>
+<li>Minimal dependencies (httpx only for HTTP)</li>
+<li>Reliable and predictable behavior</li>
+<li>Easy debugging without abstraction layers</li>
+<li>Full control over API interactions</li>
 </ul>
 <p><strong>Out of scope for v0.1.0:</strong></p>
 <ul>
@@ -1259,24 +1351,24 @@
 <p><strong>Implementation milestones:</strong></p>
 <ul>
 <li><del>v0.1.0a: Core models and abstract interface</del> ✅</li>
-<li><del>v0.1.0b: LiteLLM client wrapper</del> ✅</li>
-<li>v0.1.0c: Edge existence/orientation prompts</li>
-<li>v0.1.0d: Multi-LLM consensus logic</li>
+<li><del>v0.1.0b: Direct vendor API clients (Groq, Gemini)</del> ✅</li>
+<li><del>v0.1.0c: Edge existence/orientation prompts</del> ✅</li>
+<li><del>v0.1.0d: Multi-LLM consensus logic</del> ✅</li>
 <li>v0.1.0e: CLI and documentation</li>
 </ul>
 <hr />
 <h2 id="previous-releases">✅ Previous Releases<a class="headerlink" href="#previous-releases" title="Permanent link">&para;</a></h2>
 <p><em>See Git commit history for detailed implementation progress</em></p>
 <ul>
-<li>none</li>
+<li>None</li>
 </ul>
 <h2 id="upcoming-releases">🛣️ Upcoming Releases<a class="headerlink" href="#upcoming-releases" title="Permanent link">&para;</a></h2>
-<h3 id="release-v020-additional-llms">Release v0.2.0 - Additional LLMs<a class="headerlink" href="#release-v020-additional-llms" title="Permanent link">&para;</a></h3>
+<h3 id="release-v020-additional-llm-providers">Release v0.2.0 - Additional LLM Providers<a class="headerlink" href="#release-v020-additional-llm-providers" title="Permanent link">&para;</a></h3>
 <ul>
-<li>Expanded provider configurations</li>
+<li>OpenAI client for GPT-4 models</li>
+<li>Anthropic client for Claude models</li>
 <li>Provider-specific prompt optimizations</li>
 <li>Cost tracking and reporting utilities</li>
-<li>Budget management features</li>
 </ul>
 <h3 id="release-v030-llm-caching">Release v0.3.0 - LLM Caching<a class="headerlink" href="#release-v030-llm-caching" title="Permanent link">&para;</a></h3>
 <ul>
@@ -1289,8 +1381,8 @@
 <ul>
 <li>Variable descriptions and roles</li>
 <li>Domain context specification</li>
-<li>Literature retrieval (RAG) using LangChain components</li>
-<li>ChromaDB or FAISS vector store integration</li>
+<li>Literature retrieval (RAG) - evaluate lightweight alternatives to LangChain</li>
+<li>Vector store integration for document search</li>
 </ul>
 <h3 id="release-v050-algorithm-integration">Release v0.5.0 - Algorithm Integration<a class="headerlink" href="#release-v050-algorithm-integration" title="Permanent link">&para;</a></h3>
 <ul>
@@ -1305,20 +1397,19 @@
 <li>Migration of functionality from legacy discovery repo</li>
 </ul>
 <h2 id="dependencies-evolution">📦 Dependencies Evolution<a class="headerlink" href="#dependencies-evolution" title="Permanent link">&para;</a></h2>
-<div class="language-toml highlight"><pre><span></span><code><span id="__span-0-1"><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="c1"># v0.1.0</span>
+<div class="language-toml highlight"><pre><span></span><code><span id="__span-0-1"><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="c1"># v0.1.0 (current)</span>
 </span><span id="__span-0-2"><a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a><span class="n">dependencies</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">[</span>
 </span><span id="__span-0-3"><a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a><span class="w">    </span><span class="s2">&quot;click&gt;=8.0.0&quot;</span><span class="p">,</span>
-</span><span id="__span-0-4"><a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a><span class="w">    </span><span class="s2">&quot;litellm&gt;=1.0.0&quot;</span><span class="p">,</span>
+</span><span id="__span-0-4"><a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a><span class="w">    </span><span class="s2">&quot;httpx&gt;=0.24.0&quot;</span><span class="p">,</span>
 </span><span id="__span-0-5"><a id="__codelineno-0-5" name="__codelineno-0-5" href="#__codelineno-0-5"></a><span class="w">    </span><span class="s2">&quot;pydantic&gt;=2.0.0&quot;</span><span class="p">,</span>
 </span><span id="__span-0-6"><a id="__codelineno-0-6" name="__codelineno-0-6" href="#__codelineno-0-6"></a><span class="p">]</span>
 </span><span id="__span-0-7"><a id="__codelineno-0-7" name="__codelineno-0-7" href="#__codelineno-0-7"></a>
 </span><span id="__span-0-8"><a id="__codelineno-0-8" name="__codelineno-0-8" href="#__codelineno-0-8"></a><span class="c1"># v0.3.0 (add)</span>
 </span><span id="__span-0-9"><a id="__codelineno-0-9" name="__codelineno-0-9" href="#__codelineno-0-9"></a><span class="s2">&quot;diskcache&gt;=5.0.0&quot;</span>
 </span><span id="__span-0-10"><a id="__codelineno-0-10" name="__codelineno-0-10" href="#__codelineno-0-10"></a>
-</span><span id="__span-0-11"><a id="__codelineno-0-11" name="__codelineno-0-11" href="#__codelineno-0-11"></a><span class="c1"># v0.4.0 (add)</span>
-</span><span id="__span-0-12"><a id="__codelineno-0-12" name="__codelineno-0-12" href="#__codelineno-0-12"></a><span class="s2">&quot;langchain-core&gt;=0.2.0&quot;</span>
-</span><span id="__span-0-13"><a id="__codelineno-0-13" name="__codelineno-0-13" href="#__codelineno-0-13"></a><span class="s2">&quot;langchain-community&gt;=0.2.0&quot;</span>
-</span><span id="__span-0-14"><a id="__codelineno-0-14" name="__codelineno-0-14" href="#__codelineno-0-14"></a><span class="s2">&quot;chromadb&gt;=0.4.0&quot;</span>
+</span><span id="__span-0-11"><a id="__codelineno-0-11" name="__codelineno-0-11" href="#__codelineno-0-11"></a><span class="c1"># v0.4.0 (evaluate - prefer lightweight solutions)</span>
+</span><span id="__span-0-12"><a id="__codelineno-0-12" name="__codelineno-0-12" href="#__codelineno-0-12"></a><span class="c1"># Consider: llama-index, simple RAG, or custom implementation</span>
+</span><span id="__span-0-13"><a id="__codelineno-0-13" name="__codelineno-0-13" href="#__codelineno-0-13"></a><span class="c1"># Avoid: langchain (heavy dependencies)</span>
 </span></code></pre></div>
 
 

@@ -821,6 +821,17 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
+  <a href="#import-patterns" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Import Patterns
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#modules" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -855,10 +866,43 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#llm-client" class="md-nav__link">
+  <a href="#llm-provider" class="md-nav__link">
     <span class="md-ellipsis">
       
-        LLM Client
+        LLM Provider
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#groq-client" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Groq Client
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#gemini-client" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Gemini Client
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#prompts" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Prompts
       
     </span>
   </a>
@@ -953,14 +997,98 @@
   
   
     <li class="md-nav__item">
-      <a href="../llm/" class="md-nav__link">
+      <a href="../provider/" class="md-nav__link">
         
   
   
   <span class="md-ellipsis">
     
   
-    LLM Client
+    LLM Provider
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../groq_client/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Groq Client
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../gemini_client/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Gemini Client
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../prompts/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Prompts
   
 
     
@@ -1038,6 +1166,17 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
+  <a href="#import-patterns" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Import Patterns
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#modules" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -1072,10 +1211,43 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#llm-client" class="md-nav__link">
+  <a href="#llm-provider" class="md-nav__link">
     <span class="md-ellipsis">
       
-        LLM Client
+        LLM Provider
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#groq-client" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Groq Client
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#gemini-client" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Gemini Client
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#prompts" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Prompts
       
     </span>
   </a>
@@ -1117,6 +1289,16 @@
 
 <h1 id="causaliq-knowledge-api-reference">CausalIQ Knowledge API Reference<a class="headerlink" href="#causaliq-knowledge-api-reference" title="Permanent link">&para;</a></h1>
 <p>API documentation for causaliq-knowledge, organized by module.</p>
+<h2 id="import-patterns">Import Patterns<a class="headerlink" href="#import-patterns" title="Permanent link">&para;</a></h2>
+<p>Core models are available from the top-level package:</p>
+<div class="language-python highlight"><pre><span></span><code><span id="__span-0-1"><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="kn">from</span><span class="w"> </span><span class="nn">causaliq_knowledge</span><span class="w"> </span><span class="kn">import</span> <span class="n">EdgeKnowledge</span><span class="p">,</span> <span class="n">EdgeDirection</span><span class="p">,</span> <span class="n">KnowledgeProvider</span>
+</span></code></pre></div>
+<p>LLM-specific classes should be imported from the <code>llm</code> submodule:</p>
+<div class="language-python highlight"><pre><span></span><code><span id="__span-1-1"><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a><span class="kn">from</span><span class="w"> </span><span class="nn">causaliq_knowledge.llm</span><span class="w"> </span><span class="kn">import</span> <span class="n">LLMKnowledge</span>
+</span><span id="__span-1-2"><a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a><span class="kn">from</span><span class="w"> </span><span class="nn">causaliq_knowledge.llm</span><span class="w"> </span><span class="kn">import</span> <span class="n">GroqClient</span><span class="p">,</span> <span class="n">GroqConfig</span><span class="p">,</span> <span class="n">GroqResponse</span>
+</span><span id="__span-1-3"><a id="__codelineno-1-3" name="__codelineno-1-3" href="#__codelineno-1-3"></a><span class="kn">from</span><span class="w"> </span><span class="nn">causaliq_knowledge.llm</span><span class="w"> </span><span class="kn">import</span> <span class="n">GeminiClient</span><span class="p">,</span> <span class="n">GeminiConfig</span><span class="p">,</span> <span class="n">GeminiResponse</span>
+</span><span id="__span-1-4"><a id="__codelineno-1-4" name="__codelineno-1-4" href="#__codelineno-1-4"></a><span class="kn">from</span><span class="w"> </span><span class="nn">causaliq_knowledge.llm</span><span class="w"> </span><span class="kn">import</span> <span class="n">EdgeQueryPrompt</span><span class="p">,</span> <span class="n">parse_edge_response</span>
+</span></code></pre></div>
 <h2 id="modules">Modules<a class="headerlink" href="#modules" title="Permanent link">&para;</a></h2>
 <h3 id="models"><a href="../models/">Models</a><a class="headerlink" href="#models" title="Permanent link">&para;</a></h3>
 <p>Core Pydantic models for representing causal knowledge:</p>
@@ -1129,12 +1311,32 @@
 <ul>
 <li><strong>KnowledgeProvider</strong> - Abstract base class that all knowledge sources implement</li>
 </ul>
-<h3 id="llm-client"><a href="../llm/">LLM Client</a><a class="headerlink" href="#llm-client" title="Permanent link">&para;</a></h3>
-<p>LiteLLM wrapper for making LLM calls:</p>
+<h3 id="llm-provider"><a href="../provider/">LLM Provider</a><a class="headerlink" href="#llm-provider" title="Permanent link">&para;</a></h3>
+<p>Main entry point for LLM-based knowledge queries:</p>
 <ul>
-<li><strong>LLMConfig</strong> - Configuration for LLM client (model, temperature, etc.)</li>
-<li><strong>LLMResponse</strong> - Response from an LLM call with content and usage stats</li>
-<li><strong>LLMClient</strong> - Client for making LLM calls with cost tracking</li>
+<li><strong>LLMKnowledge</strong> - KnowledgeProvider implementation using vendor-specific API clients</li>
+<li><strong>weighted_vote</strong> - Multi-model consensus by weighted voting</li>
+<li><strong>highest_confidence</strong> - Select response with highest confidence</li>
+</ul>
+<h3 id="groq-client"><a href="../groq_client/">Groq Client</a><a class="headerlink" href="#groq-client" title="Permanent link">&para;</a></h3>
+<p>Direct Groq API client for fast LLM inference:</p>
+<ul>
+<li><strong>GroqConfig</strong> - Configuration for Groq API client</li>
+<li><strong>GroqResponse</strong> - Response from Groq API</li>
+<li><strong>GroqClient</strong> - Client for making Groq API calls</li>
+</ul>
+<h3 id="gemini-client"><a href="../gemini_client/">Gemini Client</a><a class="headerlink" href="#gemini-client" title="Permanent link">&para;</a></h3>
+<p>Direct Google Gemini API client:</p>
+<ul>
+<li><strong>GeminiConfig</strong> - Configuration for Gemini API client</li>
+<li><strong>GeminiResponse</strong> - Response from Gemini API</li>
+<li><strong>GeminiClient</strong> - Client for making Gemini API calls</li>
+</ul>
+<h3 id="prompts"><a href="../prompts/">Prompts</a><a class="headerlink" href="#prompts" title="Permanent link">&para;</a></h3>
+<p>Prompt templates for LLM edge queries:</p>
+<ul>
+<li><strong>EdgeQueryPrompt</strong> - Builder for edge existence/orientation prompts</li>
+<li><strong>parse_edge_response</strong> - Parse LLM JSON responses to EdgeKnowledge</li>
 </ul>
 <h3 id="cli"><a href="../cli/">CLI</a><a class="headerlink" href="#cli" title="Permanent link">&para;</a></h3>
 <p>Command-line interface for testing and querying.</p>

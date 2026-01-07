@@ -737,10 +737,21 @@
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
-  <a href="#litellm-over-langchain-for-v010-v030" class="md-nav__link">
+  <a href="#vendor-specific-apis-over-wrapper-libraries" class="md-nav__link">
     <span class="md-ellipsis">
       
-        LiteLLM over LangChain (for v0.1.0 - v0.3.0)
+        Vendor-Specific APIs over Wrapper Libraries
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#current-provider-clients" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Current Provider Clients
       
     </span>
   </a>
@@ -1095,14 +1106,98 @@
   
   
     <li class="md-nav__item">
-      <a href="../../api/llm/" class="md-nav__link">
+      <a href="../../api/provider/" class="md-nav__link">
         
   
   
   <span class="md-ellipsis">
     
   
-    LLM Client
+    LLM Provider
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../api/groq_client/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Groq Client
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../api/gemini_client/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Gemini Client
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../api/prompts/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Prompts
   
 
     
@@ -1303,10 +1398,21 @@
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
-  <a href="#litellm-over-langchain-for-v010-v030" class="md-nav__link">
+  <a href="#vendor-specific-apis-over-wrapper-libraries" class="md-nav__link">
     <span class="md-ellipsis">
       
-        LiteLLM over LangChain (for v0.1.0 - v0.3.0)
+        Vendor-Specific APIs over Wrapper Libraries
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#current-provider-clients" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Current Provider Clients
       
     </span>
   </a>
@@ -1406,12 +1512,13 @@
 <li>Use lightweight libraries over heavy frameworks</li>
 <li>Start with minimal viable features, extend incrementally</li>
 <li>Prefer explicit code over framework "magic"</li>
+<li>Use vendor-specific APIs rather than abstraction wrappers</li>
 </ul>
 <h3 id="cost-efficiency">Cost Efficiency<a class="headerlink" href="#cost-efficiency" title="Permanent link">&para;</a></h3>
 <ul>
 <li>Built-in cost tracking and budget management (critical for independent research)</li>
 <li>Caching of LLM queries and responses to avoid redundant API calls</li>
-<li>Support for cheap/free local models alongside cloud providers</li>
+<li>Support for cheap/free providers (Groq, Gemini free tiers)</li>
 </ul>
 <h3 id="transparency-and-reproducibility">Transparency and Reproducibility<a class="headerlink" href="#transparency-and-reproducibility" title="Permanent link">&para;</a></h3>
 <ul>
@@ -1432,13 +1539,12 @@
 </span><span id="__span-0-3"><a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a>├── cli.py                   # Command-line interface
 </span><span id="__span-0-4"><a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a>├── base.py                  # Abstract KnowledgeProvider interface
 </span><span id="__span-0-5"><a id="__codelineno-0-5" name="__codelineno-0-5" href="#__codelineno-0-5"></a>├── models.py                # Pydantic models (EdgeKnowledge, etc.)
-</span><span id="__span-0-6"><a id="__codelineno-0-6" name="__codelineno-0-6" href="#__codelineno-0-6"></a>├── llm/
-</span><span id="__span-0-7"><a id="__codelineno-0-7" name="__codelineno-0-7" href="#__codelineno-0-7"></a>│   ├── __init__.py
-</span><span id="__span-0-8"><a id="__codelineno-0-8" name="__codelineno-0-8" href="#__codelineno-0-8"></a>│   ├── client.py            # LiteLLM wrapper with configuration
-</span><span id="__span-0-9"><a id="__codelineno-0-9" name="__codelineno-0-9" href="#__codelineno-0-9"></a>│   ├── prompts.py           # Prompt templates for edge queries
-</span><span id="__span-0-10"><a id="__codelineno-0-10" name="__codelineno-0-10" href="#__codelineno-0-10"></a>│   └── providers.py         # LLMKnowledge implementation
-</span><span id="__span-0-11"><a id="__codelineno-0-11" name="__codelineno-0-11" href="#__codelineno-0-11"></a>└── utils/
-</span><span id="__span-0-12"><a id="__codelineno-0-12" name="__codelineno-0-12" href="#__codelineno-0-12"></a>    └── __init__.py
+</span><span id="__span-0-6"><a id="__codelineno-0-6" name="__codelineno-0-6" href="#__codelineno-0-6"></a>└── llm/
+</span><span id="__span-0-7"><a id="__codelineno-0-7" name="__codelineno-0-7" href="#__codelineno-0-7"></a>    ├── __init__.py          # LLM module exports
+</span><span id="__span-0-8"><a id="__codelineno-0-8" name="__codelineno-0-8" href="#__codelineno-0-8"></a>    ├── groq_client.py       # Direct Groq API client
+</span><span id="__span-0-9"><a id="__codelineno-0-9" name="__codelineno-0-9" href="#__codelineno-0-9"></a>    ├── gemini_client.py     # Direct Google Gemini API client
+</span><span id="__span-0-10"><a id="__codelineno-0-10" name="__codelineno-0-10" href="#__codelineno-0-10"></a>    ├── prompts.py           # Prompt templates for edge queries
+</span><span id="__span-0-11"><a id="__codelineno-0-11" name="__codelineno-0-11" href="#__codelineno-0-11"></a>    └── provider.py          # LLMKnowledge implementation
 </span></code></pre></div>
 <h3 id="data-flow">Data Flow<a class="headerlink" href="#data-flow" title="Permanent link">&para;</a></h3>
 <div class="language-text highlight"><pre><span></span><code><span id="__span-1-1"><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a>┌─────────────────────────────────────────────────────────────────┐
@@ -1474,48 +1580,68 @@
 </span><span id="__span-1-31"><a id="__codelineno-1-31" name="__codelineno-1-31" href="#__codelineno-1-31"></a>└─────────────────────────────────────────────────────────────────┘
 </span></code></pre></div>
 <h2 id="technology-choices">Technology Choices<a class="headerlink" href="#technology-choices" title="Permanent link">&para;</a></h2>
-<h3 id="litellm-over-langchain-for-v010-v030">LiteLLM over LangChain (for v0.1.0 - v0.3.0)<a class="headerlink" href="#litellm-over-langchain-for-v010-v030" title="Permanent link">&para;</a></h3>
+<h3 id="vendor-specific-apis-over-wrapper-libraries">Vendor-Specific APIs over Wrapper Libraries<a class="headerlink" href="#vendor-specific-apis-over-wrapper-libraries" title="Permanent link">&para;</a></h3>
+<p>We use <strong>direct vendor-specific API clients</strong> rather than wrapper libraries like LiteLLM or LangChain. This architectural decision provides:</p>
 <table>
 <thead>
 <tr>
-<th>Requirement</th>
-<th>LiteLLM</th>
-<th>LangChain</th>
+<th>Aspect</th>
+<th>Direct APIs</th>
+<th>Wrapper Libraries</th>
 </tr>
 </thead>
 <tbody>
 <tr>
-<td>Multi-provider unified API</td>
-<td>✅ 100+ providers</td>
-<td>✅ Many providers</td>
+<td>Reliability</td>
+<td>✅ Full control, predictable</td>
+<td>❌ Wrapper bugs, version drift</td>
 </tr>
 <tr>
-<td>Built-in cost tracking</td>
-<td>✅ Yes</td>
-<td>❌ OpenAI only</td>
+<td>Debugging</td>
+<td>✅ Clear stack traces</td>
+<td>❌ Abstraction layers</td>
 </tr>
 <tr>
-<td>Built-in caching</td>
-<td>✅ disk/redis/semantic</td>
-<td>✅ Various</td>
+<td>Dependencies</td>
+<td>✅ Minimal (httpx only)</td>
+<td>❌ Heavy transitive deps</td>
 </tr>
 <tr>
-<td>Complexity</td>
-<td>Low</td>
-<td>High</td>
+<td>API Coverage</td>
+<td>✅ Full vendor features</td>
+<td>❌ Lowest common denominator</td>
 </tr>
 <tr>
-<td>Package size</td>
-<td>~5MB</td>
-<td>~100MB+</td>
+<td>Maintenance</td>
+<td>✅ We control updates</td>
+<td>❌ Wait for wrapper updates</td>
 </tr>
 </tbody>
 </table>
-<p><strong>Rationale</strong>: For simple, structured queries about edge existence/orientation, LiteLLM provides everything needed with less complexity. LangChain may be added in v0.4.0+ when RAG capabilities are needed for literature context.</p>
+<p><strong>Why Not LiteLLM?</strong></p>
+<ul>
+<li>Adds 50+ transitive dependencies</li>
+<li>Version conflicts with other packages</li>
+<li>Wrapper bugs mask vendor API issues</li>
+<li>We only need 2-3 providers, not 100+</li>
+</ul>
+<p><strong>Why Not LangChain?</strong></p>
+<ul>
+<li>Massive dependency footprint (~100MB+)</li>
+<li>Over-engineered for simple structured queries  </li>
+<li>Rapid breaking changes between versions</li>
+<li>May reconsider for v0.4.0+ RAG features only</li>
+</ul>
+<h3 id="current-provider-clients">Current Provider Clients<a class="headerlink" href="#current-provider-clients" title="Permanent link">&para;</a></h3>
+<ul>
+<li><strong>GroqClient</strong>: Direct Groq API via httpx (free tier, fast inference)</li>
+<li><strong>GeminiClient</strong>: Direct Google Gemini API via httpx (generous free tier)</li>
+</ul>
 <h3 id="key-dependencies">Key Dependencies<a class="headerlink" href="#key-dependencies" title="Permanent link">&para;</a></h3>
 <ul>
-<li><strong>litellm</strong>: Unified LLM API with cost tracking</li>
+<li><strong>httpx</strong>: HTTP client for API calls</li>
 <li><strong>pydantic</strong>: Structured response validation</li>
+<li><strong>click</strong>: Command-line interface</li>
 <li><strong>diskcache</strong> (v0.3.0): Persistent query caching</li>
 </ul>
 <h2 id="integration-points">Integration Points<a class="headerlink" href="#integration-points" title="Permanent link">&para;</a></h2>
