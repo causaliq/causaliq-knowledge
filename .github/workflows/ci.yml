@@ -10,6 +10,6 @@ jobs:
   ci:
     uses: causaliq/causaliq/.github/workflows/shared-ci.yml@main
     with:
-      python-versions: '["3.9", "3.10", "3.11", "3.12"]'
+      python-versions: '["3.9", "3.10", "3.11", "3.12", "3.13"]'
       operating-systems: '["ubuntu-latest", "macos-latest", "windows-latest"]'
       package-name: "causaliq-knowledge"
