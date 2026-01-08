@@ -3,11 +3,8 @@
 import httpx
 import pytest
 
-from causaliq_knowledge.llm.groq_client import (
-    GroqClient,
-    GroqConfig,
-    GroqResponse,
-)
+from causaliq_knowledge.llm.base_client import LLMResponse
+from causaliq_knowledge.llm.groq_client import GroqClient, GroqConfig
 
 
 # Test default configuration values
@@ -49,9 +46,16 @@ def test_groq_config_missing_api_key(monkeypatch):
         GroqConfig()
 
 
+# Test provider_name property returns correct value
+def test_groq_client_provider_name(monkeypatch):
+    monkeypatch.setenv("GROQ_API_KEY", "test-key")
+    client = GroqClient()
+    assert client.provider_name == "groq"
+
+
 # Test basic response creation
 def test_groq_response_basic():
-    response = GroqResponse(
+    response = LLMResponse(
         content='{"test": "data"}',
         model="llama-3.1-8b-instant",
         input_tokens=10,
@@ -68,7 +72,7 @@ def test_groq_response_basic():
 
 # Test successful JSON parsing
 def test_groq_response_parse_json_success():
-    response = GroqResponse(
+    response = LLMResponse(
         content='{"exists": true, "confidence": 0.8}', model="test"
     )
 
@@ -78,7 +82,7 @@ def test_groq_response_parse_json_success():
 
 # Test JSON parsing with markdown code blocks
 def test_groq_response_parse_json_with_markdown():
-    response = GroqResponse(
+    response = LLMResponse(
         content='```json\n{"exists": true}\n```', model="test"
     )
 
@@ -88,7 +92,7 @@ def test_groq_response_parse_json_with_markdown():
 
 # Test JSON parsing with trailing markdown only
 def test_groq_response_parse_json_trailing_markdown():
-    response = GroqResponse(content='{"exists": false}```', model="test")
+    response = LLMResponse(content='{"exists": false}```', model="test")
 
     parsed = response.parse_json()
     assert parsed == {"exists": False}
@@ -96,7 +100,7 @@ def test_groq_response_parse_json_trailing_markdown():
 
 # Test JSON parsing with both leading and trailing markdown
 def test_groq_response_parse_json_both_markdown():
-    response = GroqResponse(content='```\n{"test": "value"}```', model="test")
+    response = LLMResponse(content='```\n{"test": "value"}```', model="test")
 
     parsed = response.parse_json()
     assert parsed == {"test": "value"}
@@ -104,7 +108,7 @@ def test_groq_response_parse_json_both_markdown():
 
 # Test JSON parsing failure
 def test_groq_response_parse_json_failure():
-    response = GroqResponse(content="invalid json", model="test")
+    response = LLMResponse(content="invalid json", model="test")
 
     parsed = response.parse_json()
     assert parsed is None
@@ -162,7 +166,7 @@ def test_groq_client_completion_success(monkeypatch):
     messages = [{"role": "user", "content": "Test message"}]
     response = client.completion(messages)
 
-    assert isinstance(response, GroqResponse)
+    assert isinstance(response, LLMResponse)
     assert response.content == "Test response"
     assert response.input_tokens == 10
     assert response.output_tokens == 5
@@ -283,4 +287,4 @@ def test_groq_client_complete_json(monkeypatch):
     parsed_json, response = client.complete_json(messages)
 
     assert parsed_json == {"exists": True, "confidence": 0.8}
-    assert isinstance(response, GroqResponse)
+    assert isinstance(response, LLMResponse)

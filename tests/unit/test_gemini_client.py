@@ -3,11 +3,8 @@
 import httpx
 import pytest
 
-from causaliq_knowledge.llm.gemini_client import (
-    GeminiClient,
-    GeminiConfig,
-    GeminiResponse,
-)
+from causaliq_knowledge.llm.base_client import LLMResponse
+from causaliq_knowledge.llm.gemini_client import GeminiClient, GeminiConfig
 
 
 # Test default configuration values
@@ -49,9 +46,16 @@ def test_gemini_config_missing_api_key(monkeypatch):
         GeminiConfig()
 
 
+# Test provider_name property returns correct value
+def test_gemini_client_provider_name(monkeypatch):
+    monkeypatch.setenv("GEMINI_API_KEY", "test-key")
+    client = GeminiClient()
+    assert client.provider_name == "gemini"
+
+
 # Test basic response creation
 def test_gemini_response_basic():
-    response = GeminiResponse(
+    response = LLMResponse(
         content='{"test": "data"}',
         model="gemini-2.5-flash",
         input_tokens=10,
@@ -68,7 +72,7 @@ def test_gemini_response_basic():
 
 # Test successful JSON parsing
 def test_gemini_response_parse_json_success():
-    response = GeminiResponse(
+    response = LLMResponse(
         content='{"exists": true, "confidence": 0.8}', model="test"
     )
 
@@ -78,7 +82,7 @@ def test_gemini_response_parse_json_success():
 
 # Test JSON parsing with markdown code blocks
 def test_gemini_response_parse_json_with_markdown():
-    response = GeminiResponse(
+    response = LLMResponse(
         content='```json\n{"exists": false}\n```', model="test"
     )
 
@@ -88,7 +92,7 @@ def test_gemini_response_parse_json_with_markdown():
 
 # Test JSON parsing failure
 def test_gemini_response_parse_json_failure():
-    response = GeminiResponse(content="invalid json content", model="test")
+    response = LLMResponse(content="invalid json content", model="test")
 
     parsed = response.parse_json()
     assert parsed is None
@@ -154,7 +158,7 @@ def test_gemini_client_completion_success(monkeypatch):
     messages = [{"role": "user", "content": "Test message"}]
     response = client.completion(messages)
 
-    assert isinstance(response, GeminiResponse)
+    assert isinstance(response, LLMResponse)
     assert response.content == "Test response from Gemini"
     assert response.input_tokens == 15
     assert response.output_tokens == 8
@@ -367,25 +371,25 @@ def test_gemini_client_complete_json(monkeypatch):
     parsed_json, response = client.complete_json(messages)
 
     assert parsed_json == {"exists": False, "confidence": 0.9}
-    assert isinstance(response, GeminiResponse)
+    assert isinstance(response, LLMResponse)
 
 
-# Test GeminiResponse JSON parsing with logging on JSONDecodeError
+# Test LLMResponse JSON parsing with logging on JSONDecodeError
 def test_gemini_response_json_parse_with_logging():
     """Test JSONDecodeError with logging (lines 58-60)."""
     # Note: This is unreachable code due to duplicate exception handling
     # The first JSONDecodeError handler at line 57 catches all cases
     # But we'll test normal JSON parsing error for coverage
-    response = GeminiResponse("invalid json", "test-model")
+    response = LLMResponse("invalid json", "test-model")
     result = response.parse_json()
     assert result is None
 
 
-# Test GeminiResponse JSON parsing with generic code block markers
+# Test LLMResponse JSON parsing with generic code block markers
 def test_gemini_response_json_parse_generic_code_blocks():
     """Test parsing JSON with generic ``` code block markers (line 51)."""
     # Test the elif condition for generic ``` markers
-    response = GeminiResponse('```{"test": "value"}```', "test-model")
+    response = LLMResponse('```{"test": "value"}```', "test-model")
     result = response.parse_json()
     assert result == {"test": "value"}
 

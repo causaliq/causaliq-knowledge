@@ -1,6 +1,5 @@
 """Direct Groq API client - clean and reliable."""
 
-import json
 import logging
 import os
 from dataclasses import dataclass
@@ -8,12 +7,28 @@ from typing import Any, Dict, List, Optional
 
 import httpx
 
+from causaliq_knowledge.llm.base_client import (
+    BaseLLMClient,
+    LLMConfig,
+    LLMResponse,
+)
+
 logger = logging.getLogger(__name__)
 
 
 @dataclass
-class GroqConfig:
-    """Configuration for Groq API client."""
+class GroqConfig(LLMConfig):
+    """Configuration for Groq API client.
+
+    Extends LLMConfig with Groq-specific defaults.
+
+    Attributes:
+        model: Groq model identifier (default: llama-3.1-8b-instant).
+        temperature: Sampling temperature (default: 0.1).
+        max_tokens: Maximum response tokens (default: 500).
+        timeout: Request timeout in seconds (default: 30.0).
+        api_key: Groq API key (falls back to GROQ_API_KEY env var).
+    """
 
     model: str = "llama-3.1-8b-instant"
     temperature: float = 0.1
@@ -29,50 +44,52 @@ class GroqConfig:
             raise ValueError("GROQ_API_KEY environment variable is required")
 
 
-@dataclass
-class GroqResponse:
-    """Response from Groq API."""
+class GroqClient(BaseLLMClient):
+    """Direct Groq API client.
 
-    content: str
-    model: str
-    input_tokens: int = 0
-    output_tokens: int = 0
-    cost: float = 0.0  # Groq free tier
-    raw_response: Optional[Dict] = None
+    Implements the BaseLLMClient interface for Groq's API.
+    Uses httpx for HTTP requests.
 
-    def parse_json(self) -> Optional[Dict[str, Any]]:
-        """Parse content as JSON, handling common formatting issues."""
-        try:
-            # Clean up potential markdown code blocks
-            text = self.content.strip()
-            if text.startswith("```json"):
-                text = text[7:]
-            elif text.startswith("```"):
-                text = text[3:]
-            if text.endswith("```"):
-                text = text[:-3]
-
-            return json.loads(text.strip())  # type: ignore[no-any-return]
-        except json.JSONDecodeError as e:
-            logger.warning(f"Failed to parse JSON response: {e}")
-            return None
-
-
-class GroqClient:
-    """Direct Groq API client."""
+    Example:
+        >>> config = GroqConfig(model="llama-3.1-8b-instant")
+        >>> client = GroqClient(config)
+        >>> msgs = [{"role": "user", "content": "Hello"}]
+        >>> response = client.completion(msgs)
+        >>> print(response.content)
+    """
 
     BASE_URL = "https://api.groq.com/openai/v1"
 
-    def __init__(self, config: Optional[GroqConfig] = None):
-        """Initialize Groq client."""
+    def __init__(self, config: Optional[GroqConfig] = None) -> None:
+        """Initialize Groq client.
+
+        Args:
+            config: Groq configuration. If None, uses defaults with
+                   API key from GROQ_API_KEY environment variable.
+        """
         self.config = config or GroqConfig()
         self._total_calls = 0
 
+    @property
+    def provider_name(self) -> str:
+        """Return the provider name."""
+        return "groq"
+
     def completion(
         self, messages: List[Dict[str, str]], **kwargs: Any
-    ) -> GroqResponse:
-        """Make a chat completion request to Groq."""
+    ) -> LLMResponse:
+        """Make a chat completion request to Groq.
 
+        Args:
+            messages: List of message dicts with "role" and "content" keys.
+            **kwargs: Override config options (temperature, max_tokens).
+
+        Returns:
+            LLMResponse with the generated content and metadata.
+
+        Raises:
+            ValueError: If the API request fails.
+        """
         # Build request payload
         payload = {
             "model": self.config.model,
@@ -112,7 +129,7 @@ class GroqClient:
                     f"Groq response: {input_tokens} in, {output_tokens} out"
                 )
 
-                return GroqResponse(
+                return LLMResponse(
                     content=content,
                     model=data.get("model", self.config.model),
                     input_tokens=input_tokens,
@@ -136,13 +153,21 @@ class GroqClient:
 
     def complete_json(
         self, messages: List[Dict[str, str]], **kwargs: Any
-    ) -> tuple[Optional[Dict[str, Any]], GroqResponse]:
-        """Make a completion request and parse response as JSON."""
+    ) -> tuple[Optional[Dict[str, Any]], LLMResponse]:
+        """Make a completion request and parse response as JSON.
+
+        Args:
+            messages: List of message dicts with "role" and "content" keys.
+            **kwargs: Override config options passed to completion().
+
+        Returns:
+            Tuple of (parsed JSON dict or None, raw LLMResponse).
+        """
         response = self.completion(messages, **kwargs)
         parsed = response.parse_json()
         return parsed, response
 
     @property
     def call_count(self) -> int:
-        """Number of API calls made."""
+        """Return the number of API calls made."""
         return self._total_calls

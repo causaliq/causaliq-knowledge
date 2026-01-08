@@ -1,6 +1,5 @@
 """Direct Google Gemini API client - clean and reliable."""
 
-import json
 import logging
 import os
 from dataclasses import dataclass
@@ -8,12 +7,28 @@ from typing import Any, Dict, List, Optional
 
 import httpx
 
+from causaliq_knowledge.llm.base_client import (
+    BaseLLMClient,
+    LLMConfig,
+    LLMResponse,
+)
+
 logger = logging.getLogger(__name__)
 
 
 @dataclass
-class GeminiConfig:
-    """Configuration for Gemini API client."""
+class GeminiConfig(LLMConfig):
+    """Configuration for Gemini API client.
+
+    Extends LLMConfig with Gemini-specific defaults.
+
+    Attributes:
+        model: Gemini model identifier (default: gemini-2.5-flash).
+        temperature: Sampling temperature (default: 0.1).
+        max_tokens: Maximum response tokens (default: 500).
+        timeout: Request timeout in seconds (default: 30.0).
+        api_key: Gemini API key (falls back to GEMINI_API_KEY env var).
+    """
 
     model: str = "gemini-2.5-flash"
     temperature: float = 0.1
@@ -29,48 +44,52 @@ class GeminiConfig:
             raise ValueError("GEMINI_API_KEY environment variable is required")
 
 
-@dataclass
-class GeminiResponse:
-    """Response from Gemini API."""
+class GeminiClient(BaseLLMClient):
+    """Direct Gemini API client.
 
-    content: str
-    model: str
-    input_tokens: int = 0
-    output_tokens: int = 0
-    cost: float = 0.0  # Gemini free tier
-    raw_response: Optional[Dict] = None
+    Implements the BaseLLMClient interface for Google's Gemini API.
+    Uses httpx for HTTP requests.
 
-    def parse_json(self) -> Optional[Dict[str, Any]]:
-        """Parse content as JSON, handling common formatting issues."""
-        try:
-            # Clean up potential markdown code blocks
-            text = self.content.strip()
-            if text.startswith("```json"):
-                text = text[7:]
-            elif text.startswith("```"):
-                text = text[3:]
-            if text.endswith("```"):
-                text = text[:-3]
-
-            return json.loads(text.strip())  # type: ignore[no-any-return]
-        except json.JSONDecodeError:
-            return None
-
-
-class GeminiClient:
-    """Direct Gemini API client."""
+    Example:
+        >>> config = GeminiConfig(model="gemini-2.5-flash")
+        >>> client = GeminiClient(config)
+        >>> msgs = [{"role": "user", "content": "Hello"}]
+        >>> response = client.completion(msgs)
+        >>> print(response.content)
+    """
 
     BASE_URL = "https://generativelanguage.googleapis.com/v1beta/models"
 
-    def __init__(self, config: Optional[GeminiConfig] = None):
-        """Initialize Gemini client."""
+    def __init__(self, config: Optional[GeminiConfig] = None) -> None:
+        """Initialize Gemini client.
+
+        Args:
+            config: Gemini configuration. If None, uses defaults with
+                   API key from GEMINI_API_KEY environment variable.
+        """
         self.config = config or GeminiConfig()
         self._total_calls = 0
 
+    @property
+    def provider_name(self) -> str:
+        """Return the provider name."""
+        return "gemini"
+
     def completion(
         self, messages: List[Dict[str, str]], **kwargs: Any
-    ) -> GeminiResponse:
-        """Make a chat completion request to Gemini."""
+    ) -> LLMResponse:
+        """Make a chat completion request to Gemini.
+
+        Args:
+            messages: List of message dicts with "role" and "content" keys.
+            **kwargs: Override config options (temperature, max_tokens).
+
+        Returns:
+            LLMResponse with the generated content and metadata.
+
+        Raises:
+            ValueError: If the API request fails.
+        """
 
         # Convert OpenAI-style messages to Gemini format
         contents = []
@@ -158,7 +177,7 @@ class GeminiClient:
                     f"Gemini response: {input_tokens} in, {output_tokens} out"
                 )
 
-                return GeminiResponse(
+                return LLMResponse(
                     content=content,
                     model=self.config.model,
                     input_tokens=input_tokens,
@@ -191,13 +210,21 @@ class GeminiClient:
 
     def complete_json(
         self, messages: List[Dict[str, str]], **kwargs: Any
-    ) -> tuple[Optional[Dict[str, Any]], GeminiResponse]:
-        """Make a completion request and parse response as JSON."""
+    ) -> tuple[Optional[Dict[str, Any]], LLMResponse]:
+        """Make a completion request and parse response as JSON.
+
+        Args:
+            messages: List of message dicts with "role" and "content" keys.
+            **kwargs: Override config options passed to completion().
+
+        Returns:
+            Tuple of (parsed JSON dict or None, raw LLMResponse).
+        """
         response = self.completion(messages, **kwargs)
         parsed = response.parse_json()
         return parsed, response
 
     @property
     def call_count(self) -> int:
-        """Number of API calls made."""
+        """Return the number of API calls made."""
         return self._total_calls
