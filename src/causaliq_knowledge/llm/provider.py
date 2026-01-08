@@ -8,8 +8,13 @@ from causaliq_knowledge.llm.anthropic_client import (
     AnthropicClient,
     AnthropicConfig,
 )
+from causaliq_knowledge.llm.deepseek_client import (
+    DeepSeekClient,
+    DeepSeekConfig,
+)
 from causaliq_knowledge.llm.gemini_client import GeminiClient, GeminiConfig
 from causaliq_knowledge.llm.groq_client import GroqClient, GroqConfig
+from causaliq_knowledge.llm.mistral_client import MistralClient, MistralConfig
 from causaliq_knowledge.llm.ollama_client import OllamaClient, OllamaConfig
 from causaliq_knowledge.llm.openai_client import OpenAIClient, OpenAIConfig
 from causaliq_knowledge.llm.prompts import EdgeQueryPrompt, parse_edge_response
@@ -201,8 +206,10 @@ class LLMKnowledge(KnowledgeProvider):
             str,
             Union[
                 AnthropicClient,
+                DeepSeekClient,
                 GeminiClient,
                 GroqClient,
+                MistralClient,
                 OllamaClient,
                 OpenAIClient,
             ],
@@ -258,12 +265,34 @@ class LLMKnowledge(KnowledgeProvider):
                     timeout=timeout,
                 )
                 self._clients[model] = OpenAIClient(config=openai_config)
+            elif model.startswith("deepseek/"):
+                # Use direct DeepSeek client for DeepSeek models
+                deepseek_model = model.split("/", 1)[1]  # Extract model name
+                deepseek_config = DeepSeekConfig(
+                    model=deepseek_model,
+                    temperature=temperature,
+                    max_tokens=max_tokens,
+                    timeout=timeout,
+                )
+                self._clients[model] = DeepSeekClient(config=deepseek_config)
+            elif model.startswith("mistral/"):
+                # Use direct Mistral client for Mistral models
+                mistral_model = model.split("/", 1)[1]  # Extract model name
+                mistral_config = MistralConfig(
+                    model=mistral_model,
+                    temperature=temperature,
+                    max_tokens=max_tokens,
+                    timeout=timeout,
+                )
+                self._clients[model] = MistralClient(config=mistral_config)
             else:
                 # Only direct API clients are supported
                 supported_prefixes = [
                     "anthropic/",
+                    "deepseek/",
                     "gemini/",
                     "groq/",
+                    "mistral/",
                     "ollama/",
                     "openai/",
                 ]

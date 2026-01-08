@@ -94,6 +94,17 @@ def test_openai_config_inherits_from_base():
     assert issubclass(OpenAIConfig, LLMConfig)
 
 
+# Test _default_config returns OpenAIConfig
+def test_openai_default_config(monkeypatch):
+    monkeypatch.setenv("OPENAI_API_KEY", "test-key")
+    client = OpenAIClient()
+    default = client._default_config()
+
+    assert isinstance(default, OpenAIConfig)
+    assert default.model == "gpt-4o-mini"
+    assert default.api_key == "test-key"
+
+
 # --- completion() Tests ---
 
 
@@ -224,7 +235,7 @@ def test_openai_completion_http_error(mocker):
     client = OpenAIClient(config)
     messages = [{"role": "user", "content": "Hello"}]
 
-    with pytest.raises(ValueError, match="OpenAI API error"):
+    with pytest.raises(ValueError, match="(?i)openai API error"):
         client.completion(messages)
 
 
@@ -258,7 +269,7 @@ def test_openai_completion_generic_error(mocker):
     client = OpenAIClient(config)
     messages = [{"role": "user", "content": "Hello"}]
 
-    with pytest.raises(ValueError, match="OpenAI API error"):
+    with pytest.raises(ValueError, match="(?i)openai API error"):
         client.completion(messages)
 
 
@@ -446,7 +457,7 @@ def test_openai_list_models_api_error(mocker):
 
     mocker.patch("httpx.Client", return_value=mock_client)
 
-    with pytest.raises(ValueError, match="OpenAI API error"):
+    with pytest.raises(ValueError, match="(?i)openai API error"):
         client.list_models()
 
 
@@ -463,7 +474,7 @@ def test_openai_list_models_generic_error(mocker):
 
     mocker.patch("httpx.Client", return_value=mock_client)
 
-    with pytest.raises(ValueError, match="Failed to list OpenAI models"):
+    with pytest.raises(ValueError, match="(?i)failed to list openai models"):
         client.list_models()
 
 
@@ -576,3 +587,17 @@ def test_openai_completion_empty_content(mocker):
     response = client.completion(messages)
 
     assert response.content == ""
+
+
+# Test base class _filter_models default implementation
+def test_openai_compat_base_filter_models_default(monkeypatch):
+    from causaliq_knowledge.llm.openai_compat_client import OpenAICompatClient
+
+    monkeypatch.setenv("OPENAI_API_KEY", "test-key")
+    client = OpenAIClient()
+
+    # Call the base class _filter_models directly (not overridden version)
+    models = ["model-a", "model-b", "model-c"]
+    result = OpenAICompatClient._filter_models(client, models)
+
+    assert result == models

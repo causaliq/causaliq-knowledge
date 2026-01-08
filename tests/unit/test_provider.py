@@ -352,6 +352,56 @@ def test_llm_knowledge_openai_model(monkeypatch):
     assert client.config.timeout == 45.0
 
 
+# Test LLMKnowledge with DeepSeek model creates DeepSeekClient.
+def test_llm_knowledge_deepseek_model(monkeypatch):
+    from causaliq_knowledge.llm.deepseek_client import DeepSeekClient
+
+    monkeypatch.setenv("DEEPSEEK_API_KEY", "test-key")
+
+    provider = LLMKnowledge(
+        models=["deepseek/deepseek-chat"],
+        timeout=50.0,
+    )
+
+    assert provider.models == ["deepseek/deepseek-chat"]
+    assert "deepseek/deepseek-chat" in provider.name
+    assert "deepseek/deepseek-chat" in provider._clients
+    assert isinstance(
+        provider._clients["deepseek/deepseek-chat"],
+        DeepSeekClient,
+    )
+
+    # Verify config was passed correctly
+    client = provider._clients["deepseek/deepseek-chat"]
+    assert client.config.model == "deepseek-chat"
+    assert client.config.timeout == 50.0
+
+
+# Test LLMKnowledge with Mistral model creates MistralClient.
+def test_llm_knowledge_mistral_model(monkeypatch):
+    from causaliq_knowledge.llm.mistral_client import MistralClient
+
+    monkeypatch.setenv("MISTRAL_API_KEY", "test-key")
+
+    provider = LLMKnowledge(
+        models=["mistral/mistral-small-latest"],
+        timeout=55.0,
+    )
+
+    assert provider.models == ["mistral/mistral-small-latest"]
+    assert "mistral/mistral-small-latest" in provider.name
+    assert "mistral/mistral-small-latest" in provider._clients
+    assert isinstance(
+        provider._clients["mistral/mistral-small-latest"],
+        MistralClient,
+    )
+
+    # Verify config was passed correctly
+    client = provider._clients["mistral/mistral-small-latest"]
+    assert client.config.model == "mistral-small-latest"
+    assert client.config.timeout == 55.0
+
+
 # Test LLMKnowledge with custom consensus strategy.
 def test_llm_knowledge_custom_strategy(monkeypatch):
     monkeypatch.setenv("GROQ_API_KEY", "test-key")

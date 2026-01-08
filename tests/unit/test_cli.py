@@ -705,3 +705,199 @@ def test_cli_models_invalid_provider():
     assert "Unknown provider" in result.output
     assert "invalid_provider" in result.output
     assert "groq" in result.output  # Valid providers should be listed
+
+
+# Test models command with DeepSeek config raising ValueError
+def test_cli_models_deepseek_config_error(monkeypatch):
+    # Mock DeepSeekConfig to throw ValueError (no API key set)
+    class MockDeepSeekConfig:
+        def __init__(self):
+            raise ValueError(
+                "DEEPSEEK_API_KEY environment variable is required"
+            )
+
+    # Mock both the direct module and the re-export in __init__.py
+    monkeypatch.setattr(
+        "causaliq_knowledge.llm.deepseek_client.DeepSeekConfig",
+        MockDeepSeekConfig,
+    )
+    monkeypatch.setattr(
+        "causaliq_knowledge.llm.DeepSeekConfig", MockDeepSeekConfig
+    )
+
+    runner = CliRunner()
+    result = runner.invoke(cli, ["models", "deepseek"])
+
+    assert result.exit_code == 0
+    assert "DEEPSEEK_API_KEY environment variable is required" in result.output
+
+
+# Test models command with DeepSeek available but is_available returns False
+def test_cli_models_deepseek_not_available(monkeypatch):
+    class MockDeepSeekConfig:
+        pass
+
+    class MockDeepSeekClient:
+        def __init__(self, config):
+            pass
+
+        def is_available(self):
+            return False
+
+    monkeypatch.setattr(
+        "causaliq_knowledge.llm.deepseek_client.DeepSeekConfig",
+        MockDeepSeekConfig,
+    )
+    monkeypatch.setattr(
+        "causaliq_knowledge.llm.DeepSeekConfig", MockDeepSeekConfig
+    )
+    monkeypatch.setattr(
+        "causaliq_knowledge.llm.deepseek_client.DeepSeekClient",
+        MockDeepSeekClient,
+    )
+    monkeypatch.setattr(
+        "causaliq_knowledge.llm.DeepSeekClient", MockDeepSeekClient
+    )
+
+    runner = CliRunner()
+    result = runner.invoke(cli, ["models", "deepseek"])
+
+    assert result.exit_code == 0
+    assert "DEEPSEEK_API_KEY not set" in result.output
+
+
+# Test models command with DeepSeek success
+def test_cli_models_deepseek_success(monkeypatch):
+    class MockDeepSeekConfig:
+        pass
+
+    class MockDeepSeekClient:
+        def __init__(self, config):
+            pass
+
+        def is_available(self):
+            return True
+
+        def list_models(self):
+            return ["deepseek-chat", "deepseek-reasoner"]
+
+    monkeypatch.setattr(
+        "causaliq_knowledge.llm.deepseek_client.DeepSeekConfig",
+        MockDeepSeekConfig,
+    )
+    monkeypatch.setattr(
+        "causaliq_knowledge.llm.DeepSeekConfig", MockDeepSeekConfig
+    )
+    monkeypatch.setattr(
+        "causaliq_knowledge.llm.deepseek_client.DeepSeekClient",
+        MockDeepSeekClient,
+    )
+    monkeypatch.setattr(
+        "causaliq_knowledge.llm.DeepSeekClient", MockDeepSeekClient
+    )
+
+    runner = CliRunner()
+    result = runner.invoke(cli, ["models", "deepseek"])
+
+    assert result.exit_code == 0
+    assert "deepseek/deepseek-chat" in result.output
+    assert "deepseek/deepseek-reasoner" in result.output
+    assert "[OK]" in result.output
+
+
+# Test models command with Mistral config raising ValueError
+def test_cli_models_mistral_config_error(monkeypatch):
+    # Mock MistralConfig to throw ValueError (no API key set)
+    class MockMistralConfig:
+        def __init__(self):
+            raise ValueError(
+                "MISTRAL_API_KEY environment variable is required"
+            )
+
+    # Mock both the direct module and the re-export in __init__.py
+    monkeypatch.setattr(
+        "causaliq_knowledge.llm.mistral_client.MistralConfig",
+        MockMistralConfig,
+    )
+    monkeypatch.setattr(
+        "causaliq_knowledge.llm.MistralConfig", MockMistralConfig
+    )
+
+    runner = CliRunner()
+    result = runner.invoke(cli, ["models", "mistral"])
+
+    assert result.exit_code == 0
+    assert "MISTRAL_API_KEY environment variable is required" in result.output
+
+
+# Test models command with Mistral available but is_available returns False
+def test_cli_models_mistral_not_available(monkeypatch):
+    class MockMistralConfig:
+        pass
+
+    class MockMistralClient:
+        def __init__(self, config):
+            pass
+
+        def is_available(self):
+            return False
+
+    monkeypatch.setattr(
+        "causaliq_knowledge.llm.mistral_client.MistralConfig",
+        MockMistralConfig,
+    )
+    monkeypatch.setattr(
+        "causaliq_knowledge.llm.MistralConfig", MockMistralConfig
+    )
+    monkeypatch.setattr(
+        "causaliq_knowledge.llm.mistral_client.MistralClient",
+        MockMistralClient,
+    )
+    monkeypatch.setattr(
+        "causaliq_knowledge.llm.MistralClient", MockMistralClient
+    )
+
+    runner = CliRunner()
+    result = runner.invoke(cli, ["models", "mistral"])
+
+    assert result.exit_code == 0
+    assert "MISTRAL_API_KEY not set" in result.output
+
+
+# Test models command with Mistral success
+def test_cli_models_mistral_success(monkeypatch):
+    class MockMistralConfig:
+        pass
+
+    class MockMistralClient:
+        def __init__(self, config):
+            pass
+
+        def is_available(self):
+            return True
+
+        def list_models(self):
+            return ["mistral-small-latest", "mistral-large-latest"]
+
+    monkeypatch.setattr(
+        "causaliq_knowledge.llm.mistral_client.MistralConfig",
+        MockMistralConfig,
+    )
+    monkeypatch.setattr(
+        "causaliq_knowledge.llm.MistralConfig", MockMistralConfig
+    )
+    monkeypatch.setattr(
+        "causaliq_knowledge.llm.mistral_client.MistralClient",
+        MockMistralClient,
+    )
+    monkeypatch.setattr(
+        "causaliq_knowledge.llm.MistralClient", MockMistralClient
+    )
+
+    runner = CliRunner()
+    result = runner.invoke(cli, ["models", "mistral"])
+
+    assert result.exit_code == 0
+    assert "mistral/mistral-small-latest" in result.output
+    assert "mistral/mistral-large-latest" in result.output
+    assert "[OK]" in result.output

@@ -159,7 +159,7 @@ def list_models(provider: Optional[str]) -> None:
     access level or locally installed models.
 
     Optionally specify PROVIDER to list models from a single provider:
-    groq, anthropic, gemini, ollama, or openai.
+    groq, anthropic, gemini, ollama, openai, deepseek, or mistral.
 
     Examples:
 
@@ -167,17 +167,21 @@ def list_models(provider: Optional[str]) -> None:
 
         cqknow models groq         # List only Groq models
 
-        cqknow models openai       # List only OpenAI models
+        cqknow models mistral      # List only Mistral models
     """
     from typing import Callable, List, Optional, Tuple, TypedDict
 
     from causaliq_knowledge.llm import (
         AnthropicClient,
         AnthropicConfig,
+        DeepSeekClient,
+        DeepSeekConfig,
         GeminiClient,
         GeminiConfig,
         GroqClient,
         GroqConfig,
+        MistralClient,
+        MistralConfig,
         OllamaClient,
         OllamaConfig,
         OpenAIClient,
@@ -250,6 +254,28 @@ def list_models(provider: Optional[str]) -> None:
         except ValueError as e:
             return False, [], str(e)
 
+    def get_deepseek_models() -> Tuple[bool, List[str], Optional[str]]:
+        """Returns (available, models, error_msg)."""
+        try:
+            client = DeepSeekClient(DeepSeekConfig())
+            if not client.is_available():
+                return False, [], "DEEPSEEK_API_KEY not set"
+            models = [f"deepseek/{m}" for m in client.list_models()]
+            return True, models, None
+        except ValueError as e:
+            return False, [], str(e)
+
+    def get_mistral_models() -> Tuple[bool, List[str], Optional[str]]:
+        """Returns (available, models, error_msg)."""
+        try:
+            client = MistralClient(MistralConfig())
+            if not client.is_available():
+                return False, [], "MISTRAL_API_KEY not set"
+            models = [f"mistral/{m}" for m in client.list_models()]
+            return True, models, None
+        except ValueError as e:
+            return False, [], str(e)
+
     providers: List[ProviderInfo] = [
         {
             "name": "Groq",
@@ -286,10 +312,32 @@ def list_models(provider: Optional[str]) -> None:
             "url": "https://platform.openai.com",
             "get_models": get_openai_models,
         },
+        {
+            "name": "DeepSeek",
+            "prefix": "deepseek/",
+            "env_var": "DEEPSEEK_API_KEY",
+            "url": "https://platform.deepseek.com",
+            "get_models": get_deepseek_models,
+        },
+        {
+            "name": "Mistral",
+            "prefix": "mistral/",
+            "env_var": "MISTRAL_API_KEY",
+            "url": "https://console.mistral.ai",
+            "get_models": get_mistral_models,
+        },
     ]
 
     # Filter providers if a specific one is requested
-    valid_provider_names = ["groq", "anthropic", "gemini", "ollama", "openai"]
+    valid_provider_names = [
+        "groq",
+        "anthropic",
+        "gemini",
+        "ollama",
+        "openai",
+        "deepseek",
+        "mistral",
+    ]
     if provider:
         provider_lower = provider.lower()
         if provider_lower not in valid_provider_names:
