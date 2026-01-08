@@ -327,6 +327,31 @@ def test_llm_knowledge_anthropic_model(monkeypatch):
     assert client.config.timeout == 60.0
 
 
+# Test LLMKnowledge with OpenAI model creates OpenAIClient.
+def test_llm_knowledge_openai_model(monkeypatch):
+    from causaliq_knowledge.llm.openai_client import OpenAIClient
+
+    monkeypatch.setenv("OPENAI_API_KEY", "test-key")
+
+    provider = LLMKnowledge(
+        models=["openai/gpt-4o-mini"],
+        timeout=45.0,
+    )
+
+    assert provider.models == ["openai/gpt-4o-mini"]
+    assert "openai/gpt-4o-mini" in provider.name
+    assert "openai/gpt-4o-mini" in provider._clients
+    assert isinstance(
+        provider._clients["openai/gpt-4o-mini"],
+        OpenAIClient,
+    )
+
+    # Verify config was passed correctly
+    client = provider._clients["openai/gpt-4o-mini"]
+    assert client.config.model == "gpt-4o-mini"
+    assert client.config.timeout == 45.0
+
+
 # Test LLMKnowledge with custom consensus strategy.
 def test_llm_knowledge_custom_strategy(monkeypatch):
     monkeypatch.setenv("GROQ_API_KEY", "test-key")
@@ -576,6 +601,7 @@ def test_llm_knowledge_unsupported_model():
     assert "groq/" in str(exc_info.value)
     assert "gemini/" in str(exc_info.value)
     assert "ollama/" in str(exc_info.value)
+    assert "openai/" in str(exc_info.value)
 
 
 def test_llm_knowledge_invalid_client_in_query_edge(monkeypatch):

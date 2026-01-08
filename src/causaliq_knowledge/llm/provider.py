@@ -11,6 +11,7 @@ from causaliq_knowledge.llm.anthropic_client import (
 from causaliq_knowledge.llm.gemini_client import GeminiClient, GeminiConfig
 from causaliq_knowledge.llm.groq_client import GroqClient, GroqConfig
 from causaliq_knowledge.llm.ollama_client import OllamaClient, OllamaConfig
+from causaliq_knowledge.llm.openai_client import OpenAIClient, OpenAIConfig
 from causaliq_knowledge.llm.prompts import EdgeQueryPrompt, parse_edge_response
 from causaliq_knowledge.models import EdgeDirection, EdgeKnowledge
 
@@ -197,7 +198,14 @@ class LLMKnowledge(KnowledgeProvider):
 
         # Create a client for each model - use direct APIs only
         self._clients: dict[
-            str, Union[AnthropicClient, GroqClient, GeminiClient, OllamaClient]
+            str,
+            Union[
+                AnthropicClient,
+                GeminiClient,
+                GroqClient,
+                OllamaClient,
+                OpenAIClient,
+            ],
         ] = {}
         for model in models:
             if model.startswith("anthropic/"):
@@ -240,6 +248,16 @@ class LLMKnowledge(KnowledgeProvider):
                     timeout=timeout,
                 )
                 self._clients[model] = OllamaClient(config=ollama_config)
+            elif model.startswith("openai/"):
+                # Use direct OpenAI client for GPT models
+                openai_model = model.split("/", 1)[1]  # Extract model name
+                openai_config = OpenAIConfig(
+                    model=openai_model,
+                    temperature=temperature,
+                    max_tokens=max_tokens,
+                    timeout=timeout,
+                )
+                self._clients[model] = OpenAIClient(config=openai_config)
             else:
                 # Only direct API clients are supported
                 supported_prefixes = [
@@ -247,6 +265,7 @@ class LLMKnowledge(KnowledgeProvider):
                     "gemini/",
                     "groq/",
                     "ollama/",
+                    "openai/",
                 ]
                 raise ValueError(
                     f"Model '{model}' not supported. "

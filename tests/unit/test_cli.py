@@ -326,20 +326,7 @@ def test_cli_models_groq_not_available(monkeypatch):
         def is_available(self):
             return False
 
-    # Mock Gemini to throw ValueError
-    class MockGeminiConfig:
-        def __init__(self):
-            raise ValueError("GEMINI_API_KEY not set")
-
-    # Mock Ollama to throw ValueError
-    class MockOllamaClient:
-        def __init__(self, config):
-            pass
-
-        def list_models(self):
-            raise ValueError("Ollama not running")
-
-    # Patch at both source and __init__ levels for full coverage
+    # Only need to mock Groq since we filter to just groq provider
     monkeypatch.setattr(
         "causaliq_knowledge.llm.groq_client.GroqConfig", MockGroqConfig
     )
@@ -348,21 +335,9 @@ def test_cli_models_groq_not_available(monkeypatch):
         "causaliq_knowledge.llm.groq_client.GroqClient", MockGroqClient
     )
     monkeypatch.setattr("causaliq_knowledge.llm.GroqClient", MockGroqClient)
-    monkeypatch.setattr(
-        "causaliq_knowledge.llm.gemini_client.GeminiConfig", MockGeminiConfig
-    )
-    monkeypatch.setattr(
-        "causaliq_knowledge.llm.GeminiConfig", MockGeminiConfig
-    )
-    monkeypatch.setattr(
-        "causaliq_knowledge.llm.ollama_client.OllamaClient", MockOllamaClient
-    )
-    monkeypatch.setattr(
-        "causaliq_knowledge.llm.OllamaClient", MockOllamaClient
-    )
 
     runner = CliRunner()
-    result = runner.invoke(cli, ["models"])
+    result = runner.invoke(cli, ["models", "groq"])
 
     assert result.exit_code == 0
     assert "GROQ_API_KEY not set" in result.output
@@ -370,11 +345,6 @@ def test_cli_models_groq_not_available(monkeypatch):
 
 # Test models command with Gemini available but is_available returns False
 def test_cli_models_gemini_not_available(monkeypatch):
-    # Mock Groq to throw ValueError
-    class MockGroqConfig:
-        def __init__(self):
-            raise ValueError("GROQ_API_KEY not set")
-
     # Mock GeminiConfig to not throw (so we can test is_available path)
     class MockGeminiConfig:
         pass
@@ -387,19 +357,7 @@ def test_cli_models_gemini_not_available(monkeypatch):
         def is_available(self):
             return False
 
-    # Mock Ollama to throw ValueError
-    class MockOllamaClient:
-        def __init__(self, config):
-            pass
-
-        def list_models(self):
-            raise ValueError("Ollama not running")
-
-    # Patch at both source and __init__ levels for full coverage
-    monkeypatch.setattr(
-        "causaliq_knowledge.llm.groq_client.GroqConfig", MockGroqConfig
-    )
-    monkeypatch.setattr("causaliq_knowledge.llm.GroqConfig", MockGroqConfig)
+    # Only need to mock Gemini since we filter to just gemini provider
     monkeypatch.setattr(
         "causaliq_knowledge.llm.gemini_client.GeminiConfig", MockGeminiConfig
     )
@@ -412,15 +370,9 @@ def test_cli_models_gemini_not_available(monkeypatch):
     monkeypatch.setattr(
         "causaliq_knowledge.llm.GeminiClient", MockGeminiClient
     )
-    monkeypatch.setattr(
-        "causaliq_knowledge.llm.ollama_client.OllamaClient", MockOllamaClient
-    )
-    monkeypatch.setattr(
-        "causaliq_knowledge.llm.OllamaClient", MockOllamaClient
-    )
 
     runner = CliRunner()
-    result = runner.invoke(cli, ["models"])
+    result = runner.invoke(cli, ["models", "gemini"])
 
     assert result.exit_code == 0
     assert "GEMINI_API_KEY not set" in result.output
@@ -428,11 +380,6 @@ def test_cli_models_gemini_not_available(monkeypatch):
 
 # Test models command with Anthropic available but is_available returns False
 def test_cli_models_anthropic_not_available(monkeypatch):
-    # Mock Groq to throw ValueError
-    class MockGroqConfig:
-        def __init__(self):
-            raise ValueError("GROQ_API_KEY not set")
-
     # Mock AnthropicConfig to not throw (so we can test is_available path)
     class MockAnthropicConfig:
         pass
@@ -445,24 +392,7 @@ def test_cli_models_anthropic_not_available(monkeypatch):
         def is_available(self):
             return False
 
-    # Mock Gemini to throw ValueError
-    class MockGeminiConfig:
-        def __init__(self):
-            raise ValueError("GEMINI_API_KEY not set")
-
-    # Mock Ollama to throw ValueError
-    class MockOllamaClient:
-        def __init__(self, config):
-            pass
-
-        def list_models(self):
-            raise ValueError("Ollama not running")
-
-    # Patch at both source and __init__ levels for full coverage
-    monkeypatch.setattr(
-        "causaliq_knowledge.llm.groq_client.GroqConfig", MockGroqConfig
-    )
-    monkeypatch.setattr("causaliq_knowledge.llm.GroqConfig", MockGroqConfig)
+    # Only need to mock Anthropic since we filter to just anthropic provider
     monkeypatch.setattr(
         "causaliq_knowledge.llm.anthropic_client.AnthropicConfig",
         MockAnthropicConfig,
@@ -477,21 +407,9 @@ def test_cli_models_anthropic_not_available(monkeypatch):
     monkeypatch.setattr(
         "causaliq_knowledge.llm.AnthropicClient", MockAnthropicClient
     )
-    monkeypatch.setattr(
-        "causaliq_knowledge.llm.gemini_client.GeminiConfig", MockGeminiConfig
-    )
-    monkeypatch.setattr(
-        "causaliq_knowledge.llm.GeminiConfig", MockGeminiConfig
-    )
-    monkeypatch.setattr(
-        "causaliq_knowledge.llm.ollama_client.OllamaClient", MockOllamaClient
-    )
-    monkeypatch.setattr(
-        "causaliq_knowledge.llm.OllamaClient", MockOllamaClient
-    )
 
     runner = CliRunner()
-    result = runner.invoke(cli, ["models"])
+    result = runner.invoke(cli, ["models", "anthropic"])
 
     assert result.exit_code == 0
     assert "ANTHROPIC_API_KEY not set" in result.output
@@ -499,11 +417,6 @@ def test_cli_models_anthropic_not_available(monkeypatch):
 
 # Test models command with Anthropic config raising ValueError
 def test_cli_models_anthropic_config_error(monkeypatch):
-    # Mock Groq to throw ValueError
-    class MockGroqConfig:
-        def __init__(self):
-            raise ValueError("GROQ_API_KEY not set")
-
     # Mock AnthropicConfig to throw ValueError (no API key set)
     class MockAnthropicConfig:
         def __init__(self):
@@ -511,24 +424,7 @@ def test_cli_models_anthropic_config_error(monkeypatch):
                 "ANTHROPIC_API_KEY environment variable is required"
             )
 
-    # Mock Gemini to throw ValueError
-    class MockGeminiConfig:
-        def __init__(self):
-            raise ValueError("GEMINI_API_KEY not set")
-
-    # Mock Ollama to throw ValueError
-    class MockOllamaClient:
-        def __init__(self, config):
-            pass
-
-        def list_models(self):
-            raise ValueError("Ollama not running")
-
-    # Patch at both source and __init__ levels for full coverage
-    monkeypatch.setattr(
-        "causaliq_knowledge.llm.groq_client.GroqConfig", MockGroqConfig
-    )
-    monkeypatch.setattr("causaliq_knowledge.llm.GroqConfig", MockGroqConfig)
+    # Only need to mock Anthropic since we filter to just anthropic provider
     monkeypatch.setattr(
         "causaliq_knowledge.llm.anthropic_client.AnthropicConfig",
         MockAnthropicConfig,
@@ -536,21 +432,9 @@ def test_cli_models_anthropic_config_error(monkeypatch):
     monkeypatch.setattr(
         "causaliq_knowledge.llm.AnthropicConfig", MockAnthropicConfig
     )
-    monkeypatch.setattr(
-        "causaliq_knowledge.llm.gemini_client.GeminiConfig", MockGeminiConfig
-    )
-    monkeypatch.setattr(
-        "causaliq_knowledge.llm.GeminiConfig", MockGeminiConfig
-    )
-    monkeypatch.setattr(
-        "causaliq_knowledge.llm.ollama_client.OllamaClient", MockOllamaClient
-    )
-    monkeypatch.setattr(
-        "causaliq_knowledge.llm.OllamaClient", MockOllamaClient
-    )
 
     runner = CliRunner()
-    result = runner.invoke(cli, ["models"])
+    result = runner.invoke(cli, ["models", "anthropic"])
 
     assert result.exit_code == 0
     assert (
@@ -558,18 +442,43 @@ def test_cli_models_anthropic_config_error(monkeypatch):
     )
 
 
+# Test models command with OpenAI available but is_available returns False
+def test_cli_models_openai_not_available(monkeypatch):
+    # Mock OpenAIConfig to not throw (so we can test is_available path)
+    class MockOpenAIConfig:
+        pass
+
+    # Mock OpenAI to be configured but is_available returns False
+    class MockOpenAIClient:
+        def __init__(self, config):
+            pass
+
+        def is_available(self):
+            return False
+
+    # Only need to mock OpenAI since we filter to just openai provider
+    monkeypatch.setattr(
+        "causaliq_knowledge.llm.openai_client.OpenAIConfig", MockOpenAIConfig
+    )
+    monkeypatch.setattr(
+        "causaliq_knowledge.llm.OpenAIConfig", MockOpenAIConfig
+    )
+    monkeypatch.setattr(
+        "causaliq_knowledge.llm.openai_client.OpenAIClient", MockOpenAIClient
+    )
+    monkeypatch.setattr(
+        "causaliq_knowledge.llm.OpenAIClient", MockOpenAIClient
+    )
+
+    runner = CliRunner()
+    result = runner.invoke(cli, ["models", "openai"])
+
+    assert result.exit_code == 0
+    assert "OPENAI_API_KEY not set" in result.output
+
+
 # Test models command with Ollama available but no models installed
 def test_cli_models_ollama_no_models(monkeypatch):
-    # Mock Groq to throw ValueError
-    class MockGroqConfig:
-        def __init__(self):
-            raise ValueError("GROQ_API_KEY not set")
-
-    # Mock Gemini to throw ValueError
-    class MockGeminiConfig:
-        def __init__(self):
-            raise ValueError("GEMINI_API_KEY not set")
-
     # Mock Ollama to return empty list
     class MockOllamaClient:
         def __init__(self, config):
@@ -578,17 +487,7 @@ def test_cli_models_ollama_no_models(monkeypatch):
         def list_models(self):
             return []  # No models installed
 
-    # Patch at both source and __init__ levels for full coverage
-    monkeypatch.setattr(
-        "causaliq_knowledge.llm.groq_client.GroqConfig", MockGroqConfig
-    )
-    monkeypatch.setattr("causaliq_knowledge.llm.GroqConfig", MockGroqConfig)
-    monkeypatch.setattr(
-        "causaliq_knowledge.llm.gemini_client.GeminiConfig", MockGeminiConfig
-    )
-    monkeypatch.setattr(
-        "causaliq_knowledge.llm.GeminiConfig", MockGeminiConfig
-    )
+    # Only need to mock Ollama since we filter to just ollama provider
     monkeypatch.setattr(
         "causaliq_knowledge.llm.ollama_client.OllamaClient", MockOllamaClient
     )
@@ -597,7 +496,7 @@ def test_cli_models_ollama_no_models(monkeypatch):
     )
 
     runner = CliRunner()
-    result = runner.invoke(cli, ["models"])
+    result = runner.invoke(cli, ["models", "ollama"])
 
     assert result.exit_code == 0
     assert "No models installed" in result.output
@@ -621,20 +520,7 @@ def test_cli_models_groq_success(monkeypatch):
         def list_models(self):
             return ["llama-3.1-8b-instant", "mixtral-8x7b"]
 
-    # Mock Gemini to throw ValueError
-    class MockGeminiConfig:
-        def __init__(self):
-            raise ValueError("GEMINI_API_KEY not set")
-
-    # Mock Ollama to throw ValueError
-    class MockOllamaClient:
-        def __init__(self, config):
-            pass
-
-        def list_models(self):
-            raise ValueError("Ollama not running")
-
-    # Patch at both source and __init__ levels for full coverage
+    # Only need to mock Groq since we filter to just groq provider
     monkeypatch.setattr(
         "causaliq_knowledge.llm.groq_client.GroqConfig", MockGroqConfig
     )
@@ -643,21 +529,9 @@ def test_cli_models_groq_success(monkeypatch):
         "causaliq_knowledge.llm.groq_client.GroqClient", MockGroqClient
     )
     monkeypatch.setattr("causaliq_knowledge.llm.GroqClient", MockGroqClient)
-    monkeypatch.setattr(
-        "causaliq_knowledge.llm.gemini_client.GeminiConfig", MockGeminiConfig
-    )
-    monkeypatch.setattr(
-        "causaliq_knowledge.llm.GeminiConfig", MockGeminiConfig
-    )
-    monkeypatch.setattr(
-        "causaliq_knowledge.llm.ollama_client.OllamaClient", MockOllamaClient
-    )
-    monkeypatch.setattr(
-        "causaliq_knowledge.llm.OllamaClient", MockOllamaClient
-    )
 
     runner = CliRunner()
-    result = runner.invoke(cli, ["models"])
+    result = runner.invoke(cli, ["models", "groq"])
 
     assert result.exit_code == 0
     assert "groq/llama-3.1-8b-instant" in result.output
@@ -669,11 +543,6 @@ def test_cli_models_groq_success(monkeypatch):
 
 # Test models command with Gemini available with models
 def test_cli_models_gemini_success(monkeypatch):
-    # Mock Groq to throw ValueError
-    class MockGroqConfig:
-        def __init__(self):
-            raise ValueError("GROQ_API_KEY not set")
-
     # Mock GeminiConfig to not throw
     class MockGeminiConfig:
         pass
@@ -689,19 +558,7 @@ def test_cli_models_gemini_success(monkeypatch):
         def list_models(self):
             return ["gemini-2.5-flash", "gemini-2.0-pro"]
 
-    # Mock Ollama to throw ValueError
-    class MockOllamaClient:
-        def __init__(self, config):
-            pass
-
-        def list_models(self):
-            raise ValueError("Ollama not running")
-
-    # Patch at both source and __init__ levels for full coverage
-    monkeypatch.setattr(
-        "causaliq_knowledge.llm.groq_client.GroqConfig", MockGroqConfig
-    )
-    monkeypatch.setattr("causaliq_knowledge.llm.GroqConfig", MockGroqConfig)
+    # Only need to mock Gemini since we filter to just gemini provider
     monkeypatch.setattr(
         "causaliq_knowledge.llm.gemini_client.GeminiConfig", MockGeminiConfig
     )
@@ -714,15 +571,9 @@ def test_cli_models_gemini_success(monkeypatch):
     monkeypatch.setattr(
         "causaliq_knowledge.llm.GeminiClient", MockGeminiClient
     )
-    monkeypatch.setattr(
-        "causaliq_knowledge.llm.ollama_client.OllamaClient", MockOllamaClient
-    )
-    monkeypatch.setattr(
-        "causaliq_knowledge.llm.OllamaClient", MockOllamaClient
-    )
 
     runner = CliRunner()
-    result = runner.invoke(cli, ["models"])
+    result = runner.invoke(cli, ["models", "gemini"])
 
     assert result.exit_code == 0
     assert "gemini/gemini-2.5-flash" in result.output
@@ -732,16 +583,6 @@ def test_cli_models_gemini_success(monkeypatch):
 
 # Test models command with Ollama available with models
 def test_cli_models_ollama_success(monkeypatch):
-    # Mock Groq to throw ValueError
-    class MockGroqConfig:
-        def __init__(self):
-            raise ValueError("GROQ_API_KEY not set")
-
-    # Mock Gemini to throw ValueError
-    class MockGeminiConfig:
-        def __init__(self):
-            raise ValueError("GEMINI_API_KEY not set")
-
     # Mock Ollama to return models successfully
     class MockOllamaClient:
         def __init__(self, config):
@@ -750,17 +591,7 @@ def test_cli_models_ollama_success(monkeypatch):
         def list_models(self):
             return ["llama3.2:1b", "mistral:7b"]
 
-    # Patch at both source and __init__ levels for full coverage
-    monkeypatch.setattr(
-        "causaliq_knowledge.llm.groq_client.GroqConfig", MockGroqConfig
-    )
-    monkeypatch.setattr("causaliq_knowledge.llm.GroqConfig", MockGroqConfig)
-    monkeypatch.setattr(
-        "causaliq_knowledge.llm.gemini_client.GeminiConfig", MockGeminiConfig
-    )
-    monkeypatch.setattr(
-        "causaliq_knowledge.llm.GeminiConfig", MockGeminiConfig
-    )
+    # Only need to mock Ollama since we filter to just ollama provider
     monkeypatch.setattr(
         "causaliq_knowledge.llm.ollama_client.OllamaClient", MockOllamaClient
     )
@@ -769,7 +600,7 @@ def test_cli_models_ollama_success(monkeypatch):
     )
 
     runner = CliRunner()
-    result = runner.invoke(cli, ["models"])
+    result = runner.invoke(cli, ["models", "ollama"])
 
     assert result.exit_code == 0
     assert "ollama/llama3.2:1b" in result.output
@@ -779,11 +610,6 @@ def test_cli_models_ollama_success(monkeypatch):
 
 # Test models command with Anthropic available with models
 def test_cli_models_anthropic_success(monkeypatch):
-    # Mock Groq to throw ValueError
-    class MockGroqConfig:
-        def __init__(self):
-            raise ValueError("GROQ_API_KEY not set")
-
     # Mock AnthropicConfig to not throw
     class MockAnthropicConfig:
         pass
@@ -799,24 +625,7 @@ def test_cli_models_anthropic_success(monkeypatch):
         def list_models(self):
             return ["claude-sonnet-4-20250514", "claude-3-5-sonnet-20241022"]
 
-    # Mock Gemini to throw ValueError
-    class MockGeminiConfig:
-        def __init__(self):
-            raise ValueError("GEMINI_API_KEY not set")
-
-    # Mock Ollama to throw ValueError
-    class MockOllamaClient:
-        def __init__(self, config):
-            pass
-
-        def list_models(self):
-            raise ValueError("Ollama not running")
-
-    # Patch at both source and __init__ levels for full coverage
-    monkeypatch.setattr(
-        "causaliq_knowledge.llm.groq_client.GroqConfig", MockGroqConfig
-    )
-    monkeypatch.setattr("causaliq_knowledge.llm.GroqConfig", MockGroqConfig)
+    # Only need to mock Anthropic since we filter to just anthropic provider
     monkeypatch.setattr(
         "causaliq_knowledge.llm.anthropic_client.AnthropicConfig",
         MockAnthropicConfig,
@@ -831,21 +640,9 @@ def test_cli_models_anthropic_success(monkeypatch):
     monkeypatch.setattr(
         "causaliq_knowledge.llm.AnthropicClient", MockAnthropicClient
     )
-    monkeypatch.setattr(
-        "causaliq_knowledge.llm.gemini_client.GeminiConfig", MockGeminiConfig
-    )
-    monkeypatch.setattr(
-        "causaliq_knowledge.llm.GeminiConfig", MockGeminiConfig
-    )
-    monkeypatch.setattr(
-        "causaliq_knowledge.llm.ollama_client.OllamaClient", MockOllamaClient
-    )
-    monkeypatch.setattr(
-        "causaliq_knowledge.llm.OllamaClient", MockOllamaClient
-    )
 
     runner = CliRunner()
-    result = runner.invoke(cli, ["models"])
+    result = runner.invoke(cli, ["models", "anthropic"])
 
     assert result.exit_code == 0
     assert "anthropic/claude-sonnet-4-20250514" in result.output
@@ -853,3 +650,58 @@ def test_cli_models_anthropic_success(monkeypatch):
     assert "[OK]" in result.output
     assert "2 models" in result.output
     assert "Default model:" in result.output
+
+
+# Test models command with OpenAI available with models
+def test_cli_models_openai_success(monkeypatch):
+    # Mock OpenAIConfig to not throw
+    class MockOpenAIConfig:
+        pass
+
+    # Mock OpenAI to return models successfully
+    class MockOpenAIClient:
+        def __init__(self, config):
+            pass
+
+        def is_available(self):
+            return True
+
+        def list_models(self):
+            return ["gpt-4o", "gpt-4o-mini"]
+
+    # Only need to mock OpenAI since we filter to just openai provider
+    monkeypatch.setattr(
+        "causaliq_knowledge.llm.openai_client.OpenAIConfig",
+        MockOpenAIConfig,
+    )
+    monkeypatch.setattr(
+        "causaliq_knowledge.llm.OpenAIConfig", MockOpenAIConfig
+    )
+    monkeypatch.setattr(
+        "causaliq_knowledge.llm.openai_client.OpenAIClient",
+        MockOpenAIClient,
+    )
+    monkeypatch.setattr(
+        "causaliq_knowledge.llm.OpenAIClient", MockOpenAIClient
+    )
+
+    runner = CliRunner()
+    result = runner.invoke(cli, ["models", "openai"])
+
+    assert result.exit_code == 0
+    assert "openai/gpt-4o" in result.output
+    assert "openai/gpt-4o-mini" in result.output
+    assert "[OK]" in result.output
+    assert "2 models" in result.output
+    assert "Default model:" in result.output
+
+
+# Test models command with invalid provider name
+def test_cli_models_invalid_provider():
+    runner = CliRunner()
+    result = runner.invoke(cli, ["models", "invalid_provider"])
+
+    assert result.exit_code == 1
+    assert "Unknown provider" in result.output
+    assert "invalid_provider" in result.output
+    assert "groq" in result.output  # Valid providers should be listed

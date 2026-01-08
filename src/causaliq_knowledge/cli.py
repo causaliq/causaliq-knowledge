@@ -150,12 +150,24 @@ def query_edge(
 
 
 @cli.command("models")
-def list_models() -> None:
+@click.argument("provider", required=False, default=None)
+def list_models(provider: Optional[str]) -> None:
     """List available LLM models from each provider.
 
     Queries each provider's API to show models accessible with your
     current configuration. Results are filtered by your API key's
     access level or locally installed models.
+
+    Optionally specify PROVIDER to list models from a single provider:
+    groq, anthropic, gemini, ollama, or openai.
+
+    Examples:
+
+        cqknow models              # List all providers
+
+        cqknow models groq         # List only Groq models
+
+        cqknow models openai       # List only OpenAI models
     """
     from typing import Callable, List, Optional, Tuple, TypedDict
 
@@ -168,6 +180,8 @@ def list_models() -> None:
         GroqConfig,
         OllamaClient,
         OllamaConfig,
+        OpenAIClient,
+        OpenAIConfig,
     )
 
     # Type for get_models functions
@@ -225,6 +239,17 @@ def list_models() -> None:
         except ValueError as e:
             return False, [], str(e)
 
+    def get_openai_models() -> Tuple[bool, List[str], Optional[str]]:
+        """Returns (available, models, error_msg)."""
+        try:
+            client = OpenAIClient(OpenAIConfig())
+            if not client.is_available():
+                return False, [], "OPENAI_API_KEY not set"
+            models = [f"openai/{m}" for m in client.list_models()]
+            return True, models, None
+        except ValueError as e:
+            return False, [], str(e)
+
     providers: List[ProviderInfo] = [
         {
             "name": "Groq",
@@ -254,48 +279,70 @@ def list_models() -> None:
             "url": "https://ollama.ai",
             "get_models": get_ollama_models,
         },
+        {
+            "name": "OpenAI",
+            "prefix": "openai/",
+            "env_var": "OPENAI_API_KEY",
+            "url": "https://platform.openai.com",
+            "get_models": get_openai_models,
+        },
     ]
+
+    # Filter providers if a specific one is requested
+    valid_provider_names = ["groq", "anthropic", "gemini", "ollama", "openai"]
+    if provider:
+        provider_lower = provider.lower()
+        if provider_lower not in valid_provider_names:
+            click.echo(
+                f"Unknown provider: {provider}. "
+                f"Valid options: {', '.join(valid_provider_names)}",
+                err=True,
+            )
+            sys.exit(1)
+        providers = [
+            p for p in providers if p["prefix"].rstrip("/") == provider_lower
+        ]
 
     click.echo("\nAvailable LLM Models:\n")
 
     any_available = False
-    for provider in providers:
-        available, models, error = provider["get_models"]()
+    for prov in providers:
+        available, models, error = prov["get_models"]()
 
         if available and models:
             any_available = True
             status = click.style("[OK]", fg="green")
             count = len(models)
-            click.echo(f"  {status} {provider['name']} ({count} models):")
+            click.echo(f"  {status} {prov['name']} ({count} models):")
             for m in models:
                 click.echo(f"      {m}")
         elif available and not models:
             status = click.style("[!]", fg="yellow")
-            click.echo(f"  {status} {provider['name']}:")
+            click.echo(f"  {status} {prov['name']}:")
             click.echo(f"      {error}")
         else:
             status = click.style("[X]", fg="red")
-            click.echo(f"  {status} {provider['name']}:")
+            click.echo(f"  {status} {prov['name']}:")
             click.echo(f"      {error}")
 
         click.echo()
 
     click.echo("Provider Setup:")
-    for provider in providers:
-        available, _, _ = provider["get_models"]()
-        if provider["env_var"]:
+    for prov in providers:
+        available, _, _ = prov["get_models"]()
+        if prov["env_var"]:
             status = "configured" if available else "not set"
             color = "green" if available else "yellow"
             click.echo(
-                f"  {provider['env_var']}: "
-                f"{click.style(status, fg=color)} - {provider['url']}"
+                f"  {prov['env_var']}: "
+                f"{click.style(status, fg=color)} - {prov['url']}"
             )
         else:
             status = "running" if available else "not running"
             color = "green" if available else "yellow"
             click.echo(
                 f"  Ollama server: "
-                f"{click.style(status, fg=color)} - {provider['url']}"
+                f"{click.style(status, fg=color)} - {prov['url']}"
             )
 
     click.echo()

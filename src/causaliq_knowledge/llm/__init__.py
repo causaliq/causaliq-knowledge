@@ -12,6 +12,7 @@ from causaliq_knowledge.llm.base_client import (
 from causaliq_knowledge.llm.gemini_client import GeminiClient, GeminiConfig
 from causaliq_knowledge.llm.groq_client import GroqClient, GroqConfig
 from causaliq_knowledge.llm.ollama_client import OllamaClient, OllamaConfig
+from causaliq_knowledge.llm.openai_client import OpenAIClient, OpenAIConfig
 from causaliq_knowledge.llm.prompts import EdgeQueryPrompt, parse_edge_response
 from causaliq_knowledge.llm.provider import (
     CONSENSUS_STRATEGIES,
@@ -40,6 +41,9 @@ __all__ = [
     # Ollama (local)
     "OllamaClient",
     "OllamaConfig",
+    # OpenAI
+    "OpenAIClient",
+    "OpenAIConfig",
     # Provider
     "LLMKnowledge",
     "highest_confidence",
