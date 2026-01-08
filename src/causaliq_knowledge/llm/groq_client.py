@@ -171,3 +171,53 @@ class GroqClient(BaseLLMClient):
     def call_count(self) -> int:
         """Return the number of API calls made."""
         return self._total_calls
+
+    def is_available(self) -> bool:
+        """Check if Groq API is available.
+
+        Returns:
+            True if GROQ_API_KEY is configured.
+        """
+        return bool(self.config.api_key)
+
+    def list_models(self) -> List[str]:
+        """List available models from Groq API.
+
+        Queries the Groq API to get models accessible with the current
+        API key. Filters to only include text generation models.
+
+        Returns:
+            List of model identifiers (e.g., ['llama-3.1-8b-instant', ...]).
+
+        Raises:
+            ValueError: If the API request fails.
+        """
+        try:
+            with httpx.Client(timeout=self.config.timeout) as client:
+                response = client.get(
+                    f"{self.BASE_URL}/models",
+                    headers={"Authorization": f"Bearer {self.config.api_key}"},
+                )
+                response.raise_for_status()
+                data = response.json()
+
+                # Filter and sort models
+                models = []
+                for model in data.get("data", []):
+                    model_id = model.get("id", "")
+                    # Skip whisper (audio), guard, and safeguard models
+                    if any(
+                        x in model_id.lower()
+                        for x in ["whisper", "guard", "embed"]
+                    ):
+                        continue
+                    models.append(model_id)
+
+                return sorted(models)
+
+        except httpx.HTTPStatusError as e:
+            raise ValueError(
+                f"Groq API error: {e.response.status_code} - {e.response.text}"
+            )
+        except Exception as e:
+            raise ValueError(f"Failed to list Groq models: {e}")

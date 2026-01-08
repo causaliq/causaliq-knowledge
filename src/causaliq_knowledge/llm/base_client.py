@@ -181,6 +181,35 @@ class BaseLLMClient(ABC):
         """
         pass
 
+    @abstractmethod
+    def is_available(self) -> bool:
+        """Check if the LLM provider is available and configured.
+
+        This method checks whether the client can make API calls:
+        - For cloud providers: checks if API key is set
+        - For local providers: checks if server is running
+
+        Returns:
+            True if the provider is available and ready for requests.
+        """
+        pass
+
+    @abstractmethod
+    def list_models(self) -> List[str]:
+        """List available models from the provider.
+
+        Queries the provider's API to get the list of models accessible
+        with the current API key or configuration. Results are filtered
+        by the user's subscription/access level.
+
+        Returns:
+            List of model identifiers available for use.
+
+        Raises:
+            ValueError: If the API request fails.
+        """
+        pass
+
     @property
     def model_name(self) -> str:
         """Return the model name being used.

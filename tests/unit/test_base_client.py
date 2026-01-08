@@ -133,6 +133,8 @@ def _create_mock_client_class():
             self.config = config
             self._calls = 0
             self._response_content = "Mock response"
+            self._available = True
+            self._models = ["model-a", "model-b"]
 
         @property
         def provider_name(self) -> str:
@@ -150,6 +152,12 @@ def _create_mock_client_class():
         @property
         def call_count(self) -> int:
             return self._calls
+
+        def is_available(self) -> bool:
+            return self._available
+
+        def list_models(self) -> List[str]:
+            return self._models
 
     return MockClient
 
@@ -189,6 +197,30 @@ def test_base_llm_client_complete_json():
     assert parsed == {"exists": True, "confidence": 0.9}
     assert response.content == '{"exists": true, "confidence": 0.9}'
     assert client.call_count == 1
+
+
+# Test that is_available method works on mock implementation
+def test_base_llm_client_is_available():
+    MockClient = _create_mock_client_class()
+    config = LLMConfig(model="mock-model")
+    client = MockClient(config)
+
+    assert client.is_available() is True
+    client._available = False
+    assert client.is_available() is False
+
+
+# Test that list_models method works on mock implementation
+def test_base_llm_client_list_models():
+    MockClient = _create_mock_client_class()
+    config = LLMConfig(model="mock-model")
+    client = MockClient(config)
+
+    models = client.list_models()
+    assert models == ["model-a", "model-b"]
+
+    client._models = ["new-model"]
+    assert client.list_models() == ["new-model"]
 
 
 # --- Inheritance Verification Tests ---

@@ -53,6 +53,20 @@ def test_groq_client_provider_name(monkeypatch):
     assert client.provider_name == "groq"
 
 
+# Test is_available returns True when API key is set
+def test_groq_client_is_available_with_key(monkeypatch):
+    monkeypatch.setenv("GROQ_API_KEY", "test-key")
+    client = GroqClient()
+    assert client.is_available() is True
+
+
+# Test is_available returns True with explicit API key
+def test_groq_client_is_available_with_explicit_key():
+    config = GroqConfig(api_key="explicit-key")
+    client = GroqClient(config)
+    assert client.is_available() is True
+
+
 # Test basic response creation
 def test_groq_response_basic():
     response = LLMResponse(
@@ -288,3 +302,100 @@ def test_groq_client_complete_json(monkeypatch):
 
     assert parsed_json == {"exists": True, "confidence": 0.8}
     assert isinstance(response, LLMResponse)
+
+
+# Test list_models returns available models
+def test_groq_client_list_models_success(monkeypatch):
+    mock_response_data = {
+        "data": [
+            {"id": "llama-3.1-8b-instant"},
+            {"id": "llama-3.3-70b-versatile"},
+            {"id": "whisper-large-v3"},  # Should be filtered
+            {"id": "llama-guard-4"},  # Should be filtered
+        ]
+    }
+
+    class MockResponse:
+        def json(self):
+            return mock_response_data
+
+        def raise_for_status(self):
+            pass
+
+    class MockClient:
+        def get(self, *args, **kwargs):
+            return MockResponse()
+
+        def __enter__(self):
+            return self
+
+        def __exit__(self, *args):
+            pass
+
+    monkeypatch.setattr("httpx.Client", lambda *args, **kwargs: MockClient())
+
+    config = GroqConfig(api_key="test-key")
+    client = GroqClient(config)
+
+    models = client.list_models()
+
+    # Should filter out whisper and guard models
+    assert "llama-3.1-8b-instant" in models
+    assert "llama-3.3-70b-versatile" in models
+    assert "whisper-large-v3" not in models
+    assert "llama-guard-4" not in models
+
+
+# Test list_models handles API error
+def test_groq_client_list_models_error(monkeypatch):
+    import httpx
+
+    class MockResponse:
+        status_code = 401
+        text = "Unauthorized"
+
+        def raise_for_status(self):
+            raise httpx.HTTPStatusError(
+                "Unauthorized",
+                request=httpx.Request("GET", "http://test"),
+                response=self,
+            )
+
+    class MockClient:
+        def get(self, *args, **kwargs):
+            return MockResponse()
+
+        def __enter__(self):
+            return self
+
+        def __exit__(self, *args):
+            pass
+
+    monkeypatch.setattr("httpx.Client", lambda *args, **kwargs: MockClient())
+
+    config = GroqConfig(api_key="test-key")
+    client = GroqClient(config)
+
+    with pytest.raises(ValueError, match="Groq API error"):
+        client.list_models()
+
+
+# Test list_models handles generic exception
+def test_groq_client_list_models_generic_exception(monkeypatch):
+    class MockClient:
+        def get(self, *args, **kwargs):
+            raise RuntimeError("Network failure")
+
+        def __enter__(self):
+            return self
+
+        def __exit__(self, *args):
+            pass
+
+    monkeypatch.setattr("httpx.Client", lambda *args, **kwargs: MockClient())
+
+    config = GroqConfig(api_key="test-key")
+    client = GroqClient(config)
+
+    with pytest.raises(ValueError, match="Failed to list Groq models"):
+        client.list_models()

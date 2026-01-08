@@ -6,6 +6,7 @@ from typing import Any, Dict, Optional, Union
 from causaliq_knowledge.base import KnowledgeProvider
 from causaliq_knowledge.llm.gemini_client import GeminiClient, GeminiConfig
 from causaliq_knowledge.llm.groq_client import GroqClient, GroqConfig
+from causaliq_knowledge.llm.ollama_client import OllamaClient, OllamaConfig
 from causaliq_knowledge.llm.prompts import EdgeQueryPrompt, parse_edge_response
 from causaliq_knowledge.models import EdgeDirection, EdgeKnowledge
 
@@ -164,6 +165,7 @@ class LLMKnowledge(KnowledgeProvider):
             models: List of model identifiers. Supported formats:
                 - "groq/llama-3.1-8b-instant" (Groq API)
                 - "gemini/gemini-2.5-flash" (Google Gemini API)
+                - "ollama/llama3.2:1b" (Local Ollama server)
                 Defaults to ["groq/llama-3.1-8b-instant"].
             consensus_strategy: How to combine multi-model responses.
                 Options: "weighted_vote", "highest_confidence".
@@ -190,7 +192,9 @@ class LLMKnowledge(KnowledgeProvider):
         self._consensus_fn = CONSENSUS_STRATEGIES[consensus_strategy]
 
         # Create a client for each model - use direct APIs only
-        self._clients: dict[str, Union[GroqClient, GeminiClient]] = {}
+        self._clients: dict[
+            str, Union[GroqClient, GeminiClient, OllamaClient]
+        ] = {}
         for model in models:
             if model.startswith("groq/"):
                 # Use direct Groq client - more reliable than litellm
@@ -212,9 +216,19 @@ class LLMKnowledge(KnowledgeProvider):
                     timeout=timeout,
                 )
                 self._clients[model] = GeminiClient(config=gemini_config)
+            elif model.startswith("ollama/"):
+                # Use local Ollama client for running models locally
+                ollama_model = model.split("/", 1)[1]  # Extract model name
+                ollama_config = OllamaConfig(
+                    model=ollama_model,
+                    temperature=temperature,
+                    max_tokens=max_tokens,
+                    timeout=timeout,
+                )
+                self._clients[model] = OllamaClient(config=ollama_config)
             else:
                 # Only direct API clients are supported
-                supported_prefixes = ["groq/", "gemini/"]
+                supported_prefixes = ["groq/", "gemini/", "ollama/"]
                 raise ValueError(
                     f"Model '{model}' not supported. "
                     f"Supported prefixes: {supported_prefixes}."
@@ -262,35 +276,17 @@ class LLMKnowledge(KnowledgeProvider):
         responses: list[EdgeKnowledge] = []
         for model, client in self._clients.items():
             try:
-                if isinstance(client, GroqClient):
-                    # Direct Groq API call
-                    messages = []
-                    if system_prompt:
-                        messages.append(
-                            {"role": "system", "content": system_prompt}
-                        )
-                    messages.append({"role": "user", "content": user_prompt})
-
-                    json_data, _ = client.complete_json(messages)
-                    knowledge = parse_edge_response(json_data, model=model)
-                    responses.append(knowledge)
-                elif isinstance(client, GeminiClient):
-                    # Direct Gemini API call
-                    messages = []
-                    if system_prompt:
-                        messages.append(
-                            {"role": "system", "content": system_prompt}
-                        )
-                    messages.append({"role": "user", "content": user_prompt})
-
-                    json_data, _ = client.complete_json(messages)
-                    knowledge = parse_edge_response(json_data, model=model)
-                    responses.append(knowledge)
-                else:
-                    # Should never reach here due to constructor validation
-                    raise ValueError(
-                        f"Unsupported client type for model {model}"
+                # All clients implement BaseLLMClient interface
+                messages = []
+                if system_prompt:
+                    messages.append(
+                        {"role": "system", "content": system_prompt}
                     )
+                messages.append({"role": "user", "content": user_prompt})
+
+                json_data, _ = client.complete_json(messages)
+                knowledge = parse_edge_response(json_data, model=model)
+                responses.append(knowledge)
             except Exception as e:
                 # On error, add uncertain response
                 responses.append(
@@ -314,21 +310,11 @@ class LLMKnowledge(KnowledgeProvider):
         per_model: Dict[str, Dict[str, Any]] = {}
 
         for model, client in self._clients.items():
-            if isinstance(client, GroqClient):
-                # Direct Groq client stats
-                stats: Dict[str, Any] = {
-                    "call_count": client.call_count,
-                    "total_cost": 0.0,  # Free tier
-                }
-            elif isinstance(client, GeminiClient):
-                # Direct Gemini client stats
-                stats = {
-                    "call_count": client.call_count,
-                    "total_cost": 0.0,  # Free tier
-                }
-            else:
-                # Should never reach here due to constructor validation
-                raise ValueError(f"Unsupported client type for model {model}")
+            # All clients implement BaseLLMClient with call_count property
+            stats: Dict[str, Any] = {
+                "call_count": client.call_count,
+                "total_cost": 0.0,  # All current providers are free tier
+            }
 
             total_calls += stats["call_count"]
             total_cost += stats["total_cost"]

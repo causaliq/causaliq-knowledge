@@ -151,50 +151,142 @@ def query_edge(
 
 @cli.command("models")
 def list_models() -> None:
-    """List supported LLM models.
+    """List available LLM models from each provider.
 
-    These are model identifiers that work with our direct API clients.
-    Only models with direct API support are listed.
+    Queries each provider's API to show models accessible with your
+    current configuration. Results are filtered by your API key's
+    access level or locally installed models.
     """
-    models = [
-        (
-            "Groq (Fast, Free Tier Available)",
-            [
-                "groq/llama-3.1-8b-instant",
-                "groq/llama-3.1-70b-versatile",
-                "groq/llama-3.2-1b-preview",
-                "groq/llama-3.2-3b-preview",
-                "groq/mixtral-8x7b-32768",
-                "groq/gemma-7b-it",
-                "groq/gemma2-9b-it",
-            ],
-        ),
-        (
-            "Google Gemini (Free Tier Available)",
-            [
-                "gemini/gemini-2.5-flash",
-                "gemini/gemini-1.5-pro",
-                "gemini/gemini-1.5-flash",
-                "gemini/gemini-1.5-flash-8b",
-            ],
-        ),
+    from typing import Callable, List, Optional, Tuple, TypedDict
+
+    from causaliq_knowledge.llm import (
+        GeminiClient,
+        GeminiConfig,
+        GroqClient,
+        GroqConfig,
+        OllamaClient,
+        OllamaConfig,
+    )
+
+    # Type for get_models functions
+    GetModelsFunc = Callable[[], Tuple[bool, List[str], Optional[str]]]
+
+    class ProviderInfo(TypedDict):
+        name: str
+        prefix: str
+        env_var: Optional[str]
+        url: str
+        get_models: GetModelsFunc
+
+    def get_groq_models() -> Tuple[bool, List[str], Optional[str]]:
+        """Returns (available, models, error_msg)."""
+        try:
+            client = GroqClient(GroqConfig())
+            if not client.is_available():
+                return False, [], "GROQ_API_KEY not set"
+            models = [f"groq/{m}" for m in client.list_models()]
+            return True, models, None
+        except ValueError as e:
+            return False, [], str(e)
+
+    def get_gemini_models() -> Tuple[bool, List[str], Optional[str]]:
+        """Returns (available, models, error_msg)."""
+        try:
+            client = GeminiClient(GeminiConfig())
+            if not client.is_available():
+                return False, [], "GEMINI_API_KEY not set"
+            models = [f"gemini/{m}" for m in client.list_models()]
+            return True, models, None
+        except ValueError as e:
+            return False, [], str(e)
+
+    def get_ollama_models() -> Tuple[bool, List[str], Optional[str]]:
+        """Returns (available, models, error_msg)."""
+        try:
+            client = OllamaClient(OllamaConfig())
+            models = [f"ollama/{m}" for m in client.list_models()]
+            if not models:
+                msg = "No models installed. Run: ollama pull <model>"
+                return True, [], msg
+            return True, models, None
+        except ValueError as e:
+            return False, [], str(e)
+
+    providers: List[ProviderInfo] = [
+        {
+            "name": "Groq",
+            "prefix": "groq/",
+            "env_var": "GROQ_API_KEY",
+            "url": "https://console.groq.com",
+            "get_models": get_groq_models,
+        },
+        {
+            "name": "Gemini",
+            "prefix": "gemini/",
+            "env_var": "GEMINI_API_KEY",
+            "url": "https://aistudio.google.com",
+            "get_models": get_gemini_models,
+        },
+        {
+            "name": "Ollama (Local)",
+            "prefix": "ollama/",
+            "env_var": None,
+            "url": "https://ollama.ai",
+            "get_models": get_ollama_models,
+        },
     ]
 
-    click.echo("\nSupported LLM Models (Direct API Access):\n")
-    for provider, model_list in models:
-        click.echo(f"  {provider}:")
-        for m in model_list:
-            click.echo(f"    - {m}")
+    click.echo("\nAvailable LLM Models:\n")
+
+    any_available = False
+    for provider in providers:
+        available, models, error = provider["get_models"]()
+
+        if available and models:
+            any_available = True
+            status = click.style("[OK]", fg="green")
+            count = len(models)
+            click.echo(f"  {status} {provider['name']} ({count} models):")
+            for m in models:
+                click.echo(f"      {m}")
+        elif available and not models:
+            status = click.style("[!]", fg="yellow")
+            click.echo(f"  {status} {provider['name']}:")
+            click.echo(f"      {error}")
+        else:
+            status = click.style("[X]", fg="red")
+            click.echo(f"  {status} {provider['name']}:")
+            click.echo(f"      {error}")
+
+        click.echo()
+
+    click.echo("Provider Setup:")
+    for provider in providers:
+        available, _, _ = provider["get_models"]()
+        if provider["env_var"]:
+            status = "configured" if available else "not set"
+            color = "green" if available else "yellow"
+            click.echo(
+                f"  {provider['env_var']}: "
+                f"{click.style(status, fg=color)} - {provider['url']}"
+            )
+        else:
+            status = "running" if available else "not running"
+            color = "green" if available else "yellow"
+            click.echo(
+                f"  Ollama server: "
+                f"{click.style(status, fg=color)} - {provider['url']}"
+            )
+
     click.echo()
-    click.echo("Required API Keys:")
     click.echo(
-        "  GROQ_API_KEY      - Get free API key at https://console.groq.com"
-    )
-    click.echo(
-        "  GEMINI_API_KEY    - Get free API key at https://aistudio.google.com"
+        click.style("Note: ", fg="yellow")
+        + "Some models may require a paid plan. "
+        + "Free tier availability varies by provider."
     )
     click.echo()
-    click.echo("Default model: groq/llama-3.1-8b-instant")
+    if any_available:
+        click.echo("Default model: groq/llama-3.1-8b-instant")
     click.echo()
 
 

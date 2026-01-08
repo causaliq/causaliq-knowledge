@@ -282,6 +282,26 @@ def test_llm_knowledge_custom_models(monkeypatch):
     assert "gemini/gemini-2.5-flash" in provider.name
 
 
+# Test LLMKnowledge with Ollama model creates OllamaClient.
+def test_llm_knowledge_ollama_model(monkeypatch):
+    from causaliq_knowledge.llm.ollama_client import OllamaClient
+
+    provider = LLMKnowledge(
+        models=["ollama/llama3.2:1b"],
+        timeout=120.0,
+    )
+
+    assert provider.models == ["ollama/llama3.2:1b"]
+    assert "ollama/llama3.2:1b" in provider.name
+    assert "ollama/llama3.2:1b" in provider._clients
+    assert isinstance(provider._clients["ollama/llama3.2:1b"], OllamaClient)
+
+    # Verify config was passed correctly
+    client = provider._clients["ollama/llama3.2:1b"]
+    assert client.config.model == "llama3.2:1b"
+    assert client.config.timeout == 120.0
+
+
 # Test LLMKnowledge with custom consensus strategy.
 def test_llm_knowledge_custom_strategy(monkeypatch):
     monkeypatch.setenv("GROQ_API_KEY", "test-key")
@@ -407,25 +427,25 @@ def test_llm_knowledge_query_edge_handles_error(monkeypatch):
     assert "API Error" in result.reasoning
 
 
-# Test unsupported client type error in query_edge
-def test_llm_knowledge_query_edge_unsupported_client(monkeypatch):
+# Test client without complete_json raises graceful error in query_edge
+def test_llm_knowledge_query_edge_invalid_client(monkeypatch):
     # Mock environment for API keys
     monkeypatch.setenv("GROQ_API_KEY", "test-key")
     provider = LLMKnowledge(models=["groq/llama-3.1-8b-instant"])
 
-    # Create a mock client that's not GroqClient or GeminiClient
-    class UnsupportedClient:
+    # Create a mock client that doesn't implement BaseLLMClient interface
+    class InvalidClient:
         pass
 
-    # Replace the client with an unsupported type after construction
-    provider._clients["groq/llama-3.1-8b-instant"] = UnsupportedClient()
+    # Replace the client with an invalid type after construction
+    provider._clients["groq/llama-3.1-8b-instant"] = InvalidClient()
 
     result = provider.query_edge("X", "Y")
 
     # Should return uncertain response with error message
     assert result.exists is None
     assert result.confidence == 0.0
-    assert "Unsupported client type" in result.reasoning
+    assert "Error querying groq/llama-3.1-8b-instant" in result.reasoning
 
 
 # Test LLMKnowledge query_edge multi-model consensus.
@@ -504,20 +524,21 @@ def test_llm_knowledge_query_edge_highest_confidence(monkeypatch):
     assert result.confidence == 0.95
 
 
-# Test unsupported client type error in get_stats
-def test_llm_knowledge_get_stats_unsupported_client(monkeypatch):
+# Test client without call_count raises error in get_stats
+def test_llm_knowledge_get_stats_invalid_client(monkeypatch):
     # Mock environment for API keys
     monkeypatch.setenv("GROQ_API_KEY", "test-key")
     provider = LLMKnowledge(models=["groq/llama-3.1-8b-instant"])
 
-    # Create a mock client that's not GroqClient or GeminiClient
-    class UnsupportedClient:
+    # Create a mock client that doesn't implement BaseLLMClient interface
+    class InvalidClient:
         pass
 
-    # Replace the client with an unsupported type after construction
-    provider._clients["groq/llama-3.1-8b-instant"] = UnsupportedClient()
+    # Replace the client with an invalid type after construction
+    provider._clients["groq/llama-3.1-8b-instant"] = InvalidClient()
 
-    with pytest.raises(ValueError, match="Unsupported client type"):
+    # Should raise AttributeError since client lacks call_count
+    with pytest.raises(AttributeError):
         provider.get_stats()
 
 
@@ -529,21 +550,22 @@ def test_llm_knowledge_unsupported_model():
     assert "Model 'unsupported/model' not supported" in str(exc_info.value)
     assert "groq/" in str(exc_info.value)
     assert "gemini/" in str(exc_info.value)
+    assert "ollama/" in str(exc_info.value)
 
 
-def test_llm_knowledge_unsupported_client_in_query_edge(monkeypatch):
-    """Test that query_edge handles unsupported client type gracefully."""
+def test_llm_knowledge_invalid_client_in_query_edge(monkeypatch):
+    """Test that query_edge handles invalid client type gracefully."""
     # Mock environment for API keys
     monkeypatch.setenv("GROQ_API_KEY", "test-key")
 
     # Create a provider with a valid model
     provider = LLMKnowledge(models=["groq/llama-3.1-8b-instant"])
 
-    # Replace the client with an unsupported mock object
-    class UnsupportedClient:
+    # Replace the client with an invalid mock object
+    class InvalidClient:
         pass
 
-    provider._clients["groq/llama-3.1-8b-instant"] = UnsupportedClient()
+    provider._clients["groq/llama-3.1-8b-instant"] = InvalidClient()
 
     # Should return uncertain response due to exception handling
     result = provider.query_edge("A", "B")
@@ -551,22 +573,20 @@ def test_llm_knowledge_unsupported_client_in_query_edge(monkeypatch):
     assert "Error querying groq/llama-3.1-8b-instant" in result.reasoning
 
 
-def test_llm_knowledge_unsupported_client_in_get_stats(monkeypatch):
-    """Test that get_stats raises error for unsupported client type."""
+def test_llm_knowledge_invalid_client_in_get_stats(monkeypatch):
+    """Test that get_stats raises error for invalid client type."""
     # Mock environment for API keys
     monkeypatch.setenv("GROQ_API_KEY", "test-key")
 
     # Create a provider with a valid model
     provider = LLMKnowledge(models=["groq/llama-3.1-8b-instant"])
 
-    # Replace the client with an unsupported mock object
-    class UnsupportedClient:
+    # Replace the client with an invalid mock object
+    class InvalidClient:
         pass
 
-    provider._clients["groq/llama-3.1-8b-instant"] = UnsupportedClient()
+    provider._clients["groq/llama-3.1-8b-instant"] = InvalidClient()
 
-    with pytest.raises(
-        ValueError,
-        match="Unsupported client type for model groq/llama-3.1-8b-instant",
-    ):
+    # Should raise AttributeError since client lacks call_count
+    with pytest.raises(AttributeError):
         provider.get_stats()

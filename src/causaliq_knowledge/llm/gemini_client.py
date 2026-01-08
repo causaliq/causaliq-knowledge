@@ -228,3 +228,54 @@ class GeminiClient(BaseLLMClient):
     def call_count(self) -> int:
         """Return the number of API calls made."""
         return self._total_calls
+
+    def is_available(self) -> bool:
+        """Check if Gemini API is available.
+
+        Returns:
+            True if GEMINI_API_KEY is configured.
+        """
+        return bool(self.config.api_key)
+
+    def list_models(self) -> List[str]:
+        """List available models from Gemini API.
+
+        Queries the Gemini API to get models accessible with the current
+        API key. Filters to only include models that support generateContent.
+
+        Returns:
+            List of model identifiers (e.g., ['gemini-2.5-flash', ...]).
+
+        Raises:
+            ValueError: If the API request fails.
+        """
+        try:
+            with httpx.Client(timeout=self.config.timeout) as client:
+                response = client.get(
+                    f"{self.BASE_URL}?key={self.config.api_key}",
+                )
+                response.raise_for_status()
+                data = response.json()
+
+                # Filter to models that support text generation
+                models = []
+                for model in data.get("models", []):
+                    methods = model.get("supportedGenerationMethods", [])
+                    if "generateContent" not in methods:
+                        continue
+                    # Extract model name (remove 'models/' prefix)
+                    name = model.get("name", "").replace("models/", "")
+                    # Skip embedding and TTS models
+                    if any(x in name.lower() for x in ["embed", "tts", "aqa"]):
+                        continue
+                    models.append(name)
+
+                return sorted(models)
+
+        except httpx.HTTPStatusError as e:
+            raise ValueError(
+                f"Gemini API error: {e.response.status_code} - "
+                f"{e.response.text}"
+            )
+        except Exception as e:
+            raise ValueError(f"Failed to list Gemini models: {e}")

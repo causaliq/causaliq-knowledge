@@ -52,17 +52,41 @@ def test_cli_query_help():
 
 
 # Test models command lists models.
-def test_cli_models():
+def test_cli_models(monkeypatch):
+    # Ensure no API keys are set so we test the unavailable path
+    monkeypatch.delenv("GROQ_API_KEY", raising=False)
+    monkeypatch.delenv("GEMINI_API_KEY", raising=False)
+
+    # Mock httpx to avoid real network calls
+    import httpx
+
+    def mock_client(*args, **kwargs):
+        class MockClient:
+            def __enter__(self):
+                return self
+
+            def __exit__(self, *args):
+                pass
+
+            def get(self, *args, **kwargs):
+                raise httpx.ConnectError("Mocked connection error")
+
+        return MockClient()
+
+    monkeypatch.setattr("httpx.Client", mock_client)
+
     runner = CliRunner()
     result = runner.invoke(cli, ["models"])
 
     assert result.exit_code == 0
     assert "Groq" in result.output
-    assert "groq/llama-3.1-8b-instant" in result.output
     assert "Gemini" in result.output
-    assert "gemini/gemini-2.5-flash" in result.output
+    assert "Ollama" in result.output
     assert "GROQ_API_KEY" in result.output
     assert "GEMINI_API_KEY" in result.output
+    assert "Ollama server" in result.output
+    # When API keys not set, should show "not set" message
+    assert "not set" in result.output
 
 
 # Test query command with mocked provider.
@@ -286,3 +310,336 @@ def test_cli_query_no_edge(monkeypatch):
     assert result.exit_code == 0
     assert "No" in result.output
     assert "N/A" in result.output
+
+
+# Test models command with Groq available but is_available returns False
+def test_cli_models_groq_not_available(monkeypatch):
+    # Mock GroqConfig to not throw (so we can test is_available path)
+    class MockGroqConfig:
+        pass
+
+    # Mock Groq to be configured but is_available returns False
+    class MockGroqClient:
+        def __init__(self, config):
+            pass
+
+        def is_available(self):
+            return False
+
+    # Mock Gemini to throw ValueError
+    class MockGeminiConfig:
+        def __init__(self):
+            raise ValueError("GEMINI_API_KEY not set")
+
+    # Mock Ollama to throw ValueError
+    class MockOllamaClient:
+        def __init__(self, config):
+            pass
+
+        def list_models(self):
+            raise ValueError("Ollama not running")
+
+    # Patch at both source and __init__ levels for full coverage
+    monkeypatch.setattr(
+        "causaliq_knowledge.llm.groq_client.GroqConfig", MockGroqConfig
+    )
+    monkeypatch.setattr("causaliq_knowledge.llm.GroqConfig", MockGroqConfig)
+    monkeypatch.setattr(
+        "causaliq_knowledge.llm.groq_client.GroqClient", MockGroqClient
+    )
+    monkeypatch.setattr("causaliq_knowledge.llm.GroqClient", MockGroqClient)
+    monkeypatch.setattr(
+        "causaliq_knowledge.llm.gemini_client.GeminiConfig", MockGeminiConfig
+    )
+    monkeypatch.setattr(
+        "causaliq_knowledge.llm.GeminiConfig", MockGeminiConfig
+    )
+    monkeypatch.setattr(
+        "causaliq_knowledge.llm.ollama_client.OllamaClient", MockOllamaClient
+    )
+    monkeypatch.setattr(
+        "causaliq_knowledge.llm.OllamaClient", MockOllamaClient
+    )
+
+    runner = CliRunner()
+    result = runner.invoke(cli, ["models"])
+
+    assert result.exit_code == 0
+    assert "GROQ_API_KEY not set" in result.output
+
+
+# Test models command with Gemini available but is_available returns False
+def test_cli_models_gemini_not_available(monkeypatch):
+    # Mock Groq to throw ValueError
+    class MockGroqConfig:
+        def __init__(self):
+            raise ValueError("GROQ_API_KEY not set")
+
+    # Mock GeminiConfig to not throw (so we can test is_available path)
+    class MockGeminiConfig:
+        pass
+
+    # Mock Gemini to be configured but is_available returns False
+    class MockGeminiClient:
+        def __init__(self, config):
+            pass
+
+        def is_available(self):
+            return False
+
+    # Mock Ollama to throw ValueError
+    class MockOllamaClient:
+        def __init__(self, config):
+            pass
+
+        def list_models(self):
+            raise ValueError("Ollama not running")
+
+    # Patch at both source and __init__ levels for full coverage
+    monkeypatch.setattr(
+        "causaliq_knowledge.llm.groq_client.GroqConfig", MockGroqConfig
+    )
+    monkeypatch.setattr("causaliq_knowledge.llm.GroqConfig", MockGroqConfig)
+    monkeypatch.setattr(
+        "causaliq_knowledge.llm.gemini_client.GeminiConfig", MockGeminiConfig
+    )
+    monkeypatch.setattr(
+        "causaliq_knowledge.llm.GeminiConfig", MockGeminiConfig
+    )
+    monkeypatch.setattr(
+        "causaliq_knowledge.llm.gemini_client.GeminiClient", MockGeminiClient
+    )
+    monkeypatch.setattr(
+        "causaliq_knowledge.llm.GeminiClient", MockGeminiClient
+    )
+    monkeypatch.setattr(
+        "causaliq_knowledge.llm.ollama_client.OllamaClient", MockOllamaClient
+    )
+    monkeypatch.setattr(
+        "causaliq_knowledge.llm.OllamaClient", MockOllamaClient
+    )
+
+    runner = CliRunner()
+    result = runner.invoke(cli, ["models"])
+
+    assert result.exit_code == 0
+    assert "GEMINI_API_KEY not set" in result.output
+
+
+# Test models command with Ollama available but no models installed
+def test_cli_models_ollama_no_models(monkeypatch):
+    # Mock Groq to throw ValueError
+    class MockGroqConfig:
+        def __init__(self):
+            raise ValueError("GROQ_API_KEY not set")
+
+    # Mock Gemini to throw ValueError
+    class MockGeminiConfig:
+        def __init__(self):
+            raise ValueError("GEMINI_API_KEY not set")
+
+    # Mock Ollama to return empty list
+    class MockOllamaClient:
+        def __init__(self, config):
+            pass
+
+        def list_models(self):
+            return []  # No models installed
+
+    # Patch at both source and __init__ levels for full coverage
+    monkeypatch.setattr(
+        "causaliq_knowledge.llm.groq_client.GroqConfig", MockGroqConfig
+    )
+    monkeypatch.setattr("causaliq_knowledge.llm.GroqConfig", MockGroqConfig)
+    monkeypatch.setattr(
+        "causaliq_knowledge.llm.gemini_client.GeminiConfig", MockGeminiConfig
+    )
+    monkeypatch.setattr(
+        "causaliq_knowledge.llm.GeminiConfig", MockGeminiConfig
+    )
+    monkeypatch.setattr(
+        "causaliq_knowledge.llm.ollama_client.OllamaClient", MockOllamaClient
+    )
+    monkeypatch.setattr(
+        "causaliq_knowledge.llm.OllamaClient", MockOllamaClient
+    )
+
+    runner = CliRunner()
+    result = runner.invoke(cli, ["models"])
+
+    assert result.exit_code == 0
+    assert "No models installed" in result.output
+    assert "ollama pull" in result.output
+
+
+# Test models command with successful provider (Groq available with models)
+def test_cli_models_groq_success(monkeypatch):
+    # Mock GroqConfig to not throw
+    class MockGroqConfig:
+        pass
+
+    # Mock Groq to return models successfully
+    class MockGroqClient:
+        def __init__(self, config):
+            pass
+
+        def is_available(self):
+            return True
+
+        def list_models(self):
+            return ["llama-3.1-8b-instant", "mixtral-8x7b"]
+
+    # Mock Gemini to throw ValueError
+    class MockGeminiConfig:
+        def __init__(self):
+            raise ValueError("GEMINI_API_KEY not set")
+
+    # Mock Ollama to throw ValueError
+    class MockOllamaClient:
+        def __init__(self, config):
+            pass
+
+        def list_models(self):
+            raise ValueError("Ollama not running")
+
+    # Patch at both source and __init__ levels for full coverage
+    monkeypatch.setattr(
+        "causaliq_knowledge.llm.groq_client.GroqConfig", MockGroqConfig
+    )
+    monkeypatch.setattr("causaliq_knowledge.llm.GroqConfig", MockGroqConfig)
+    monkeypatch.setattr(
+        "causaliq_knowledge.llm.groq_client.GroqClient", MockGroqClient
+    )
+    monkeypatch.setattr("causaliq_knowledge.llm.GroqClient", MockGroqClient)
+    monkeypatch.setattr(
+        "causaliq_knowledge.llm.gemini_client.GeminiConfig", MockGeminiConfig
+    )
+    monkeypatch.setattr(
+        "causaliq_knowledge.llm.GeminiConfig", MockGeminiConfig
+    )
+    monkeypatch.setattr(
+        "causaliq_knowledge.llm.ollama_client.OllamaClient", MockOllamaClient
+    )
+    monkeypatch.setattr(
+        "causaliq_knowledge.llm.OllamaClient", MockOllamaClient
+    )
+
+    runner = CliRunner()
+    result = runner.invoke(cli, ["models"])
+
+    assert result.exit_code == 0
+    assert "groq/llama-3.1-8b-instant" in result.output
+    assert "groq/mixtral-8x7b" in result.output
+    assert "[OK]" in result.output
+    assert "2 models" in result.output
+    assert "Default model:" in result.output
+
+
+# Test models command with Gemini available with models
+def test_cli_models_gemini_success(monkeypatch):
+    # Mock Groq to throw ValueError
+    class MockGroqConfig:
+        def __init__(self):
+            raise ValueError("GROQ_API_KEY not set")
+
+    # Mock GeminiConfig to not throw
+    class MockGeminiConfig:
+        pass
+
+    # Mock Gemini to return models successfully
+    class MockGeminiClient:
+        def __init__(self, config):
+            pass
+
+        def is_available(self):
+            return True
+
+        def list_models(self):
+            return ["gemini-2.5-flash", "gemini-2.0-pro"]
+
+    # Mock Ollama to throw ValueError
+    class MockOllamaClient:
+        def __init__(self, config):
+            pass
+
+        def list_models(self):
+            raise ValueError("Ollama not running")
+
+    # Patch at both source and __init__ levels for full coverage
+    monkeypatch.setattr(
+        "causaliq_knowledge.llm.groq_client.GroqConfig", MockGroqConfig
+    )
+    monkeypatch.setattr("causaliq_knowledge.llm.GroqConfig", MockGroqConfig)
+    monkeypatch.setattr(
+        "causaliq_knowledge.llm.gemini_client.GeminiConfig", MockGeminiConfig
+    )
+    monkeypatch.setattr(
+        "causaliq_knowledge.llm.GeminiConfig", MockGeminiConfig
+    )
+    monkeypatch.setattr(
+        "causaliq_knowledge.llm.gemini_client.GeminiClient", MockGeminiClient
+    )
+    monkeypatch.setattr(
+        "causaliq_knowledge.llm.GeminiClient", MockGeminiClient
+    )
+    monkeypatch.setattr(
+        "causaliq_knowledge.llm.ollama_client.OllamaClient", MockOllamaClient
+    )
+    monkeypatch.setattr(
+        "causaliq_knowledge.llm.OllamaClient", MockOllamaClient
+    )
+
+    runner = CliRunner()
+    result = runner.invoke(cli, ["models"])
+
+    assert result.exit_code == 0
+    assert "gemini/gemini-2.5-flash" in result.output
+    assert "gemini/gemini-2.0-pro" in result.output
+    assert "[OK]" in result.output
+
+
+# Test models command with Ollama available with models
+def test_cli_models_ollama_success(monkeypatch):
+    # Mock Groq to throw ValueError
+    class MockGroqConfig:
+        def __init__(self):
+            raise ValueError("GROQ_API_KEY not set")
+
+    # Mock Gemini to throw ValueError
+    class MockGeminiConfig:
+        def __init__(self):
+            raise ValueError("GEMINI_API_KEY not set")
+
+    # Mock Ollama to return models successfully
+    class MockOllamaClient:
+        def __init__(self, config):
+            pass
+
+        def list_models(self):
+            return ["llama3.2:1b", "mistral:7b"]
+
+    # Patch at both source and __init__ levels for full coverage
+    monkeypatch.setattr(
+        "causaliq_knowledge.llm.groq_client.GroqConfig", MockGroqConfig
+    )
+    monkeypatch.setattr("causaliq_knowledge.llm.GroqConfig", MockGroqConfig)
+    monkeypatch.setattr(
+        "causaliq_knowledge.llm.gemini_client.GeminiConfig", MockGeminiConfig
+    )
+    monkeypatch.setattr(
+        "causaliq_knowledge.llm.GeminiConfig", MockGeminiConfig
+    )
+    monkeypatch.setattr(
+        "causaliq_knowledge.llm.ollama_client.OllamaClient", MockOllamaClient
+    )
+    monkeypatch.setattr(
+        "causaliq_knowledge.llm.OllamaClient", MockOllamaClient
+    )
+
+    runner = CliRunner()
+    result = runner.invoke(cli, ["models"])
+
+    assert result.exit_code == 0
+    assert "ollama/llama3.2:1b" in result.output
+    assert "ollama/mistral:7b" in result.output
+    assert "[OK]" in result.output

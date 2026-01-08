@@ -53,6 +53,20 @@ def test_gemini_client_provider_name(monkeypatch):
     assert client.provider_name == "gemini"
 
 
+# Test is_available returns True when API key is set
+def test_gemini_client_is_available_with_key(monkeypatch):
+    monkeypatch.setenv("GEMINI_API_KEY", "test-key")
+    client = GeminiClient()
+    assert client.is_available() is True
+
+
+# Test is_available returns True with explicit API key
+def test_gemini_client_is_available_with_explicit_key():
+    config = GeminiConfig(api_key="explicit-key")
+    client = GeminiClient(config)
+    assert client.is_available() is True
+
+
 # Test basic response creation
 def test_gemini_response_basic():
     response = LLMResponse(
@@ -625,3 +639,110 @@ def test_gemini_timeout_exception(monkeypatch):
 
     with pytest.raises(ValueError, match="Gemini API request timed out"):
         client.completion(messages)
+
+
+# Test list_models returns available models
+def test_gemini_client_list_models_success(monkeypatch):
+    mock_response_data = {
+        "models": [
+            {
+                "name": "models/gemini-2.5-flash",
+                "supportedGenerationMethods": ["generateContent"],
+            },
+            {
+                "name": "models/gemini-2.0-flash",
+                "supportedGenerationMethods": ["generateContent"],
+            },
+            {
+                "name": "models/embedding-001",
+                "supportedGenerationMethods": ["embedContent"],
+            },
+            {
+                "name": "models/gemini-tts-model",
+                "supportedGenerationMethods": ["generateContent"],
+            },
+        ]
+    }
+
+    class MockResponse:
+        def json(self):
+            return mock_response_data
+
+        def raise_for_status(self):
+            pass
+
+    class MockClient:
+        def get(self, *args, **kwargs):
+            return MockResponse()
+
+        def __enter__(self):
+            return self
+
+        def __exit__(self, *args):
+            pass
+
+    monkeypatch.setattr("httpx.Client", lambda *args, **kwargs: MockClient())
+
+    config = GeminiConfig(api_key="test-key")
+    client = GeminiClient(config)
+
+    models = client.list_models()
+
+    # Should filter out embed and tts models
+    assert "gemini-2.5-flash" in models
+    assert "gemini-2.0-flash" in models
+    assert "embedding-001" not in models
+    assert "gemini-tts-model" not in models
+
+
+# Test list_models handles API error
+def test_gemini_client_list_models_error(monkeypatch):
+    class MockResponse:
+        status_code = 401
+        text = "Unauthorized"
+
+        def raise_for_status(self):
+            raise httpx.HTTPStatusError(
+                "Unauthorized",
+                request=httpx.Request("GET", "http://test"),
+                response=self,
+            )
+
+    class MockClient:
+        def get(self, *args, **kwargs):
+            return MockResponse()
+
+        def __enter__(self):
+            return self
+
+        def __exit__(self, *args):
+            pass
+
+    monkeypatch.setattr("httpx.Client", lambda *args, **kwargs: MockClient())
+
+    config = GeminiConfig(api_key="test-key")
+    client = GeminiClient(config)
+
+    with pytest.raises(ValueError, match="Gemini API error"):
+        client.list_models()
+
+
+# Test list_models handles generic exception
+def test_gemini_client_list_models_generic_exception(monkeypatch):
+    class MockClient:
+        def get(self, *args, **kwargs):
+            raise RuntimeError("Network failure")
+
+        def __enter__(self):
+            return self
+
+        def __exit__(self, *args):
+            pass
+
+    monkeypatch.setattr("httpx.Client", lambda *args, **kwargs: MockClient())
+
+    config = GeminiConfig(api_key="test-key")
+    client = GeminiClient(config)
+
+    with pytest.raises(ValueError, match="Failed to list Gemini models"):
+        client.list_models()
