@@ -160,6 +160,8 @@ def list_models() -> None:
     from typing import Callable, List, Optional, Tuple, TypedDict
 
     from causaliq_knowledge.llm import (
+        AnthropicClient,
+        AnthropicConfig,
         GeminiClient,
         GeminiConfig,
         GroqClient,
@@ -185,6 +187,17 @@ def list_models() -> None:
             if not client.is_available():
                 return False, [], "GROQ_API_KEY not set"
             models = [f"groq/{m}" for m in client.list_models()]
+            return True, models, None
+        except ValueError as e:
+            return False, [], str(e)
+
+    def get_anthropic_models() -> Tuple[bool, List[str], Optional[str]]:
+        """Returns (available, models, error_msg)."""
+        try:
+            client = AnthropicClient(AnthropicConfig())
+            if not client.is_available():
+                return False, [], "ANTHROPIC_API_KEY not set"
+            models = [f"anthropic/{m}" for m in client.list_models()]
             return True, models, None
         except ValueError as e:
             return False, [], str(e)
@@ -219,6 +232,13 @@ def list_models() -> None:
             "env_var": "GROQ_API_KEY",
             "url": "https://console.groq.com",
             "get_models": get_groq_models,
+        },
+        {
+            "name": "Anthropic",
+            "prefix": "anthropic/",
+            "env_var": "ANTHROPIC_API_KEY",
+            "url": "https://console.anthropic.com",
+            "get_models": get_anthropic_models,
         },
         {
             "name": "Gemini",

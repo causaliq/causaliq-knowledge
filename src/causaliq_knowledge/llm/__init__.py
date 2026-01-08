@@ -1,5 +1,9 @@
 """LLM integration module for causaliq-knowledge."""
 
+from causaliq_knowledge.llm.anthropic_client import (
+    AnthropicClient,
+    AnthropicConfig,
+)
 from causaliq_knowledge.llm.base_client import (
     BaseLLMClient,
     LLMConfig,
@@ -21,6 +25,9 @@ __all__ = [
     "BaseLLMClient",
     "LLMConfig",
     "LLMResponse",
+    # Anthropic
+    "AnthropicClient",
+    "AnthropicConfig",
     # Consensus
     "CONSENSUS_STRATEGIES",
     "EdgeQueryPrompt",

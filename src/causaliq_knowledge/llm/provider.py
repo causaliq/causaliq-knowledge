@@ -4,6 +4,10 @@ import logging
 from typing import Any, Dict, Optional, Union
 
 from causaliq_knowledge.base import KnowledgeProvider
+from causaliq_knowledge.llm.anthropic_client import (
+    AnthropicClient,
+    AnthropicConfig,
+)
 from causaliq_knowledge.llm.gemini_client import GeminiClient, GeminiConfig
 from causaliq_knowledge.llm.groq_client import GroqClient, GroqConfig
 from causaliq_knowledge.llm.ollama_client import OllamaClient, OllamaConfig
@@ -193,10 +197,20 @@ class LLMKnowledge(KnowledgeProvider):
 
         # Create a client for each model - use direct APIs only
         self._clients: dict[
-            str, Union[GroqClient, GeminiClient, OllamaClient]
+            str, Union[AnthropicClient, GroqClient, GeminiClient, OllamaClient]
         ] = {}
         for model in models:
-            if model.startswith("groq/"):
+            if model.startswith("anthropic/"):
+                # Use direct Anthropic client for Claude models
+                anthropic_model = model.split("/", 1)[1]  # Extract model name
+                anthropic_config = AnthropicConfig(
+                    model=anthropic_model,
+                    temperature=temperature,
+                    max_tokens=max_tokens,
+                    timeout=timeout,
+                )
+                self._clients[model] = AnthropicClient(config=anthropic_config)
+            elif model.startswith("groq/"):
                 # Use direct Groq client - more reliable than litellm
                 groq_model = model.split("/", 1)[1]  # Extract model name
                 config = GroqConfig(
@@ -228,7 +242,12 @@ class LLMKnowledge(KnowledgeProvider):
                 self._clients[model] = OllamaClient(config=ollama_config)
             else:
                 # Only direct API clients are supported
-                supported_prefixes = ["groq/", "gemini/", "ollama/"]
+                supported_prefixes = [
+                    "anthropic/",
+                    "gemini/",
+                    "groq/",
+                    "ollama/",
+                ]
                 raise ValueError(
                     f"Model '{model}' not supported. "
                     f"Supported prefixes: {supported_prefixes}."

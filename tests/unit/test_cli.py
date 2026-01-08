@@ -426,6 +426,138 @@ def test_cli_models_gemini_not_available(monkeypatch):
     assert "GEMINI_API_KEY not set" in result.output
 
 
+# Test models command with Anthropic available but is_available returns False
+def test_cli_models_anthropic_not_available(monkeypatch):
+    # Mock Groq to throw ValueError
+    class MockGroqConfig:
+        def __init__(self):
+            raise ValueError("GROQ_API_KEY not set")
+
+    # Mock AnthropicConfig to not throw (so we can test is_available path)
+    class MockAnthropicConfig:
+        pass
+
+    # Mock Anthropic to be configured but is_available returns False
+    class MockAnthropicClient:
+        def __init__(self, config):
+            pass
+
+        def is_available(self):
+            return False
+
+    # Mock Gemini to throw ValueError
+    class MockGeminiConfig:
+        def __init__(self):
+            raise ValueError("GEMINI_API_KEY not set")
+
+    # Mock Ollama to throw ValueError
+    class MockOllamaClient:
+        def __init__(self, config):
+            pass
+
+        def list_models(self):
+            raise ValueError("Ollama not running")
+
+    # Patch at both source and __init__ levels for full coverage
+    monkeypatch.setattr(
+        "causaliq_knowledge.llm.groq_client.GroqConfig", MockGroqConfig
+    )
+    monkeypatch.setattr("causaliq_knowledge.llm.GroqConfig", MockGroqConfig)
+    monkeypatch.setattr(
+        "causaliq_knowledge.llm.anthropic_client.AnthropicConfig",
+        MockAnthropicConfig,
+    )
+    monkeypatch.setattr(
+        "causaliq_knowledge.llm.AnthropicConfig", MockAnthropicConfig
+    )
+    monkeypatch.setattr(
+        "causaliq_knowledge.llm.anthropic_client.AnthropicClient",
+        MockAnthropicClient,
+    )
+    monkeypatch.setattr(
+        "causaliq_knowledge.llm.AnthropicClient", MockAnthropicClient
+    )
+    monkeypatch.setattr(
+        "causaliq_knowledge.llm.gemini_client.GeminiConfig", MockGeminiConfig
+    )
+    monkeypatch.setattr(
+        "causaliq_knowledge.llm.GeminiConfig", MockGeminiConfig
+    )
+    monkeypatch.setattr(
+        "causaliq_knowledge.llm.ollama_client.OllamaClient", MockOllamaClient
+    )
+    monkeypatch.setattr(
+        "causaliq_knowledge.llm.OllamaClient", MockOllamaClient
+    )
+
+    runner = CliRunner()
+    result = runner.invoke(cli, ["models"])
+
+    assert result.exit_code == 0
+    assert "ANTHROPIC_API_KEY not set" in result.output
+
+
+# Test models command with Anthropic config raising ValueError
+def test_cli_models_anthropic_config_error(monkeypatch):
+    # Mock Groq to throw ValueError
+    class MockGroqConfig:
+        def __init__(self):
+            raise ValueError("GROQ_API_KEY not set")
+
+    # Mock AnthropicConfig to throw ValueError (no API key set)
+    class MockAnthropicConfig:
+        def __init__(self):
+            raise ValueError(
+                "ANTHROPIC_API_KEY environment variable is required"
+            )
+
+    # Mock Gemini to throw ValueError
+    class MockGeminiConfig:
+        def __init__(self):
+            raise ValueError("GEMINI_API_KEY not set")
+
+    # Mock Ollama to throw ValueError
+    class MockOllamaClient:
+        def __init__(self, config):
+            pass
+
+        def list_models(self):
+            raise ValueError("Ollama not running")
+
+    # Patch at both source and __init__ levels for full coverage
+    monkeypatch.setattr(
+        "causaliq_knowledge.llm.groq_client.GroqConfig", MockGroqConfig
+    )
+    monkeypatch.setattr("causaliq_knowledge.llm.GroqConfig", MockGroqConfig)
+    monkeypatch.setattr(
+        "causaliq_knowledge.llm.anthropic_client.AnthropicConfig",
+        MockAnthropicConfig,
+    )
+    monkeypatch.setattr(
+        "causaliq_knowledge.llm.AnthropicConfig", MockAnthropicConfig
+    )
+    monkeypatch.setattr(
+        "causaliq_knowledge.llm.gemini_client.GeminiConfig", MockGeminiConfig
+    )
+    monkeypatch.setattr(
+        "causaliq_knowledge.llm.GeminiConfig", MockGeminiConfig
+    )
+    monkeypatch.setattr(
+        "causaliq_knowledge.llm.ollama_client.OllamaClient", MockOllamaClient
+    )
+    monkeypatch.setattr(
+        "causaliq_knowledge.llm.OllamaClient", MockOllamaClient
+    )
+
+    runner = CliRunner()
+    result = runner.invoke(cli, ["models"])
+
+    assert result.exit_code == 0
+    assert (
+        "ANTHROPIC_API_KEY environment variable is required" in result.output
+    )
+
+
 # Test models command with Ollama available but no models installed
 def test_cli_models_ollama_no_models(monkeypatch):
     # Mock Groq to throw ValueError
@@ -643,3 +775,81 @@ def test_cli_models_ollama_success(monkeypatch):
     assert "ollama/llama3.2:1b" in result.output
     assert "ollama/mistral:7b" in result.output
     assert "[OK]" in result.output
+
+
+# Test models command with Anthropic available with models
+def test_cli_models_anthropic_success(monkeypatch):
+    # Mock Groq to throw ValueError
+    class MockGroqConfig:
+        def __init__(self):
+            raise ValueError("GROQ_API_KEY not set")
+
+    # Mock AnthropicConfig to not throw
+    class MockAnthropicConfig:
+        pass
+
+    # Mock Anthropic to return models successfully
+    class MockAnthropicClient:
+        def __init__(self, config):
+            pass
+
+        def is_available(self):
+            return True
+
+        def list_models(self):
+            return ["claude-sonnet-4-20250514", "claude-3-5-sonnet-20241022"]
+
+    # Mock Gemini to throw ValueError
+    class MockGeminiConfig:
+        def __init__(self):
+            raise ValueError("GEMINI_API_KEY not set")
+
+    # Mock Ollama to throw ValueError
+    class MockOllamaClient:
+        def __init__(self, config):
+            pass
+
+        def list_models(self):
+            raise ValueError("Ollama not running")
+
+    # Patch at both source and __init__ levels for full coverage
+    monkeypatch.setattr(
+        "causaliq_knowledge.llm.groq_client.GroqConfig", MockGroqConfig
+    )
+    monkeypatch.setattr("causaliq_knowledge.llm.GroqConfig", MockGroqConfig)
+    monkeypatch.setattr(
+        "causaliq_knowledge.llm.anthropic_client.AnthropicConfig",
+        MockAnthropicConfig,
+    )
+    monkeypatch.setattr(
+        "causaliq_knowledge.llm.AnthropicConfig", MockAnthropicConfig
+    )
+    monkeypatch.setattr(
+        "causaliq_knowledge.llm.anthropic_client.AnthropicClient",
+        MockAnthropicClient,
+    )
+    monkeypatch.setattr(
+        "causaliq_knowledge.llm.AnthropicClient", MockAnthropicClient
+    )
+    monkeypatch.setattr(
+        "causaliq_knowledge.llm.gemini_client.GeminiConfig", MockGeminiConfig
+    )
+    monkeypatch.setattr(
+        "causaliq_knowledge.llm.GeminiConfig", MockGeminiConfig
+    )
+    monkeypatch.setattr(
+        "causaliq_knowledge.llm.ollama_client.OllamaClient", MockOllamaClient
+    )
+    monkeypatch.setattr(
+        "causaliq_knowledge.llm.OllamaClient", MockOllamaClient
+    )
+
+    runner = CliRunner()
+    result = runner.invoke(cli, ["models"])
+
+    assert result.exit_code == 0
+    assert "anthropic/claude-sonnet-4-20250514" in result.output
+    assert "anthropic/claude-3-5-sonnet-20241022" in result.output
+    assert "[OK]" in result.output
+    assert "2 models" in result.output
+    assert "Default model:" in result.output

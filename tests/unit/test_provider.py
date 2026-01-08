@@ -302,6 +302,31 @@ def test_llm_knowledge_ollama_model(monkeypatch):
     assert client.config.timeout == 120.0
 
 
+# Test LLMKnowledge with Anthropic model creates AnthropicClient.
+def test_llm_knowledge_anthropic_model(monkeypatch):
+    from causaliq_knowledge.llm.anthropic_client import AnthropicClient
+
+    monkeypatch.setenv("ANTHROPIC_API_KEY", "test-key")
+
+    provider = LLMKnowledge(
+        models=["anthropic/claude-sonnet-4-20250514"],
+        timeout=60.0,
+    )
+
+    assert provider.models == ["anthropic/claude-sonnet-4-20250514"]
+    assert "anthropic/claude-sonnet-4-20250514" in provider.name
+    assert "anthropic/claude-sonnet-4-20250514" in provider._clients
+    assert isinstance(
+        provider._clients["anthropic/claude-sonnet-4-20250514"],
+        AnthropicClient,
+    )
+
+    # Verify config was passed correctly
+    client = provider._clients["anthropic/claude-sonnet-4-20250514"]
+    assert client.config.model == "claude-sonnet-4-20250514"
+    assert client.config.timeout == 60.0
+
+
 # Test LLMKnowledge with custom consensus strategy.
 def test_llm_knowledge_custom_strategy(monkeypatch):
     monkeypatch.setenv("GROQ_API_KEY", "test-key")
