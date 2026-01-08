@@ -869,14 +869,99 @@
   
   
     <li class="md-nav__item">
-      <a href="../groq_client/" class="md-nav__link">
+      <a href="../base_client/" class="md-nav__link">
         
   
   
   <span class="md-ellipsis">
     
   
-    Groq Client
+    LLM Client Interface
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+        
+          
+          
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--section md-nav__item--nested">
+      
+        
+        
+          
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_5_6" >
+        
+          
+          <label class="md-nav__link" for="__nav_5_6" id="__nav_5_6_label" tabindex="">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Vendor API Clients
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_5_6_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_5_6">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Vendor API Clients
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../clients/groq/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Groq
   
 
     
@@ -897,14 +982,14 @@
   
   
     <li class="md-nav__item">
-      <a href="../gemini_client/" class="md-nav__link">
+      <a href="../clients/gemini/" class="md-nav__link">
         
   
   
   <span class="md-ellipsis">
     
   
-    Gemini Client
+    Gemini
   
 
     
@@ -913,6 +998,42 @@
   
 
       </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../clients/ollama/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Ollama
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
     </li>
   
 
@@ -1477,7 +1598,7 @@ causal relationships.</p>
             <b><code><a class="autorefs autorefs-internal" title="            list_models (causaliq_knowledge.cli.list_models)" href="#causaliq_knowledge.cli.list_models">list_models</a></code></b>
             –
             <div class="doc-md-description">
-              <p>List supported LLM models.</p>
+              <p>List available LLM models from each provider.</p>
             </div>
           </li>
           <li class="doc-section-item field-body">
@@ -1546,9 +1667,10 @@ causal relationships.</p>
 
     <div class="doc doc-contents ">
 
-        <p>List supported LLM models.</p>
-<p>These are model identifiers that work with our direct API clients.
-Only models with direct API support are listed.</p>
+        <p>List available LLM models from each provider.</p>
+<p>Queries each provider's API to show models accessible with your
+current configuration. Results are filtered by your API key's
+access level or locally installed models.</p>
 
           
 
