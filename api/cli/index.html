@@ -954,14 +954,42 @@
   
   
     <li class="md-nav__item">
-      <a href="../clients/groq/" class="md-nav__link">
+      <a href="../clients/anthropic/" class="md-nav__link">
         
   
   
   <span class="md-ellipsis">
     
   
-    Groq
+    Anthropic
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../clients/deepseek/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    DeepSeek
   
 
     
@@ -1010,6 +1038,62 @@
   
   
     <li class="md-nav__item">
+      <a href="../clients/groq/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Groq
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../clients/mistral/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Mistral
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
       <a href="../clients/ollama/" class="md-nav__link">
         
   
@@ -1018,6 +1102,34 @@
     
   
     Ollama
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../clients/openai/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    OpenAI
   
 
     
@@ -1662,7 +1774,7 @@ causal relationships.</p>
 
 
 <a href="#causaliq_knowledge.cli.list_models" class="headerlink" title="Permanent link">&para;</a></h4>
-<div class="language-python doc-signature highlight"><pre><span></span><code><span id="__span-0-1"><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="nf">list_models</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="kc">None</span>
+<div class="language-python doc-signature highlight"><pre><span></span><code><span id="__span-0-1"><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="nf">list_models</span><span class="p">(</span><span class="n"><span title="causaliq_knowledge.cli.list_models(provider)">provider</span></span><span class="p">:</span> <span class="n"><span title="typing.Optional">Optional</span></span><span class="p">[</span><span class="n"><span title="str">str</span></span><span class="p">])</span> <span class="o">-&gt;</span> <span class="kc">None</span>
 </span></code></pre></div>
 
     <div class="doc doc-contents ">
@@ -1671,6 +1783,15 @@ causal relationships.</p>
 <p>Queries each provider's API to show models accessible with your
 current configuration. Results are filtered by your API key's
 access level or locally installed models.</p>
+<p>Optionally specify PROVIDER to list models from a single provider:
+groq, anthropic, gemini, ollama, openai, deepseek, or mistral.</p>
+<p>Examples:</p>
+<div class="language-text highlight"><pre><span></span><code>cqknow models              # List all providers
+
+cqknow models groq         # List only Groq models
+
+cqknow models mistral      # List only Mistral models
+</code></pre></div>
 
           
 

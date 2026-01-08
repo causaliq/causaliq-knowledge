@@ -9,10 +9,10 @@
       
       
       
-        <link rel="prev" href="../deepseek/">
+        <link rel="prev" href="../groq/">
       
       
-        <link rel="next" href="../groq/">
+        <link rel="next" href="../ollama/">
       
       
         
@@ -23,7 +23,7 @@
     
     
       
-        <title>Gemini - causaliq-knowledge</title>
+        <title>Mistral - causaliq-knowledge</title>
       
     
     
@@ -78,7 +78,7 @@
     <div data-md-component="skip">
       
         
-        <a href="#gemini-client-api-reference" class="md-skip">
+        <a href="#mistral-client" class="md-skip">
           Skip to content
         </a>
       
@@ -114,7 +114,7 @@
         <div class="md-header__topic" data-md-component="header-topic">
           <span class="md-ellipsis">
             
-              Gemini
+              Mistral
             
           </span>
         </div>
@@ -1009,6 +1009,62 @@
                 
   
   
+  
+  
+    <li class="md-nav__item">
+      <a href="../gemini/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Gemini
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../groq/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Groq
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
     
   
   
@@ -1028,7 +1084,7 @@
   <span class="md-ellipsis">
     
   
-    Gemini
+    Mistral
   
 
     
@@ -1046,7 +1102,7 @@
   <span class="md-ellipsis">
     
   
-    Gemini
+    Mistral
   
 
     
@@ -1085,6 +1141,17 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#configuration" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Configuration
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#usage" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -1093,100 +1160,94 @@
     </span>
   </a>
   
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#environment-variables" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Environment Variables
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#geminiconfig" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        GeminiConfig
-      
-    </span>
-  </a>
-  
-    <nav class="md-nav" aria-label="GeminiConfig">
+    <nav class="md-nav" aria-label="Usage">
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
-  <a href="#causaliq_knowledge.llm.gemini_client.GeminiConfig" class="md-nav__link">
+  <a href="#basic-usage" class="md-nav__link">
     <span class="md-ellipsis">
       
-        GeminiConfig
+        Basic Usage
       
     </span>
   </a>
   
-    <nav class="md-nav" aria-label="GeminiConfig">
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#using-with-cli" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Using with CLI
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#using-with-llmknowledge-provider" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Using with LLMKnowledge Provider
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#available-models" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Available Models
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#pricing" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Pricing
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#api-reference" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        API Reference
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#causaliq_knowledge.llm.mistral_client.MistralConfig" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        MistralConfig
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="MistralConfig">
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
-  <a href="#causaliq_knowledge.llm.gemini_client.GeminiConfig.api_key" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        api_key
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#causaliq_knowledge.llm.gemini_client.GeminiConfig.max_tokens" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        max_tokens
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#causaliq_knowledge.llm.gemini_client.GeminiConfig.model" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        model
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#causaliq_knowledge.llm.gemini_client.GeminiConfig.temperature" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        temperature
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#causaliq_knowledge.llm.gemini_client.GeminiConfig.timeout" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        timeout
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#causaliq_knowledge.llm.gemini_client.GeminiConfig.__post_init__" class="md-nav__link">
+  <a href="#causaliq_knowledge.llm.mistral_client.MistralConfig.__post_init__" class="md-nav__link">
     <span class="md-ellipsis">
       
         __post_init__
@@ -1200,38 +1261,21 @@
     </nav>
   
 </li>
-        
-      </ul>
-    </nav>
-  
-</li>
       
         <li class="md-nav__item">
-  <a href="#geminiclient" class="md-nav__link">
+  <a href="#causaliq_knowledge.llm.mistral_client.MistralClient" class="md-nav__link">
     <span class="md-ellipsis">
       
-        GeminiClient
+        MistralClient
       
     </span>
   </a>
   
-    <nav class="md-nav" aria-label="GeminiClient">
+    <nav class="md-nav" aria-label="MistralClient">
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
-  <a href="#causaliq_knowledge.llm.gemini_client.GeminiClient" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        GeminiClient
-      
-    </span>
-  </a>
-  
-    <nav class="md-nav" aria-label="GeminiClient">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#causaliq_knowledge.llm.gemini_client.GeminiClient(config)" class="md-nav__link">
+  <a href="#causaliq_knowledge.llm.mistral_client.MistralClient(config)" class="md-nav__link">
     <span class="md-ellipsis">
       
         config
@@ -1242,29 +1286,7 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#causaliq_knowledge.llm.gemini_client.GeminiClient.BASE_URL" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        BASE_URL
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#causaliq_knowledge.llm.gemini_client.GeminiClient._total_calls" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        _total_calls
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#causaliq_knowledge.llm.gemini_client.GeminiClient.call_count" class="md-nav__link">
+  <a href="#causaliq_knowledge.llm.mistral_client.MistralClient.call_count" class="md-nav__link">
     <span class="md-ellipsis">
       
         call_count
@@ -1275,18 +1297,7 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#causaliq_knowledge.llm.gemini_client.GeminiClient.config" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        config
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#causaliq_knowledge.llm.gemini_client.GeminiClient.model_name" class="md-nav__link">
+  <a href="#causaliq_knowledge.llm.mistral_client.MistralClient.model_name" class="md-nav__link">
     <span class="md-ellipsis">
       
         model_name
@@ -1297,7 +1308,7 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#causaliq_knowledge.llm.gemini_client.GeminiClient.provider_name" class="md-nav__link">
+  <a href="#causaliq_knowledge.llm.mistral_client.MistralClient.provider_name" class="md-nav__link">
     <span class="md-ellipsis">
       
         provider_name
@@ -1308,7 +1319,7 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#causaliq_knowledge.llm.gemini_client.GeminiClient.complete_json" class="md-nav__link">
+  <a href="#causaliq_knowledge.llm.mistral_client.MistralClient.complete_json" class="md-nav__link">
     <span class="md-ellipsis">
       
         complete_json
@@ -1320,7 +1331,7 @@
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
-  <a href="#causaliq_knowledge.llm.gemini_client.GeminiClient.complete_json(messages)" class="md-nav__link">
+  <a href="#causaliq_knowledge.llm.mistral_client.MistralClient.complete_json(messages)" class="md-nav__link">
     <span class="md-ellipsis">
       
         messages
@@ -1331,7 +1342,7 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#causaliq_knowledge.llm.gemini_client.GeminiClient.complete_json(**kwargs)" class="md-nav__link">
+  <a href="#causaliq_knowledge.llm.mistral_client.MistralClient.complete_json(**kwargs)" class="md-nav__link">
     <span class="md-ellipsis">
       
         **kwargs
@@ -1347,7 +1358,7 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#causaliq_knowledge.llm.gemini_client.GeminiClient.completion" class="md-nav__link">
+  <a href="#causaliq_knowledge.llm.mistral_client.MistralClient.completion" class="md-nav__link">
     <span class="md-ellipsis">
       
         completion
@@ -1359,7 +1370,7 @@
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
-  <a href="#causaliq_knowledge.llm.gemini_client.GeminiClient.completion(messages)" class="md-nav__link">
+  <a href="#causaliq_knowledge.llm.mistral_client.MistralClient.completion(messages)" class="md-nav__link">
     <span class="md-ellipsis">
       
         messages
@@ -1370,7 +1381,7 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#causaliq_knowledge.llm.gemini_client.GeminiClient.completion(**kwargs)" class="md-nav__link">
+  <a href="#causaliq_knowledge.llm.mistral_client.MistralClient.completion(**kwargs)" class="md-nav__link">
     <span class="md-ellipsis">
       
         **kwargs
@@ -1386,7 +1397,7 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#causaliq_knowledge.llm.gemini_client.GeminiClient.is_available" class="md-nav__link">
+  <a href="#causaliq_knowledge.llm.mistral_client.MistralClient.is_available" class="md-nav__link">
     <span class="md-ellipsis">
       
         is_available
@@ -1397,7 +1408,7 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#causaliq_knowledge.llm.gemini_client.GeminiClient.list_models" class="md-nav__link">
+  <a href="#causaliq_knowledge.llm.mistral_client.MistralClient.list_models" class="md-nav__link">
     <span class="md-ellipsis">
       
         list_models
@@ -1411,94 +1422,11 @@
     </nav>
   
 </li>
-        
-      </ul>
-    </nav>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#message-format-conversion" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Message Format Conversion
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#supported-models" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Supported Models
-      
-    </span>
-  </a>
-  
-</li>
       
     </ul>
   
 </nav>
       
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="../groq/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    Groq
-  
-
-    
-  </span>
-  
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="../mistral/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    Mistral
-  
-
-    
-  </span>
-  
-  
-
-      </a>
     </li>
   
 
@@ -1671,6 +1599,17 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#configuration" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Configuration
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#usage" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -1679,100 +1618,94 @@
     </span>
   </a>
   
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#environment-variables" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Environment Variables
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#geminiconfig" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        GeminiConfig
-      
-    </span>
-  </a>
-  
-    <nav class="md-nav" aria-label="GeminiConfig">
+    <nav class="md-nav" aria-label="Usage">
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
-  <a href="#causaliq_knowledge.llm.gemini_client.GeminiConfig" class="md-nav__link">
+  <a href="#basic-usage" class="md-nav__link">
     <span class="md-ellipsis">
       
-        GeminiConfig
+        Basic Usage
       
     </span>
   </a>
   
-    <nav class="md-nav" aria-label="GeminiConfig">
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#using-with-cli" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Using with CLI
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#using-with-llmknowledge-provider" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Using with LLMKnowledge Provider
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#available-models" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Available Models
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#pricing" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Pricing
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#api-reference" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        API Reference
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#causaliq_knowledge.llm.mistral_client.MistralConfig" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        MistralConfig
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="MistralConfig">
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
-  <a href="#causaliq_knowledge.llm.gemini_client.GeminiConfig.api_key" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        api_key
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#causaliq_knowledge.llm.gemini_client.GeminiConfig.max_tokens" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        max_tokens
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#causaliq_knowledge.llm.gemini_client.GeminiConfig.model" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        model
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#causaliq_knowledge.llm.gemini_client.GeminiConfig.temperature" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        temperature
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#causaliq_knowledge.llm.gemini_client.GeminiConfig.timeout" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        timeout
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#causaliq_knowledge.llm.gemini_client.GeminiConfig.__post_init__" class="md-nav__link">
+  <a href="#causaliq_knowledge.llm.mistral_client.MistralConfig.__post_init__" class="md-nav__link">
     <span class="md-ellipsis">
       
         __post_init__
@@ -1786,38 +1719,21 @@
     </nav>
   
 </li>
-        
-      </ul>
-    </nav>
-  
-</li>
       
         <li class="md-nav__item">
-  <a href="#geminiclient" class="md-nav__link">
+  <a href="#causaliq_knowledge.llm.mistral_client.MistralClient" class="md-nav__link">
     <span class="md-ellipsis">
       
-        GeminiClient
+        MistralClient
       
     </span>
   </a>
   
-    <nav class="md-nav" aria-label="GeminiClient">
+    <nav class="md-nav" aria-label="MistralClient">
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
-  <a href="#causaliq_knowledge.llm.gemini_client.GeminiClient" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        GeminiClient
-      
-    </span>
-  </a>
-  
-    <nav class="md-nav" aria-label="GeminiClient">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#causaliq_knowledge.llm.gemini_client.GeminiClient(config)" class="md-nav__link">
+  <a href="#causaliq_knowledge.llm.mistral_client.MistralClient(config)" class="md-nav__link">
     <span class="md-ellipsis">
       
         config
@@ -1828,29 +1744,7 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#causaliq_knowledge.llm.gemini_client.GeminiClient.BASE_URL" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        BASE_URL
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#causaliq_knowledge.llm.gemini_client.GeminiClient._total_calls" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        _total_calls
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#causaliq_knowledge.llm.gemini_client.GeminiClient.call_count" class="md-nav__link">
+  <a href="#causaliq_knowledge.llm.mistral_client.MistralClient.call_count" class="md-nav__link">
     <span class="md-ellipsis">
       
         call_count
@@ -1861,18 +1755,7 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#causaliq_knowledge.llm.gemini_client.GeminiClient.config" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        config
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#causaliq_knowledge.llm.gemini_client.GeminiClient.model_name" class="md-nav__link">
+  <a href="#causaliq_knowledge.llm.mistral_client.MistralClient.model_name" class="md-nav__link">
     <span class="md-ellipsis">
       
         model_name
@@ -1883,7 +1766,7 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#causaliq_knowledge.llm.gemini_client.GeminiClient.provider_name" class="md-nav__link">
+  <a href="#causaliq_knowledge.llm.mistral_client.MistralClient.provider_name" class="md-nav__link">
     <span class="md-ellipsis">
       
         provider_name
@@ -1894,7 +1777,7 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#causaliq_knowledge.llm.gemini_client.GeminiClient.complete_json" class="md-nav__link">
+  <a href="#causaliq_knowledge.llm.mistral_client.MistralClient.complete_json" class="md-nav__link">
     <span class="md-ellipsis">
       
         complete_json
@@ -1906,7 +1789,7 @@
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
-  <a href="#causaliq_knowledge.llm.gemini_client.GeminiClient.complete_json(messages)" class="md-nav__link">
+  <a href="#causaliq_knowledge.llm.mistral_client.MistralClient.complete_json(messages)" class="md-nav__link">
     <span class="md-ellipsis">
       
         messages
@@ -1917,7 +1800,7 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#causaliq_knowledge.llm.gemini_client.GeminiClient.complete_json(**kwargs)" class="md-nav__link">
+  <a href="#causaliq_knowledge.llm.mistral_client.MistralClient.complete_json(**kwargs)" class="md-nav__link">
     <span class="md-ellipsis">
       
         **kwargs
@@ -1933,7 +1816,7 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#causaliq_knowledge.llm.gemini_client.GeminiClient.completion" class="md-nav__link">
+  <a href="#causaliq_knowledge.llm.mistral_client.MistralClient.completion" class="md-nav__link">
     <span class="md-ellipsis">
       
         completion
@@ -1945,7 +1828,7 @@
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
-  <a href="#causaliq_knowledge.llm.gemini_client.GeminiClient.completion(messages)" class="md-nav__link">
+  <a href="#causaliq_knowledge.llm.mistral_client.MistralClient.completion(messages)" class="md-nav__link">
     <span class="md-ellipsis">
       
         messages
@@ -1956,7 +1839,7 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#causaliq_knowledge.llm.gemini_client.GeminiClient.completion(**kwargs)" class="md-nav__link">
+  <a href="#causaliq_knowledge.llm.mistral_client.MistralClient.completion(**kwargs)" class="md-nav__link">
     <span class="md-ellipsis">
       
         **kwargs
@@ -1972,7 +1855,7 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#causaliq_knowledge.llm.gemini_client.GeminiClient.is_available" class="md-nav__link">
+  <a href="#causaliq_knowledge.llm.mistral_client.MistralClient.is_available" class="md-nav__link">
     <span class="md-ellipsis">
       
         is_available
@@ -1983,7 +1866,7 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#causaliq_knowledge.llm.gemini_client.GeminiClient.list_models" class="md-nav__link">
+  <a href="#causaliq_knowledge.llm.mistral_client.MistralClient.list_models" class="md-nav__link">
     <span class="md-ellipsis">
       
         list_models
@@ -1995,33 +1878,6 @@
         
       </ul>
     </nav>
-  
-</li>
-        
-      </ul>
-    </nav>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#message-format-conversion" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Message Format Conversion
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#supported-models" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Supported Models
-      
-    </span>
-  </a>
   
 </li>
       
@@ -2042,102 +1898,223 @@
 
 
 
-<h1 id="gemini-client-api-reference">Gemini Client API Reference<a class="headerlink" href="#gemini-client-api-reference" title="Permanent link">&para;</a></h1>
-<p>Direct Google Gemini API client. This client implements the
-<a href="../../base_client/">BaseLLMClient</a> interface using httpx to communicate
-directly with Google's Generative Language API.</p>
+<h1 id="mistral-client">Mistral Client<a class="headerlink" href="#mistral-client" title="Permanent link">&para;</a></h1>
+<p>Direct Mistral AI API client for Mistral models.</p>
 <h2 id="overview">Overview<a class="headerlink" href="#overview" title="Permanent link">&para;</a></h2>
-<p>The Gemini client provides:</p>
+<p>Mistral AI is a French AI company known for high-quality open-weight and proprietary models.
+Their API is <strong>OpenAI-compatible</strong>, making integration straightforward.</p>
+<p><strong>Key features:</strong></p>
 <ul>
-<li>Direct HTTP communication with Google's Generative Language API</li>
-<li>Implements the <code>BaseLLMClient</code> abstract interface</li>
-<li>Automatic conversion from OpenAI-style messages to Gemini format</li>
-<li>JSON response parsing with error handling</li>
-<li>Call counting for usage tracking</li>
-<li>Configurable timeout settings</li>
+<li><strong>Mistral Small</strong>: Fast, cost-effective for simple tasks</li>
+<li><strong>Mistral Large</strong>: Most capable, best for complex reasoning</li>
+<li><strong>Codestral</strong>: Optimized for code generation</li>
+<li>Strong EU-based option for data sovereignty</li>
+<li>OpenAI-compatible API</li>
 </ul>
+<h2 id="configuration">Configuration<a class="headerlink" href="#configuration" title="Permanent link">&para;</a></h2>
+<p>The client requires a <code>MISTRAL_API_KEY</code> environment variable:</p>
+<div class="language-bash highlight"><pre><span></span><code><span id="__span-0-1"><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="c1"># Linux/macOS</span>
+</span><span id="__span-0-2"><a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a><span class="nb">export</span><span class="w"> </span><span class="nv">MISTRAL_API_KEY</span><span class="o">=</span><span class="s2">&quot;your-api-key&quot;</span>
+</span><span id="__span-0-3"><a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a>
+</span><span id="__span-0-4"><a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a><span class="c1"># Windows PowerShell</span>
+</span><span id="__span-0-5"><a id="__codelineno-0-5" name="__codelineno-0-5" href="#__codelineno-0-5"></a><span class="nv">$env</span>:MISTRAL_API_KEY<span class="o">=</span><span class="s2">&quot;your-api-key&quot;</span>
+</span><span id="__span-0-6"><a id="__codelineno-0-6" name="__codelineno-0-6" href="#__codelineno-0-6"></a>
+</span><span id="__span-0-7"><a id="__codelineno-0-7" name="__codelineno-0-7" href="#__codelineno-0-7"></a><span class="c1"># Windows cmd</span>
+</span><span id="__span-0-8"><a id="__codelineno-0-8" name="__codelineno-0-8" href="#__codelineno-0-8"></a><span class="nb">set</span><span class="w"> </span><span class="nv">MISTRAL_API_KEY</span><span class="o">=</span>your-api-key
+</span></code></pre></div>
+<p>Get your API key from: <a href="https://console.mistral.ai">https://console.mistral.ai</a></p>
 <h2 id="usage">Usage<a class="headerlink" href="#usage" title="Permanent link">&para;</a></h2>
-<div class="language-python highlight"><pre><span></span><code><span id="__span-0-1"><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="kn">from</span><span class="w"> </span><span class="nn">causaliq_knowledge.llm</span><span class="w"> </span><span class="kn">import</span> <span class="n">GeminiClient</span><span class="p">,</span> <span class="n">GeminiConfig</span>
-</span><span id="__span-0-2"><a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a>
-</span><span id="__span-0-3"><a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a><span class="c1"># Create client with custom config</span>
-</span><span id="__span-0-4"><a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a><span class="n">config</span> <span class="o">=</span> <span class="n">GeminiConfig</span><span class="p">(</span>
-</span><span id="__span-0-5"><a id="__codelineno-0-5" name="__codelineno-0-5" href="#__codelineno-0-5"></a>    <span class="n">model</span><span class="o">=</span><span class="s2">&quot;gemini-2.5-flash&quot;</span><span class="p">,</span>
-</span><span id="__span-0-6"><a id="__codelineno-0-6" name="__codelineno-0-6" href="#__codelineno-0-6"></a>    <span class="n">temperature</span><span class="o">=</span><span class="mf">0.1</span><span class="p">,</span>
-</span><span id="__span-0-7"><a id="__codelineno-0-7" name="__codelineno-0-7" href="#__codelineno-0-7"></a>    <span class="n">max_tokens</span><span class="o">=</span><span class="mi">500</span><span class="p">,</span>
-</span><span id="__span-0-8"><a id="__codelineno-0-8" name="__codelineno-0-8" href="#__codelineno-0-8"></a><span class="p">)</span>
-</span><span id="__span-0-9"><a id="__codelineno-0-9" name="__codelineno-0-9" href="#__codelineno-0-9"></a><span class="n">client</span> <span class="o">=</span> <span class="n">GeminiClient</span><span class="p">(</span><span class="n">config</span><span class="o">=</span><span class="n">config</span><span class="p">)</span>
-</span><span id="__span-0-10"><a id="__codelineno-0-10" name="__codelineno-0-10" href="#__codelineno-0-10"></a>
-</span><span id="__span-0-11"><a id="__codelineno-0-11" name="__codelineno-0-11" href="#__codelineno-0-11"></a><span class="c1"># Make a completion request (OpenAI-style messages)</span>
-</span><span id="__span-0-12"><a id="__codelineno-0-12" name="__codelineno-0-12" href="#__codelineno-0-12"></a><span class="n">messages</span> <span class="o">=</span> <span class="p">[</span>
-</span><span id="__span-0-13"><a id="__codelineno-0-13" name="__codelineno-0-13" href="#__codelineno-0-13"></a>    <span class="p">{</span><span class="s2">&quot;role&quot;</span><span class="p">:</span> <span class="s2">&quot;system&quot;</span><span class="p">,</span> <span class="s2">&quot;content&quot;</span><span class="p">:</span> <span class="s2">&quot;You are a helpful assistant.&quot;</span><span class="p">},</span>
-</span><span id="__span-0-14"><a id="__codelineno-0-14" name="__codelineno-0-14" href="#__codelineno-0-14"></a>    <span class="p">{</span><span class="s2">&quot;role&quot;</span><span class="p">:</span> <span class="s2">&quot;user&quot;</span><span class="p">,</span> <span class="s2">&quot;content&quot;</span><span class="p">:</span> <span class="s2">&quot;What is 2+2?&quot;</span><span class="p">},</span>
-</span><span id="__span-0-15"><a id="__codelineno-0-15" name="__codelineno-0-15" href="#__codelineno-0-15"></a><span class="p">]</span>
-</span><span id="__span-0-16"><a id="__codelineno-0-16" name="__codelineno-0-16" href="#__codelineno-0-16"></a><span class="n">response</span> <span class="o">=</span> <span class="n">client</span><span class="o">.</span><span class="n">completion</span><span class="p">(</span><span class="n">messages</span><span class="p">)</span>
-</span><span id="__span-0-17"><a id="__codelineno-0-17" name="__codelineno-0-17" href="#__codelineno-0-17"></a><span class="nb">print</span><span class="p">(</span><span class="n">response</span><span class="o">.</span><span class="n">content</span><span class="p">)</span>
-</span><span id="__span-0-18"><a id="__codelineno-0-18" name="__codelineno-0-18" href="#__codelineno-0-18"></a>
-</span><span id="__span-0-19"><a id="__codelineno-0-19" name="__codelineno-0-19" href="#__codelineno-0-19"></a><span class="c1"># Parse JSON response</span>
-</span><span id="__span-0-20"><a id="__codelineno-0-20" name="__codelineno-0-20" href="#__codelineno-0-20"></a><span class="n">json_data</span> <span class="o">=</span> <span class="n">response</span><span class="o">.</span><span class="n">parse_json</span><span class="p">()</span>
+<h3 id="basic-usage">Basic Usage<a class="headerlink" href="#basic-usage" title="Permanent link">&para;</a></h3>
+<div class="language-python highlight"><pre><span></span><code><span id="__span-1-1"><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a><span class="kn">from</span><span class="w"> </span><span class="nn">causaliq_knowledge.llm</span><span class="w"> </span><span class="kn">import</span> <span class="n">MistralClient</span><span class="p">,</span> <span class="n">MistralConfig</span>
+</span><span id="__span-1-2"><a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a>
+</span><span id="__span-1-3"><a id="__codelineno-1-3" name="__codelineno-1-3" href="#__codelineno-1-3"></a><span class="c1"># Default config (uses MISTRAL_API_KEY env var)</span>
+</span><span id="__span-1-4"><a id="__codelineno-1-4" name="__codelineno-1-4" href="#__codelineno-1-4"></a><span class="n">client</span> <span class="o">=</span> <span class="n">MistralClient</span><span class="p">()</span>
+</span><span id="__span-1-5"><a id="__codelineno-1-5" name="__codelineno-1-5" href="#__codelineno-1-5"></a>
+</span><span id="__span-1-6"><a id="__codelineno-1-6" name="__codelineno-1-6" href="#__codelineno-1-6"></a><span class="c1"># Or with custom config</span>
+</span><span id="__span-1-7"><a id="__codelineno-1-7" name="__codelineno-1-7" href="#__codelineno-1-7"></a><span class="n">config</span> <span class="o">=</span> <span class="n">MistralConfig</span><span class="p">(</span>
+</span><span id="__span-1-8"><a id="__codelineno-1-8" name="__codelineno-1-8" href="#__codelineno-1-8"></a>    <span class="n">model</span><span class="o">=</span><span class="s2">&quot;mistral-small-latest&quot;</span><span class="p">,</span>
+</span><span id="__span-1-9"><a id="__codelineno-1-9" name="__codelineno-1-9" href="#__codelineno-1-9"></a>    <span class="n">temperature</span><span class="o">=</span><span class="mf">0.1</span><span class="p">,</span>
+</span><span id="__span-1-10"><a id="__codelineno-1-10" name="__codelineno-1-10" href="#__codelineno-1-10"></a>    <span class="n">max_tokens</span><span class="o">=</span><span class="mi">500</span><span class="p">,</span>
+</span><span id="__span-1-11"><a id="__codelineno-1-11" name="__codelineno-1-11" href="#__codelineno-1-11"></a>    <span class="n">timeout</span><span class="o">=</span><span class="mf">30.0</span><span class="p">,</span>
+</span><span id="__span-1-12"><a id="__codelineno-1-12" name="__codelineno-1-12" href="#__codelineno-1-12"></a><span class="p">)</span>
+</span><span id="__span-1-13"><a id="__codelineno-1-13" name="__codelineno-1-13" href="#__codelineno-1-13"></a><span class="n">client</span> <span class="o">=</span> <span class="n">MistralClient</span><span class="p">(</span><span class="n">config</span><span class="p">)</span>
+</span><span id="__span-1-14"><a id="__codelineno-1-14" name="__codelineno-1-14" href="#__codelineno-1-14"></a>
+</span><span id="__span-1-15"><a id="__codelineno-1-15" name="__codelineno-1-15" href="#__codelineno-1-15"></a><span class="c1"># Make a completion request</span>
+</span><span id="__span-1-16"><a id="__codelineno-1-16" name="__codelineno-1-16" href="#__codelineno-1-16"></a><span class="n">messages</span> <span class="o">=</span> <span class="p">[{</span><span class="s2">&quot;role&quot;</span><span class="p">:</span> <span class="s2">&quot;user&quot;</span><span class="p">,</span> <span class="s2">&quot;content&quot;</span><span class="p">:</span> <span class="s2">&quot;What is 2 + 2?&quot;</span><span class="p">}]</span>
+</span><span id="__span-1-17"><a id="__codelineno-1-17" name="__codelineno-1-17" href="#__codelineno-1-17"></a><span class="n">response</span> <span class="o">=</span> <span class="n">client</span><span class="o">.</span><span class="n">completion</span><span class="p">(</span><span class="n">messages</span><span class="p">)</span>
+</span><span id="__span-1-18"><a id="__codelineno-1-18" name="__codelineno-1-18" href="#__codelineno-1-18"></a><span class="nb">print</span><span class="p">(</span><span class="n">response</span><span class="o">.</span><span class="n">content</span><span class="p">)</span>
 </span></code></pre></div>
-<h2 id="environment-variables">Environment Variables<a class="headerlink" href="#environment-variables" title="Permanent link">&para;</a></h2>
-<p>The Gemini client requires the <code>GEMINI_API_KEY</code> environment variable to be set:</p>
-<div class="language-bash highlight"><pre><span></span><code><span id="__span-1-1"><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a><span class="nb">export</span><span class="w"> </span><span class="nv">GEMINI_API_KEY</span><span class="o">=</span>your_api_key_here
+<h3 id="using-with-cli">Using with CLI<a class="headerlink" href="#using-with-cli" title="Permanent link">&para;</a></h3>
+<div class="language-bash highlight"><pre><span></span><code><span id="__span-2-1"><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a><span class="c1"># Query with Mistral</span>
+</span><span id="__span-2-2"><a id="__codelineno-2-2" name="__codelineno-2-2" href="#__codelineno-2-2"></a>cqknow<span class="w"> </span>query<span class="w"> </span>smoking<span class="w"> </span>lung_cancer<span class="w"> </span>--model<span class="w"> </span>mistral/mistral-small-latest
+</span><span id="__span-2-3"><a id="__codelineno-2-3" name="__codelineno-2-3" href="#__codelineno-2-3"></a>
+</span><span id="__span-2-4"><a id="__codelineno-2-4" name="__codelineno-2-4" href="#__codelineno-2-4"></a><span class="c1"># Use large model for complex queries</span>
+</span><span id="__span-2-5"><a id="__codelineno-2-5" name="__codelineno-2-5" href="#__codelineno-2-5"></a>cqknow<span class="w"> </span>query<span class="w"> </span>income<span class="w"> </span>education<span class="w"> </span>--model<span class="w"> </span>mistral/mistral-large-latest<span class="w"> </span>--domain<span class="w"> </span>economics
+</span><span id="__span-2-6"><a id="__codelineno-2-6" name="__codelineno-2-6" href="#__codelineno-2-6"></a>
+</span><span id="__span-2-7"><a id="__codelineno-2-7" name="__codelineno-2-7" href="#__codelineno-2-7"></a><span class="c1"># List available Mistral models</span>
+</span><span id="__span-2-8"><a id="__codelineno-2-8" name="__codelineno-2-8" href="#__codelineno-2-8"></a>cqknow<span class="w"> </span>models<span class="w"> </span>mistral
 </span></code></pre></div>
-<h2 id="geminiconfig">GeminiConfig<a class="headerlink" href="#geminiconfig" title="Permanent link">&para;</a></h2>
+<h3 id="using-with-llmknowledge-provider">Using with LLMKnowledge Provider<a class="headerlink" href="#using-with-llmknowledge-provider" title="Permanent link">&para;</a></h3>
+<div class="language-python highlight"><pre><span></span><code><span id="__span-3-1"><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a><span class="kn">from</span><span class="w"> </span><span class="nn">causaliq_knowledge.llm</span><span class="w"> </span><span class="kn">import</span> <span class="n">LLMKnowledge</span>
+</span><span id="__span-3-2"><a id="__codelineno-3-2" name="__codelineno-3-2" href="#__codelineno-3-2"></a>
+</span><span id="__span-3-3"><a id="__codelineno-3-3" name="__codelineno-3-3" href="#__codelineno-3-3"></a><span class="c1"># Single model</span>
+</span><span id="__span-3-4"><a id="__codelineno-3-4" name="__codelineno-3-4" href="#__codelineno-3-4"></a><span class="n">provider</span> <span class="o">=</span> <span class="n">LLMKnowledge</span><span class="p">(</span><span class="n">models</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;mistral/mistral-small-latest&quot;</span><span class="p">])</span>
+</span><span id="__span-3-5"><a id="__codelineno-3-5" name="__codelineno-3-5" href="#__codelineno-3-5"></a><span class="n">result</span> <span class="o">=</span> <span class="n">provider</span><span class="o">.</span><span class="n">query_edge</span><span class="p">(</span><span class="s2">&quot;smoking&quot;</span><span class="p">,</span> <span class="s2">&quot;lung_cancer&quot;</span><span class="p">)</span>
+</span><span id="__span-3-6"><a id="__codelineno-3-6" name="__codelineno-3-6" href="#__codelineno-3-6"></a>
+</span><span id="__span-3-7"><a id="__codelineno-3-7" name="__codelineno-3-7" href="#__codelineno-3-7"></a><span class="c1"># Multi-model consensus</span>
+</span><span id="__span-3-8"><a id="__codelineno-3-8" name="__codelineno-3-8" href="#__codelineno-3-8"></a><span class="n">provider</span> <span class="o">=</span> <span class="n">LLMKnowledge</span><span class="p">(</span>
+</span><span id="__span-3-9"><a id="__codelineno-3-9" name="__codelineno-3-9" href="#__codelineno-3-9"></a>    <span class="n">models</span><span class="o">=</span><span class="p">[</span>
+</span><span id="__span-3-10"><a id="__codelineno-3-10" name="__codelineno-3-10" href="#__codelineno-3-10"></a>        <span class="s2">&quot;mistral/mistral-large-latest&quot;</span><span class="p">,</span>
+</span><span id="__span-3-11"><a id="__codelineno-3-11" name="__codelineno-3-11" href="#__codelineno-3-11"></a>        <span class="s2">&quot;groq/llama-3.1-8b-instant&quot;</span><span class="p">,</span>
+</span><span id="__span-3-12"><a id="__codelineno-3-12" name="__codelineno-3-12" href="#__codelineno-3-12"></a>    <span class="p">],</span>
+</span><span id="__span-3-13"><a id="__codelineno-3-13" name="__codelineno-3-13" href="#__codelineno-3-13"></a>    <span class="n">consensus_strategy</span><span class="o">=</span><span class="s2">&quot;weighted_vote&quot;</span><span class="p">,</span>
+</span><span id="__span-3-14"><a id="__codelineno-3-14" name="__codelineno-3-14" href="#__codelineno-3-14"></a><span class="p">)</span>
+</span></code></pre></div>
+<h2 id="available-models">Available Models<a class="headerlink" href="#available-models" title="Permanent link">&para;</a></h2>
+<table>
+<thead>
+<tr>
+<th>Model</th>
+<th>Description</th>
+<th>Best For</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>mistral-small-latest</code></td>
+<td>Fast, cost-effective</td>
+<td>Simple tasks</td>
+</tr>
+<tr>
+<td><code>mistral-medium-latest</code></td>
+<td>Balanced performance</td>
+<td>General use</td>
+</tr>
+<tr>
+<td><code>mistral-large-latest</code></td>
+<td>Most capable</td>
+<td>Complex reasoning</td>
+</tr>
+<tr>
+<td><code>codestral-latest</code></td>
+<td>Code-optimized</td>
+<td>Programming tasks</td>
+</tr>
+<tr>
+<td><code>open-mistral-nemo</code></td>
+<td>12B open model</td>
+<td>Budget-friendly</td>
+</tr>
+<tr>
+<td><code>open-mixtral-8x7b</code></td>
+<td>MoE open model</td>
+<td>Balanced open model</td>
+</tr>
+<tr>
+<td><code>ministral-3b-latest</code></td>
+<td>Ultra-small</td>
+<td>Edge deployment</td>
+</tr>
+<tr>
+<td><code>ministral-8b-latest</code></td>
+<td>Small</td>
+<td>Resource-constrained</td>
+</tr>
+</tbody>
+</table>
+<h2 id="pricing">Pricing<a class="headerlink" href="#pricing" title="Permanent link">&para;</a></h2>
+<p>Mistral AI offers competitive pricing (as of Jan 2025):</p>
+<table>
+<thead>
+<tr>
+<th>Model</th>
+<th>Input (per 1M tokens)</th>
+<th>Output (per 1M tokens)</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>mistral-small</td>
+<td>$0.20</td>
+<td>$0.60</td>
+</tr>
+<tr>
+<td>mistral-medium</td>
+<td>$2.70</td>
+<td>$8.10</td>
+</tr>
+<tr>
+<td>mistral-large</td>
+<td>$2.00</td>
+<td>$6.00</td>
+</tr>
+<tr>
+<td>codestral</td>
+<td>$0.20</td>
+<td>$0.60</td>
+</tr>
+<tr>
+<td>open-mistral-nemo</td>
+<td>$0.15</td>
+<td>$0.15</td>
+</tr>
+<tr>
+<td>ministral-3b</td>
+<td>$0.04</td>
+<td>$0.04</td>
+</tr>
+<tr>
+<td>ministral-8b</td>
+<td>$0.10</td>
+<td>$0.10</td>
+</tr>
+</tbody>
+</table>
+<p>See <a href="https://mistral.ai/technology/#pricing">Mistral pricing</a> for details.</p>
+<h2 id="api-reference">API Reference<a class="headerlink" href="#api-reference" title="Permanent link">&para;</a></h2>
 
 
 <div class="doc doc-object doc-class">
 
 
 
-<h3 id="causaliq_knowledge.llm.gemini_client.GeminiConfig" class="doc doc-heading">
-<code class="doc-symbol doc-symbol-heading doc-symbol-class"></code>            <span class="doc doc-object-name doc-class-name">GeminiConfig</span>
+<h2 id="causaliq_knowledge.llm.mistral_client.MistralConfig" class="doc doc-heading">
+<code class="doc-symbol doc-symbol-heading doc-symbol-class"></code>            <span class="doc doc-object-name doc-class-name">MistralConfig</span>
 
 
   <span class="doc doc-labels">
       <small class="doc doc-label doc-label-dataclass"><code>dataclass</code></small>
   </span>
 
-<a href="#causaliq_knowledge.llm.gemini_client.GeminiConfig" class="headerlink" title="Permanent link">&para;</a></h3>
-<div class="language-python doc-signature highlight"><pre><span></span><code><span id="__span-0-1"><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="nf">GeminiConfig</span><span class="p">(</span>
-</span><span id="__span-0-2"><a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a>    <span class="n"><span title="causaliq_knowledge.llm.gemini_client.GeminiConfig(model)">model</span></span><span class="p">:</span> <span class="n"><span title="str">str</span></span> <span class="o">=</span> <span class="s2">&quot;gemini-2.5-flash&quot;</span><span class="p">,</span>
-</span><span id="__span-0-3"><a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a>    <span class="n"><span title="causaliq_knowledge.llm.gemini_client.GeminiConfig(temperature)">temperature</span></span><span class="p">:</span> <span class="n"><span title="float">float</span></span> <span class="o">=</span> <span class="mf">0.1</span><span class="p">,</span>
-</span><span id="__span-0-4"><a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a>    <span class="n"><span title="causaliq_knowledge.llm.gemini_client.GeminiConfig(max_tokens)">max_tokens</span></span><span class="p">:</span> <span class="n"><span title="int">int</span></span> <span class="o">=</span> <span class="mi">500</span><span class="p">,</span>
-</span><span id="__span-0-5"><a id="__codelineno-0-5" name="__codelineno-0-5" href="#__codelineno-0-5"></a>    <span class="n"><span title="causaliq_knowledge.llm.gemini_client.GeminiConfig(timeout)">timeout</span></span><span class="p">:</span> <span class="n"><span title="float">float</span></span> <span class="o">=</span> <span class="mf">30.0</span><span class="p">,</span>
-</span><span id="__span-0-6"><a id="__codelineno-0-6" name="__codelineno-0-6" href="#__codelineno-0-6"></a>    <span class="n"><span title="causaliq_knowledge.llm.gemini_client.GeminiConfig(api_key)">api_key</span></span><span class="p">:</span> <span class="n"><span title="typing.Optional">Optional</span></span><span class="p">[</span><span class="n"><span title="str">str</span></span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+<a href="#causaliq_knowledge.llm.mistral_client.MistralConfig" class="headerlink" title="Permanent link">&para;</a></h2>
+<div class="language-python doc-signature highlight"><pre><span></span><code><span id="__span-0-1"><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="nf">MistralConfig</span><span class="p">(</span>
+</span><span id="__span-0-2"><a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a>    <span class="n"><span title="causaliq_knowledge.llm.mistral_client.MistralConfig(model)">model</span></span><span class="p">:</span> <span class="n"><span title="str">str</span></span> <span class="o">=</span> <span class="s2">&quot;mistral-small-latest&quot;</span><span class="p">,</span>
+</span><span id="__span-0-3"><a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a>    <span class="n"><span title="causaliq_knowledge.llm.mistral_client.MistralConfig(temperature)">temperature</span></span><span class="p">:</span> <span class="n"><span title="float">float</span></span> <span class="o">=</span> <span class="mf">0.1</span><span class="p">,</span>
+</span><span id="__span-0-4"><a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a>    <span class="n"><span title="causaliq_knowledge.llm.mistral_client.MistralConfig(max_tokens)">max_tokens</span></span><span class="p">:</span> <span class="n"><span title="int">int</span></span> <span class="o">=</span> <span class="mi">500</span><span class="p">,</span>
+</span><span id="__span-0-5"><a id="__codelineno-0-5" name="__codelineno-0-5" href="#__codelineno-0-5"></a>    <span class="n"><span title="causaliq_knowledge.llm.mistral_client.MistralConfig(timeout)">timeout</span></span><span class="p">:</span> <span class="n"><span title="float">float</span></span> <span class="o">=</span> <span class="mf">30.0</span><span class="p">,</span>
+</span><span id="__span-0-6"><a id="__codelineno-0-6" name="__codelineno-0-6" href="#__codelineno-0-6"></a>    <span class="n"><span title="causaliq_knowledge.llm.mistral_client.MistralConfig(api_key)">api_key</span></span><span class="p">:</span> <span class="n"><span title="typing.Optional">Optional</span></span><span class="p">[</span><span class="n"><span title="str">str</span></span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
 </span><span id="__span-0-7"><a id="__codelineno-0-7" name="__codelineno-0-7" href="#__codelineno-0-7"></a><span class="p">)</span>
 </span></code></pre></div>
 
     <div class="doc doc-contents first">
 
 
-        <p>Configuration for Gemini API client.</p>
-<p>Extends LLMConfig with Gemini-specific defaults.</p>
+        <p>Configuration for Mistral AI API client.</p>
+<p>Extends OpenAICompatConfig with Mistral-specific defaults.</p>
 
 
 <p><span class="doc-section-title">Attributes:</span></p>
     <ul>
         <li class="doc-section-item field-body">
-          <b><code><a class="autorefs autorefs-internal" title="            model
-
-
-  
-      class-attribute
-      instance-attribute
-   (causaliq_knowledge.llm.gemini_client.GeminiConfig.model)" href="#causaliq_knowledge.llm.gemini_client.GeminiConfig.model">model</a></code></b>
+          <b><code><span title="causaliq_knowledge.llm.mistral_client.MistralConfig.model">model</span></code></b>
               (<code><span title="str">str</span></code>)
           –
           <div class="doc-md-description">
-            <p>Gemini model identifier (default: gemini-2.5-flash).</p>
+            <p>Mistral model identifier (default: mistral-small-latest).</p>
           </div>
         </li>
         <li class="doc-section-item field-body">
-          <b><code><a class="autorefs autorefs-internal" title="            temperature
-
-
-  
-      class-attribute
-      instance-attribute
-   (causaliq_knowledge.llm.gemini_client.GeminiConfig.temperature)" href="#causaliq_knowledge.llm.gemini_client.GeminiConfig.temperature">temperature</a></code></b>
+          <b><code><span title="causaliq_knowledge.llm.mistral_client.MistralConfig.temperature">temperature</span></code></b>
               (<code><span title="float">float</span></code>)
           –
           <div class="doc-md-description">
@@ -2145,13 +2122,7 @@ directly with Google's Generative Language API.</p>
           </div>
         </li>
         <li class="doc-section-item field-body">
-          <b><code><a class="autorefs autorefs-internal" title="            max_tokens
-
-
-  
-      class-attribute
-      instance-attribute
-   (causaliq_knowledge.llm.gemini_client.GeminiConfig.max_tokens)" href="#causaliq_knowledge.llm.gemini_client.GeminiConfig.max_tokens">max_tokens</a></code></b>
+          <b><code><span title="causaliq_knowledge.llm.mistral_client.MistralConfig.max_tokens">max_tokens</span></code></b>
               (<code><span title="int">int</span></code>)
           –
           <div class="doc-md-description">
@@ -2159,13 +2130,7 @@ directly with Google's Generative Language API.</p>
           </div>
         </li>
         <li class="doc-section-item field-body">
-          <b><code><a class="autorefs autorefs-internal" title="            timeout
-
-
-  
-      class-attribute
-      instance-attribute
-   (causaliq_knowledge.llm.gemini_client.GeminiConfig.timeout)" href="#causaliq_knowledge.llm.gemini_client.GeminiConfig.timeout">timeout</a></code></b>
+          <b><code><span title="causaliq_knowledge.llm.mistral_client.MistralConfig.timeout">timeout</span></code></b>
               (<code><span title="float">float</span></code>)
           –
           <div class="doc-md-description">
@@ -2173,17 +2138,11 @@ directly with Google's Generative Language API.</p>
           </div>
         </li>
         <li class="doc-section-item field-body">
-          <b><code><a class="autorefs autorefs-internal" title="            api_key
-
-
-  
-      class-attribute
-      instance-attribute
-   (causaliq_knowledge.llm.gemini_client.GeminiConfig.api_key)" href="#causaliq_knowledge.llm.gemini_client.GeminiConfig.api_key">api_key</a></code></b>
+          <b><code><span title="causaliq_knowledge.llm.mistral_client.MistralConfig.api_key">api_key</span></code></b>
               (<code><span title="typing.Optional">Optional</span>[<span title="str">str</span>]</code>)
           –
           <div class="doc-md-description">
-            <p>Gemini API key (falls back to GEMINI_API_KEY env var).</p>
+            <p>Mistral API key (falls back to MISTRAL_API_KEY env var).</p>
           </div>
         </li>
     </ul>
@@ -2203,7 +2162,7 @@ directly with Google's Generative Language API.</p>
 <p><span class="doc-section-title">Methods:</span></p>
     <ul>
           <li class="doc-section-item field-body">
-            <b><code><a class="autorefs autorefs-internal" title="            __post_init__ (causaliq_knowledge.llm.gemini_client.GeminiConfig.__post_init__)" href="#causaliq_knowledge.llm.gemini_client.GeminiConfig.__post_init__">__post_init__</a></code></b>
+            <b><code><a class="autorefs autorefs-internal" title="            __post_init__ (causaliq_knowledge.llm.mistral_client.MistralConfig.__post_init__)" href="#causaliq_knowledge.llm.mistral_client.MistralConfig.__post_init__">__post_init__</a></code></b>
             –
             <div class="doc-md-description">
               <p>Set API key from environment if not provided.</p>
@@ -2224,137 +2183,17 @@ directly with Google's Generative Language API.</p>
 
 
 
-<div class="doc doc-object doc-attribute">
-
-
-
-<h4 id="causaliq_knowledge.llm.gemini_client.GeminiConfig.api_key" class="doc doc-heading">
-<code class="doc-symbol doc-symbol-heading doc-symbol-attribute"></code>            <span class="doc doc-object-name doc-attribute-name">api_key</span>
-
-
-  <span class="doc doc-labels">
-      <small class="doc doc-label doc-label-class-attribute"><code>class-attribute</code></small>
-      <small class="doc doc-label doc-label-instance-attribute"><code>instance-attribute</code></small>
-  </span>
-
-<a href="#causaliq_knowledge.llm.gemini_client.GeminiConfig.api_key" class="headerlink" title="Permanent link">&para;</a></h4>
-<div class="language-python doc-signature highlight"><pre><span></span><code><span id="__span-0-1"><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="n">api_key</span><span class="p">:</span> <span class="n"><span title="typing.Optional">Optional</span></span><span class="p">[</span><span class="n"><span title="str">str</span></span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
-</span></code></pre></div>
-
-    <div class="doc doc-contents ">
-
-          
-    </div>
-
-</div>
-
-<div class="doc doc-object doc-attribute">
-
-
-
-<h4 id="causaliq_knowledge.llm.gemini_client.GeminiConfig.max_tokens" class="doc doc-heading">
-<code class="doc-symbol doc-symbol-heading doc-symbol-attribute"></code>            <span class="doc doc-object-name doc-attribute-name">max_tokens</span>
-
-
-  <span class="doc doc-labels">
-      <small class="doc doc-label doc-label-class-attribute"><code>class-attribute</code></small>
-      <small class="doc doc-label doc-label-instance-attribute"><code>instance-attribute</code></small>
-  </span>
-
-<a href="#causaliq_knowledge.llm.gemini_client.GeminiConfig.max_tokens" class="headerlink" title="Permanent link">&para;</a></h4>
-<div class="language-python doc-signature highlight"><pre><span></span><code><span id="__span-0-1"><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="n">max_tokens</span><span class="p">:</span> <span class="n"><span title="int">int</span></span> <span class="o">=</span> <span class="mi">500</span>
-</span></code></pre></div>
-
-    <div class="doc doc-contents ">
-
-          
-    </div>
-
-</div>
-
-<div class="doc doc-object doc-attribute">
-
-
-
-<h4 id="causaliq_knowledge.llm.gemini_client.GeminiConfig.model" class="doc doc-heading">
-<code class="doc-symbol doc-symbol-heading doc-symbol-attribute"></code>            <span class="doc doc-object-name doc-attribute-name">model</span>
-
-
-  <span class="doc doc-labels">
-      <small class="doc doc-label doc-label-class-attribute"><code>class-attribute</code></small>
-      <small class="doc doc-label doc-label-instance-attribute"><code>instance-attribute</code></small>
-  </span>
-
-<a href="#causaliq_knowledge.llm.gemini_client.GeminiConfig.model" class="headerlink" title="Permanent link">&para;</a></h4>
-<div class="language-python doc-signature highlight"><pre><span></span><code><span id="__span-0-1"><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="n">model</span><span class="p">:</span> <span class="n"><span title="str">str</span></span> <span class="o">=</span> <span class="s1">&#39;gemini-2.5-flash&#39;</span>
-</span></code></pre></div>
-
-    <div class="doc doc-contents ">
-
-          
-    </div>
-
-</div>
-
-<div class="doc doc-object doc-attribute">
-
-
-
-<h4 id="causaliq_knowledge.llm.gemini_client.GeminiConfig.temperature" class="doc doc-heading">
-<code class="doc-symbol doc-symbol-heading doc-symbol-attribute"></code>            <span class="doc doc-object-name doc-attribute-name">temperature</span>
-
-
-  <span class="doc doc-labels">
-      <small class="doc doc-label doc-label-class-attribute"><code>class-attribute</code></small>
-      <small class="doc doc-label doc-label-instance-attribute"><code>instance-attribute</code></small>
-  </span>
-
-<a href="#causaliq_knowledge.llm.gemini_client.GeminiConfig.temperature" class="headerlink" title="Permanent link">&para;</a></h4>
-<div class="language-python doc-signature highlight"><pre><span></span><code><span id="__span-0-1"><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="n">temperature</span><span class="p">:</span> <span class="n"><span title="float">float</span></span> <span class="o">=</span> <span class="mf">0.1</span>
-</span></code></pre></div>
-
-    <div class="doc doc-contents ">
-
-          
-    </div>
-
-</div>
-
-<div class="doc doc-object doc-attribute">
-
-
-
-<h4 id="causaliq_knowledge.llm.gemini_client.GeminiConfig.timeout" class="doc doc-heading">
-<code class="doc-symbol doc-symbol-heading doc-symbol-attribute"></code>            <span class="doc doc-object-name doc-attribute-name">timeout</span>
-
-
-  <span class="doc doc-labels">
-      <small class="doc doc-label doc-label-class-attribute"><code>class-attribute</code></small>
-      <small class="doc doc-label doc-label-instance-attribute"><code>instance-attribute</code></small>
-  </span>
-
-<a href="#causaliq_knowledge.llm.gemini_client.GeminiConfig.timeout" class="headerlink" title="Permanent link">&para;</a></h4>
-<div class="language-python doc-signature highlight"><pre><span></span><code><span id="__span-0-1"><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="n">timeout</span><span class="p">:</span> <span class="n"><span title="float">float</span></span> <span class="o">=</span> <span class="mf">30.0</span>
-</span></code></pre></div>
-
-    <div class="doc doc-contents ">
-
-          
-    </div>
-
-</div>
-
 
 
 
 <div class="doc doc-object doc-function">
 
 
-<h4 id="causaliq_knowledge.llm.gemini_client.GeminiConfig.__post_init__" class="doc doc-heading">
+<h3 id="causaliq_knowledge.llm.mistral_client.MistralConfig.__post_init__" class="doc doc-heading">
 <code class="doc-symbol doc-symbol-heading doc-symbol-method"></code>            <span class="doc doc-object-name doc-function-name">__post_init__</span>
 
 
-<a href="#causaliq_knowledge.llm.gemini_client.GeminiConfig.__post_init__" class="headerlink" title="Permanent link">&para;</a></h4>
+<a href="#causaliq_knowledge.llm.mistral_client.MistralConfig.__post_init__" class="headerlink" title="Permanent link">&para;</a></h3>
 <div class="language-python doc-signature highlight"><pre><span></span><code><span id="__span-0-1"><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="nf">__post_init__</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="kc">None</span>
 </span></code></pre></div>
 
@@ -2374,41 +2213,50 @@ directly with Google's Generative Language API.</p>
 
     </div>
 
-</div><h2 id="geminiclient">GeminiClient<a class="headerlink" href="#geminiclient" title="Permanent link">&para;</a></h2>
-
+</div>
 
 <div class="doc doc-object doc-class">
 
 
 
-<h3 id="causaliq_knowledge.llm.gemini_client.GeminiClient" class="doc doc-heading">
-<code class="doc-symbol doc-symbol-heading doc-symbol-class"></code>            <span class="doc doc-object-name doc-class-name">GeminiClient</span>
+<h2 id="causaliq_knowledge.llm.mistral_client.MistralClient" class="doc doc-heading">
+<code class="doc-symbol doc-symbol-heading doc-symbol-class"></code>            <span class="doc doc-object-name doc-class-name">MistralClient</span>
 
 
-<a href="#causaliq_knowledge.llm.gemini_client.GeminiClient" class="headerlink" title="Permanent link">&para;</a></h3>
-<div class="language-python doc-signature highlight"><pre><span></span><code><span id="__span-0-1"><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="nf">GeminiClient</span><span class="p">(</span><span class="n"><a class="autorefs autorefs-internal" title="config (causaliq_knowledge.llm.gemini_client.GeminiClient(config))" href="#causaliq_knowledge.llm.gemini_client.GeminiClient(config)">config</a></span><span class="p">:</span> <span class="n"><span title="typing.Optional">Optional</span></span><span class="p">[</span><span class="n"><a class="autorefs autorefs-internal" title="            GeminiConfig
+<a href="#causaliq_knowledge.llm.mistral_client.MistralClient" class="headerlink" title="Permanent link">&para;</a></h2>
+<div class="language-python doc-signature highlight"><pre><span></span><code><span id="__span-0-1"><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="nf">MistralClient</span><span class="p">(</span><span class="n"><a class="autorefs autorefs-internal" title="config (causaliq_knowledge.llm.mistral_client.MistralClient(config))" href="#causaliq_knowledge.llm.mistral_client.MistralClient(config)">config</a></span><span class="p">:</span> <span class="n"><span title="typing.Optional">Optional</span></span><span class="p">[</span><span class="n"><a class="autorefs autorefs-internal" title="            MistralConfig
 
 
   
       dataclass
-   (causaliq_knowledge.llm.gemini_client.GeminiConfig)" href="#causaliq_knowledge.llm.gemini_client.GeminiConfig">GeminiConfig</a></span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">)</span>
+   (causaliq_knowledge.llm.mistral_client.MistralConfig)" href="#causaliq_knowledge.llm.mistral_client.MistralConfig">MistralConfig</a></span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">)</span>
 </span></code></pre></div>
 
     <div class="doc doc-contents first">
 
 
-        <p>Direct Gemini API client.</p>
-<p>Implements the BaseLLMClient interface for Google's Gemini API.
-Uses httpx for HTTP requests.</p>
+        <p>Direct Mistral AI API client.</p>
+<p>Mistral AI is a French company providing high-quality LLMs with an
+OpenAI-compatible API.</p>
 
+
+<details class="available-models" open>
+  <summary>Available models</summary>
+  <ul>
+<li>mistral-small-latest: Fast, cost-effective</li>
+<li>mistral-medium-latest: Balanced performance</li>
+<li>mistral-large-latest: Most capable</li>
+<li>codestral-latest: Optimized for code</li>
+</ul>
+</details>
 
 <details class="example" open>
   <summary>Example</summary>
   <blockquote>
 <blockquote>
 <blockquote>
-<p>config = GeminiConfig(model="gemini-2.5-flash")
-client = GeminiClient(config)
+<p>config = MistralConfig(model="mistral-small-latest")
+client = MistralClient(config)
 msgs = [{"role": "user", "content": "Hello"}]
 response = client.completion(msgs)
 print(response.content)</p>
@@ -2421,19 +2269,19 @@ print(response.content)</p>
 <p><span class="doc-section-title">Parameters:</span></p>
     <ul>
         <li class="doc-section-item field-body">
-<h4 id="causaliq_knowledge.llm.gemini_client.GeminiClient(config)" class="doc doc-heading doc-heading-parameter">              <b><code>config</code></b>
-<a href="#causaliq_knowledge.llm.gemini_client.GeminiClient(config)" class="headerlink" title="Permanent link">&para;</a></h4>              (<code><span title="typing.Optional">Optional</span>[<a class="autorefs autorefs-internal" title="            GeminiConfig
+<h3 id="causaliq_knowledge.llm.mistral_client.MistralClient(config)" class="doc doc-heading doc-heading-parameter">              <b><code>config</code></b>
+<a href="#causaliq_knowledge.llm.mistral_client.MistralClient(config)" class="headerlink" title="Permanent link">&para;</a></h3>              (<code><span title="typing.Optional">Optional</span>[<a class="autorefs autorefs-internal" title="            MistralConfig
 
 
   
       dataclass
-   (causaliq_knowledge.llm.gemini_client.GeminiConfig)" href="#causaliq_knowledge.llm.gemini_client.GeminiConfig">GeminiConfig</a>]</code>, default:
+   (causaliq_knowledge.llm.mistral_client.MistralConfig)" href="#causaliq_knowledge.llm.mistral_client.MistralConfig">MistralConfig</a>]</code>, default:
                   <code>None</code>
 )
           –
           <div class="doc-md-description">
-            <p>Gemini configuration. If None, uses defaults with
-   API key from GEMINI_API_KEY environment variable.</p>
+            <p>Mistral configuration. If None, uses defaults with
+   API key from MISTRAL_API_KEY environment variable.</p>
           </div>
         </li>
     </ul>
@@ -2453,31 +2301,31 @@ print(response.content)</p>
 <p><span class="doc-section-title">Methods:</span></p>
     <ul>
           <li class="doc-section-item field-body">
-            <b><code><a class="autorefs autorefs-internal" title="            complete_json (causaliq_knowledge.llm.gemini_client.GeminiClient.complete_json)" href="#causaliq_knowledge.llm.gemini_client.GeminiClient.complete_json">complete_json</a></code></b>
+            <b><code><a class="autorefs autorefs-internal" title="            complete_json (causaliq_knowledge.llm.mistral_client.MistralClient.complete_json)" href="#causaliq_knowledge.llm.mistral_client.MistralClient.complete_json">complete_json</a></code></b>
             –
             <div class="doc-md-description">
               <p>Make a completion request and parse response as JSON.</p>
             </div>
           </li>
           <li class="doc-section-item field-body">
-            <b><code><a class="autorefs autorefs-internal" title="            completion (causaliq_knowledge.llm.gemini_client.GeminiClient.completion)" href="#causaliq_knowledge.llm.gemini_client.GeminiClient.completion">completion</a></code></b>
+            <b><code><a class="autorefs autorefs-internal" title="            completion (causaliq_knowledge.llm.mistral_client.MistralClient.completion)" href="#causaliq_knowledge.llm.mistral_client.MistralClient.completion">completion</a></code></b>
             –
             <div class="doc-md-description">
-              <p>Make a chat completion request to Gemini.</p>
+              <p>Make a chat completion request.</p>
             </div>
           </li>
           <li class="doc-section-item field-body">
-            <b><code><a class="autorefs autorefs-internal" title="            is_available (causaliq_knowledge.llm.gemini_client.GeminiClient.is_available)" href="#causaliq_knowledge.llm.gemini_client.GeminiClient.is_available">is_available</a></code></b>
+            <b><code><a class="autorefs autorefs-internal" title="            is_available (causaliq_knowledge.llm.mistral_client.MistralClient.is_available)" href="#causaliq_knowledge.llm.mistral_client.MistralClient.is_available">is_available</a></code></b>
             –
             <div class="doc-md-description">
-              <p>Check if Gemini API is available.</p>
+              <p>Check if the API is available.</p>
             </div>
           </li>
           <li class="doc-section-item field-body">
-            <b><code><a class="autorefs autorefs-internal" title="            list_models (causaliq_knowledge.llm.gemini_client.GeminiClient.list_models)" href="#causaliq_knowledge.llm.gemini_client.GeminiClient.list_models">list_models</a></code></b>
+            <b><code><a class="autorefs autorefs-internal" title="            list_models (causaliq_knowledge.llm.mistral_client.MistralClient.list_models)" href="#causaliq_knowledge.llm.mistral_client.MistralClient.list_models">list_models</a></code></b>
             –
             <div class="doc-md-description">
-              <p>List available models from Gemini API.</p>
+              <p>List available models from the API.</p>
             </div>
           </li>
     </ul>
@@ -2488,53 +2336,16 @@ print(response.content)</p>
 <p><span class="doc-section-title">Attributes:</span></p>
     <ul>
         <li class="doc-section-item field-body">
-          <b><code><a class="autorefs autorefs-internal" title="            BASE_URL
-
-
-  
-      class-attribute
-      instance-attribute
-   (causaliq_knowledge.llm.gemini_client.GeminiClient.BASE_URL)" href="#causaliq_knowledge.llm.gemini_client.GeminiClient.BASE_URL">BASE_URL</a></code></b>
-          –
-          <div class="doc-md-description">
-            
-          </div>
-        </li>
-        <li class="doc-section-item field-body">
-          <b><code><a class="autorefs autorefs-internal" title="            _total_calls
-
-
-  
-      instance-attribute
-   (causaliq_knowledge.llm.gemini_client.GeminiClient._total_calls)" href="#causaliq_knowledge.llm.gemini_client.GeminiClient._total_calls">_total_calls</a></code></b>
-          –
-          <div class="doc-md-description">
-            
-          </div>
-        </li>
-        <li class="doc-section-item field-body">
           <b><code><a class="autorefs autorefs-internal" title="            call_count
 
 
   
       property
-   (causaliq_knowledge.llm.gemini_client.GeminiClient.call_count)" href="#causaliq_knowledge.llm.gemini_client.GeminiClient.call_count">call_count</a></code></b>
+   (causaliq_knowledge.llm.mistral_client.MistralClient.call_count)" href="#causaliq_knowledge.llm.mistral_client.MistralClient.call_count">call_count</a></code></b>
               (<code><span title="int">int</span></code>)
           –
           <div class="doc-md-description">
             <p>Return the number of API calls made.</p>
-          </div>
-        </li>
-        <li class="doc-section-item field-body">
-          <b><code><a class="autorefs autorefs-internal" title="            config
-
-
-  
-      instance-attribute
-   (causaliq_knowledge.llm.gemini_client.GeminiClient.config)" href="#causaliq_knowledge.llm.gemini_client.GeminiClient.config">config</a></code></b>
-          –
-          <div class="doc-md-description">
-            
           </div>
         </li>
         <li class="doc-section-item field-body">
@@ -2543,7 +2354,7 @@ print(response.content)</p>
 
   
       property
-   (causaliq_knowledge.llm.gemini_client.GeminiClient.model_name)" href="#causaliq_knowledge.llm.gemini_client.GeminiClient.model_name">model_name</a></code></b>
+   (causaliq_knowledge.llm.mistral_client.MistralClient.model_name)" href="#causaliq_knowledge.llm.mistral_client.MistralClient.model_name">model_name</a></code></b>
               (<code><span title="str">str</span></code>)
           –
           <div class="doc-md-description">
@@ -2556,7 +2367,7 @@ print(response.content)</p>
 
   
       property
-   (causaliq_knowledge.llm.gemini_client.GeminiClient.provider_name)" href="#causaliq_knowledge.llm.gemini_client.GeminiClient.provider_name">provider_name</a></code></b>
+   (causaliq_knowledge.llm.mistral_client.MistralClient.provider_name)" href="#causaliq_knowledge.llm.mistral_client.MistralClient.provider_name">provider_name</a></code></b>
               (<code><span title="str">str</span></code>)
           –
           <div class="doc-md-description">
@@ -2580,54 +2391,7 @@ print(response.content)</p>
 
 
 
-<h4 id="causaliq_knowledge.llm.gemini_client.GeminiClient.BASE_URL" class="doc doc-heading">
-<code class="doc-symbol doc-symbol-heading doc-symbol-attribute"></code>            <span class="doc doc-object-name doc-attribute-name">BASE_URL</span>
-
-
-  <span class="doc doc-labels">
-      <small class="doc doc-label doc-label-class-attribute"><code>class-attribute</code></small>
-      <small class="doc doc-label doc-label-instance-attribute"><code>instance-attribute</code></small>
-  </span>
-
-<a href="#causaliq_knowledge.llm.gemini_client.GeminiClient.BASE_URL" class="headerlink" title="Permanent link">&para;</a></h4>
-<div class="language-python doc-signature highlight"><pre><span></span><code><span id="__span-0-1"><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="n">BASE_URL</span> <span class="o">=</span> <span class="s1">&#39;https://generativelanguage.googleapis.com/v1beta/models&#39;</span>
-</span></code></pre></div>
-
-    <div class="doc doc-contents ">
-
-          
-    </div>
-
-</div>
-
-<div class="doc doc-object doc-attribute">
-
-
-
-<h4 id="causaliq_knowledge.llm.gemini_client.GeminiClient._total_calls" class="doc doc-heading">
-<code class="doc-symbol doc-symbol-heading doc-symbol-attribute"></code>            <span class="doc doc-object-name doc-attribute-name">_total_calls</span>
-
-
-  <span class="doc doc-labels">
-      <small class="doc doc-label doc-label-instance-attribute"><code>instance-attribute</code></small>
-  </span>
-
-<a href="#causaliq_knowledge.llm.gemini_client.GeminiClient._total_calls" class="headerlink" title="Permanent link">&para;</a></h4>
-<div class="language-python doc-signature highlight"><pre><span></span><code><span id="__span-0-1"><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="n">_total_calls</span> <span class="o">=</span> <span class="mi">0</span>
-</span></code></pre></div>
-
-    <div class="doc doc-contents ">
-
-          
-    </div>
-
-</div>
-
-<div class="doc doc-object doc-attribute">
-
-
-
-<h4 id="causaliq_knowledge.llm.gemini_client.GeminiClient.call_count" class="doc doc-heading">
+<h3 id="causaliq_knowledge.llm.mistral_client.MistralClient.call_count" class="doc doc-heading">
 <code class="doc-symbol doc-symbol-heading doc-symbol-attribute"></code>            <span class="doc doc-object-name doc-attribute-name">call_count</span>
 
 
@@ -2635,7 +2399,7 @@ print(response.content)</p>
       <small class="doc doc-label doc-label-property"><code>property</code></small>
   </span>
 
-<a href="#causaliq_knowledge.llm.gemini_client.GeminiClient.call_count" class="headerlink" title="Permanent link">&para;</a></h4>
+<a href="#causaliq_knowledge.llm.mistral_client.MistralClient.call_count" class="headerlink" title="Permanent link">&para;</a></h3>
 <div class="language-python doc-signature highlight"><pre><span></span><code><span id="__span-0-1"><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="n">call_count</span><span class="p">:</span> <span class="n"><span title="int">int</span></span>
 </span></code></pre></div>
 
@@ -2652,35 +2416,7 @@ print(response.content)</p>
 
 
 
-<h4 id="causaliq_knowledge.llm.gemini_client.GeminiClient.config" class="doc doc-heading">
-<code class="doc-symbol doc-symbol-heading doc-symbol-attribute"></code>            <span class="doc doc-object-name doc-attribute-name">config</span>
-
-
-  <span class="doc doc-labels">
-      <small class="doc doc-label doc-label-instance-attribute"><code>instance-attribute</code></small>
-  </span>
-
-<a href="#causaliq_knowledge.llm.gemini_client.GeminiClient.config" class="headerlink" title="Permanent link">&para;</a></h4>
-<div class="language-python doc-signature highlight"><pre><span></span><code><span id="__span-0-1"><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="n">config</span> <span class="o">=</span> <span class="n"><a class="autorefs autorefs-internal" title="config (causaliq_knowledge.llm.gemini_client.GeminiClient(config))" href="#causaliq_knowledge.llm.gemini_client.GeminiClient(config)">config</a></span> <span class="ow">or</span> <span class="n"><a class="autorefs autorefs-internal" title="            GeminiConfig
-
-
-  
-      dataclass
-   (causaliq_knowledge.llm.gemini_client.GeminiConfig)" href="#causaliq_knowledge.llm.gemini_client.GeminiConfig">GeminiConfig</a></span><span class="p">()</span>
-</span></code></pre></div>
-
-    <div class="doc doc-contents ">
-
-          
-    </div>
-
-</div>
-
-<div class="doc doc-object doc-attribute">
-
-
-
-<h4 id="causaliq_knowledge.llm.gemini_client.GeminiClient.model_name" class="doc doc-heading">
+<h3 id="causaliq_knowledge.llm.mistral_client.MistralClient.model_name" class="doc doc-heading">
 <code class="doc-symbol doc-symbol-heading doc-symbol-attribute"></code>            <span class="doc doc-object-name doc-attribute-name">model_name</span>
 
 
@@ -2688,7 +2424,7 @@ print(response.content)</p>
       <small class="doc doc-label doc-label-property"><code>property</code></small>
   </span>
 
-<a href="#causaliq_knowledge.llm.gemini_client.GeminiClient.model_name" class="headerlink" title="Permanent link">&para;</a></h4>
+<a href="#causaliq_knowledge.llm.mistral_client.MistralClient.model_name" class="headerlink" title="Permanent link">&para;</a></h3>
 <div class="language-python doc-signature highlight"><pre><span></span><code><span id="__span-0-1"><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="n">model_name</span><span class="p">:</span> <span class="n"><span title="str">str</span></span>
 </span></code></pre></div>
 
@@ -2717,7 +2453,7 @@ print(response.content)</p>
 
 
 
-<h4 id="causaliq_knowledge.llm.gemini_client.GeminiClient.provider_name" class="doc doc-heading">
+<h3 id="causaliq_knowledge.llm.mistral_client.MistralClient.provider_name" class="doc doc-heading">
 <code class="doc-symbol doc-symbol-heading doc-symbol-attribute"></code>            <span class="doc doc-object-name doc-attribute-name">provider_name</span>
 
 
@@ -2725,7 +2461,7 @@ print(response.content)</p>
       <small class="doc doc-label doc-label-property"><code>property</code></small>
   </span>
 
-<a href="#causaliq_knowledge.llm.gemini_client.GeminiClient.provider_name" class="headerlink" title="Permanent link">&para;</a></h4>
+<a href="#causaliq_knowledge.llm.mistral_client.MistralClient.provider_name" class="headerlink" title="Permanent link">&para;</a></h3>
 <div class="language-python doc-signature highlight"><pre><span></span><code><span id="__span-0-1"><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="n">provider_name</span><span class="p">:</span> <span class="n"><span title="str">str</span></span>
 </span></code></pre></div>
 
@@ -2744,13 +2480,13 @@ print(response.content)</p>
 <div class="doc doc-object doc-function">
 
 
-<h4 id="causaliq_knowledge.llm.gemini_client.GeminiClient.complete_json" class="doc doc-heading">
+<h3 id="causaliq_knowledge.llm.mistral_client.MistralClient.complete_json" class="doc doc-heading">
 <code class="doc-symbol doc-symbol-heading doc-symbol-method"></code>            <span class="doc doc-object-name doc-function-name">complete_json</span>
 
 
-<a href="#causaliq_knowledge.llm.gemini_client.GeminiClient.complete_json" class="headerlink" title="Permanent link">&para;</a></h4>
+<a href="#causaliq_knowledge.llm.mistral_client.MistralClient.complete_json" class="headerlink" title="Permanent link">&para;</a></h3>
 <div class="language-python doc-signature highlight"><pre><span></span><code><span id="__span-0-1"><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="nf">complete_json</span><span class="p">(</span>
-</span><span id="__span-0-2"><a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a>    <span class="n"><a class="autorefs autorefs-internal" title="messages (causaliq_knowledge.llm.gemini_client.GeminiClient.complete_json(messages))" href="#causaliq_knowledge.llm.gemini_client.GeminiClient.complete_json(messages)">messages</a></span><span class="p">:</span> <span class="n"><span title="typing.List">List</span></span><span class="p">[</span><span class="n"><span title="typing.Dict">Dict</span></span><span class="p">[</span><span class="n"><span title="str">str</span></span><span class="p">,</span> <span class="n"><span title="str">str</span></span><span class="p">]],</span> <span class="o">**</span><span class="n"><a class="autorefs autorefs-internal" title="**kwargs (causaliq_knowledge.llm.gemini_client.GeminiClient.complete_json(**kwargs))" href="#causaliq_knowledge.llm.gemini_client.GeminiClient.complete_json(**kwargs)">kwargs</a></span><span class="p">:</span> <span class="n"><span title="typing.Any">Any</span></span>
+</span><span id="__span-0-2"><a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a>    <span class="n"><a class="autorefs autorefs-internal" title="messages (causaliq_knowledge.llm.mistral_client.MistralClient.complete_json(messages))" href="#causaliq_knowledge.llm.mistral_client.MistralClient.complete_json(messages)">messages</a></span><span class="p">:</span> <span class="n"><span title="typing.List">List</span></span><span class="p">[</span><span class="n"><span title="typing.Dict">Dict</span></span><span class="p">[</span><span class="n"><span title="str">str</span></span><span class="p">,</span> <span class="n"><span title="str">str</span></span><span class="p">]],</span> <span class="o">**</span><span class="n"><a class="autorefs autorefs-internal" title="**kwargs (causaliq_knowledge.llm.mistral_client.MistralClient.complete_json(**kwargs))" href="#causaliq_knowledge.llm.mistral_client.MistralClient.complete_json(**kwargs)">kwargs</a></span><span class="p">:</span> <span class="n"><span title="typing.Any">Any</span></span>
 </span><span id="__span-0-3"><a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a><span class="p">)</span> <span class="o">-&gt;</span> <span class="n"><span title="tuple">tuple</span></span><span class="p">[</span><span class="n"><span title="typing.Optional">Optional</span></span><span class="p">[</span><span class="n"><span title="typing.Dict">Dict</span></span><span class="p">[</span><span class="n"><span title="str">str</span></span><span class="p">,</span> <span class="n"><span title="typing.Any">Any</span></span><span class="p">]],</span> <span class="n"><a class="autorefs autorefs-internal" title="            LLMResponse
 
 
@@ -2767,16 +2503,16 @@ print(response.content)</p>
 <p><span class="doc-section-title">Parameters:</span></p>
     <ul>
         <li class="doc-section-item field-body">
-<h5 id="causaliq_knowledge.llm.gemini_client.GeminiClient.complete_json(messages)" class="doc doc-heading doc-heading-parameter">              <b><code>messages</code></b>
-<a href="#causaliq_knowledge.llm.gemini_client.GeminiClient.complete_json(messages)" class="headerlink" title="Permanent link">&para;</a></h5>              (<code><span title="typing.List">List</span>[<span title="typing.Dict">Dict</span>[<span title="str">str</span>, <span title="str">str</span>]]</code>)
+<h4 id="causaliq_knowledge.llm.mistral_client.MistralClient.complete_json(messages)" class="doc doc-heading doc-heading-parameter">              <b><code>messages</code></b>
+<a href="#causaliq_knowledge.llm.mistral_client.MistralClient.complete_json(messages)" class="headerlink" title="Permanent link">&para;</a></h4>              (<code><span title="typing.List">List</span>[<span title="typing.Dict">Dict</span>[<span title="str">str</span>, <span title="str">str</span>]]</code>)
           –
           <div class="doc-md-description">
             <p>List of message dicts with "role" and "content" keys.</p>
           </div>
         </li>
         <li class="doc-section-item field-body">
-<h5 id="causaliq_knowledge.llm.gemini_client.GeminiClient.complete_json(**kwargs)" class="doc doc-heading doc-heading-parameter">              <b><code>**kwargs</code></b>
-<a href="#causaliq_knowledge.llm.gemini_client.GeminiClient.complete_json(**kwargs)" class="headerlink" title="Permanent link">&para;</a></h5>              (<code><span title="typing.Any">Any</span></code>, default:
+<h4 id="causaliq_knowledge.llm.mistral_client.MistralClient.complete_json(**kwargs)" class="doc doc-heading doc-heading-parameter">              <b><code>**kwargs</code></b>
+<a href="#causaliq_knowledge.llm.mistral_client.MistralClient.complete_json(**kwargs)" class="headerlink" title="Permanent link">&para;</a></h4>              (<code><span title="typing.Any">Any</span></code>, default:
                   <code>{}</code>
 )
           –
@@ -2812,12 +2548,12 @@ print(response.content)</p>
 <div class="doc doc-object doc-function">
 
 
-<h4 id="causaliq_knowledge.llm.gemini_client.GeminiClient.completion" class="doc doc-heading">
+<h3 id="causaliq_knowledge.llm.mistral_client.MistralClient.completion" class="doc doc-heading">
 <code class="doc-symbol doc-symbol-heading doc-symbol-method"></code>            <span class="doc doc-object-name doc-function-name">completion</span>
 
 
-<a href="#causaliq_knowledge.llm.gemini_client.GeminiClient.completion" class="headerlink" title="Permanent link">&para;</a></h4>
-<div class="language-python doc-signature highlight"><pre><span></span><code><span id="__span-0-1"><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="nf">completion</span><span class="p">(</span><span class="n"><a class="autorefs autorefs-internal" title="messages (causaliq_knowledge.llm.gemini_client.GeminiClient.completion(messages))" href="#causaliq_knowledge.llm.gemini_client.GeminiClient.completion(messages)">messages</a></span><span class="p">:</span> <span class="n"><span title="typing.List">List</span></span><span class="p">[</span><span class="n"><span title="typing.Dict">Dict</span></span><span class="p">[</span><span class="n"><span title="str">str</span></span><span class="p">,</span> <span class="n"><span title="str">str</span></span><span class="p">]],</span> <span class="o">**</span><span class="n"><a class="autorefs autorefs-internal" title="**kwargs (causaliq_knowledge.llm.gemini_client.GeminiClient.completion(**kwargs))" href="#causaliq_knowledge.llm.gemini_client.GeminiClient.completion(**kwargs)">kwargs</a></span><span class="p">:</span> <span class="n"><span title="typing.Any">Any</span></span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n"><a class="autorefs autorefs-internal" title="            LLMResponse
+<a href="#causaliq_knowledge.llm.mistral_client.MistralClient.completion" class="headerlink" title="Permanent link">&para;</a></h3>
+<div class="language-python doc-signature highlight"><pre><span></span><code><span id="__span-0-1"><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="nf">completion</span><span class="p">(</span><span class="n"><a class="autorefs autorefs-internal" title="messages (causaliq_knowledge.llm.mistral_client.MistralClient.completion(messages))" href="#causaliq_knowledge.llm.mistral_client.MistralClient.completion(messages)">messages</a></span><span class="p">:</span> <span class="n"><span title="typing.List">List</span></span><span class="p">[</span><span class="n"><span title="typing.Dict">Dict</span></span><span class="p">[</span><span class="n"><span title="str">str</span></span><span class="p">,</span> <span class="n"><span title="str">str</span></span><span class="p">]],</span> <span class="o">**</span><span class="n"><a class="autorefs autorefs-internal" title="**kwargs (causaliq_knowledge.llm.mistral_client.MistralClient.completion(**kwargs))" href="#causaliq_knowledge.llm.mistral_client.MistralClient.completion(**kwargs)">kwargs</a></span><span class="p">:</span> <span class="n"><span title="typing.Any">Any</span></span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n"><a class="autorefs autorefs-internal" title="            LLMResponse
 
 
   
@@ -2827,22 +2563,22 @@ print(response.content)</p>
 
     <div class="doc doc-contents ">
 
-        <p>Make a chat completion request to Gemini.</p>
+        <p>Make a chat completion request.</p>
 
 
 <p><span class="doc-section-title">Parameters:</span></p>
     <ul>
         <li class="doc-section-item field-body">
-<h5 id="causaliq_knowledge.llm.gemini_client.GeminiClient.completion(messages)" class="doc doc-heading doc-heading-parameter">              <b><code>messages</code></b>
-<a href="#causaliq_knowledge.llm.gemini_client.GeminiClient.completion(messages)" class="headerlink" title="Permanent link">&para;</a></h5>              (<code><span title="typing.List">List</span>[<span title="typing.Dict">Dict</span>[<span title="str">str</span>, <span title="str">str</span>]]</code>)
+<h4 id="causaliq_knowledge.llm.mistral_client.MistralClient.completion(messages)" class="doc doc-heading doc-heading-parameter">              <b><code>messages</code></b>
+<a href="#causaliq_knowledge.llm.mistral_client.MistralClient.completion(messages)" class="headerlink" title="Permanent link">&para;</a></h4>              (<code><span title="typing.List">List</span>[<span title="typing.Dict">Dict</span>[<span title="str">str</span>, <span title="str">str</span>]]</code>)
           –
           <div class="doc-md-description">
             <p>List of message dicts with "role" and "content" keys.</p>
           </div>
         </li>
         <li class="doc-section-item field-body">
-<h5 id="causaliq_knowledge.llm.gemini_client.GeminiClient.completion(**kwargs)" class="doc doc-heading doc-heading-parameter">              <b><code>**kwargs</code></b>
-<a href="#causaliq_knowledge.llm.gemini_client.GeminiClient.completion(**kwargs)" class="headerlink" title="Permanent link">&para;</a></h5>              (<code><span title="typing.Any">Any</span></code>, default:
+<h4 id="causaliq_knowledge.llm.mistral_client.MistralClient.completion(**kwargs)" class="doc doc-heading doc-heading-parameter">              <b><code>**kwargs</code></b>
+<a href="#causaliq_knowledge.llm.mistral_client.MistralClient.completion(**kwargs)" class="headerlink" title="Permanent link">&para;</a></h4>              (<code><span title="typing.Any">Any</span></code>, default:
                   <code>{}</code>
 )
           –
@@ -2890,17 +2626,17 @@ print(response.content)</p>
 <div class="doc doc-object doc-function">
 
 
-<h4 id="causaliq_knowledge.llm.gemini_client.GeminiClient.is_available" class="doc doc-heading">
+<h3 id="causaliq_knowledge.llm.mistral_client.MistralClient.is_available" class="doc doc-heading">
 <code class="doc-symbol doc-symbol-heading doc-symbol-method"></code>            <span class="doc doc-object-name doc-function-name">is_available</span>
 
 
-<a href="#causaliq_knowledge.llm.gemini_client.GeminiClient.is_available" class="headerlink" title="Permanent link">&para;</a></h4>
+<a href="#causaliq_knowledge.llm.mistral_client.MistralClient.is_available" class="headerlink" title="Permanent link">&para;</a></h3>
 <div class="language-python doc-signature highlight"><pre><span></span><code><span id="__span-0-1"><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="nf">is_available</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="n"><span title="bool">bool</span></span>
 </span></code></pre></div>
 
     <div class="doc doc-contents ">
 
-        <p>Check if Gemini API is available.</p>
+        <p>Check if the API is available.</p>
 
 
 <p><span class="doc-section-title">Returns:</span></p>
@@ -2909,7 +2645,7 @@ print(response.content)</p>
               <code><span title="bool">bool</span></code>
           –
           <div class="doc-md-description">
-            <p>True if GEMINI_API_KEY is configured.</p>
+            <p>True if API key is configured.</p>
           </div>
         </li>
     </ul>
@@ -2923,19 +2659,19 @@ print(response.content)</p>
 <div class="doc doc-object doc-function">
 
 
-<h4 id="causaliq_knowledge.llm.gemini_client.GeminiClient.list_models" class="doc doc-heading">
+<h3 id="causaliq_knowledge.llm.mistral_client.MistralClient.list_models" class="doc doc-heading">
 <code class="doc-symbol doc-symbol-heading doc-symbol-method"></code>            <span class="doc doc-object-name doc-function-name">list_models</span>
 
 
-<a href="#causaliq_knowledge.llm.gemini_client.GeminiClient.list_models" class="headerlink" title="Permanent link">&para;</a></h4>
+<a href="#causaliq_knowledge.llm.mistral_client.MistralClient.list_models" class="headerlink" title="Permanent link">&para;</a></h3>
 <div class="language-python doc-signature highlight"><pre><span></span><code><span id="__span-0-1"><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="nf">list_models</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="n"><span title="typing.List">List</span></span><span class="p">[</span><span class="n"><span title="str">str</span></span><span class="p">]</span>
 </span></code></pre></div>
 
     <div class="doc doc-contents ">
 
-        <p>List available models from Gemini API.</p>
-<p>Queries the Gemini API to get models accessible with the current
-API key. Filters to only include models that support generateContent.</p>
+        <p>List available models from the API.</p>
+<p>Queries the API to get models accessible with the current
+API key, then filters using _filter_models().</p>
 
 
 <p><span class="doc-section-title">Returns:</span></p>
@@ -2944,7 +2680,7 @@ API key. Filters to only include models that support generateContent.</p>
               <code><span title="typing.List">List</span>[<span title="str">str</span>]</code>
           –
           <div class="doc-md-description">
-            <p>List of model identifiers (e.g., ['gemini-2.5-flash', ...]).</p>
+            <p>List of model identifiers.</p>
           </div>
         </li>
     </ul>
@@ -2973,59 +2709,7 @@ API key. Filters to only include models that support generateContent.</p>
 
     </div>
 
-</div><h2 id="message-format-conversion">Message Format Conversion<a class="headerlink" href="#message-format-conversion" title="Permanent link">&para;</a></h2>
-<p>The client automatically converts OpenAI-style messages to Gemini's format:</p>
-<table>
-<thead>
-<tr>
-<th>OpenAI Role</th>
-<th>Gemini Role</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td><code>system</code></td>
-<td>System instruction (separate field)</td>
-</tr>
-<tr>
-<td><code>user</code></td>
-<td><code>user</code></td>
-</tr>
-<tr>
-<td><code>assistant</code></td>
-<td><code>model</code></td>
-</tr>
-</tbody>
-</table>
-<h2 id="supported-models">Supported Models<a class="headerlink" href="#supported-models" title="Permanent link">&para;</a></h2>
-<p>Google Gemini provides a generous free tier:</p>
-<table>
-<thead>
-<tr>
-<th>Model</th>
-<th>Description</th>
-<th>Free Tier</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td><code>gemini-2.5-flash</code></td>
-<td>Fast and efficient</td>
-<td>✅ Yes</td>
-</tr>
-<tr>
-<td><code>gemini-2.5-pro</code></td>
-<td>Most capable</td>
-<td>✅ Limited</td>
-</tr>
-<tr>
-<td><code>gemini-1.5-flash</code></td>
-<td>Previous generation</td>
-<td>✅ Yes</td>
-</tr>
-</tbody>
-</table>
-<p>See <a href="https://ai.google.dev/models/gemini">Google AI documentation</a> for the full list of available models.</p>
+</div>
 
 
 
@@ -3063,7 +2747,7 @@ API key. Filters to only include models that support generateContent.</p>
       <nav class="md-footer__inner md-grid" aria-label="Footer" >
         
           
-          <a href="../deepseek/" class="md-footer__link md-footer__link--prev" aria-label="Previous: DeepSeek">
+          <a href="../groq/" class="md-footer__link md-footer__link--prev" aria-label="Previous: Groq">
             <div class="md-footer__button md-icon">
               
               <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11z"/></svg>
@@ -3073,20 +2757,20 @@ API key. Filters to only include models that support generateContent.</p>
                 Previous
               </span>
               <div class="md-ellipsis">
-                DeepSeek
+                Groq
               </div>
             </div>
           </a>
         
         
           
-          <a href="../groq/" class="md-footer__link md-footer__link--next" aria-label="Next: Groq">
+          <a href="../ollama/" class="md-footer__link md-footer__link--next" aria-label="Next: Ollama">
             <div class="md-footer__title">
               <span class="md-footer__direction">
                 Next
               </span>
               <div class="md-ellipsis">
-                Groq
+                Ollama
               </div>
             </div>
             <div class="md-footer__button md-icon">
