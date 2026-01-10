@@ -101,8 +101,14 @@ We use **direct vendor-specific API clients** rather than wrapper libraries like
 |----------|--------------|----------------|------------------|
 | Groq | `GroqClient` | `groq/llama-3.1-8b-instant` | `GROQ_API_KEY` |
 | Google Gemini | `GeminiClient` | `gemini/gemini-2.5-flash` | `GEMINI_API_KEY` |
+| OpenAI | `OpenAIClient` | `openai/gpt-4o-mini` | `OPENAI_API_KEY` |
+| Anthropic | `AnthropicClient` | `anthropic/claude-sonnet-4-20250514` | `ANTHROPIC_API_KEY` |
+| DeepSeek | `DeepSeekClient` | `deepseek/deepseek-chat` | `DEEPSEEK_API_KEY` |
+| Mistral | `MistralClient` | `mistral/mistral-small-latest` | `MISTRAL_API_KEY` |
+| Ollama | `OllamaClient` | `ollama/llama3` | N/A (local) |
 
-Additional providers (OpenAI, Anthropic) can be added by implementing new client classes following the same pattern.
+Additional providers can be added by implementing new client classes following
+the same pattern.
 
 ### Cost Considerations
 
@@ -112,8 +118,15 @@ For edge queries (~500 tokens each):
 |----------|-------|----------------------|---------|-------|
 | Groq | llama-3.1-8b-instant | Free tier | Good | Very fast |
 | Google | gemini-2.5-flash | Free tier | Good | Fast |
+| Ollama | llama3 | Free (local) | Good | Depends on HW |
+| DeepSeek | deepseek-chat | ~$0.07 | Excellent | Fast |
+| Mistral | mistral-small-latest | ~$0.50 | Good | Fast |
+| OpenAI | gpt-4o-mini | ~$0.15 | Excellent | Fast |
+| Anthropic | claude-sonnet-4-20250514 | ~$1.50 | Excellent | Fast |
 
-**Recommendation**: Use Groq free tier for development and testing. Both Groq and Gemini offer generous free tiers suitable for most research use cases.
+**Recommendation**: Use Groq free tier for development and testing. Ollama is
+great for local development. Both Groq and Gemini offer generous free tiers
+suitable for most research use cases.
 
 ## Prompt Design
 
@@ -251,11 +264,6 @@ for _, row in uncertain_edges.iterrows():
 - 1000 unique edges: ~20-30 minutes (sequential), ~5 min (parallel)
 
 ## Future Extensions
-
-### v0.2.0: Additional Providers
-
-- OpenAI client for GPT-4 models
-- Anthropic client for Claude models
 
 ### v0.3.0: Caching
 

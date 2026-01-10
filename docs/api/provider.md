@@ -11,6 +11,11 @@ libraries like LiteLLM or LangChain. Currently supported providers:
 
 - **Groq**: Fast inference for open-source models (free tier)
 - **Gemini**: Google's Gemini models (generous free tier)
+- **OpenAI**: GPT-4o and other OpenAI models
+- **Anthropic**: Claude models
+- **DeepSeek**: DeepSeek-V3 and DeepSeek-R1 models
+- **Mistral**: Mistral AI models
+- **Ollama**: Local LLMs (Llama, Mistral, Phi, etc.)
 
 ## Usage
 
@@ -46,6 +51,11 @@ Models are specified with a provider prefix:
 |----------|--------|---------|
 | Groq | `groq/<model>` | `groq/llama-3.1-8b-instant` |
 | Gemini | `gemini/<model>` | `gemini/gemini-2.5-flash` |
+| OpenAI | `openai/<model>` | `openai/gpt-4o-mini` |
+| Anthropic | `anthropic/<model>` | `anthropic/claude-sonnet-4-20250514` |
+| DeepSeek | `deepseek/<model>` | `deepseek/deepseek-chat` |
+| Mistral | `mistral/<model>` | `mistral/mistral-small-latest` |
+| Ollama | `ollama/<model>` | `ollama/llama3` |
 
 ## LLMKnowledge
 

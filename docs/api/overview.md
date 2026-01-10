@@ -13,10 +13,32 @@ from causaliq_knowledge import EdgeKnowledge, EdgeDirection, KnowledgeProvider
 LLM-specific classes should be imported from the `llm` submodule:
 
 ```python
-from causaliq_knowledge.llm import LLMKnowledge
-from causaliq_knowledge.llm import GroqClient, GroqConfig, GroqResponse
-from causaliq_knowledge.llm import GeminiClient, GeminiConfig, GeminiResponse
-from causaliq_knowledge.llm import EdgeQueryPrompt, parse_edge_response
+from causaliq_knowledge.llm import (
+    # Abstract base interface
+    BaseLLMClient,
+    LLMConfig,
+    LLMResponse,
+    # Main provider
+    LLMKnowledge,
+    # Vendor clients
+    GroqClient,
+    GroqConfig,
+    GeminiClient,
+    GeminiConfig,
+    OpenAIClient,
+    OpenAIConfig,
+    AnthropicClient,
+    AnthropicConfig,
+    DeepSeekClient,
+    DeepSeekConfig,
+    MistralClient,
+    MistralConfig,
+    OllamaClient,
+    OllamaConfig,
+    # Prompts
+    EdgeQueryPrompt,
+    parse_edge_response,
+)
 ```
 
 ## Modules
@@ -42,21 +64,25 @@ Main entry point for LLM-based knowledge queries:
 - **weighted_vote** - Multi-model consensus by weighted voting
 - **highest_confidence** - Select response with highest confidence
 
-### [Groq Client](groq_client.md)
+### [LLM Client Interface](base_client.md)
 
-Direct Groq API client for fast LLM inference:
+Abstract base class and common types for LLM vendor clients:
 
-- **GroqConfig** - Configuration for Groq API client
-- **GroqResponse** - Response from Groq API
-- **GroqClient** - Client for making Groq API calls
+- **BaseLLMClient** - Abstract interface all vendor clients implement
+- **LLMConfig** - Base configuration dataclass
+- **LLMResponse** - Unified response format
 
-### [Gemini Client](gemini_client.md)
+### Vendor API Clients
 
-Direct Google Gemini API client:
+Direct API clients for specific LLM providers. All implement the `BaseLLMClient` interface.
 
-- **GeminiConfig** - Configuration for Gemini API client
-- **GeminiResponse** - Response from Gemini API
-- **GeminiClient** - Client for making Gemini API calls
+- **[Groq Client](clients/groq.md)** - Fast inference via Groq API
+- **[Gemini Client](clients/gemini.md)** - Google Gemini API
+- **[OpenAI Client](clients/openai.md)** - OpenAI GPT models
+- **[Anthropic Client](clients/anthropic.md)** - Anthropic Claude models
+- **[DeepSeek Client](clients/deepseek.md)** - DeepSeek models
+- **[Mistral Client](clients/mistral.md)** - Mistral AI models
+- **[Ollama Client](clients/ollama.md)** - Local LLMs via Ollama
 
 ### [Prompts](prompts.md)
 

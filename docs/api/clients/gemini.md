@@ -1,14 +1,15 @@
 # Gemini Client API Reference
 
-Direct Google Gemini API client. This client uses httpx to communicate
-directly with the Gemini API, providing reliable and predictable behavior
-without wrapper library dependencies.
+Direct Google Gemini API client. This client implements the
+[BaseLLMClient](../base_client.md) interface using httpx to communicate
+directly with Google's Generative Language API.
 
 ## Overview
 
 The Gemini client provides:
 
 - Direct HTTP communication with Google's Generative Language API
+- Implements the `BaseLLMClient` abstract interface
 - Automatic conversion from OpenAI-style messages to Gemini format
 - JSON response parsing with error handling
 - Call counting for usage tracking
@@ -50,15 +51,6 @@ export GEMINI_API_KEY=your_api_key_here
 ## GeminiConfig
 
 ::: causaliq_knowledge.llm.gemini_client.GeminiConfig
-    options:
-        show_root_heading: true
-        show_source: false
-        heading_level: 3
-        members: true
-
-## GeminiResponse
-
-::: causaliq_knowledge.llm.gemini_client.GeminiResponse
     options:
         show_root_heading: true
         show_source: false

@@ -59,10 +59,17 @@ knowledge = LLMKnowledge(
 
 ## LLM Provider Setup
 
-CausalIQ Knowledge uses **direct vendor-specific API clients** (not wrapper libraries) to communicate with LLM providers. This approach provides reliability and minimal dependencies. Currently supported:
+CausalIQ Knowledge uses **direct vendor-specific API clients** (not wrapper
+libraries) to communicate with LLM providers. This approach provides
+reliability and minimal dependencies. Currently supported:
 
 - **Groq**: Free tier with fast inference
 - **Google Gemini**: Generous free tier
+- **OpenAI**: GPT-4o and other models
+- **Anthropic**: Claude models
+- **DeepSeek**: DeepSeek-V3 and R1 models
+- **Mistral**: Mistral AI models
+- **Ollama**: Local LLMs (free, runs locally)
 
 ### Free Options
 
@@ -97,14 +104,65 @@ Google offers free access to Gemini models:
 knowledge = LLMKnowledge(models=["gemini/gemini-2.5-flash"])
 ```
 
-### Coming Soon (v0.2.0)
+#### OpenAI
 
-Additional providers will be added in future releases:
+OpenAI provides GPT-4o and other models:
 
-| Provider | Status | Notes |
-|----------|--------|-------|
-| **OpenAI** | Planned v0.2.0 | GPT-4 models |
-| **Anthropic** | Planned v0.2.0 | Claude models |
+1. Sign up at [platform.openai.com](https://platform.openai.com)
+2. Create an API key
+3. Set `OPENAI_API_KEY` environment variable
+
+```python
+knowledge = LLMKnowledge(models=["openai/gpt-4o-mini"])
+```
+
+#### Anthropic
+
+Anthropic provides Claude models:
+
+1. Sign up at [console.anthropic.com](https://console.anthropic.com)
+2. Create an API key
+3. Set `ANTHROPIC_API_KEY` environment variable
+
+```python
+knowledge = LLMKnowledge(models=["anthropic/claude-sonnet-4-20250514"])
+```
+
+#### DeepSeek
+
+DeepSeek offers high-quality models at competitive prices:
+
+1. Sign up at [platform.deepseek.com](https://platform.deepseek.com)
+2. Create an API key
+3. Set `DEEPSEEK_API_KEY` environment variable
+
+```python
+knowledge = LLMKnowledge(models=["deepseek/deepseek-chat"])
+```
+
+#### Mistral
+
+Mistral AI provides models with EU data sovereignty:
+
+1. Sign up at [console.mistral.ai](https://console.mistral.ai)
+2. Create an API key
+3. Set `MISTRAL_API_KEY` environment variable
+
+```python
+knowledge = LLMKnowledge(models=["mistral/mistral-small-latest"])
+```
+
+#### Ollama (Local)
+
+Run models locally with Ollama (no API key needed):
+
+1. Install Ollama from [ollama.ai](https://ollama.ai)
+2. Pull a model: `ollama pull llama3`
+3. Use in code:
+
+```python
+knowledge = LLMKnowledge(models=["ollama/llama3"])
+```
 
 ### Storing API Keys
 
