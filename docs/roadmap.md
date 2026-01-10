@@ -1,16 +1,36 @@
 # CausalIQ Knowledge - Development Roadmap
 
-**Last updated**: January 07, 2026  
+**Last updated**: January 10, 2026  
 
 This project roadmap fits into the [overall ecosystem roadmap](https://causaliq.org/projects/ecosystem_roadmap/)
 
 ## 🎯 Current Release
 
+### Release v0.2.0 - Additional LLMs [January 2026]
+
+Expanded LLM provider support from 2 to 7 providers.
+
+**Scope:**
+
+- OpenAI client for GPT-4o and GPT-4o-mini models
+- Anthropic client for Claude models
+- DeepSeek client for DeepSeek-V3 and R1 models
+- Mistral client for Mistral AI models
+- Ollama client for local LLM inference
+- OpenAI-compatible base client for API-compatible providers
+- Integration tests for all providers
+- Cost estimation utilities for each provider
+
+
+---
+
+## ✅ Previous Releases
+
 ### Release v0.1.0 - Foundation LLM [January 2026]
 
 Simple LLM queries to 1 or 2 LLMs about edge existence and orientation to support graph averaging.
 
-**Scope:**
+**Delivered:**
 
 - Abstract `KnowledgeProvider` interface
 - `EdgeKnowledge` Pydantic model for structured responses
@@ -19,47 +39,11 @@ Simple LLM queries to 1 or 2 LLMs about edge existence and orientation to suppor
 - Single-model and multi-model consensus queries
 - Basic prompt templates for edge existence/orientation
 - CLI for testing queries
-
-**Architecture Decision:**
-
-We use **vendor-specific API clients** (GroqClient, GeminiClient) rather than wrapper libraries like LiteLLM or LangChain. This provides:
-
-- Minimal dependencies (httpx only for HTTP)
-- Reliable and predictable behavior
-- Easy debugging without abstraction layers
-- Full control over API interactions
-
-**Out of scope for v0.1.0:**
-
-- Response caching (v0.3.0)
-- Rich context/RAG (v0.4.0)
-- Direct algorithm integration (v0.5.0)
-
-**Implementation milestones:**
-
-- ~~v0.1.0a: Core models and abstract interface~~ ✅
-- ~~v0.1.0b: Direct vendor API clients (Groq, Gemini)~~ ✅
-- ~~v0.1.0c: Edge existence/orientation prompts~~ ✅
-- ~~v0.1.0d: Multi-LLM consensus logic~~ ✅
-- v0.1.0e: CLI and documentation
-
----
-
-## ✅ Previous Releases
-
-*See Git commit history for detailed implementation progress*
-
-- None
+- 100% test coverage
+- Comprehensive documentation
 
 
 ## 🛣️ Upcoming Releases
-
-### Release v0.2.0 - Additional LLM Providers
-
-- OpenAI client for GPT-4 models
-- Anthropic client for Claude models
-- Provider-specific prompt optimizations
-- Cost tracking and reporting utilities
 
 ### Release v0.3.0 - LLM Caching
 

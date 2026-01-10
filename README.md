@@ -31,17 +31,13 @@ print(f"Reasoning: {result.reasoning}")
 
 ## Features
 
-Under development:
-
-- **Release v0.1.0 - Foundation LLM**: Simple LLM queries to 1 or 2 LLMs about edge existence and orientation to support graph averaging
-
 Currently implemented releases:
 
-- None
+- **Release v0.1.0 - Foundation LLM**: Simple LLM queries to 1 or 2 LLMs about edge existence and orientation to support graph averaging
+- **Release v0.2.0 - Additional LLMs**: Support for 7 LLM providers (Groq, Gemini, OpenAI, Anthropic, DeepSeek, Mistral, Ollama)
 
 Planned:
 
-- **Release v0.2.0 - Additional LLMs**: Support for more LLM providers (OpenAI, Anthropic)
 - **Release v0.3.0 - LLM Caching**: Caching of LLM queries and responses
 - **Release v0.4.0 - LLM Context**: Variable/role/literature etc context
 - **Release v0.5.0 - Algorithm integration**: Integration into structure learning algorithms
@@ -74,8 +70,11 @@ This approach keeps the package lightweight, reliable, and easy to debug.
 |----------|--------|--------|-----------|
 | **Groq** | `GroqClient` | llama-3.1-8b-instant | ✅ Generous |
 | **Google Gemini** | `GeminiClient` | gemini-2.5-flash | ✅ Generous |
-
-Additional providers (OpenAI, Anthropic) can be added in future releases.
+| **OpenAI** | `OpenAIClient` | gpt-4o-mini | ❌ Paid |
+| **Anthropic** | `AnthropicClient` | claude-sonnet-4-20250514 | ❌ Paid |
+| **DeepSeek** | `DeepSeekClient` | deepseek-chat | ✅ Low cost |
+| **Mistral** | `MistralClient` | mistral-small-latest | ❌ Paid |
+| **Ollama** | `OllamaClient` | llama3 | ✅ Free (local) |
 
 ## Upcoming Key Innovations
 

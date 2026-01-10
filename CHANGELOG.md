@@ -32,6 +32,28 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Nothing yet
 
 
+## [0.2.0] - Additional LLMs - 2026-01-10
+
+Expanded LLM provider support from 2 to 7 providers, covering major commercial and open-source options.
+
+### Added
+
+- **OpenAI Client**: Direct API client for GPT-4o, GPT-4o-mini and other OpenAI models
+- **Anthropic Client**: Direct API client for Claude models (claude-sonnet-4-20250514, etc.)
+- **DeepSeek Client**: Direct API client for DeepSeek-V3 and DeepSeek-R1 models (OpenAI-compatible)
+- **Mistral Client**: Direct API client for Mistral AI models (OpenAI-compatible)
+- **Ollama Client**: Local LLM support via Ollama (llama3, mistral, phi, etc.)
+- **OpenAI-Compatible Base**: Shared client implementation for OpenAI-compatible APIs
+- **Integration Tests**: Real API integration tests for all 7 providers (marked slow, skipped on CI)
+- **Provider Documentation**: Individual API reference pages for each client
+
+### Changed
+
+- Updated documentation to reflect all supported providers
+- Enhanced provider detection in `LLMKnowledge` to route to correct client
+- Updated roadmap and user guide with new provider setup instructions
+
+
 ## [0.1.0] - Foundation LLM - 2026-01-07
 
 First release of causaliq-knowledge providing LLM-based knowledge services for causal discovery.
