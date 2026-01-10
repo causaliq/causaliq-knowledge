@@ -653,19 +653,63 @@
   
 </li>
         
-      </ul>
-    </nav>
+          <li class="md-nav__item">
+  <a href="#openai" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        OpenAI
+      
+    </span>
+  </a>
   
 </li>
         
           <li class="md-nav__item">
-  <a href="#coming-soon-v020" class="md-nav__link">
+  <a href="#anthropic" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Coming Soon (v0.2.0)
+        Anthropic
       
     </span>
   </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#deepseek" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        DeepSeek
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#mistral" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Mistral
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#ollama-local" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Ollama (Local)
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
   
 </li>
         
@@ -1641,19 +1685,63 @@
   
 </li>
         
-      </ul>
-    </nav>
+          <li class="md-nav__item">
+  <a href="#openai" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        OpenAI
+      
+    </span>
+  </a>
   
 </li>
         
           <li class="md-nav__item">
-  <a href="#coming-soon-v020" class="md-nav__link">
+  <a href="#anthropic" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Coming Soon (v0.2.0)
+        Anthropic
       
     </span>
   </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#deepseek" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        DeepSeek
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#mistral" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Mistral
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#ollama-local" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Ollama (Local)
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
   
 </li>
         
@@ -1794,10 +1882,17 @@
 </span><span id="__span-3-5"><a id="__codelineno-3-5" name="__codelineno-3-5" href="#__codelineno-3-5"></a><span class="p">)</span>
 </span></code></pre></div>
 <h2 id="llm-provider-setup">LLM Provider Setup<a class="headerlink" href="#llm-provider-setup" title="Permanent link">&para;</a></h2>
-<p>CausalIQ Knowledge uses <strong>direct vendor-specific API clients</strong> (not wrapper libraries) to communicate with LLM providers. This approach provides reliability and minimal dependencies. Currently supported:</p>
+<p>CausalIQ Knowledge uses <strong>direct vendor-specific API clients</strong> (not wrapper
+libraries) to communicate with LLM providers. This approach provides
+reliability and minimal dependencies. Currently supported:</p>
 <ul>
 <li><strong>Groq</strong>: Free tier with fast inference</li>
 <li><strong>Google Gemini</strong>: Generous free tier</li>
+<li><strong>OpenAI</strong>: GPT-4o and other models</li>
+<li><strong>Anthropic</strong>: Claude models</li>
+<li><strong>DeepSeek</strong>: DeepSeek-V3 and R1 models</li>
+<li><strong>Mistral</strong>: Mistral AI models</li>
+<li><strong>Ollama</strong>: Local LLMs (free, runs locally)</li>
 </ul>
 <h3 id="free-options">Free Options<a class="headerlink" href="#free-options" title="Permanent link">&para;</a></h3>
 <h4 id="groq-free-tier-very-fast">Groq (Free Tier - Very Fast)<a class="headerlink" href="#groq-free-tier-very-fast" title="Permanent link">&para;</a></h4>
@@ -1824,44 +1919,66 @@
 </ol>
 <div class="language-python highlight"><pre><span></span><code><span id="__span-5-1"><a id="__codelineno-5-1" name="__codelineno-5-1" href="#__codelineno-5-1"></a><span class="n">knowledge</span> <span class="o">=</span> <span class="n">LLMKnowledge</span><span class="p">(</span><span class="n">models</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;gemini/gemini-2.5-flash&quot;</span><span class="p">])</span>
 </span></code></pre></div>
-<h3 id="coming-soon-v020">Coming Soon (v0.2.0)<a class="headerlink" href="#coming-soon-v020" title="Permanent link">&para;</a></h3>
-<p>Additional providers will be added in future releases:</p>
-<table>
-<thead>
-<tr>
-<th>Provider</th>
-<th>Status</th>
-<th>Notes</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td><strong>OpenAI</strong></td>
-<td>Planned v0.2.0</td>
-<td>GPT-4 models</td>
-</tr>
-<tr>
-<td><strong>Anthropic</strong></td>
-<td>Planned v0.2.0</td>
-<td>Claude models</td>
-</tr>
-</tbody>
-</table>
+<h4 id="openai">OpenAI<a class="headerlink" href="#openai" title="Permanent link">&para;</a></h4>
+<p>OpenAI provides GPT-4o and other models:</p>
+<ol>
+<li>Sign up at <a href="https://platform.openai.com">platform.openai.com</a></li>
+<li>Create an API key</li>
+<li>Set <code>OPENAI_API_KEY</code> environment variable</li>
+</ol>
+<div class="language-python highlight"><pre><span></span><code><span id="__span-6-1"><a id="__codelineno-6-1" name="__codelineno-6-1" href="#__codelineno-6-1"></a><span class="n">knowledge</span> <span class="o">=</span> <span class="n">LLMKnowledge</span><span class="p">(</span><span class="n">models</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;openai/gpt-4o-mini&quot;</span><span class="p">])</span>
+</span></code></pre></div>
+<h4 id="anthropic">Anthropic<a class="headerlink" href="#anthropic" title="Permanent link">&para;</a></h4>
+<p>Anthropic provides Claude models:</p>
+<ol>
+<li>Sign up at <a href="https://console.anthropic.com">console.anthropic.com</a></li>
+<li>Create an API key</li>
+<li>Set <code>ANTHROPIC_API_KEY</code> environment variable</li>
+</ol>
+<div class="language-python highlight"><pre><span></span><code><span id="__span-7-1"><a id="__codelineno-7-1" name="__codelineno-7-1" href="#__codelineno-7-1"></a><span class="n">knowledge</span> <span class="o">=</span> <span class="n">LLMKnowledge</span><span class="p">(</span><span class="n">models</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;anthropic/claude-sonnet-4-20250514&quot;</span><span class="p">])</span>
+</span></code></pre></div>
+<h4 id="deepseek">DeepSeek<a class="headerlink" href="#deepseek" title="Permanent link">&para;</a></h4>
+<p>DeepSeek offers high-quality models at competitive prices:</p>
+<ol>
+<li>Sign up at <a href="https://platform.deepseek.com">platform.deepseek.com</a></li>
+<li>Create an API key</li>
+<li>Set <code>DEEPSEEK_API_KEY</code> environment variable</li>
+</ol>
+<div class="language-python highlight"><pre><span></span><code><span id="__span-8-1"><a id="__codelineno-8-1" name="__codelineno-8-1" href="#__codelineno-8-1"></a><span class="n">knowledge</span> <span class="o">=</span> <span class="n">LLMKnowledge</span><span class="p">(</span><span class="n">models</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;deepseek/deepseek-chat&quot;</span><span class="p">])</span>
+</span></code></pre></div>
+<h4 id="mistral">Mistral<a class="headerlink" href="#mistral" title="Permanent link">&para;</a></h4>
+<p>Mistral AI provides models with EU data sovereignty:</p>
+<ol>
+<li>Sign up at <a href="https://console.mistral.ai">console.mistral.ai</a></li>
+<li>Create an API key</li>
+<li>Set <code>MISTRAL_API_KEY</code> environment variable</li>
+</ol>
+<div class="language-python highlight"><pre><span></span><code><span id="__span-9-1"><a id="__codelineno-9-1" name="__codelineno-9-1" href="#__codelineno-9-1"></a><span class="n">knowledge</span> <span class="o">=</span> <span class="n">LLMKnowledge</span><span class="p">(</span><span class="n">models</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;mistral/mistral-small-latest&quot;</span><span class="p">])</span>
+</span></code></pre></div>
+<h4 id="ollama-local">Ollama (Local)<a class="headerlink" href="#ollama-local" title="Permanent link">&para;</a></h4>
+<p>Run models locally with Ollama (no API key needed):</p>
+<ol>
+<li>Install Ollama from <a href="https://ollama.ai">ollama.ai</a></li>
+<li>Pull a model: <code>ollama pull llama3</code></li>
+<li>Use in code:</li>
+</ol>
+<div class="language-python highlight"><pre><span></span><code><span id="__span-10-1"><a id="__codelineno-10-1" name="__codelineno-10-1" href="#__codelineno-10-1"></a><span class="n">knowledge</span> <span class="o">=</span> <span class="n">LLMKnowledge</span><span class="p">(</span><span class="n">models</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;ollama/llama3&quot;</span><span class="p">])</span>
+</span></code></pre></div>
 <h3 id="storing-api-keys">Storing API Keys<a class="headerlink" href="#storing-api-keys" title="Permanent link">&para;</a></h3>
 <h4 id="option-1-user-environment-variables-recommended">Option 1: User Environment Variables (Recommended)<a class="headerlink" href="#option-1-user-environment-variables-recommended" title="Permanent link">&para;</a></h4>
 <p>Set permanently for your user account on Windows:</p>
-<div class="language-powershell highlight"><pre><span></span><code><span id="__span-6-1"><a id="__codelineno-6-1" name="__codelineno-6-1" href="#__codelineno-6-1"></a><span class="no">[Environment]</span><span class="p">::</span><span class="n">SetEnvironmentVariable</span><span class="p">(</span><span class="s2">&quot;GROQ_API_KEY&quot;</span><span class="p">,</span> <span class="s2">&quot;your-key&quot;</span><span class="p">,</span> <span class="s2">&quot;User&quot;</span><span class="p">)</span>
-</span><span id="__span-6-2"><a id="__codelineno-6-2" name="__codelineno-6-2" href="#__codelineno-6-2"></a><span class="no">[Environment]</span><span class="p">::</span><span class="n">SetEnvironmentVariable</span><span class="p">(</span><span class="s2">&quot;GEMINI_API_KEY&quot;</span><span class="p">,</span> <span class="s2">&quot;your-key&quot;</span><span class="p">,</span> <span class="s2">&quot;User&quot;</span><span class="p">)</span>
+<div class="language-powershell highlight"><pre><span></span><code><span id="__span-11-1"><a id="__codelineno-11-1" name="__codelineno-11-1" href="#__codelineno-11-1"></a><span class="no">[Environment]</span><span class="p">::</span><span class="n">SetEnvironmentVariable</span><span class="p">(</span><span class="s2">&quot;GROQ_API_KEY&quot;</span><span class="p">,</span> <span class="s2">&quot;your-key&quot;</span><span class="p">,</span> <span class="s2">&quot;User&quot;</span><span class="p">)</span>
+</span><span id="__span-11-2"><a id="__codelineno-11-2" name="__codelineno-11-2" href="#__codelineno-11-2"></a><span class="no">[Environment]</span><span class="p">::</span><span class="n">SetEnvironmentVariable</span><span class="p">(</span><span class="s2">&quot;GEMINI_API_KEY&quot;</span><span class="p">,</span> <span class="s2">&quot;your-key&quot;</span><span class="p">,</span> <span class="s2">&quot;User&quot;</span><span class="p">)</span>
 </span></code></pre></div>
 <p>On Linux/macOS, add to your <code>~/.bashrc</code> or <code>~/.zshrc</code>:</p>
-<div class="language-bash highlight"><pre><span></span><code><span id="__span-7-1"><a id="__codelineno-7-1" name="__codelineno-7-1" href="#__codelineno-7-1"></a><span class="nb">export</span><span class="w"> </span><span class="nv">GROQ_API_KEY</span><span class="o">=</span><span class="s2">&quot;your-key&quot;</span>
-</span><span id="__span-7-2"><a id="__codelineno-7-2" name="__codelineno-7-2" href="#__codelineno-7-2"></a><span class="nb">export</span><span class="w"> </span><span class="nv">GEMINI_API_KEY</span><span class="o">=</span><span class="s2">&quot;your-key&quot;</span>
+<div class="language-bash highlight"><pre><span></span><code><span id="__span-12-1"><a id="__codelineno-12-1" name="__codelineno-12-1" href="#__codelineno-12-1"></a><span class="nb">export</span><span class="w"> </span><span class="nv">GROQ_API_KEY</span><span class="o">=</span><span class="s2">&quot;your-key&quot;</span>
+</span><span id="__span-12-2"><a id="__codelineno-12-2" name="__codelineno-12-2" href="#__codelineno-12-2"></a><span class="nb">export</span><span class="w"> </span><span class="nv">GEMINI_API_KEY</span><span class="o">=</span><span class="s2">&quot;your-key&quot;</span>
 </span></code></pre></div>
 <p>Restart your terminal for changes to take effect.</p>
 <h4 id="option-2-project-env-file">Option 2: Project <code>.env</code> File<a class="headerlink" href="#option-2-project-env-file" title="Permanent link">&para;</a></h4>
 <p>Create a <code>.env</code> file in your project root:</p>
-<div class="language-text highlight"><pre><span></span><code><span id="__span-8-1"><a id="__codelineno-8-1" name="__codelineno-8-1" href="#__codelineno-8-1"></a>GROQ_API_KEY=your-key-here
-</span><span id="__span-8-2"><a id="__codelineno-8-2" name="__codelineno-8-2" href="#__codelineno-8-2"></a>GEMINI_API_KEY=your-key-here
+<div class="language-text highlight"><pre><span></span><code><span id="__span-13-1"><a id="__codelineno-13-1" name="__codelineno-13-1" href="#__codelineno-13-1"></a>GROQ_API_KEY=your-key-here
+</span><span id="__span-13-2"><a id="__codelineno-13-2" name="__codelineno-13-2" href="#__codelineno-13-2"></a>GEMINI_API_KEY=your-key-here
 </span></code></pre></div>
 <p><strong>Important:</strong> Add <code>.env</code> to your <code>.gitignore</code> so keys aren't committed to version control!</p>
 <h4 id="option-3-password-manager">Option 3: Password Manager<a class="headerlink" href="#option-3-password-manager" title="Permanent link">&para;</a></h4>
@@ -1874,11 +1991,11 @@
 <p>Copy keys from your password manager when setting environment variables.</p>
 <h3 id="verifying-your-setup">Verifying Your Setup<a class="headerlink" href="#verifying-your-setup" title="Permanent link">&para;</a></h3>
 <p>Test your configuration with the CLI:</p>
-<div class="language-bash highlight"><pre><span></span><code><span id="__span-9-1"><a id="__codelineno-9-1" name="__codelineno-9-1" href="#__codelineno-9-1"></a><span class="c1"># Using the installed CLI</span>
-</span><span id="__span-9-2"><a id="__codelineno-9-2" name="__codelineno-9-2" href="#__codelineno-9-2"></a>cqknow<span class="w"> </span>query<span class="w"> </span>smoking<span class="w"> </span>lung_cancer<span class="w"> </span>--model<span class="w"> </span>groq/llama-3.1-8b-instant
-</span><span id="__span-9-3"><a id="__codelineno-9-3" name="__codelineno-9-3" href="#__codelineno-9-3"></a>
-</span><span id="__span-9-4"><a id="__codelineno-9-4" name="__codelineno-9-4" href="#__codelineno-9-4"></a><span class="c1"># Or with Python module</span>
-</span><span id="__span-9-5"><a id="__codelineno-9-5" name="__codelineno-9-5" href="#__codelineno-9-5"></a>python<span class="w"> </span>-m<span class="w"> </span>causaliq_knowledge.cli<span class="w"> </span>query<span class="w"> </span>smoking<span class="w"> </span>lung_cancer<span class="w"> </span>--model<span class="w"> </span>ollama/llama3
+<div class="language-bash highlight"><pre><span></span><code><span id="__span-14-1"><a id="__codelineno-14-1" name="__codelineno-14-1" href="#__codelineno-14-1"></a><span class="c1"># Using the installed CLI</span>
+</span><span id="__span-14-2"><a id="__codelineno-14-2" name="__codelineno-14-2" href="#__codelineno-14-2"></a>cqknow<span class="w"> </span>query<span class="w"> </span>smoking<span class="w"> </span>lung_cancer<span class="w"> </span>--model<span class="w"> </span>groq/llama-3.1-8b-instant
+</span><span id="__span-14-3"><a id="__codelineno-14-3" name="__codelineno-14-3" href="#__codelineno-14-3"></a>
+</span><span id="__span-14-4"><a id="__codelineno-14-4" name="__codelineno-14-4" href="#__codelineno-14-4"></a><span class="c1"># Or with Python module</span>
+</span><span id="__span-14-5"><a id="__codelineno-14-5" name="__codelineno-14-5" href="#__codelineno-14-5"></a>python<span class="w"> </span>-m<span class="w"> </span>causaliq_knowledge.cli<span class="w"> </span>query<span class="w"> </span>smoking<span class="w"> </span>lung_cancer<span class="w"> </span>--model<span class="w"> </span>ollama/llama3
 </span></code></pre></div>
 <h2 id="whats-next">What's Next?<a class="headerlink" href="#whats-next" title="Permanent link">&para;</a></h2>
 <ul>

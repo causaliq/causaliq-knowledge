@@ -2018,6 +2018,11 @@ libraries like LiteLLM or LangChain. Currently supported providers:</p>
 <ul>
 <li><strong>Groq</strong>: Fast inference for open-source models (free tier)</li>
 <li><strong>Gemini</strong>: Google's Gemini models (generous free tier)</li>
+<li><strong>OpenAI</strong>: GPT-4o and other OpenAI models</li>
+<li><strong>Anthropic</strong>: Claude models</li>
+<li><strong>DeepSeek</strong>: DeepSeek-V3 and DeepSeek-R1 models</li>
+<li><strong>Mistral</strong>: Mistral AI models</li>
+<li><strong>Ollama</strong>: Local LLMs (Llama, Mistral, Phi, etc.)</li>
 </ul>
 <h2 id="usage">Usage<a class="headerlink" href="#usage" title="Permanent link">&para;</a></h2>
 <div class="language-python highlight"><pre><span></span><code><span id="__span-0-1"><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="kn">from</span><span class="w"> </span><span class="nn">causaliq_knowledge.llm</span><span class="w"> </span><span class="kn">import</span> <span class="n">LLMKnowledge</span>
@@ -2062,6 +2067,31 @@ libraries like LiteLLM or LangChain. Currently supported providers:</p>
 <td>Gemini</td>
 <td><code>gemini/&lt;model&gt;</code></td>
 <td><code>gemini/gemini-2.5-flash</code></td>
+</tr>
+<tr>
+<td>OpenAI</td>
+<td><code>openai/&lt;model&gt;</code></td>
+<td><code>openai/gpt-4o-mini</code></td>
+</tr>
+<tr>
+<td>Anthropic</td>
+<td><code>anthropic/&lt;model&gt;</code></td>
+<td><code>anthropic/claude-sonnet-4-20250514</code></td>
+</tr>
+<tr>
+<td>DeepSeek</td>
+<td><code>deepseek/&lt;model&gt;</code></td>
+<td><code>deepseek/deepseek-chat</code></td>
+</tr>
+<tr>
+<td>Mistral</td>
+<td><code>mistral/&lt;model&gt;</code></td>
+<td><code>mistral/mistral-small-latest</code></td>
+</tr>
+<tr>
+<td>Ollama</td>
+<td><code>ollama/&lt;model&gt;</code></td>
+<td><code>ollama/llama3</code></td>
 </tr>
 </tbody>
 </table>

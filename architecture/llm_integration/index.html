@@ -1050,17 +1050,6 @@
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
-  <a href="#v020-additional-providers" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        v0.2.0: Additional Providers
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
   <a href="#v030-caching" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -2045,17 +2034,6 @@
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
-  <a href="#v020-additional-providers" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        v0.2.0: Additional Providers
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
   <a href="#v030-caching" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -2217,9 +2195,40 @@
 <td><code>gemini/gemini-2.5-flash</code></td>
 <td><code>GEMINI_API_KEY</code></td>
 </tr>
+<tr>
+<td>OpenAI</td>
+<td><code>OpenAIClient</code></td>
+<td><code>openai/gpt-4o-mini</code></td>
+<td><code>OPENAI_API_KEY</code></td>
+</tr>
+<tr>
+<td>Anthropic</td>
+<td><code>AnthropicClient</code></td>
+<td><code>anthropic/claude-sonnet-4-20250514</code></td>
+<td><code>ANTHROPIC_API_KEY</code></td>
+</tr>
+<tr>
+<td>DeepSeek</td>
+<td><code>DeepSeekClient</code></td>
+<td><code>deepseek/deepseek-chat</code></td>
+<td><code>DEEPSEEK_API_KEY</code></td>
+</tr>
+<tr>
+<td>Mistral</td>
+<td><code>MistralClient</code></td>
+<td><code>mistral/mistral-small-latest</code></td>
+<td><code>MISTRAL_API_KEY</code></td>
+</tr>
+<tr>
+<td>Ollama</td>
+<td><code>OllamaClient</code></td>
+<td><code>ollama/llama3</code></td>
+<td>N/A (local)</td>
+</tr>
 </tbody>
 </table>
-<p>Additional providers (OpenAI, Anthropic) can be added by implementing new client classes following the same pattern.</p>
+<p>Additional providers can be added by implementing new client classes following
+the same pattern.</p>
 <h3 id="cost-considerations">Cost Considerations<a class="headerlink" href="#cost-considerations" title="Permanent link">&para;</a></h3>
 <p>For edge queries (~500 tokens each):</p>
 <table>
@@ -2247,9 +2256,46 @@
 <td>Good</td>
 <td>Fast</td>
 </tr>
+<tr>
+<td>Ollama</td>
+<td>llama3</td>
+<td>Free (local)</td>
+<td>Good</td>
+<td>Depends on HW</td>
+</tr>
+<tr>
+<td>DeepSeek</td>
+<td>deepseek-chat</td>
+<td>~$0.07</td>
+<td>Excellent</td>
+<td>Fast</td>
+</tr>
+<tr>
+<td>Mistral</td>
+<td>mistral-small-latest</td>
+<td>~$0.50</td>
+<td>Good</td>
+<td>Fast</td>
+</tr>
+<tr>
+<td>OpenAI</td>
+<td>gpt-4o-mini</td>
+<td>~$0.15</td>
+<td>Excellent</td>
+<td>Fast</td>
+</tr>
+<tr>
+<td>Anthropic</td>
+<td>claude-sonnet-4-20250514</td>
+<td>~$1.50</td>
+<td>Excellent</td>
+<td>Fast</td>
+</tr>
 </tbody>
 </table>
-<p><strong>Recommendation</strong>: Use Groq free tier for development and testing. Both Groq and Gemini offer generous free tiers suitable for most research use cases.</p>
+<p><strong>Recommendation</strong>: Use Groq free tier for development and testing. Ollama is
+great for local development. Both Groq and Gemini offer generous free tiers
+suitable for most research use cases.</p>
 <h2 id="prompt-design">Prompt Design<a class="headerlink" href="#prompt-design" title="Permanent link">&para;</a></h2>
 <h3 id="edge-existence-query">Edge Existence Query<a class="headerlink" href="#edge-existence-query" title="Permanent link">&para;</a></h3>
 <div class="language-text highlight"><pre><span></span><code><span id="__span-2-1"><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a>System: You are an expert in causal reasoning and domain knowledge. 
@@ -2364,11 +2410,6 @@
 <li>1000 unique edges: ~20-30 minutes (sequential), ~5 min (parallel)</li>
 </ul>
 <h2 id="future-extensions">Future Extensions<a class="headerlink" href="#future-extensions" title="Permanent link">&para;</a></h2>
-<h3 id="v020-additional-providers">v0.2.0: Additional Providers<a class="headerlink" href="#v020-additional-providers" title="Permanent link">&para;</a></h3>
-<ul>
-<li>OpenAI client for GPT-4 models</li>
-<li>Anthropic client for Claude models</li>
-</ul>
 <h3 id="v030-caching">v0.3.0: Caching<a class="headerlink" href="#v030-caching" title="Permanent link">&para;</a></h3>
 <ul>
 <li>Disk-based cache keyed by (node_a, node_b, context_hash)</li>

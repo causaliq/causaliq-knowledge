@@ -453,10 +453,10 @@
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
-  <a href="#release-v010-foundation-llm-january-2026" class="md-nav__link">
+  <a href="#release-v020-additional-llms-january-2026" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Release v0.1.0 - Foundation LLM [January 2026]
+        Release v0.2.0 - Additional LLMs [January 2026]
       
     </span>
   </a>
@@ -477,6 +477,23 @@
     </span>
   </a>
   
+    <nav class="md-nav" aria-label="✅ Previous Releases">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#release-v010-foundation-llm-january-2026" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Release v0.1.0 - Foundation LLM [January 2026]
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
 </li>
       
         <li class="md-nav__item">
@@ -490,17 +507,6 @@
   
     <nav class="md-nav" aria-label="🛣️ Upcoming Releases">
       <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#release-v020-additional-llm-providers" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Release v0.2.0 - Additional LLM Providers
-      
-    </span>
-  </a>
-  
-</li>
         
           <li class="md-nav__item">
   <a href="#release-v030-llm-caching" class="md-nav__link">
@@ -1422,10 +1428,10 @@
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
-  <a href="#release-v010-foundation-llm-january-2026" class="md-nav__link">
+  <a href="#release-v020-additional-llms-january-2026" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Release v0.1.0 - Foundation LLM [January 2026]
+        Release v0.2.0 - Additional LLMs [January 2026]
       
     </span>
   </a>
@@ -1446,6 +1452,23 @@
     </span>
   </a>
   
+    <nav class="md-nav" aria-label="✅ Previous Releases">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#release-v010-foundation-llm-january-2026" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Release v0.1.0 - Foundation LLM [January 2026]
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
 </li>
       
         <li class="md-nav__item">
@@ -1459,17 +1482,6 @@
   
     <nav class="md-nav" aria-label="🛣️ Upcoming Releases">
       <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#release-v020-additional-llm-providers" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Release v0.2.0 - Additional LLM Providers
-      
-    </span>
-  </a>
-  
-</li>
         
           <li class="md-nav__item">
   <a href="#release-v030-llm-caching" class="md-nav__link">
@@ -1549,12 +1561,27 @@
 
 
 <h1 id="causaliq-knowledge-development-roadmap">CausalIQ Knowledge - Development Roadmap<a class="headerlink" href="#causaliq-knowledge-development-roadmap" title="Permanent link">&para;</a></h1>
-<p><strong>Last updated</strong>: January 07, 2026  </p>
+<p><strong>Last updated</strong>: January 10, 2026  </p>
 <p>This project roadmap fits into the <a href="https://causaliq.org/projects/ecosystem_roadmap/">overall ecosystem roadmap</a></p>
 <h2 id="current-release">🎯 Current Release<a class="headerlink" href="#current-release" title="Permanent link">&para;</a></h2>
+<h3 id="release-v020-additional-llms-january-2026">Release v0.2.0 - Additional LLMs [January 2026]<a class="headerlink" href="#release-v020-additional-llms-january-2026" title="Permanent link">&para;</a></h3>
+<p>Expanded LLM provider support from 2 to 7 providers.</p>
+<p><strong>Scope:</strong></p>
+<ul>
+<li>OpenAI client for GPT-4o and GPT-4o-mini models</li>
+<li>Anthropic client for Claude models</li>
+<li>DeepSeek client for DeepSeek-V3 and R1 models</li>
+<li>Mistral client for Mistral AI models</li>
+<li>Ollama client for local LLM inference</li>
+<li>OpenAI-compatible base client for API-compatible providers</li>
+<li>Integration tests for all providers</li>
+<li>Cost estimation utilities for each provider</li>
+</ul>
+<hr />
+<h2 id="previous-releases">✅ Previous Releases<a class="headerlink" href="#previous-releases" title="Permanent link">&para;</a></h2>
 <h3 id="release-v010-foundation-llm-january-2026">Release v0.1.0 - Foundation LLM [January 2026]<a class="headerlink" href="#release-v010-foundation-llm-january-2026" title="Permanent link">&para;</a></h3>
 <p>Simple LLM queries to 1 or 2 LLMs about edge existence and orientation to support graph averaging.</p>
-<p><strong>Scope:</strong></p>
+<p><strong>Delivered:</strong></p>
 <ul>
 <li>Abstract <code>KnowledgeProvider</code> interface</li>
 <li><code>EdgeKnowledge</code> Pydantic model for structured responses</li>
@@ -1563,43 +1590,10 @@
 <li>Single-model and multi-model consensus queries</li>
 <li>Basic prompt templates for edge existence/orientation</li>
 <li>CLI for testing queries</li>
-</ul>
-<p><strong>Architecture Decision:</strong></p>
-<p>We use <strong>vendor-specific API clients</strong> (GroqClient, GeminiClient) rather than wrapper libraries like LiteLLM or LangChain. This provides:</p>
-<ul>
-<li>Minimal dependencies (httpx only for HTTP)</li>
-<li>Reliable and predictable behavior</li>
-<li>Easy debugging without abstraction layers</li>
-<li>Full control over API interactions</li>
-</ul>
-<p><strong>Out of scope for v0.1.0:</strong></p>
-<ul>
-<li>Response caching (v0.3.0)</li>
-<li>Rich context/RAG (v0.4.0)</li>
-<li>Direct algorithm integration (v0.5.0)</li>
-</ul>
-<p><strong>Implementation milestones:</strong></p>
-<ul>
-<li><del>v0.1.0a: Core models and abstract interface</del> ✅</li>
-<li><del>v0.1.0b: Direct vendor API clients (Groq, Gemini)</del> ✅</li>
-<li><del>v0.1.0c: Edge existence/orientation prompts</del> ✅</li>
-<li><del>v0.1.0d: Multi-LLM consensus logic</del> ✅</li>
-<li>v0.1.0e: CLI and documentation</li>
-</ul>
-<hr />
-<h2 id="previous-releases">✅ Previous Releases<a class="headerlink" href="#previous-releases" title="Permanent link">&para;</a></h2>
-<p><em>See Git commit history for detailed implementation progress</em></p>
-<ul>
-<li>None</li>
+<li>100% test coverage</li>
+<li>Comprehensive documentation</li>
 </ul>
 <h2 id="upcoming-releases">🛣️ Upcoming Releases<a class="headerlink" href="#upcoming-releases" title="Permanent link">&para;</a></h2>
-<h3 id="release-v020-additional-llm-providers">Release v0.2.0 - Additional LLM Providers<a class="headerlink" href="#release-v020-additional-llm-providers" title="Permanent link">&para;</a></h3>
-<ul>
-<li>OpenAI client for GPT-4 models</li>
-<li>Anthropic client for Claude models</li>
-<li>Provider-specific prompt optimizations</li>
-<li>Cost tracking and reporting utilities</li>
-</ul>
 <h3 id="release-v030-llm-caching">Release v0.3.0 - LLM Caching<a class="headerlink" href="#release-v030-llm-caching" title="Permanent link">&para;</a></h3>
 <ul>
 <li>Disk-based response caching (diskcache)</li>
