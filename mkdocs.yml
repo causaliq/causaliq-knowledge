@@ -50,6 +50,7 @@ nav:
     - Architectural Overview: architecture/overview.md
     - Design Notes: 
       - LLM Integration: architecture/llm_integration.md
+      - Caching: architecture/caching.md
       - Testing Strategy: architecture/testing_strategy.md
   - API Reference: 
     - API Overview: api/overview.md
