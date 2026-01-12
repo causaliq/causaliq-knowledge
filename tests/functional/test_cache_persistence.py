@@ -52,3 +52,31 @@ def test_file_cache_persists_schema() -> None:
     with TokenCache(db_path) as cache:
         assert cache.table_exists("tokens")
         assert cache.table_exists("cache_entries")
+
+
+# Test that tokens persist and reload across sessions
+def test_tokens_persist_across_sessions() -> None:
+    """Verify tokens are saved to disk and reloaded on reopen."""
+    db_path = TEST_TMP_DIR / "persist_tokens.db"
+    # Clean up from previous runs
+    if db_path.exists():
+        db_path.unlink()
+
+    # Create tokens in first session
+    with TokenCache(db_path) as cache:
+        id1 = cache.get_or_create_token("hello")
+        id2 = cache.get_or_create_token("world")
+        assert id1 == 1
+        assert id2 == 2
+
+    # Reopen and verify tokens were loaded from disk
+    with TokenCache(db_path) as cache:
+        # Should return same IDs (loaded from disk)
+        assert cache.get_or_create_token("hello") == 1
+        assert cache.get_or_create_token("world") == 2
+        # In-memory dict should be populated
+        assert cache._token_to_id["hello"] == 1
+        assert cache._id_to_token[1] == "hello"
+        # New token should get next ID
+        id3 = cache.get_or_create_token("new")
+        assert id3 == 3

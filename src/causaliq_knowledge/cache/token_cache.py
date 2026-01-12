@@ -66,6 +66,9 @@ class TokenCache:
         """
         self.db_path = str(db_path)
         self._conn: sqlite3.Connection | None = None
+        # In-memory token dictionary for fast lookup
+        self._token_to_id: dict[str, int] = {}
+        self._id_to_token: dict[int, str] = {}
 
     @property
     def conn(self) -> sqlite3.Connection:
@@ -120,6 +123,17 @@ class TokenCache:
         """Create database tables if they don't exist."""
         self.conn.executescript(self._SCHEMA_SQL)
         self.conn.commit()
+        self._load_token_dict()
+
+    def _load_token_dict(self) -> None:
+        """Load token dictionary from database into memory."""
+        cursor = self.conn.execute("SELECT id, token FROM tokens")
+        self._token_to_id.clear()
+        self._id_to_token.clear()
+        for row in cursor:
+            token_id, token = row[0], row[1]
+            self._token_to_id[token] = token_id
+            self._id_to_token[token_id] = token
 
     def __enter__(self) -> TokenCache:
         """Context manager entry - opens connection."""
@@ -200,3 +214,55 @@ class TokenCache:
         cursor = self.conn.execute("SELECT COUNT(*) FROM tokens")
         row = cursor.fetchone()
         return int(row[0]) if row else 0
+
+    def get_or_create_token(self, token: str) -> int:
+        """Get token ID, creating a new entry if needed.
+
+        This method is used by encoders to compress strings to integer IDs.
+        The token dictionary grows dynamically as new tokens are encountered.
+
+        Args:
+            token: The string token to look up or create.
+
+        Returns:
+            Integer ID for the token (1-65535 range).
+
+        Raises:
+            ValueError: If token dictionary exceeds uint16 capacity.
+        """
+        # Fast path: check in-memory cache
+        if token in self._token_to_id:
+            return self._token_to_id[token]
+
+        # Slow path: insert into database
+        cursor = self.conn.execute(
+            "INSERT INTO tokens (token) VALUES (?) RETURNING id",
+            (token,),
+        )
+        token_id: int = cursor.fetchone()[0]
+        self.conn.commit()
+
+        # Check uint16 capacity (max 65,535 tokens)
+        if token_id > 65535:  # pragma: no cover
+            raise ValueError(
+                f"Token dictionary exceeded uint16 capacity: {token_id}"
+            )
+
+        # Update in-memory cache
+        self._token_to_id[token] = token_id
+        self._id_to_token[token_id] = token
+
+        return token_id
+
+    def get_token(self, token_id: int) -> str | None:
+        """Get token string by ID.
+
+        This method is used by decoders to expand integer IDs back to strings.
+
+        Args:
+            token_id: The integer ID to look up.
+
+        Returns:
+            The token string, or None if not found.
+        """
+        return self._id_to_token.get(token_id)

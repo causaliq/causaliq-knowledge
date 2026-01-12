@@ -210,3 +210,91 @@ def test_utcnow_iso_returns_iso_format() -> None:
         assert "T" in timestamp
         # Should have UTC timezone indicator
         assert "+" in timestamp or "Z" in timestamp
+
+
+# ============================================================================
+# Token dictionary tests
+# ============================================================================
+
+
+# Test get_or_create_token creates new token
+def test_get_or_create_token_new() -> None:
+    """Verify new tokens are assigned sequential IDs starting from 1."""
+    with TokenCache(":memory:") as cache:
+        id1 = cache.get_or_create_token("hello")
+        id2 = cache.get_or_create_token("world")
+
+        assert id1 == 1
+        assert id2 == 2
+        assert cache.token_count() == 2
+
+
+# Test get_or_create_token returns existing ID
+def test_get_or_create_token_existing() -> None:
+    """Verify existing tokens return their assigned ID."""
+    with TokenCache(":memory:") as cache:
+        id1 = cache.get_or_create_token("hello")
+        id2 = cache.get_or_create_token("hello")
+
+        assert id1 == id2
+        assert cache.token_count() == 1
+
+
+# Test get_token returns token string by ID
+def test_get_token_returns_string() -> None:
+    """Verify get_token returns the correct string for a valid ID."""
+    with TokenCache(":memory:") as cache:
+        token_id = cache.get_or_create_token("test_token")
+        result = cache.get_token(token_id)
+
+        assert result == "test_token"
+
+
+# Test get_token returns None for invalid ID
+def test_get_token_returns_none_for_invalid() -> None:
+    """Verify get_token returns None for non-existent ID."""
+    with TokenCache(":memory:") as cache:
+        result = cache.get_token(9999)
+
+        assert result is None
+
+
+# Test token dictionary is loaded on open
+def test_token_dict_loaded_on_open() -> None:
+    """Verify in-memory token dict is populated when cache opens."""
+    with TokenCache(":memory:") as cache:
+        cache.get_or_create_token("first")
+        cache.get_or_create_token("second")
+
+        # Verify in-memory dicts are populated
+        assert len(cache._token_to_id) == 2
+        assert len(cache._id_to_token) == 2
+        assert cache._token_to_id["first"] == 1
+        assert cache._id_to_token[1] == "first"
+
+
+# Test empty token is valid
+def test_empty_token_is_valid() -> None:
+    """Verify empty string can be stored as a token."""
+    with TokenCache(":memory:") as cache:
+        token_id = cache.get_or_create_token("")
+        result = cache.get_token(token_id)
+
+        assert result == ""
+        assert token_id == 1
+
+
+# Test special characters in tokens
+def test_special_characters_in_tokens() -> None:
+    """Verify tokens with special characters are handled correctly."""
+    with TokenCache(":memory:") as cache:
+        special_tokens = ["{", "}", '"', ":", ",", "\n", "\t", "emoji🎉"]
+        ids = [cache.get_or_create_token(t) for t in special_tokens]
+
+        # Each should get unique ID
+        assert len(set(ids)) == len(special_tokens)
+
+        # Each should round-trip correctly
+        for token in special_tokens:
+            token_id = cache._token_to_id[token]
+            assert cache.get_token(token_id) == token
