@@ -9,10 +9,10 @@
       
       
       
-        <link rel="prev" href="../cache/">
+        <link rel="prev" href="../models/">
       
       
-        <link rel="next" href="../provider/">
+        <link rel="next" href="../base/">
       
       
         
@@ -23,7 +23,7 @@
     
     
       
-        <title>Base - causaliq-knowledge</title>
+        <title>Cache - causaliq-knowledge</title>
       
     
     
@@ -78,7 +78,7 @@
     <div data-md-component="skip">
       
         
-        <a href="#base-api-reference" class="md-skip">
+        <a href="#cache-module" class="md-skip">
           Skip to content
         </a>
       
@@ -114,7 +114,7 @@
         <div class="md-header__topic" data-md-component="header-topic">
           <span class="md-ellipsis">
             
-              Base
+              Cache
             
           </span>
         </div>
@@ -840,34 +840,6 @@
                 
   
   
-  
-  
-    <li class="md-nav__item">
-      <a href="../cache/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    Cache
-  
-
-    
-  </span>
-  
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
     
   
   
@@ -887,7 +859,7 @@
   <span class="md-ellipsis">
     
   
-    Base
+    Cache
   
 
     
@@ -905,7 +877,7 @@
   <span class="md-ellipsis">
     
   
-    Base
+    Cache
   
 
     
@@ -933,34 +905,44 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
-  <a href="#knowledgeprovider" class="md-nav__link">
+  <a href="#overview" class="md-nav__link">
     <span class="md-ellipsis">
       
-        KnowledgeProvider
+        Overview
       
     </span>
   </a>
   
-    <nav class="md-nav" aria-label="KnowledgeProvider">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#causaliq_knowledge.base.KnowledgeProvider" class="md-nav__link">
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#design-philosophy" class="md-nav__link">
     <span class="md-ellipsis">
       
-        KnowledgeProvider
+        Design Philosophy
       
     </span>
   </a>
   
-    <nav class="md-nav" aria-label="KnowledgeProvider">
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#usage" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Usage
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Usage">
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
-  <a href="#causaliq_knowledge.base.KnowledgeProvider.name" class="md-nav__link">
+  <a href="#basic-in-memory-cache" class="md-nav__link">
     <span class="md-ellipsis">
       
-        name
+        Basic In-Memory Cache
       
     </span>
   </a>
@@ -968,22 +950,60 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#causaliq_knowledge.base.KnowledgeProvider.query_edge" class="md-nav__link">
+  <a href="#file-based-persistent-cache" class="md-nav__link">
     <span class="md-ellipsis">
       
-        query_edge
+        File-Based Persistent Cache
       
     </span>
   </a>
   
-    <nav class="md-nav" aria-label="query_edge">
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#transaction-support" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Transaction Support
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#api-reference" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        API Reference
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#causaliq_knowledge.cache.TokenCache" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        TokenCache
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="TokenCache">
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
-  <a href="#causaliq_knowledge.base.KnowledgeProvider.query_edge(node_a)" class="md-nav__link">
+  <a href="#causaliq_knowledge.cache.TokenCache(db_path)" class="md-nav__link">
     <span class="md-ellipsis">
       
-        node_a
+        db_path
       
     </span>
   </a>
@@ -991,10 +1011,10 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#causaliq_knowledge.base.KnowledgeProvider.query_edge(node_b)" class="md-nav__link">
+  <a href="#causaliq_knowledge.cache.TokenCache.is_open" class="md-nav__link">
     <span class="md-ellipsis">
       
-        node_b
+        is_open
       
     </span>
   </a>
@@ -1002,10 +1022,77 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#causaliq_knowledge.base.KnowledgeProvider.query_edge(context)" class="md-nav__link">
+  <a href="#causaliq_knowledge.cache.TokenCache.is_memory" class="md-nav__link">
     <span class="md-ellipsis">
       
-        context
+        is_memory
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#causaliq_knowledge.cache.TokenCache.conn" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        conn
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#causaliq_knowledge.cache.TokenCache.open" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        open
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#causaliq_knowledge.cache.TokenCache.close" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        close
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#causaliq_knowledge.cache.TokenCache.transaction" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        transaction
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#causaliq_knowledge.cache.TokenCache.table_exists" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        table_exists
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="table_exists">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#causaliq_knowledge.cache.TokenCache.table_exists(table_name)" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        table_name
       
     </span>
   </a>
@@ -1018,46 +1105,41 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#causaliq_knowledge.base.KnowledgeProvider.query_edges" class="md-nav__link">
+  <a href="#causaliq_knowledge.cache.TokenCache.entry_count" class="md-nav__link">
     <span class="md-ellipsis">
       
-        query_edges
+        entry_count
       
     </span>
   </a>
   
-    <nav class="md-nav" aria-label="query_edges">
+    <nav class="md-nav" aria-label="entry_count">
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
-  <a href="#causaliq_knowledge.base.KnowledgeProvider.query_edges(edges)" class="md-nav__link">
+  <a href="#causaliq_knowledge.cache.TokenCache.entry_count(entry_type)" class="md-nav__link">
     <span class="md-ellipsis">
       
-        edges
+        entry_type
       
     </span>
   </a>
+  
+</li>
+        
+      </ul>
+    </nav>
   
 </li>
         
           <li class="md-nav__item">
-  <a href="#causaliq_knowledge.base.KnowledgeProvider.query_edges(context)" class="md-nav__link">
+  <a href="#causaliq_knowledge.cache.TokenCache.token_count" class="md-nav__link">
     <span class="md-ellipsis">
       
-        context
+        token_count
       
     </span>
   </a>
-  
-</li>
-        
-      </ul>
-    </nav>
-  
-</li>
-        
-      </ul>
-    </nav>
   
 </li>
         
@@ -1070,6 +1152,34 @@
   
 </nav>
       
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../base/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Base
+  
+
+    
+  </span>
+  
+  
+
+      </a>
     </li>
   
 
@@ -1484,34 +1594,44 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
-  <a href="#knowledgeprovider" class="md-nav__link">
+  <a href="#overview" class="md-nav__link">
     <span class="md-ellipsis">
       
-        KnowledgeProvider
+        Overview
       
     </span>
   </a>
   
-    <nav class="md-nav" aria-label="KnowledgeProvider">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#causaliq_knowledge.base.KnowledgeProvider" class="md-nav__link">
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#design-philosophy" class="md-nav__link">
     <span class="md-ellipsis">
       
-        KnowledgeProvider
+        Design Philosophy
       
     </span>
   </a>
   
-    <nav class="md-nav" aria-label="KnowledgeProvider">
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#usage" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Usage
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Usage">
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
-  <a href="#causaliq_knowledge.base.KnowledgeProvider.name" class="md-nav__link">
+  <a href="#basic-in-memory-cache" class="md-nav__link">
     <span class="md-ellipsis">
       
-        name
+        Basic In-Memory Cache
       
     </span>
   </a>
@@ -1519,22 +1639,60 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#causaliq_knowledge.base.KnowledgeProvider.query_edge" class="md-nav__link">
+  <a href="#file-based-persistent-cache" class="md-nav__link">
     <span class="md-ellipsis">
       
-        query_edge
+        File-Based Persistent Cache
       
     </span>
   </a>
   
-    <nav class="md-nav" aria-label="query_edge">
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#transaction-support" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Transaction Support
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#api-reference" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        API Reference
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#causaliq_knowledge.cache.TokenCache" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        TokenCache
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="TokenCache">
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
-  <a href="#causaliq_knowledge.base.KnowledgeProvider.query_edge(node_a)" class="md-nav__link">
+  <a href="#causaliq_knowledge.cache.TokenCache(db_path)" class="md-nav__link">
     <span class="md-ellipsis">
       
-        node_a
+        db_path
       
     </span>
   </a>
@@ -1542,10 +1700,10 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#causaliq_knowledge.base.KnowledgeProvider.query_edge(node_b)" class="md-nav__link">
+  <a href="#causaliq_knowledge.cache.TokenCache.is_open" class="md-nav__link">
     <span class="md-ellipsis">
       
-        node_b
+        is_open
       
     </span>
   </a>
@@ -1553,10 +1711,77 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#causaliq_knowledge.base.KnowledgeProvider.query_edge(context)" class="md-nav__link">
+  <a href="#causaliq_knowledge.cache.TokenCache.is_memory" class="md-nav__link">
     <span class="md-ellipsis">
       
-        context
+        is_memory
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#causaliq_knowledge.cache.TokenCache.conn" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        conn
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#causaliq_knowledge.cache.TokenCache.open" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        open
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#causaliq_knowledge.cache.TokenCache.close" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        close
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#causaliq_knowledge.cache.TokenCache.transaction" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        transaction
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#causaliq_knowledge.cache.TokenCache.table_exists" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        table_exists
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="table_exists">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#causaliq_knowledge.cache.TokenCache.table_exists(table_name)" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        table_name
       
     </span>
   </a>
@@ -1569,46 +1794,41 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#causaliq_knowledge.base.KnowledgeProvider.query_edges" class="md-nav__link">
+  <a href="#causaliq_knowledge.cache.TokenCache.entry_count" class="md-nav__link">
     <span class="md-ellipsis">
       
-        query_edges
+        entry_count
       
     </span>
   </a>
   
-    <nav class="md-nav" aria-label="query_edges">
+    <nav class="md-nav" aria-label="entry_count">
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
-  <a href="#causaliq_knowledge.base.KnowledgeProvider.query_edges(edges)" class="md-nav__link">
+  <a href="#causaliq_knowledge.cache.TokenCache.entry_count(entry_type)" class="md-nav__link">
     <span class="md-ellipsis">
       
-        edges
+        entry_type
       
     </span>
   </a>
+  
+</li>
+        
+      </ul>
+    </nav>
   
 </li>
         
           <li class="md-nav__item">
-  <a href="#causaliq_knowledge.base.KnowledgeProvider.query_edges(context)" class="md-nav__link">
+  <a href="#causaliq_knowledge.cache.TokenCache.token_count" class="md-nav__link">
     <span class="md-ellipsis">
       
-        context
+        token_count
       
     </span>
   </a>
-  
-</li>
-        
-      </ul>
-    </nav>
-  
-</li>
-        
-      </ul>
-    </nav>
   
 </li>
         
@@ -1634,31 +1854,95 @@
 
 
 
-<h1 id="base-api-reference">Base API Reference<a class="headerlink" href="#base-api-reference" title="Permanent link">&para;</a></h1>
-<p>Abstract base classes defining the knowledge provider interface.</p>
-<h2 id="knowledgeprovider">KnowledgeProvider<a class="headerlink" href="#knowledgeprovider" title="Permanent link">&para;</a></h2>
+<h1 id="cache-module">Cache Module<a class="headerlink" href="#cache-module" title="Permanent link">&para;</a></h1>
+<p>SQLite-backed caching infrastructure with shared token dictionary for
+efficient storage. This module provides the core caching capability that
+will eventually migrate to <code>causaliq-core</code>.</p>
+<h2 id="overview">Overview<a class="headerlink" href="#overview" title="Permanent link">&para;</a></h2>
+<p>The cache module provides:</p>
+<ul>
+<li><strong>TokenCache</strong> - SQLite-backed cache with connection management</li>
+<li><strong>EntryEncoder</strong> - Abstract base for type-specific encoders (future)</li>
+</ul>
+<h2 id="design-philosophy">Design Philosophy<a class="headerlink" href="#design-philosophy" title="Permanent link">&para;</a></h2>
+<p>The cache uses SQLite for storage, providing:</p>
+<ul>
+<li>Fast indexed key lookup</li>
+<li>Built-in concurrency via SQLite locking</li>
+<li>In-memory mode via <code>:memory:</code> for testing</li>
+<li>Incremental updates without rewriting</li>
+</ul>
+<p>See <a href="../../architecture/caching/">Caching Architecture</a> for full design details.</p>
+<h2 id="usage">Usage<a class="headerlink" href="#usage" title="Permanent link">&para;</a></h2>
+<h3 id="basic-in-memory-cache">Basic In-Memory Cache<a class="headerlink" href="#basic-in-memory-cache" title="Permanent link">&para;</a></h3>
+<div class="language-python highlight"><pre><span></span><code><span id="__span-0-1"><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="kn">from</span><span class="w"> </span><span class="nn">causaliq_knowledge.cache</span><span class="w"> </span><span class="kn">import</span> <span class="n">TokenCache</span>
+</span><span id="__span-0-2"><a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a>
+</span><span id="__span-0-3"><a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a><span class="c1"># In-memory cache (fast, non-persistent)</span>
+</span><span id="__span-0-4"><a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a><span class="k">with</span> <span class="n">TokenCache</span><span class="p">(</span><span class="s2">&quot;:memory:&quot;</span><span class="p">)</span> <span class="k">as</span> <span class="n">cache</span><span class="p">:</span>
+</span><span id="__span-0-5"><a id="__codelineno-0-5" name="__codelineno-0-5" href="#__codelineno-0-5"></a>    <span class="k">assert</span> <span class="n">cache</span><span class="o">.</span><span class="n">table_exists</span><span class="p">(</span><span class="s2">&quot;tokens&quot;</span><span class="p">)</span>
+</span><span id="__span-0-6"><a id="__codelineno-0-6" name="__codelineno-0-6" href="#__codelineno-0-6"></a>    <span class="k">assert</span> <span class="n">cache</span><span class="o">.</span><span class="n">table_exists</span><span class="p">(</span><span class="s2">&quot;cache_entries&quot;</span><span class="p">)</span>
+</span></code></pre></div>
+<h3 id="file-based-persistent-cache">File-Based Persistent Cache<a class="headerlink" href="#file-based-persistent-cache" title="Permanent link">&para;</a></h3>
+<div class="language-python highlight"><pre><span></span><code><span id="__span-1-1"><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a><span class="kn">from</span><span class="w"> </span><span class="nn">causaliq_knowledge.cache</span><span class="w"> </span><span class="kn">import</span> <span class="n">TokenCache</span>
+</span><span id="__span-1-2"><a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a>
+</span><span id="__span-1-3"><a id="__codelineno-1-3" name="__codelineno-1-3" href="#__codelineno-1-3"></a><span class="c1"># File-based cache (persistent)</span>
+</span><span id="__span-1-4"><a id="__codelineno-1-4" name="__codelineno-1-4" href="#__codelineno-1-4"></a><span class="k">with</span> <span class="n">TokenCache</span><span class="p">(</span><span class="s2">&quot;my_cache.db&quot;</span><span class="p">)</span> <span class="k">as</span> <span class="n">cache</span><span class="p">:</span>
+</span><span id="__span-1-5"><a id="__codelineno-1-5" name="__codelineno-1-5" href="#__codelineno-1-5"></a>    <span class="c1"># Data persists across sessions</span>
+</span><span id="__span-1-6"><a id="__codelineno-1-6" name="__codelineno-1-6" href="#__codelineno-1-6"></a>    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Entries: </span><span class="si">{</span><span class="n">cache</span><span class="o">.</span><span class="n">entry_count</span><span class="p">()</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+</span><span id="__span-1-7"><a id="__codelineno-1-7" name="__codelineno-1-7" href="#__codelineno-1-7"></a>    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Tokens: </span><span class="si">{</span><span class="n">cache</span><span class="o">.</span><span class="n">token_count</span><span class="p">()</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+</span></code></pre></div>
+<h3 id="transaction-support">Transaction Support<a class="headerlink" href="#transaction-support" title="Permanent link">&para;</a></h3>
+<div class="language-python highlight"><pre><span></span><code><span id="__span-2-1"><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a><span class="kn">from</span><span class="w"> </span><span class="nn">causaliq_knowledge.cache</span><span class="w"> </span><span class="kn">import</span> <span class="n">TokenCache</span>
+</span><span id="__span-2-2"><a id="__codelineno-2-2" name="__codelineno-2-2" href="#__codelineno-2-2"></a>
+</span><span id="__span-2-3"><a id="__codelineno-2-3" name="__codelineno-2-3" href="#__codelineno-2-3"></a><span class="k">with</span> <span class="n">TokenCache</span><span class="p">(</span><span class="s2">&quot;:memory:&quot;</span><span class="p">)</span> <span class="k">as</span> <span class="n">cache</span><span class="p">:</span>
+</span><span id="__span-2-4"><a id="__codelineno-2-4" name="__codelineno-2-4" href="#__codelineno-2-4"></a>    <span class="c1"># Transactions auto-commit on success, rollback on exception</span>
+</span><span id="__span-2-5"><a id="__codelineno-2-5" name="__codelineno-2-5" href="#__codelineno-2-5"></a>    <span class="k">with</span> <span class="n">cache</span><span class="o">.</span><span class="n">transaction</span><span class="p">()</span> <span class="k">as</span> <span class="n">cursor</span><span class="p">:</span>
+</span><span id="__span-2-6"><a id="__codelineno-2-6" name="__codelineno-2-6" href="#__codelineno-2-6"></a>        <span class="n">cursor</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span><span class="s2">&quot;INSERT INTO tokens (token) VALUES (?)&quot;</span><span class="p">,</span> <span class="p">(</span><span class="s2">&quot;example&quot;</span><span class="p">,))</span>
+</span></code></pre></div>
+<h2 id="api-reference">API Reference<a class="headerlink" href="#api-reference" title="Permanent link">&para;</a></h2>
 
 
 <div class="doc doc-object doc-class">
 
 
 
-<h3 id="causaliq_knowledge.base.KnowledgeProvider" class="doc doc-heading">
-<code class="doc-symbol doc-symbol-heading doc-symbol-class"></code>            <span class="doc doc-object-name doc-class-name">KnowledgeProvider</span>
+<h2 id="causaliq_knowledge.cache.TokenCache" class="doc doc-heading">
+<code class="doc-symbol doc-symbol-heading doc-symbol-class"></code>            <span class="doc doc-object-name doc-class-name">TokenCache</span>
 
 
-<a href="#causaliq_knowledge.base.KnowledgeProvider" class="headerlink" title="Permanent link">&para;</a></h3>
-
+<a href="#causaliq_knowledge.cache.TokenCache" class="headerlink" title="Permanent link">&para;</a></h2>
+<div class="language-python doc-signature highlight"><pre><span></span><code><span id="__span-0-1"><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="nf">TokenCache</span><span class="p">(</span><span class="n"><a class="autorefs autorefs-internal" title="db_path (causaliq_knowledge.cache.TokenCache(db_path))" href="#causaliq_knowledge.cache.TokenCache(db_path)">db_path</a></span><span class="p">:</span> <span class="n"><span title="str">str</span></span> <span class="o">|</span> <span class="n"><span title="pathlib.Path">Path</span></span><span class="p">)</span>
+</span></code></pre></div>
 
     <div class="doc doc-contents first">
 
 
-        <p>Abstract interface for all knowledge sources.</p>
-<p>This is the base class that all knowledge providers must implement.
-Knowledge providers can be LLM-based, rule-based, human-input based,
-or any other source of causal knowledge.</p>
-<p>The primary method is <code>query_edge()</code> which asks about the causal
-relationship between two variables.</p>
+        <p>SQLite-backed cache with shared token dictionary.</p>
+
+
+<p><span class="doc-section-title">Attributes:</span></p>
+    <ul>
+        <li class="doc-section-item field-body">
+          <b><code><span title="causaliq_knowledge.cache.TokenCache.db_path">db_path</span></code></b>
+          –
+          <div class="doc-md-description">
+            <p>Path to SQLite database file, or ":memory:" for in-memory.</p>
+          </div>
+        </li>
+        <li class="doc-section-item field-body">
+          <b><code><a class="autorefs autorefs-internal" title="            conn
+
+
+  
+      property
+   (causaliq_knowledge.cache.TokenCache.conn)" href="#causaliq_knowledge.cache.TokenCache.conn">conn</a></code></b>
+              (<code><span title="sqlite3.Connection">Connection</span></code>)
+          –
+          <div class="doc-md-description">
+            <p>SQLite connection (None until open() called or context entered).</p>
+          </div>
+        </li>
+    </ul>
 
 
 <details class="example" open>
@@ -1666,17 +1950,28 @@ relationship between two variables.</p>
   <blockquote>
 <blockquote>
 <blockquote>
-<p>class MyKnowledgeProvider(KnowledgeProvider):
-...     def query_edge(self, node_a, node_b, context=None):
-...         # Implementation here
-...         return EdgeKnowledge(exists=True, confidence=0.8, ...)
-...
-provider = MyKnowledgeProvider()
-result = provider.query_edge("smoking", "cancer")</p>
+<p>with TokenCache(":memory:") as cache:
+...     cache.put("abc123", "test", b"hello")
+...     data = cache.get("abc123", "test")</p>
 </blockquote>
 </blockquote>
 </blockquote>
 </details>
+
+
+<p><span class="doc-section-title">Parameters:</span></p>
+    <ul>
+        <li class="doc-section-item field-body">
+<h3 id="causaliq_knowledge.cache.TokenCache(db_path)" class="doc doc-heading doc-heading-parameter">              <b><code>db_path</code></b>
+<a href="#causaliq_knowledge.cache.TokenCache(db_path)" class="headerlink" title="Permanent link">&para;</a></h3>              (<code><span title="str">str</span> | <span title="pathlib.Path">Path</span></code>)
+          –
+          <div class="doc-md-description">
+            <p>Path to SQLite database file. Use ":memory:" for
+in-memory database (fast, non-persistent).</p>
+          </div>
+        </li>
+    </ul>
+
           
 
 
@@ -1692,45 +1987,50 @@ result = provider.query_edge("smoking", "cancer")</p>
 <p><span class="doc-section-title">Methods:</span></p>
     <ul>
           <li class="doc-section-item field-body">
-            <b><code><a class="autorefs autorefs-internal" title="            query_edge
-
-
-  
-      abstractmethod
-   (causaliq_knowledge.base.KnowledgeProvider.query_edge)" href="#causaliq_knowledge.base.KnowledgeProvider.query_edge">query_edge</a></code></b>
+            <b><code><a class="autorefs autorefs-internal" title="            open (causaliq_knowledge.cache.TokenCache.open)" href="#causaliq_knowledge.cache.TokenCache.open">open</a></code></b>
             –
             <div class="doc-md-description">
-              <p>Query whether a causal edge exists between two nodes.</p>
+              <p>Open the database connection and initialise schema.</p>
             </div>
           </li>
           <li class="doc-section-item field-body">
-            <b><code><a class="autorefs autorefs-internal" title="            query_edges (causaliq_knowledge.base.KnowledgeProvider.query_edges)" href="#causaliq_knowledge.base.KnowledgeProvider.query_edges">query_edges</a></code></b>
+            <b><code><a class="autorefs autorefs-internal" title="            close (causaliq_knowledge.cache.TokenCache.close)" href="#causaliq_knowledge.cache.TokenCache.close">close</a></code></b>
             –
             <div class="doc-md-description">
-              <p>Query multiple edges at once.</p>
+              <p>Close the database connection.</p>
+            </div>
+          </li>
+          <li class="doc-section-item field-body">
+            <b><code><a class="autorefs autorefs-internal" title="            transaction (causaliq_knowledge.cache.TokenCache.transaction)" href="#causaliq_knowledge.cache.TokenCache.transaction">transaction</a></code></b>
+            –
+            <div class="doc-md-description">
+              <p>Context manager for a database transaction.</p>
+            </div>
+          </li>
+          <li class="doc-section-item field-body">
+            <b><code><a class="autorefs autorefs-internal" title="            table_exists (causaliq_knowledge.cache.TokenCache.table_exists)" href="#causaliq_knowledge.cache.TokenCache.table_exists">table_exists</a></code></b>
+            –
+            <div class="doc-md-description">
+              <p>Check if a table exists in the database.</p>
+            </div>
+          </li>
+          <li class="doc-section-item field-body">
+            <b><code><a class="autorefs autorefs-internal" title="            entry_count (causaliq_knowledge.cache.TokenCache.entry_count)" href="#causaliq_knowledge.cache.TokenCache.entry_count">entry_count</a></code></b>
+            –
+            <div class="doc-md-description">
+              <p>Count cache entries, optionally filtered by type.</p>
+            </div>
+          </li>
+          <li class="doc-section-item field-body">
+            <b><code><a class="autorefs autorefs-internal" title="            token_count (causaliq_knowledge.cache.TokenCache.token_count)" href="#causaliq_knowledge.cache.TokenCache.token_count">token_count</a></code></b>
+            –
+            <div class="doc-md-description">
+              <p>Count tokens in the dictionary.</p>
             </div>
           </li>
     </ul>
 
 
-
-
-<p><span class="doc-section-title">Attributes:</span></p>
-    <ul>
-        <li class="doc-section-item field-body">
-          <b><code><a class="autorefs autorefs-internal" title="            name
-
-
-  
-      property
-   (causaliq_knowledge.base.KnowledgeProvider.name)" href="#causaliq_knowledge.base.KnowledgeProvider.name">name</a></code></b>
-              (<code><span title="str">str</span></code>)
-          –
-          <div class="doc-md-description">
-            <p>Return the name of this knowledge provider.</p>
-          </div>
-        </li>
-    </ul>
 
 
 
@@ -1747,33 +2047,71 @@ result = provider.query_edge("smoking", "cancer")</p>
 
 
 
-<h4 id="causaliq_knowledge.base.KnowledgeProvider.name" class="doc doc-heading">
-<code class="doc-symbol doc-symbol-heading doc-symbol-attribute"></code>            <span class="doc doc-object-name doc-attribute-name">name</span>
+<h3 id="causaliq_knowledge.cache.TokenCache.is_open" class="doc doc-heading">
+<code class="doc-symbol doc-symbol-heading doc-symbol-attribute"></code>            <span class="doc doc-object-name doc-attribute-name">is_open</span>
 
 
   <span class="doc doc-labels">
       <small class="doc doc-label doc-label-property"><code>property</code></small>
   </span>
 
-<a href="#causaliq_knowledge.base.KnowledgeProvider.name" class="headerlink" title="Permanent link">&para;</a></h4>
-<div class="language-python doc-signature highlight"><pre><span></span><code><span id="__span-0-1"><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="n">name</span><span class="p">:</span> <span class="n"><span title="str">str</span></span>
+<a href="#causaliq_knowledge.cache.TokenCache.is_open" class="headerlink" title="Permanent link">&para;</a></h3>
+<div class="language-python doc-signature highlight"><pre><span></span><code><span id="__span-0-1"><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="n">is_open</span><span class="p">:</span> <span class="n"><span title="bool">bool</span></span>
 </span></code></pre></div>
 
     <div class="doc doc-contents ">
 
-        <p>Return the name of this knowledge provider.</p>
+        <p>Check if the cache connection is open.</p>
+
+          
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-attribute">
 
 
-<p><span class="doc-section-title">Returns:</span></p>
-    <ul>
-        <li class="doc-section-item field-body">
-              <code><span title="str">str</span></code>
-          –
-          <div class="doc-md-description">
-            <p>Class name by default. Subclasses may override.</p>
-          </div>
-        </li>
-    </ul>
+
+<h3 id="causaliq_knowledge.cache.TokenCache.is_memory" class="doc doc-heading">
+<code class="doc-symbol doc-symbol-heading doc-symbol-attribute"></code>            <span class="doc doc-object-name doc-attribute-name">is_memory</span>
+
+
+  <span class="doc doc-labels">
+      <small class="doc doc-label doc-label-property"><code>property</code></small>
+  </span>
+
+<a href="#causaliq_knowledge.cache.TokenCache.is_memory" class="headerlink" title="Permanent link">&para;</a></h3>
+<div class="language-python doc-signature highlight"><pre><span></span><code><span id="__span-0-1"><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="n">is_memory</span><span class="p">:</span> <span class="n"><span title="bool">bool</span></span>
+</span></code></pre></div>
+
+    <div class="doc doc-contents ">
+
+        <p>Check if this is an in-memory database.</p>
+
+          
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-attribute">
+
+
+
+<h3 id="causaliq_knowledge.cache.TokenCache.conn" class="doc doc-heading">
+<code class="doc-symbol doc-symbol-heading doc-symbol-attribute"></code>            <span class="doc doc-object-name doc-attribute-name">conn</span>
+
+
+  <span class="doc doc-labels">
+      <small class="doc doc-label doc-label-property"><code>property</code></small>
+  </span>
+
+<a href="#causaliq_knowledge.cache.TokenCache.conn" class="headerlink" title="Permanent link">&para;</a></h3>
+<div class="language-python doc-signature highlight"><pre><span></span><code><span id="__span-0-1"><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="n">conn</span><span class="p">:</span> <span class="n"><span title="sqlite3.Connection">Connection</span></span>
+</span></code></pre></div>
+
+    <div class="doc doc-contents ">
+
+        <p>Get the database connection, raising if not connected.</p>
 
           
     </div>
@@ -1786,69 +2124,26 @@ result = provider.query_edge("smoking", "cancer")</p>
 <div class="doc doc-object doc-function">
 
 
-<h4 id="causaliq_knowledge.base.KnowledgeProvider.query_edge" class="doc doc-heading">
-<code class="doc-symbol doc-symbol-heading doc-symbol-method"></code>            <span class="doc doc-object-name doc-function-name">query_edge</span>
+<h3 id="causaliq_knowledge.cache.TokenCache.open" class="doc doc-heading">
+<code class="doc-symbol doc-symbol-heading doc-symbol-method"></code>            <span class="doc doc-object-name doc-function-name">open</span>
 
 
-  <span class="doc doc-labels">
-      <small class="doc doc-label doc-label-abstractmethod"><code>abstractmethod</code></small>
-  </span>
-
-<a href="#causaliq_knowledge.base.KnowledgeProvider.query_edge" class="headerlink" title="Permanent link">&para;</a></h4>
-<div class="language-python doc-signature highlight"><pre><span></span><code><span id="__span-0-1"><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="nf">query_edge</span><span class="p">(</span><span class="n"><a class="autorefs autorefs-internal" title="node_a (causaliq_knowledge.base.KnowledgeProvider.query_edge(node_a))" href="#causaliq_knowledge.base.KnowledgeProvider.query_edge(node_a)">node_a</a></span><span class="p">:</span> <span class="n"><span title="str">str</span></span><span class="p">,</span> <span class="n"><a class="autorefs autorefs-internal" title="node_b (causaliq_knowledge.base.KnowledgeProvider.query_edge(node_b))" href="#causaliq_knowledge.base.KnowledgeProvider.query_edge(node_b)">node_b</a></span><span class="p">:</span> <span class="n"><span title="str">str</span></span><span class="p">,</span> <span class="n"><a class="autorefs autorefs-internal" title="context (causaliq_knowledge.base.KnowledgeProvider.query_edge(context))" href="#causaliq_knowledge.base.KnowledgeProvider.query_edge(context)">context</a></span><span class="p">:</span> <span class="n"><span title="typing.Optional">Optional</span></span><span class="p">[</span><span class="n"><span title="dict">dict</span></span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n"><a class="autorefs autorefs-internal" title="            EdgeKnowledge (causaliq_knowledge.models.EdgeKnowledge)" href="../models/#causaliq_knowledge.models.EdgeKnowledge">EdgeKnowledge</a></span>
+<a href="#causaliq_knowledge.cache.TokenCache.open" class="headerlink" title="Permanent link">&para;</a></h3>
+<div class="language-python doc-signature highlight"><pre><span></span><code><span id="__span-0-1"><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="nf">open</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="n"><a class="autorefs autorefs-internal" title="            TokenCache (causaliq_knowledge.cache.token_cache.TokenCache)" href="#causaliq_knowledge.cache.TokenCache">TokenCache</a></span>
 </span></code></pre></div>
 
     <div class="doc doc-contents ">
 
-        <p>Query whether a causal edge exists between two nodes.</p>
-
-
-<p><span class="doc-section-title">Parameters:</span></p>
-    <ul>
-        <li class="doc-section-item field-body">
-<h5 id="causaliq_knowledge.base.KnowledgeProvider.query_edge(node_a)" class="doc doc-heading doc-heading-parameter">              <b><code>node_a</code></b>
-<a href="#causaliq_knowledge.base.KnowledgeProvider.query_edge(node_a)" class="headerlink" title="Permanent link">&para;</a></h5>              (<code><span title="str">str</span></code>)
-          –
-          <div class="doc-md-description">
-            <p>Name of the first variable.</p>
-          </div>
-        </li>
-        <li class="doc-section-item field-body">
-<h5 id="causaliq_knowledge.base.KnowledgeProvider.query_edge(node_b)" class="doc doc-heading doc-heading-parameter">              <b><code>node_b</code></b>
-<a href="#causaliq_knowledge.base.KnowledgeProvider.query_edge(node_b)" class="headerlink" title="Permanent link">&para;</a></h5>              (<code><span title="str">str</span></code>)
-          –
-          <div class="doc-md-description">
-            <p>Name of the second variable.</p>
-          </div>
-        </li>
-        <li class="doc-section-item field-body">
-<h5 id="causaliq_knowledge.base.KnowledgeProvider.query_edge(context)" class="doc doc-heading doc-heading-parameter">              <b><code>context</code></b>
-<a href="#causaliq_knowledge.base.KnowledgeProvider.query_edge(context)" class="headerlink" title="Permanent link">&para;</a></h5>              (<code><span title="typing.Optional">Optional</span>[<span title="dict">dict</span>]</code>, default:
-                  <code>None</code>
-)
-          –
-          <div class="doc-md-description">
-            <p>Optional context dictionary that may include:
-- domain: The domain (e.g., "medicine", "economics")
-- descriptions: Dict mapping variable names to descriptions
-- additional_info: Any other relevant context</p>
-          </div>
-        </li>
-    </ul>
+        <p>Open the database connection and initialise schema.</p>
 
 
 <p><span class="doc-section-title">Returns:</span></p>
     <ul>
         <li class="doc-section-item field-body">
-              <code><a class="autorefs autorefs-internal" title="            EdgeKnowledge (causaliq_knowledge.models.EdgeKnowledge)" href="../models/#causaliq_knowledge.models.EdgeKnowledge">EdgeKnowledge</a></code>
+              <code><a class="autorefs autorefs-internal" title="            TokenCache (causaliq_knowledge.cache.token_cache.TokenCache)" href="#causaliq_knowledge.cache.TokenCache">TokenCache</a></code>
           –
           <div class="doc-md-description">
-            <p>EdgeKnowledge with:
-- exists: True, False, or None (uncertain)
-- direction: "a_to_b", "b_to_a", "undirected", or None
-- confidence: 0.0 to 1.0
-- reasoning: Human-readable explanation
-- model: Source identifier (optional)</p>
+            <p>self for method chaining.</p>
           </div>
         </li>
     </ul>
@@ -1857,10 +2152,10 @@ result = provider.query_edge("smoking", "cancer")</p>
 <p><span class="doc-section-title">Raises:</span></p>
     <ul>
         <li class="doc-section-item field-body">
-              <code><span title="NotImplementedError">NotImplementedError</span></code>
+              <code><span title="RuntimeError">RuntimeError</span></code>
             –
           <div class="doc-md-description">
-            <p>If not implemented by subclass.</p>
+            <p>If already connected.</p>
           </div>
         </li>
     </ul>
@@ -1874,41 +2169,82 @@ result = provider.query_edge("smoking", "cancer")</p>
 <div class="doc doc-object doc-function">
 
 
-<h4 id="causaliq_knowledge.base.KnowledgeProvider.query_edges" class="doc doc-heading">
-<code class="doc-symbol doc-symbol-heading doc-symbol-method"></code>            <span class="doc doc-object-name doc-function-name">query_edges</span>
+<h3 id="causaliq_knowledge.cache.TokenCache.close" class="doc doc-heading">
+<code class="doc-symbol doc-symbol-heading doc-symbol-method"></code>            <span class="doc doc-object-name doc-function-name">close</span>
 
 
-<a href="#causaliq_knowledge.base.KnowledgeProvider.query_edges" class="headerlink" title="Permanent link">&para;</a></h4>
-<div class="language-python doc-signature highlight"><pre><span></span><code><span id="__span-0-1"><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="nf">query_edges</span><span class="p">(</span>
-</span><span id="__span-0-2"><a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a>    <span class="n"><a class="autorefs autorefs-internal" title="edges (causaliq_knowledge.base.KnowledgeProvider.query_edges(edges))" href="#causaliq_knowledge.base.KnowledgeProvider.query_edges(edges)">edges</a></span><span class="p">:</span> <span class="n"><span title="list">list</span></span><span class="p">[</span><span class="n"><span title="tuple">tuple</span></span><span class="p">[</span><span class="n"><span title="str">str</span></span><span class="p">,</span> <span class="n"><span title="str">str</span></span><span class="p">]],</span> <span class="n"><a class="autorefs autorefs-internal" title="context (causaliq_knowledge.base.KnowledgeProvider.query_edges(context))" href="#causaliq_knowledge.base.KnowledgeProvider.query_edges(context)">context</a></span><span class="p">:</span> <span class="n"><span title="typing.Optional">Optional</span></span><span class="p">[</span><span class="n"><span title="dict">dict</span></span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
-</span><span id="__span-0-3"><a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a><span class="p">)</span> <span class="o">-&gt;</span> <span class="n"><span title="list">list</span></span><span class="p">[</span><span class="n"><a class="autorefs autorefs-internal" title="            EdgeKnowledge (causaliq_knowledge.models.EdgeKnowledge)" href="../models/#causaliq_knowledge.models.EdgeKnowledge">EdgeKnowledge</a></span><span class="p">]</span>
+<a href="#causaliq_knowledge.cache.TokenCache.close" class="headerlink" title="Permanent link">&para;</a></h3>
+<div class="language-python doc-signature highlight"><pre><span></span><code><span id="__span-0-1"><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="nf">close</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="kc">None</span>
 </span></code></pre></div>
 
     <div class="doc doc-contents ">
 
-        <p>Query multiple edges at once.</p>
-<p>Default implementation calls query_edge for each pair.
-Subclasses may override for batch optimization.</p>
+        <p>Close the database connection.</p>
+
+          
+
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-function">
+
+
+<h3 id="causaliq_knowledge.cache.TokenCache.transaction" class="doc doc-heading">
+<code class="doc-symbol doc-symbol-heading doc-symbol-method"></code>            <span class="doc doc-object-name doc-function-name">transaction</span>
+
+
+<a href="#causaliq_knowledge.cache.TokenCache.transaction" class="headerlink" title="Permanent link">&para;</a></h3>
+<div class="language-python doc-signature highlight"><pre><span></span><code><span id="__span-0-1"><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="nf">transaction</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="n"><span title="typing.Iterator">Iterator</span></span><span class="p">[</span><span class="n"><span title="sqlite3.Cursor">Cursor</span></span><span class="p">]</span>
+</span></code></pre></div>
+
+    <div class="doc doc-contents ">
+
+        <p>Context manager for a database transaction.</p>
+<p>Commits on success, rolls back on exception.</p>
+
+
+<p><span class="doc-section-title">Yields:</span></p>
+    <ul>
+        <li class="doc-section-item field-body">
+              <code><span title="sqlite3.Cursor">Cursor</span></code>
+          –
+          <div class="doc-md-description">
+            <p>SQLite cursor for executing statements.</p>
+          </div>
+        </li>
+    </ul>
+
+          
+
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-function">
+
+
+<h3 id="causaliq_knowledge.cache.TokenCache.table_exists" class="doc doc-heading">
+<code class="doc-symbol doc-symbol-heading doc-symbol-method"></code>            <span class="doc doc-object-name doc-function-name">table_exists</span>
+
+
+<a href="#causaliq_knowledge.cache.TokenCache.table_exists" class="headerlink" title="Permanent link">&para;</a></h3>
+<div class="language-python doc-signature highlight"><pre><span></span><code><span id="__span-0-1"><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="nf">table_exists</span><span class="p">(</span><span class="n"><a class="autorefs autorefs-internal" title="table_name (causaliq_knowledge.cache.TokenCache.table_exists(table_name))" href="#causaliq_knowledge.cache.TokenCache.table_exists(table_name)">table_name</a></span><span class="p">:</span> <span class="n"><span title="str">str</span></span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n"><span title="bool">bool</span></span>
+</span></code></pre></div>
+
+    <div class="doc doc-contents ">
+
+        <p>Check if a table exists in the database.</p>
 
 
 <p><span class="doc-section-title">Parameters:</span></p>
     <ul>
         <li class="doc-section-item field-body">
-<h5 id="causaliq_knowledge.base.KnowledgeProvider.query_edges(edges)" class="doc doc-heading doc-heading-parameter">              <b><code>edges</code></b>
-<a href="#causaliq_knowledge.base.KnowledgeProvider.query_edges(edges)" class="headerlink" title="Permanent link">&para;</a></h5>              (<code><span title="list">list</span>[<span title="tuple">tuple</span>[<span title="str">str</span>, <span title="str">str</span>]]</code>)
+<h4 id="causaliq_knowledge.cache.TokenCache.table_exists(table_name)" class="doc doc-heading doc-heading-parameter">              <b><code>table_name</code></b>
+<a href="#causaliq_knowledge.cache.TokenCache.table_exists(table_name)" class="headerlink" title="Permanent link">&para;</a></h4>              (<code><span title="str">str</span></code>)
           –
           <div class="doc-md-description">
-            <p>List of (node_a, node_b) tuples to query.</p>
-          </div>
-        </li>
-        <li class="doc-section-item field-body">
-<h5 id="causaliq_knowledge.base.KnowledgeProvider.query_edges(context)" class="doc doc-heading doc-heading-parameter">              <b><code>context</code></b>
-<a href="#causaliq_knowledge.base.KnowledgeProvider.query_edges(context)" class="headerlink" title="Permanent link">&para;</a></h5>              (<code><span title="typing.Optional">Optional</span>[<span title="dict">dict</span>]</code>, default:
-                  <code>None</code>
-)
-          –
-          <div class="doc-md-description">
-            <p>Optional context dictionary (shared across all queries).</p>
+            <p>Name of the table to check.</p>
           </div>
         </li>
     </ul>
@@ -1917,10 +2253,91 @@ Subclasses may override for batch optimization.</p>
 <p><span class="doc-section-title">Returns:</span></p>
     <ul>
         <li class="doc-section-item field-body">
-              <code><span title="list">list</span>[<a class="autorefs autorefs-internal" title="            EdgeKnowledge (causaliq_knowledge.models.EdgeKnowledge)" href="../models/#causaliq_knowledge.models.EdgeKnowledge">EdgeKnowledge</a>]</code>
+              <code><span title="bool">bool</span></code>
           –
           <div class="doc-md-description">
-            <p>List of EdgeKnowledge results, one per edge pair.</p>
+            <p>True if table exists, False otherwise.</p>
+          </div>
+        </li>
+    </ul>
+
+          
+
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-function">
+
+
+<h3 id="causaliq_knowledge.cache.TokenCache.entry_count" class="doc doc-heading">
+<code class="doc-symbol doc-symbol-heading doc-symbol-method"></code>            <span class="doc doc-object-name doc-function-name">entry_count</span>
+
+
+<a href="#causaliq_knowledge.cache.TokenCache.entry_count" class="headerlink" title="Permanent link">&para;</a></h3>
+<div class="language-python doc-signature highlight"><pre><span></span><code><span id="__span-0-1"><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="nf">entry_count</span><span class="p">(</span><span class="n"><a class="autorefs autorefs-internal" title="entry_type (causaliq_knowledge.cache.TokenCache.entry_count(entry_type))" href="#causaliq_knowledge.cache.TokenCache.entry_count(entry_type)">entry_type</a></span><span class="p">:</span> <span class="n"><span title="str">str</span></span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n"><span title="int">int</span></span>
+</span></code></pre></div>
+
+    <div class="doc doc-contents ">
+
+        <p>Count cache entries, optionally filtered by type.</p>
+
+
+<p><span class="doc-section-title">Parameters:</span></p>
+    <ul>
+        <li class="doc-section-item field-body">
+<h4 id="causaliq_knowledge.cache.TokenCache.entry_count(entry_type)" class="doc doc-heading doc-heading-parameter">              <b><code>entry_type</code></b>
+<a href="#causaliq_knowledge.cache.TokenCache.entry_count(entry_type)" class="headerlink" title="Permanent link">&para;</a></h4>              (<code><span title="str">str</span> | None</code>, default:
+                  <code>None</code>
+)
+          –
+          <div class="doc-md-description">
+            <p>If provided, count only entries of this type.</p>
+          </div>
+        </li>
+    </ul>
+
+
+<p><span class="doc-section-title">Returns:</span></p>
+    <ul>
+        <li class="doc-section-item field-body">
+              <code><span title="int">int</span></code>
+          –
+          <div class="doc-md-description">
+            <p>Number of matching entries.</p>
+          </div>
+        </li>
+    </ul>
+
+          
+
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-function">
+
+
+<h3 id="causaliq_knowledge.cache.TokenCache.token_count" class="doc doc-heading">
+<code class="doc-symbol doc-symbol-heading doc-symbol-method"></code>            <span class="doc doc-object-name doc-function-name">token_count</span>
+
+
+<a href="#causaliq_knowledge.cache.TokenCache.token_count" class="headerlink" title="Permanent link">&para;</a></h3>
+<div class="language-python doc-signature highlight"><pre><span></span><code><span id="__span-0-1"><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="nf">token_count</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="n"><span title="int">int</span></span>
+</span></code></pre></div>
+
+    <div class="doc doc-contents ">
+
+        <p>Count tokens in the dictionary.</p>
+
+
+<p><span class="doc-section-title">Returns:</span></p>
+    <ul>
+        <li class="doc-section-item field-body">
+              <code><span title="int">int</span></code>
+          –
+          <div class="doc-md-description">
+            <p>Number of tokens.</p>
           </div>
         </li>
     </ul>
@@ -1975,7 +2392,7 @@ Subclasses may override for batch optimization.</p>
       <nav class="md-footer__inner md-grid" aria-label="Footer" >
         
           
-          <a href="../cache/" class="md-footer__link md-footer__link--prev" aria-label="Previous: Cache">
+          <a href="../models/" class="md-footer__link md-footer__link--prev" aria-label="Previous: Models">
             <div class="md-footer__button md-icon">
               
               <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11z"/></svg>
@@ -1985,20 +2402,20 @@ Subclasses may override for batch optimization.</p>
                 Previous
               </span>
               <div class="md-ellipsis">
-                Cache
+                Models
               </div>
             </div>
           </a>
         
         
           
-          <a href="../provider/" class="md-footer__link md-footer__link--next" aria-label="Next: LLM Provider">
+          <a href="../base/" class="md-footer__link md-footer__link--next" aria-label="Next: Base">
             <div class="md-footer__title">
               <span class="md-footer__direction">
                 Next
               </span>
               <div class="md-ellipsis">
-                LLM Provider
+                Base
               </div>
             </div>
             <div class="md-footer__button md-icon">
