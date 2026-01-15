@@ -16,7 +16,10 @@ import sqlite3
 from contextlib import contextmanager
 from datetime import datetime, timezone
 from pathlib import Path
-from typing import Iterator
+from typing import TYPE_CHECKING, Any, Iterator
+
+if TYPE_CHECKING:  # pragma: no cover
+    from causaliq_knowledge.cache.encoders.base import EntryEncoder
 
 
 class TokenCache:
@@ -70,6 +73,8 @@ class TokenCache:
         # In-memory token dictionary for fast lookup
         self._token_to_id: dict[str, int] = {}
         self._id_to_token: dict[int, str] = {}
+        # Registered encoders for auto-encoding (entry_type -> encoder)
+        self._encoders: dict[str, EntryEncoder] = {}
 
     @property
     def conn(self) -> sqlite3.Connection:
@@ -365,3 +370,133 @@ class TokenCache:
         )
         self.conn.commit()
         return cursor.rowcount > 0
+
+    # ========================================================================
+    # Encoder registration and auto-encoding operations
+    # ========================================================================
+
+    def register_encoder(self, entry_type: str, encoder: EntryEncoder) -> None:
+        """Register an encoder for a specific entry type.
+
+        Once registered, `put_data()` and `get_data()` will automatically
+        encode/decode entries of this type using the registered encoder.
+
+        Args:
+            entry_type: Type identifier (e.g. 'llm', 'json', 'score').
+            encoder: EntryEncoder instance for this type.
+
+        Example:
+            >>> from causaliq_knowledge.cache.encoders import JsonEncoder
+            >>> with TokenCache(":memory:") as cache:
+            ...     cache.register_encoder("json", JsonEncoder())
+            ...     cache.put_data("key1", "json", {"msg": "hello"})
+        """
+        self._encoders[entry_type] = encoder
+
+    def get_encoder(self, entry_type: str) -> EntryEncoder | None:
+        """Get the registered encoder for an entry type.
+
+        Args:
+            entry_type: Type identifier to look up.
+
+        Returns:
+            The registered encoder, or None if not registered.
+        """
+        return self._encoders.get(entry_type)
+
+    def has_encoder(self, entry_type: str) -> bool:
+        """Check if an encoder is registered for an entry type.
+
+        Args:
+            entry_type: Type identifier to check.
+
+        Returns:
+            True if encoder is registered, False otherwise.
+        """
+        return entry_type in self._encoders
+
+    def put_data(
+        self,
+        hash: str,
+        entry_type: str,
+        data: Any,
+        metadata: Any | None = None,
+    ) -> None:
+        """Store data using the registered encoder for the entry type.
+
+        This method automatically encodes the data using the encoder
+        registered for the given entry_type. Use `put()` for raw bytes.
+
+        Args:
+            hash: Unique identifier for the entry.
+            entry_type: Type of entry (must have registered encoder).
+            data: Data to encode and store.
+            metadata: Optional metadata to encode and store.
+
+        Raises:
+            KeyError: If no encoder is registered for entry_type.
+
+        Example:
+            >>> with TokenCache(":memory:") as cache:
+            ...     cache.register_encoder("json", JsonEncoder())
+            ...     cache.put_data("abc", "json", {"key": "value"})
+        """
+        encoder = self._encoders[entry_type]
+        blob = encoder.encode(data, self)
+        meta_blob = (
+            encoder.encode(metadata, self) if metadata is not None else None
+        )
+        self.put(hash, entry_type, blob, meta_blob)
+
+    def get_data(self, hash: str, entry_type: str) -> Any | None:
+        """Retrieve and decode data using the registered encoder.
+
+        This method automatically decodes the data using the encoder
+        registered for the given entry_type. Use `get()` for raw bytes.
+
+        Args:
+            hash: Unique identifier for the entry.
+            entry_type: Type of entry (must have registered encoder).
+
+        Returns:
+            Decoded data if found, None otherwise.
+
+        Raises:
+            KeyError: If no encoder is registered for entry_type.
+
+        Example:
+            >>> with TokenCache(":memory:") as cache:
+            ...     cache.register_encoder("json", JsonEncoder())
+            ...     cache.put_data("abc", "json", {"key": "value"})
+            ...     data = cache.get_data("abc", "json")
+        """
+        blob = self.get(hash, entry_type)
+        if blob is None:
+            return None
+        encoder = self._encoders[entry_type]
+        return encoder.decode(blob, self)
+
+    def get_data_with_metadata(
+        self, hash: str, entry_type: str
+    ) -> tuple[Any, Any | None] | None:
+        """Retrieve and decode data with metadata using registered encoder.
+
+        Args:
+            hash: Unique identifier for the entry.
+            entry_type: Type of entry (must have registered encoder).
+
+        Returns:
+            Tuple of (decoded_data, decoded_metadata) if found, None otherwise.
+            metadata may be None if not stored.
+
+        Raises:
+            KeyError: If no encoder is registered for entry_type.
+        """
+        result = self.get_with_metadata(hash, entry_type)
+        if result is None:
+            return None
+        data_blob, meta_blob = result
+        encoder = self._encoders[entry_type]
+        decoded_data = encoder.decode(data_blob, self)
+        decoded_meta = encoder.decode(meta_blob, self) if meta_blob else None
+        return (decoded_data, decoded_meta)
