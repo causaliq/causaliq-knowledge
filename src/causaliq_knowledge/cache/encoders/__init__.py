@@ -7,8 +7,6 @@ using a shared token dictionary for cross-entry compression.
 Note: This submodule is designed for future migration to causaliq-core.
 """
 
-# Exports will be added as encoders are implemented:
-# - EntryEncoder: ABC defining encoder interface
-# - JsonEncoder: Generic JSON tokenisation encoder
+from causaliq_knowledge.cache.encoders.base import EntryEncoder
 
-__all__: list[str] = []
+__all__ = ["EntryEncoder"]
