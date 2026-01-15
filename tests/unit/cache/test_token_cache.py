@@ -298,3 +298,154 @@ def test_special_characters_in_tokens() -> None:
         for token in special_tokens:
             token_id = cache._token_to_id[token]
             assert cache.get_token(token_id) == token
+
+
+# ============================================================================
+# Cache entry CRUD tests
+# ============================================================================
+
+
+# Test put and get roundtrip
+def test_put_and_get_roundtrip() -> None:
+    """Verify data can be stored and retrieved."""
+    with TokenCache(":memory:") as cache:
+        data = b"hello world"
+        cache.put("abc123", "test", data)
+        result = cache.get("abc123", "test")
+
+        assert result == data
+
+
+# Test get returns None for missing entry
+def test_get_returns_none_for_missing() -> None:
+    """Verify get returns None for non-existent entries."""
+    with TokenCache(":memory:") as cache:
+        result = cache.get("nonexistent", "test")
+
+        assert result is None
+
+
+# Test put with metadata
+def test_put_with_metadata() -> None:
+    """Verify metadata is stored alongside data."""
+    with TokenCache(":memory:") as cache:
+        data = b"main data"
+        metadata = b"extra info"
+        cache.put("meta123", "test", data, metadata=metadata)
+
+        result = cache.get_with_metadata("meta123", "test")
+
+        assert result is not None
+        assert result[0] == data
+        assert result[1] == metadata
+
+
+# Test get_with_metadata returns None for missing
+def test_get_with_metadata_returns_none_for_missing() -> None:
+    """Verify get_with_metadata returns None for non-existent entries."""
+    with TokenCache(":memory:") as cache:
+        result = cache.get_with_metadata("nonexistent", "test")
+
+        assert result is None
+
+
+# Test put without metadata stores None
+def test_put_without_metadata() -> None:
+    """Verify entries without metadata have None metadata."""
+    with TokenCache(":memory:") as cache:
+        cache.put("nometa", "test", b"data")
+
+        result = cache.get_with_metadata("nometa", "test")
+
+        assert result is not None
+        assert result[0] == b"data"
+        assert result[1] is None
+
+
+# Test exists returns True for existing entry
+def test_exists_returns_true() -> None:
+    """Verify exists returns True for existing entries."""
+    with TokenCache(":memory:") as cache:
+        cache.put("exists123", "test", b"data")
+
+        assert cache.exists("exists123", "test") is True
+
+
+# Test exists returns False for missing entry
+def test_exists_returns_false() -> None:
+    """Verify exists returns False for non-existent entries."""
+    with TokenCache(":memory:") as cache:
+        assert cache.exists("missing", "test") is False
+
+
+# Test put replaces existing entry
+def test_put_replaces_existing() -> None:
+    """Verify put overwrites existing entry with same hash and type."""
+    with TokenCache(":memory:") as cache:
+        cache.put("replace", "test", b"old data")
+        cache.put("replace", "test", b"new data")
+
+        result = cache.get("replace", "test")
+
+        assert result == b"new data"
+        assert cache.entry_count() == 1
+
+
+# Test different entry types are independent
+def test_entry_types_are_independent() -> None:
+    """Verify same hash can exist for different entry types."""
+    with TokenCache(":memory:") as cache:
+        cache.put("same_hash", "llm", b"llm data")
+        cache.put("same_hash", "graph", b"graph data")
+
+        assert cache.get("same_hash", "llm") == b"llm data"
+        assert cache.get("same_hash", "graph") == b"graph data"
+        assert cache.entry_count() == 2
+
+
+# Test delete removes entry
+def test_delete_removes_entry() -> None:
+    """Verify delete removes the specified entry."""
+    with TokenCache(":memory:") as cache:
+        cache.put("todelete", "test", b"data")
+        assert cache.exists("todelete", "test") is True
+
+        result = cache.delete("todelete", "test")
+
+        assert result is True
+        assert cache.exists("todelete", "test") is False
+
+
+# Test delete returns False for missing entry
+def test_delete_returns_false_for_missing() -> None:
+    """Verify delete returns False when entry doesn't exist."""
+    with TokenCache(":memory:") as cache:
+        result = cache.delete("nonexistent", "test")
+
+        assert result is False
+
+
+# Test entry_count with type filter
+def test_entry_count_with_type_filter() -> None:
+    """Verify entry_count filters by entry type."""
+    with TokenCache(":memory:") as cache:
+        cache.put("a", "llm", b"data")
+        cache.put("b", "llm", b"data")
+        cache.put("c", "graph", b"data")
+
+        assert cache.entry_count() == 3
+        assert cache.entry_count(entry_type="llm") == 2
+        assert cache.entry_count(entry_type="graph") == 1
+        assert cache.entry_count(entry_type="score") == 0
+
+
+# Test binary data is preserved exactly
+def test_binary_data_preserved() -> None:
+    """Verify binary data with null bytes is preserved."""
+    with TokenCache(":memory:") as cache:
+        binary_data = b"\x00\x01\x02\xff\xfe\xfd"
+        cache.put("binary", "test", binary_data)
+
+        result = cache.get("binary", "test")
+
+        assert result == binary_data

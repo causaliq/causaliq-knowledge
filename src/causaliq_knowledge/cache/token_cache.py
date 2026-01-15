@@ -43,11 +43,12 @@ class TokenCache:
 
         -- Generic cache entries
         CREATE TABLE IF NOT EXISTS cache_entries (
-            hash TEXT PRIMARY KEY,
+            hash TEXT NOT NULL,
             entry_type TEXT NOT NULL,
             data BLOB NOT NULL,
             created_at TEXT NOT NULL,
-            metadata BLOB
+            metadata BLOB,
+            PRIMARY KEY (hash, entry_type)
         );
 
         -- Indexes for common queries
@@ -266,3 +267,101 @@ class TokenCache:
             The token string, or None if not found.
         """
         return self._id_to_token.get(token_id)
+
+    # ========================================================================
+    # Cache entry operations
+    # ========================================================================
+
+    def put(
+        self,
+        hash: str,
+        entry_type: str,
+        data: bytes,
+        metadata: bytes | None = None,
+    ) -> None:
+        """Store a cache entry.
+
+        Args:
+            hash: Unique identifier for the entry (e.g. SHA-256 truncated).
+            entry_type: Type of entry (e.g. 'llm', 'graph', 'score').
+            data: Binary data to store.
+            metadata: Optional binary metadata.
+        """
+        self.conn.execute(
+            "INSERT OR REPLACE INTO cache_entries "
+            "(hash, entry_type, data, created_at, metadata) "
+            "VALUES (?, ?, ?, ?, ?)",
+            (hash, entry_type, data, self._utcnow_iso(), metadata),
+        )
+        self.conn.commit()
+
+    def get(self, hash: str, entry_type: str) -> bytes | None:
+        """Retrieve a cache entry.
+
+        Args:
+            hash: Unique identifier for the entry.
+            entry_type: Type of entry to retrieve.
+
+        Returns:
+            Binary data if found, None otherwise.
+        """
+        cursor = self.conn.execute(
+            "SELECT data FROM cache_entries "
+            "WHERE hash = ? AND entry_type = ?",
+            (hash, entry_type),
+        )
+        row = cursor.fetchone()
+        return row[0] if row else None
+
+    def get_with_metadata(
+        self, hash: str, entry_type: str
+    ) -> tuple[bytes, bytes | None] | None:
+        """Retrieve a cache entry with its metadata.
+
+        Args:
+            hash: Unique identifier for the entry.
+            entry_type: Type of entry to retrieve.
+
+        Returns:
+            Tuple of (data, metadata) if found, None otherwise.
+        """
+        cursor = self.conn.execute(
+            "SELECT data, metadata FROM cache_entries "
+            "WHERE hash = ? AND entry_type = ?",
+            (hash, entry_type),
+        )
+        row = cursor.fetchone()
+        return (row[0], row[1]) if row else None
+
+    def exists(self, hash: str, entry_type: str) -> bool:
+        """Check if a cache entry exists.
+
+        Args:
+            hash: Unique identifier for the entry.
+            entry_type: Type of entry to check.
+
+        Returns:
+            True if entry exists, False otherwise.
+        """
+        cursor = self.conn.execute(
+            "SELECT 1 FROM cache_entries " "WHERE hash = ? AND entry_type = ?",
+            (hash, entry_type),
+        )
+        return cursor.fetchone() is not None
+
+    def delete(self, hash: str, entry_type: str) -> bool:
+        """Delete a cache entry.
+
+        Args:
+            hash: Unique identifier for the entry.
+            entry_type: Type of entry to delete.
+
+        Returns:
+            True if entry was deleted, False if it didn't exist.
+        """
+        cursor = self.conn.execute(
+            "DELETE FROM cache_entries WHERE hash = ? AND entry_type = ?",
+            (hash, entry_type),
+        )
+        self.conn.commit()
+        return cursor.rowcount > 0
