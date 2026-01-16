@@ -5,11 +5,17 @@ must implement. This provides a consistent API regardless of the
 underlying LLM provider.
 """
 
+from __future__ import annotations
+
+import hashlib
 import json
 import logging
 from abc import ABC, abstractmethod
 from dataclasses import dataclass, field
-from typing import Any, Dict, List, Optional
+from typing import TYPE_CHECKING, Any, Dict, List, Optional
+
+if TYPE_CHECKING:  # pragma: no cover
+    from causaliq_knowledge.cache import TokenCache
 
 logger = logging.getLogger(__name__)
 
@@ -218,3 +224,134 @@ class BaseLLMClient(ABC):
             Model identifier string.
         """
         return getattr(self, "config", LLMConfig(model="unknown")).model
+
+    def _build_cache_key(
+        self,
+        messages: List[Dict[str, str]],
+        temperature: Optional[float] = None,
+        max_tokens: Optional[int] = None,
+    ) -> str:
+        """Build a deterministic cache key for the request.
+
+        Creates a SHA-256 hash from the model, messages, temperature, and
+        max_tokens. The hash is truncated to 16 hex characters (64 bits).
+
+        Args:
+            messages: List of message dicts with "role" and "content" keys.
+            temperature: Sampling temperature (defaults to config value).
+            max_tokens: Maximum tokens (defaults to config value).
+
+        Returns:
+            16-character hex string cache key.
+        """
+        config = getattr(self, "config", LLMConfig(model="unknown"))
+        key_data = {
+            "model": config.model,
+            "messages": messages,
+            "temperature": (
+                temperature if temperature is not None else config.temperature
+            ),
+            "max_tokens": (
+                max_tokens if max_tokens is not None else config.max_tokens
+            ),
+        }
+        key_json = json.dumps(key_data, sort_keys=True, separators=(",", ":"))
+        return hashlib.sha256(key_json.encode()).hexdigest()[:16]
+
+    def set_cache(
+        self,
+        cache: Optional["TokenCache"],
+        use_cache: bool = True,
+    ) -> None:
+        """Configure caching for this client.
+
+        Args:
+            cache: TokenCache instance for caching, or None to disable.
+            use_cache: Whether to use the cache (default True).
+        """
+        self._cache = cache
+        self._use_cache = use_cache
+
+    @property
+    def cache(self) -> Optional["TokenCache"]:
+        """Return the configured cache, if any."""
+        return getattr(self, "_cache", None)
+
+    @property
+    def use_cache(self) -> bool:
+        """Return whether caching is enabled."""
+        return getattr(self, "_use_cache", True)
+
+    def cached_completion(
+        self,
+        messages: List[Dict[str, str]],
+        **kwargs: Any,
+    ) -> LLMResponse:
+        """Make a completion request with caching.
+
+        If caching is enabled and a cached response exists, returns
+        the cached response without making an API call. Otherwise,
+        makes the API call and caches the result.
+
+        Args:
+            messages: List of message dicts with "role" and "content" keys.
+            **kwargs: Provider-specific options (temperature, max_tokens, etc.)
+
+        Returns:
+            LLMResponse with the generated content and metadata.
+        """
+        from causaliq_knowledge.llm.cache import LLMCacheEntry, LLMEntryEncoder
+
+        cache = self.cache
+        use_cache = self.use_cache
+
+        # Build cache key
+        temperature = kwargs.get("temperature")
+        max_tokens = kwargs.get("max_tokens")
+        cache_key = self._build_cache_key(messages, temperature, max_tokens)
+
+        # Check cache
+        if use_cache and cache is not None:
+            # Ensure encoder is registered
+            if not cache.has_encoder("llm"):
+                cache.register_encoder("llm", LLMEntryEncoder())
+
+            if cache.exists(cache_key, "llm"):
+                cached_data = cache.get_data(cache_key, "llm")
+                if cached_data is not None:
+                    entry = LLMCacheEntry.from_dict(cached_data)
+                    return LLMResponse(
+                        content=entry.response.content,
+                        model=entry.model,
+                        input_tokens=entry.metadata.tokens.input,
+                        output_tokens=entry.metadata.tokens.output,
+                        cost=entry.metadata.cost_usd or 0.0,
+                    )
+
+        # Make API call
+        response = self.completion(messages, **kwargs)
+
+        # Store in cache
+        if use_cache and cache is not None:
+            config = getattr(self, "config", LLMConfig(model="unknown"))
+            entry = LLMCacheEntry.create(
+                model=config.model,
+                messages=messages,
+                content=response.content,
+                temperature=(
+                    temperature
+                    if temperature is not None
+                    else config.temperature
+                ),
+                max_tokens=(
+                    max_tokens if max_tokens is not None else config.max_tokens
+                ),
+                provider=self.provider_name,
+                latency_ms=0,  # Will be captured in commit #17
+                input_tokens=response.input_tokens,
+                output_tokens=response.output_tokens,
+                cost_usd=response.cost,
+            )
+            cache.put_data(cache_key, "llm", entry.to_dict())
+
+        return response

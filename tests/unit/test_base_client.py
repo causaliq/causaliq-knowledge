@@ -252,3 +252,302 @@ def test_gemini_config_inherits_from_base():
     from causaliq_knowledge.llm.gemini_client import GeminiConfig
 
     assert issubclass(GeminiConfig, LLMConfig)
+
+
+# --- Cache Key Building Tests ---
+
+
+# Test that _build_cache_key returns a 16-character hex string
+def test_build_cache_key_returns_hex_string():
+    MockClient = _create_mock_client_class()
+    config = LLMConfig(model="test-model")
+    client = MockClient(config)
+
+    key = client._build_cache_key([{"role": "user", "content": "Hello"}])
+
+    assert len(key) == 16
+    assert all(c in "0123456789abcdef" for c in key)
+
+
+# Test that _build_cache_key is deterministic (same inputs = same key)
+def test_build_cache_key_is_deterministic():
+    MockClient = _create_mock_client_class()
+    config = LLMConfig(model="test-model")
+    client = MockClient(config)
+
+    messages = [{"role": "user", "content": "Hello"}]
+    key1 = client._build_cache_key(messages)
+    key2 = client._build_cache_key(messages)
+
+    assert key1 == key2
+
+
+# Test that different messages produce different keys
+def test_build_cache_key_different_messages():
+    MockClient = _create_mock_client_class()
+    config = LLMConfig(model="test-model")
+    client = MockClient(config)
+
+    key1 = client._build_cache_key([{"role": "user", "content": "Hello"}])
+    key2 = client._build_cache_key([{"role": "user", "content": "Goodbye"}])
+
+    assert key1 != key2
+
+
+# Test that different models produce different keys
+def test_build_cache_key_different_models():
+    MockClient = _create_mock_client_class()
+    client1 = MockClient(LLMConfig(model="model-a"))
+    client2 = MockClient(LLMConfig(model="model-b"))
+
+    messages = [{"role": "user", "content": "Hello"}]
+    key1 = client1._build_cache_key(messages)
+    key2 = client2._build_cache_key(messages)
+
+    assert key1 != key2
+
+
+# Test that different temperatures produce different keys
+def test_build_cache_key_different_temperatures():
+    MockClient = _create_mock_client_class()
+    config = LLMConfig(model="test-model")
+    client = MockClient(config)
+
+    messages = [{"role": "user", "content": "Hello"}]
+    key1 = client._build_cache_key(messages, temperature=0.0)
+    key2 = client._build_cache_key(messages, temperature=0.5)
+
+    assert key1 != key2
+
+
+# Test that different max_tokens produce different keys
+def test_build_cache_key_different_max_tokens():
+    MockClient = _create_mock_client_class()
+    config = LLMConfig(model="test-model")
+    client = MockClient(config)
+
+    messages = [{"role": "user", "content": "Hello"}]
+    key1 = client._build_cache_key(messages, max_tokens=100)
+    key2 = client._build_cache_key(messages, max_tokens=500)
+
+    assert key1 != key2
+
+
+# Test that _build_cache_key uses config defaults when kwargs not provided
+def test_build_cache_key_uses_config_defaults():
+    MockClient = _create_mock_client_class()
+    config = LLMConfig(model="test-model", temperature=0.5, max_tokens=1000)
+    client = MockClient(config)
+
+    messages = [{"role": "user", "content": "Hello"}]
+    key_default = client._build_cache_key(messages)
+    key_explicit = client._build_cache_key(
+        messages, temperature=0.5, max_tokens=1000
+    )
+
+    assert key_default == key_explicit
+
+
+# Test that message order affects the cache key
+def test_build_cache_key_message_order_matters():
+    MockClient = _create_mock_client_class()
+    config = LLMConfig(model="test-model")
+    client = MockClient(config)
+
+    key1 = client._build_cache_key(
+        [
+            {"role": "user", "content": "Hello"},
+            {"role": "assistant", "content": "Hi"},
+        ]
+    )
+    key2 = client._build_cache_key(
+        [
+            {"role": "assistant", "content": "Hi"},
+            {"role": "user", "content": "Hello"},
+        ]
+    )
+
+    assert key1 != key2
+
+
+# Test that _build_cache_key handles multi-turn conversations
+def test_build_cache_key_multi_turn():
+    MockClient = _create_mock_client_class()
+    config = LLMConfig(model="test-model")
+    client = MockClient(config)
+
+    messages = [
+        {"role": "system", "content": "You are a helpful assistant."},
+        {"role": "user", "content": "What is Python?"},
+        {"role": "assistant", "content": "Python is a programming language."},
+        {"role": "user", "content": "Tell me more."},
+    ]
+    key = client._build_cache_key(messages)
+
+    assert len(key) == 16
+    assert all(c in "0123456789abcdef" for c in key)
+
+
+# Test that _build_cache_key handles empty messages list
+def test_build_cache_key_empty_messages():
+    MockClient = _create_mock_client_class()
+    config = LLMConfig(model="test-model")
+    client = MockClient(config)
+
+    key = client._build_cache_key([])
+
+    assert len(key) == 16
+    assert all(c in "0123456789abcdef" for c in key)
+
+
+# --- Cache Integration Tests ---
+
+
+# Test that set_cache configures cache on client
+def test_set_cache_configures_client():
+    from causaliq_knowledge.cache import TokenCache
+
+    MockClient = _create_mock_client_class()
+    client = MockClient(LLMConfig(model="test-model"))
+
+    with TokenCache(":memory:") as cache:
+        client.set_cache(cache, use_cache=True)
+
+        assert client.cache is cache
+        assert client.use_cache is True
+
+
+# Test that set_cache with None disables caching
+def test_set_cache_with_none():
+    MockClient = _create_mock_client_class()
+    client = MockClient(LLMConfig(model="test-model"))
+
+    client.set_cache(None, use_cache=False)
+
+    assert client.cache is None
+    assert client.use_cache is False
+
+
+# Test that cache/use_cache defaults work without set_cache
+def test_cache_defaults_without_set_cache():
+    MockClient = _create_mock_client_class()
+    client = MockClient(LLMConfig(model="test-model"))
+
+    assert client.cache is None
+    assert client.use_cache is True
+
+
+# Test that cached_completion calls completion without cache
+def test_cached_completion_without_cache():
+    MockClient = _create_mock_client_class()
+    client = MockClient(LLMConfig(model="test-model"))
+    client._response_content = "API response"
+
+    response = client.cached_completion([{"role": "user", "content": "Hello"}])
+
+    assert response.content == "API response"
+    assert client.call_count == 1
+
+
+# Test that cached_completion stores result in cache
+def test_cached_completion_stores_in_cache():
+    from causaliq_knowledge.cache import TokenCache
+
+    MockClient = _create_mock_client_class()
+    client = MockClient(LLMConfig(model="test-model"))
+    client._response_content = "API response"
+
+    with TokenCache(":memory:") as cache:
+        client.set_cache(cache)
+
+        client.cached_completion([{"role": "user", "content": "Hello"}])
+
+        # Verify entry was cached
+        assert cache.entry_count() == 1
+
+
+# Test that cached_completion returns cached result on second call
+def test_cached_completion_cache_hit():
+    from causaliq_knowledge.cache import TokenCache
+
+    MockClient = _create_mock_client_class()
+    client = MockClient(LLMConfig(model="test-model"))
+    client._response_content = "First response"
+
+    with TokenCache(":memory:") as cache:
+        client.set_cache(cache)
+
+        # First call - should hit API
+        response1 = client.cached_completion(
+            [{"role": "user", "content": "Hello"}]
+        )
+        assert response1.content == "First response"
+        assert client.call_count == 1
+
+        # Change the response the mock would return
+        client._response_content = "Second response"
+
+        # Second call - should hit cache
+        response2 = client.cached_completion(
+            [{"role": "user", "content": "Hello"}]
+        )
+        assert response2.content == "First response"  # Cached value
+        assert client.call_count == 1  # No additional API call
+
+
+# Test that cached_completion respects use_cache=False
+def test_cached_completion_respects_use_cache_false():
+    from causaliq_knowledge.cache import TokenCache
+
+    MockClient = _create_mock_client_class()
+    client = MockClient(LLMConfig(model="test-model"))
+    client._response_content = "API response"
+
+    with TokenCache(":memory:") as cache:
+        client.set_cache(cache, use_cache=False)
+
+        client.cached_completion([{"role": "user", "content": "Hello"}])
+
+        # Should not cache when use_cache=False
+        assert cache.entry_count() == 0
+
+
+# Test that cached_completion uses correct cache key
+def test_cached_completion_different_messages_different_cache():
+    from causaliq_knowledge.cache import TokenCache
+
+    MockClient = _create_mock_client_class()
+    client = MockClient(LLMConfig(model="test-model"))
+
+    with TokenCache(":memory:") as cache:
+        client.set_cache(cache)
+
+        client._response_content = "Response A"
+        client.cached_completion([{"role": "user", "content": "Message A"}])
+
+        client._response_content = "Response B"
+        client.cached_completion([{"role": "user", "content": "Message B"}])
+
+        # Should have 2 cached entries
+        assert cache.entry_count() == 2
+        assert client.call_count == 2
+
+
+# Test that cached_completion registers LLMEntryEncoder automatically
+def test_cached_completion_registers_encoder():
+    from causaliq_knowledge.cache import TokenCache
+
+    MockClient = _create_mock_client_class()
+    client = MockClient(LLMConfig(model="test-model"))
+    client._response_content = "Test"
+
+    with TokenCache(":memory:") as cache:
+        client.set_cache(cache)
+
+        # No encoder registered initially
+        assert not cache.has_encoder("llm")
+
+        client.cached_completion([{"role": "user", "content": "Hello"}])
+
+        # Should auto-register encoder
+        assert cache.has_encoder("llm")
