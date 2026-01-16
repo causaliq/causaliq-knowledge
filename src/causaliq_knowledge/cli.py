@@ -471,6 +471,136 @@ def cache_stats(cache_path: str, output_json: bool) -> None:
         sys.exit(1)
 
 
+@cache_group.command("export")
+@click.argument("cache_path", type=click.Path(exists=True))
+@click.argument("output_dir", type=click.Path())
+@click.option(
+    "--json",
+    "output_json",
+    is_flag=True,
+    help="Output result as JSON.",
+)
+def cache_export(cache_path: str, output_dir: str, output_json: bool) -> None:
+    """Export cache entries to human-readable files.
+
+    CACHE_PATH is the path to the SQLite cache database.
+    OUTPUT_DIR is the directory or zip file where files will be written.
+
+    If OUTPUT_DIR ends with .zip, entries are exported to a zip archive.
+    Otherwise, entries are exported to a directory.
+
+    Files are named using a human-readable format:
+        {model}_{node_a}_{node_b}_edge_{hash}.json
+
+    Examples:
+
+        cqknow cache export ./llm_cache.db ./export_dir
+
+        cqknow cache export ./llm_cache.db ./export.zip
+
+        cqknow cache export ./llm_cache.db ./export_dir --json
+    """
+    import tempfile
+    import zipfile
+    from pathlib import Path
+
+    from causaliq_knowledge.cache import TokenCache
+    from causaliq_knowledge.llm.cache import LLMCacheEntry, LLMEntryEncoder
+
+    output_path = Path(output_dir)
+    is_zip = output_path.suffix.lower() == ".zip"
+
+    try:
+        with TokenCache(cache_path) as cache:
+            # Register encoders for decoding
+            encoder = LLMEntryEncoder()
+            cache.register_encoder("llm", encoder)
+
+            # Register generic JsonEncoder for other types
+            from causaliq_knowledge.cache.encoders import JsonEncoder
+
+            json_encoder = JsonEncoder()
+            cache.register_encoder("json", json_encoder)
+
+            # Get entry types in the cache
+            entry_types = cache.list_entry_types()
+
+            if not entry_types:
+                if output_json:
+                    click.echo(json.dumps({"exported": 0, "error": None}))
+                else:
+                    click.echo("No entries to export.")
+                return
+
+            # Determine export directory (temp if zipping)
+            if is_zip:
+                temp_dir = tempfile.mkdtemp()
+                export_dir = Path(temp_dir)
+            else:
+                export_dir = output_path
+                export_dir.mkdir(parents=True, exist_ok=True)
+
+            # Export entries
+            exported = 0
+            for entry_type in entry_types:
+                if entry_type == "llm":
+                    # Query all entries of this type
+                    cursor = cache.conn.execute(
+                        "SELECT hash, data FROM cache_entries "
+                        "WHERE entry_type = ?",
+                        (entry_type,),
+                    )
+                    for cache_key, blob in cursor:
+                        data = encoder.decode(blob, cache)
+                        entry = LLMCacheEntry.from_dict(data)
+                        filename = encoder.generate_export_filename(
+                            entry, cache_key
+                        )
+                        file_path = export_dir / filename
+                        encoder.export_entry(entry, file_path)
+                        exported += 1
+                else:
+                    # For non-LLM types, use generic export
+                    count = cache.export_entries(export_dir, entry_type)
+                    exported += count
+
+            # Create zip archive if requested
+            if is_zip:
+                output_path.parent.mkdir(parents=True, exist_ok=True)
+                with zipfile.ZipFile(
+                    output_path, "w", zipfile.ZIP_DEFLATED
+                ) as zf:
+                    for file_path in export_dir.iterdir():
+                        if file_path.is_file():
+                            zf.write(file_path, file_path.name)
+                # Clean up temp directory
+                import shutil
+
+                shutil.rmtree(temp_dir)
+
+            # Output results
+            if output_json:
+                output = {
+                    "cache_path": cache_path,
+                    "output_path": str(output_path),
+                    "format": "zip" if is_zip else "directory",
+                    "exported": exported,
+                    "entry_types": entry_types,
+                }
+                click.echo(json.dumps(output, indent=2))
+            else:
+                fmt = "zip archive" if is_zip else "directory"
+                click.echo(
+                    f"\nExported {exported} entries to {fmt}: {output_path}"
+                )
+                click.echo(f"Entry types: {', '.join(entry_types)}")
+                click.echo()
+
+    except Exception as e:
+        click.echo(f"Error exporting cache: {e}", err=True)
+        sys.exit(1)
+
+
 def main() -> None:
     """Entry point for the CLI."""
     cli()

@@ -211,6 +211,24 @@ class TokenCache:
         row = cursor.fetchone()
         return int(row[0]) if row else 0
 
+    def list_entry_types(self) -> list[str]:
+        """List all distinct entry types in the cache.
+
+        Returns:
+            List of entry type names found in the cache.
+
+        Example:
+            >>> with TokenCache(":memory:") as cache:
+            ...     cache.register_encoder("llm", LLMEntryEncoder())
+            ...     cache.put_data("h1", "llm", {"data": "test"})
+            ...     cache.list_entry_types()
+            ['llm']
+        """
+        cursor = self.conn.execute(
+            "SELECT DISTINCT entry_type FROM cache_entries ORDER BY entry_type"
+        )
+        return [row[0] for row in cursor.fetchall()]
+
     def token_count(self) -> int:
         """Count tokens in the dictionary.
 

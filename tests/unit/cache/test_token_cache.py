@@ -439,6 +439,27 @@ def test_entry_count_with_type_filter() -> None:
         assert cache.entry_count(entry_type="score") == 0
 
 
+# Test list_entry_types returns empty list for empty cache
+def test_list_entry_types_empty() -> None:
+    """Verify list_entry_types returns empty list for empty cache."""
+    with TokenCache(":memory:") as cache:
+        assert cache.list_entry_types() == []
+
+
+# Test list_entry_types returns distinct entry types
+def test_list_entry_types_returns_distinct_types() -> None:
+    """Verify list_entry_types returns all distinct entry types."""
+    with TokenCache(":memory:") as cache:
+        cache.put("a", "llm", b"data")
+        cache.put("b", "llm", b"data")
+        cache.put("c", "graph", b"data")
+        cache.put("d", "score", b"data")
+
+        types = cache.list_entry_types()
+
+        assert types == ["graph", "llm", "score"]  # Alphabetical order
+
+
 # Test binary data is preserved exactly
 def test_binary_data_preserved() -> None:
     """Verify binary data with null bytes is preserved."""

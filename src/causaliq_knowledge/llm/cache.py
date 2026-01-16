@@ -280,6 +280,84 @@ class LLMEntryEncoder(JsonEncoder):
         data = self.decode(blob, cache)
         return LLMCacheEntry.from_dict(data)
 
+    def generate_export_filename(
+        self, entry: LLMCacheEntry, cache_key: str
+    ) -> str:
+        """Generate a human-readable filename for export.
+
+        Creates a filename from model name and query details, with a
+        short hash suffix for uniqueness.
+
+        For edge queries, extracts node names for format:
+            {model}_{node_a}_{node_b}_edge_{hash}.json
+
+        For other queries, uses prompt excerpt:
+            {model}_{prompt_excerpt}_{hash}.json
+
+        Args:
+            entry: The cache entry to generate filename for.
+            cache_key: The cache key (hash) for uniqueness suffix.
+
+        Returns:
+            Human-readable filename with .json extension.
+
+        Example:
+            >>> encoder = LLMEntryEncoder()
+            >>> entry = LLMCacheEntry.create(
+            ...     model="gpt-4",
+            ...     messages=[{"role": "user", "content": "smoking and lung"}],
+            ...     content="Yes...",
+            ... )
+            >>> encoder.generate_export_filename(entry, "a1b2c3d4e5f6")
+            'gpt4_smoking_lung_edge_a1b2.json'
+        """
+        import re
+
+        # Sanitize model name (alphanumeric only, lowercase)
+        model = re.sub(r"[^a-z0-9]", "", entry.model.lower())
+        if len(model) > 15:
+            model = model[:15]
+
+        # Extract user message content
+        prompt = ""
+        for msg in entry.messages:
+            if msg.get("role") == "user":
+                prompt = msg.get("content", "")
+                break
+
+        # Try to extract node names for edge queries
+        # Look for patterns like "X and Y", "X cause Y", "between X and Y"
+        prompt_lower = prompt.lower()
+        slug = ""
+
+        # Pattern: "between X and Y" or "X and Y"
+        match = re.search(r"(?:between\s+)?(\w+)\s+and\s+(\w+)", prompt_lower)
+        if match:
+            node_a = match.group(1)[:15]
+            node_b = match.group(2)[:15]
+            slug = f"{node_a}_{node_b}_edge"
+
+        # Fallback: extract first significant words from prompt
+        if not slug:
+            # Remove common words, keep alphanumeric
+            cleaned = re.sub(r"[^a-z0-9\s]", "", prompt_lower)
+            words = [
+                w
+                for w in cleaned.split()
+                if w
+                not in ("the", "a", "an", "is", "are", "does", "do", "can")
+            ]
+            slug = "_".join(words[:4])
+            if len(slug) > 30:
+                slug = slug[:30].rstrip("_")
+
+        # Short hash suffix for uniqueness (4 chars)
+        hash_suffix = cache_key[:4] if cache_key else "0000"
+
+        # Build filename
+        parts = [p for p in [model, slug, hash_suffix] if p]
+        return "_".join(parts) + ".json"
+
     def export_entry(self, entry: LLMCacheEntry, path: Path) -> None:
         """Export an LLMCacheEntry to a JSON file.
 

@@ -853,3 +853,118 @@ def test_llm_entry_encoder_shared_tokens():
         assert restored2.model == "gpt-4"
         assert restored1.metadata.provider == "openai"
         assert restored2.metadata.provider == "openai"
+
+
+# =============================================================================
+# LLMEntryEncoder Filename Generation Tests
+# =============================================================================
+
+
+# Test generate_export_filename for edge query.
+def test_generate_export_filename_edge_query():
+    encoder = LLMEntryEncoder()
+    entry = LLMCacheEntry.create(
+        model="gpt-4",
+        messages=[{"role": "user", "content": "smoking and lung_cancer"}],
+        content="Response",
+    )
+    filename = encoder.generate_export_filename(entry, "abc12345")
+
+    assert filename.endswith(".json")
+    assert "gpt4" in filename
+    assert "smoking" in filename
+    assert "lung" in filename  # lung_cancer parsed as lung
+    assert "edge" in filename
+    assert "abc1" in filename  # 4-char hash suffix
+
+
+# Test generate_export_filename with 'between X and Y' pattern.
+def test_generate_export_filename_between_pattern():
+    encoder = LLMEntryEncoder()
+    entry = LLMCacheEntry.create(
+        model="gemini-2.5-flash",
+        messages=[
+            {
+                "role": "user",
+                "content": "relationship between exercise and health",
+            }
+        ],
+        content="Response",
+    )
+    filename = encoder.generate_export_filename(entry, "def456")
+
+    assert "gemini25flash" in filename
+    assert "exercise" in filename
+    assert "health" in filename
+    assert "edge" in filename
+
+
+# Test generate_export_filename fallback for non-edge queries.
+def test_generate_export_filename_fallback():
+    encoder = LLMEntryEncoder()
+    entry = LLMCacheEntry.create(
+        model="gpt-4",
+        messages=[{"role": "user", "content": "What is machine learning?"}],
+        content="Response",
+    )
+    filename = encoder.generate_export_filename(entry, "xyz789")
+
+    assert filename.endswith(".json")
+    assert "gpt4" in filename
+    assert "machine" in filename
+    assert "learning" in filename
+    assert "xyz7" in filename
+
+
+# Test generate_export_filename truncates long model names.
+def test_generate_export_filename_long_model():
+    encoder = LLMEntryEncoder()
+    entry = LLMCacheEntry.create(
+        model="very-long-model-name-that-exceeds-limit",
+        messages=[{"role": "user", "content": "test"}],
+        content="Response",
+    )
+    filename = encoder.generate_export_filename(entry, "hash")
+
+    # Model portion should be truncated to 15 chars
+    model_part = filename.split("_")[0]
+    assert len(model_part) <= 15
+
+
+# Test generate_export_filename with empty messages.
+def test_generate_export_filename_empty_messages():
+    encoder = LLMEntryEncoder()
+    entry = LLMCacheEntry.create(
+        model="gpt-4",
+        messages=[],
+        content="Response",
+    )
+    filename = encoder.generate_export_filename(entry, "abc123")
+
+    assert filename.endswith(".json")
+    assert "gpt4" in filename
+    assert "abc1" in filename
+
+
+# Test generate_export_filename truncates long prompts.
+def test_generate_export_filename_long_prompt():
+    encoder = LLMEntryEncoder()
+    # Create a prompt with long words that will exceed 30 char slug limit
+    # Using long words so first 4 words exceed 30 chars
+    long_prompt = "verylongword1 verylongword2 verylongword3 verylongword4"
+    entry = LLMCacheEntry.create(
+        model="gpt-4",
+        messages=[{"role": "user", "content": long_prompt}],
+        content="Response",
+    )
+    filename = encoder.generate_export_filename(entry, "abc123")
+
+    assert filename.endswith(".json")
+    # Slug portion should be truncated to max 30 chars
+    # Format: model_slug_hash.json
+    parts = filename.replace(".json", "").split("_")
+    # Parts: [model, word1, word2, ..., hash]
+    # The middle parts are the slug
+    slug_parts = parts[1:-1]  # Remove model and hash
+    slug = "_".join(slug_parts)
+    assert len(slug) <= 30
