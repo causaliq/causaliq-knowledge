@@ -449,3 +449,41 @@ def test_binary_data_preserved() -> None:
         result = cache.get("binary", "test")
 
         assert result == binary_data
+
+
+# ============================================================================
+# Export/Import error handling tests (no filesystem access)
+# ============================================================================
+
+
+# Test export_entries raises KeyError for unregistered type
+def test_export_entries_raises_for_unregistered_type(tmp_path) -> None:
+    """Verify export_entries raises KeyError for unregistered entry_type."""
+    with TokenCache(":memory:") as cache:
+        with pytest.raises(KeyError):
+            cache.export_entries(tmp_path, "unregistered")
+
+
+# Test import_entries raises KeyError for unregistered type
+def test_import_entries_raises_for_unregistered_type(tmp_path) -> None:
+    """Verify import_entries raises KeyError for unregistered entry_type."""
+    # Create empty directory for test
+    tmp_path.mkdir(parents=True, exist_ok=True)
+
+    with TokenCache(":memory:") as cache:
+        with pytest.raises(KeyError):
+            cache.import_entries(tmp_path, "unregistered")
+
+
+# Test import_entries raises FileNotFoundError for missing directory
+def test_import_entries_raises_for_missing_directory() -> None:
+    """Verify import_entries raises FileNotFoundError for missing directory."""
+    from pathlib import Path
+
+    from causaliq_knowledge.cache.encoders import JsonEncoder
+
+    with TokenCache(":memory:") as cache:
+        cache.register_encoder("json", JsonEncoder())
+
+        with pytest.raises(FileNotFoundError):
+            cache.import_entries(Path("/nonexistent/path"), "json")

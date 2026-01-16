@@ -500,3 +500,115 @@ class TokenCache:
         decoded_data = encoder.decode(data_blob, self)
         decoded_meta = encoder.decode(meta_blob, self) if meta_blob else None
         return (decoded_data, decoded_meta)
+
+    # ========================================================================
+    # Import/Export operations
+    # ========================================================================
+
+    def export_entries(
+        self,
+        output_dir: Path,
+        entry_type: str,
+        fmt: str | None = None,
+    ) -> int:
+        """Export cache entries to human-readable files.
+
+        Each entry is exported to a separate file named `{hash}.{ext}` where
+        ext is determined by the format or encoder's default_export_format.
+
+        Args:
+            output_dir: Directory to write exported files to. Created if
+                it doesn't exist.
+            entry_type: Type of entries to export (must have registered
+                encoder).
+            fmt: Export format (e.g. 'json', 'yaml'). If None, uses the
+                encoder's default_export_format.
+
+        Returns:
+            Number of entries exported.
+
+        Raises:
+            KeyError: If no encoder is registered for entry_type.
+
+        Example:
+            >>> from pathlib import Path
+            >>> from causaliq_knowledge.cache import TokenCache
+            >>> from causaliq_knowledge.cache.encoders import JsonEncoder
+            >>> with TokenCache(":memory:") as cache:
+            ...     cache.register_encoder("json", JsonEncoder())
+            ...     cache.put_data("abc123", "json", {"key": "value"})
+            ...     count = cache.export_entries(Path("./export"), "json")
+            ...     # Creates ./export/abc123.json
+        """
+        encoder = self._encoders[entry_type]
+        ext = fmt or encoder.default_export_format
+
+        # Create output directory if needed
+        output_dir.mkdir(parents=True, exist_ok=True)
+
+        # Query all entries of this type
+        cursor = self.conn.execute(
+            "SELECT hash, data FROM cache_entries WHERE entry_type = ?",
+            (entry_type,),
+        )
+
+        count = 0
+        for hash_val, blob in cursor:
+            # Decode the blob to get original data
+            data = encoder.decode(blob, self)
+            # Export to file using encoder's export method
+            file_path = output_dir / f"{hash_val}.{ext}"
+            encoder.export(data, file_path)
+            count += 1
+
+        return count
+
+    def import_entries(
+        self,
+        input_dir: Path,
+        entry_type: str,
+    ) -> int:
+        """Import human-readable files into the cache.
+
+        Each file is imported with its stem (filename without extension)
+        used as the cache hash. The encoder's import_() method reads the
+        file and the data is encoded before storage.
+
+        Args:
+            input_dir: Directory containing files to import.
+            entry_type: Type to assign to imported entries (must have
+                registered encoder).
+
+        Returns:
+            Number of entries imported.
+
+        Raises:
+            KeyError: If no encoder is registered for entry_type.
+            FileNotFoundError: If input_dir doesn't exist.
+
+        Example:
+            >>> from pathlib import Path
+            >>> from causaliq_knowledge.cache import TokenCache
+            >>> from causaliq_knowledge.cache.encoders import JsonEncoder
+            >>> with TokenCache(":memory:") as cache:
+            ...     cache.register_encoder("json", JsonEncoder())
+            ...     count = cache.import_entries(Path("./import"), "json")
+            ...     # Imports all files from ./import as "json" entries
+        """
+        encoder = self._encoders[entry_type]
+
+        if not input_dir.exists():
+            raise FileNotFoundError(f"Input directory not found: {input_dir}")
+
+        count = 0
+        for file_path in input_dir.iterdir():
+            if file_path.is_file():
+                # Use filename (without extension) as hash
+                hash_val = file_path.stem
+                # Import data using encoder
+                data = encoder.import_(file_path)
+                # Encode and store
+                self.put_data(hash_val, entry_type, data)
+                count += 1
+
+        return count
