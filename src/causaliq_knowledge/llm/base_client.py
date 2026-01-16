@@ -10,6 +10,7 @@ from __future__ import annotations
 import hashlib
 import json
 import logging
+import time
 from abc import ABC, abstractmethod
 from dataclasses import dataclass, field
 from typing import TYPE_CHECKING, Any, Dict, List, Optional
@@ -328,8 +329,10 @@ class BaseLLMClient(ABC):
                         cost=entry.metadata.cost_usd or 0.0,
                     )
 
-        # Make API call
+        # Make API call with timing
+        start_time = time.perf_counter()
         response = self.completion(messages, **kwargs)
+        latency_ms = int((time.perf_counter() - start_time) * 1000)
 
         # Store in cache
         if use_cache and cache is not None:
@@ -347,7 +350,7 @@ class BaseLLMClient(ABC):
                     max_tokens if max_tokens is not None else config.max_tokens
                 ),
                 provider=self.provider_name,
-                latency_ms=0,  # Will be captured in commit #17
+                latency_ms=latency_ms,
                 input_tokens=response.input_tokens,
                 output_tokens=response.output_tokens,
                 cost_usd=response.cost,

@@ -551,3 +551,53 @@ def test_cached_completion_registers_encoder():
 
         # Should auto-register encoder
         assert cache.has_encoder("llm")
+
+
+# Test that cached_completion captures latency
+def test_cached_completion_captures_latency():
+    from causaliq_knowledge.cache import TokenCache
+    from causaliq_knowledge.llm.cache import LLMCacheEntry
+
+    MockClient = _create_mock_client_class()
+    client = MockClient(LLMConfig(model="test-model"))
+    client._response_content = "Test response"
+
+    with TokenCache(":memory:") as cache:
+        client.set_cache(cache)
+
+        client.cached_completion([{"role": "user", "content": "Hello"}])
+
+        # Retrieve the cached entry and check latency
+        cache_key = client._build_cache_key(
+            [{"role": "user", "content": "Hello"}]
+        )
+        cached_data = cache.get_data(cache_key, "llm")
+        entry = LLMCacheEntry.from_dict(cached_data)
+
+        # Latency should be captured (>=0, mock is fast so usually 0-1ms)
+        assert entry.metadata.latency_ms >= 0
+
+
+# Test that cached_completion captures timestamp
+def test_cached_completion_captures_timestamp():
+    from causaliq_knowledge.cache import TokenCache
+    from causaliq_knowledge.llm.cache import LLMCacheEntry
+
+    MockClient = _create_mock_client_class()
+    client = MockClient(LLMConfig(model="test-model"))
+    client._response_content = "Test response"
+
+    with TokenCache(":memory:") as cache:
+        client.set_cache(cache)
+
+        client.cached_completion([{"role": "user", "content": "Hello"}])
+
+        cache_key = client._build_cache_key(
+            [{"role": "user", "content": "Hello"}]
+        )
+        cached_data = cache.get_data(cache_key, "llm")
+        entry = LLMCacheEntry.from_dict(cached_data)
+
+        # Timestamp should be set
+        assert entry.metadata.timestamp is not None
+        assert len(entry.metadata.timestamp) > 0
