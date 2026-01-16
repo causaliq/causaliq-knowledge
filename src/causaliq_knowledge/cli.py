@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import json
 import sys
-from typing import Optional
+from typing import Any, Optional
 
 import click
 
@@ -598,6 +598,153 @@ def cache_export(cache_path: str, output_dir: str, output_json: bool) -> None:
 
     except Exception as e:
         click.echo(f"Error exporting cache: {e}", err=True)
+        sys.exit(1)
+
+
+def _is_llm_entry(data: Any) -> bool:
+    """Check if JSON data represents an LLM cache entry.
+
+    LLM entries have a specific structure with cache_key containing
+    model and messages, plus a response object.
+    """
+    if not isinstance(data, dict):
+        return False
+    cache_key = data.get("cache_key", {})
+    return (
+        isinstance(cache_key, dict)
+        and "model" in cache_key
+        and "messages" in cache_key
+        and "response" in data
+    )
+
+
+@cache_group.command("import")
+@click.argument("cache_path", type=click.Path())
+@click.argument("input_path", type=click.Path(exists=True))
+@click.option(
+    "--json",
+    "output_json",
+    is_flag=True,
+    help="Output result as JSON.",
+)
+def cache_import(cache_path: str, input_path: str, output_json: bool) -> None:
+    """Import cache entries from files.
+
+    CACHE_PATH is the path to the SQLite cache database (created if needed).
+    INPUT_PATH is a directory or zip file containing JSON files to import.
+
+    Entry types are auto-detected from JSON structure:
+    - LLM entries: contain cache_key.model, cache_key.messages, response
+    - Generic JSON: anything else
+
+    Examples:
+
+        cqknow cache import ./llm_cache.db ./import_dir
+
+        cqknow cache import ./llm_cache.db ./export.zip
+
+        cqknow cache import ./llm_cache.db ./import_dir --json
+    """
+    import hashlib
+    import tempfile
+    import zipfile
+    from pathlib import Path
+
+    from causaliq_knowledge.cache import TokenCache
+    from causaliq_knowledge.cache.encoders import JsonEncoder
+    from causaliq_knowledge.llm.cache import LLMEntryEncoder
+
+    input_file = Path(input_path)
+    is_zip = input_file.suffix.lower() == ".zip"
+
+    try:
+        with TokenCache(cache_path) as cache:
+            # Register encoders
+            llm_encoder = LLMEntryEncoder()
+            json_encoder = JsonEncoder()
+            cache.register_encoder("llm", llm_encoder)
+            cache.register_encoder("json", json_encoder)
+
+            # Determine input directory
+            if is_zip:
+                temp_dir = tempfile.mkdtemp()
+                import_dir = Path(temp_dir)
+                with zipfile.ZipFile(input_file, "r") as zf:
+                    zf.extractall(import_dir)
+            else:
+                import_dir = input_file
+                temp_dir = None
+
+            # Import entries
+            imported = 0
+            llm_count = 0
+            json_count = 0
+            skipped = 0
+
+            for file_path in import_dir.iterdir():
+                if (
+                    not file_path.is_file()
+                    or file_path.suffix.lower() != ".json"
+                ):
+                    continue
+
+                try:
+                    data = json.loads(file_path.read_text(encoding="utf-8"))
+                except (json.JSONDecodeError, UnicodeDecodeError):
+                    skipped += 1
+                    continue
+
+                # Detect entry type and generate cache key
+                if _is_llm_entry(data):
+                    # LLM entry - generate hash from cache_key contents
+                    cache_key_data = data.get("cache_key", {})
+                    key_str = json.dumps(cache_key_data, sort_keys=True)
+                    cache_key = hashlib.sha256(key_str.encode()).hexdigest()[
+                        :16
+                    ]
+                    cache.put_data(cache_key, "llm", data)
+                    llm_count += 1
+                else:
+                    # Generic JSON - use filename stem as key
+                    cache_key = file_path.stem
+                    cache.put_data(cache_key, "json", data)
+                    json_count += 1
+
+                imported += 1
+
+            # Clean up temp directory
+            if temp_dir:
+                import shutil
+
+                shutil.rmtree(temp_dir)
+
+            # Output results
+            if output_json:
+                output = {
+                    "cache_path": cache_path,
+                    "input_path": str(input_file),
+                    "format": "zip" if is_zip else "directory",
+                    "imported": imported,
+                    "llm_entries": llm_count,
+                    "json_entries": json_count,
+                    "skipped": skipped,
+                }
+                click.echo(json.dumps(output, indent=2))
+            else:
+                fmt = "zip archive" if is_zip else "directory"
+                click.echo(
+                    f"\nImported {imported} entries from {fmt}: {input_file}"
+                )
+                if llm_count:
+                    click.echo(f"  LLM entries: {llm_count}")
+                if json_count:
+                    click.echo(f"  JSON entries: {json_count}")
+                if skipped:
+                    click.echo(f"  Skipped: {skipped}")
+                click.echo()
+
+    except Exception as e:
+        click.echo(f"Error importing cache: {e}", err=True)
         sys.exit(1)
 
 

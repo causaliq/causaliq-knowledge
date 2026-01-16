@@ -423,3 +423,281 @@ def test_cli_cache_export_to_zip_creates_parent_dirs(tmp_path):
 
     assert result.exit_code == 0
     assert zip_path.exists()
+
+
+# ============================================================================
+# Cache Import Tests
+# ============================================================================
+
+
+# Test cache import command appears in help.
+def test_cli_cache_import_in_help():
+    runner = CliRunner()
+    result = runner.invoke(cli, ["cache", "--help"])
+
+    assert result.exit_code == 0
+    assert "import" in result.output
+
+
+# Test cache import from directory with LLM entries.
+def test_cli_cache_import_from_directory(tmp_path):
+    import json
+
+    from causaliq_knowledge.cache import TokenCache
+    from causaliq_knowledge.llm.cache import LLMEntryEncoder
+
+    # Create import directory with LLM JSON file
+    import_dir = tmp_path / "import"
+    import_dir.mkdir()
+
+    llm_data = {
+        "cache_key": {
+            "model": "gpt-4",
+            "messages": [{"role": "user", "content": "test query"}],
+            "temperature": 0.1,
+            "max_tokens": 100,
+        },
+        "response": {"content": "test response", "finish_reason": "stop"},
+        "metadata": {"provider": "openai"},
+    }
+    (import_dir / "test_entry.json").write_text(json.dumps(llm_data))
+
+    # Import into new cache
+    cache_path = tmp_path / "new_cache.db"
+    runner = CliRunner()
+    result = runner.invoke(
+        cli, ["cache", "import", str(cache_path), str(import_dir)]
+    )
+
+    assert result.exit_code == 0
+    assert "Imported 1 entries" in result.output
+    assert "LLM entries: 1" in result.output
+
+    # Verify entry was imported
+    with TokenCache(str(cache_path)) as cache:
+        cache.register_encoder("llm", LLMEntryEncoder())
+        assert cache.entry_count() == 1
+
+
+# Test cache import from zip file.
+def test_cli_cache_import_from_zip(tmp_path):
+    import json
+    import zipfile
+
+    from causaliq_knowledge.cache import TokenCache
+    from causaliq_knowledge.llm.cache import LLMEntryEncoder
+
+    # Create zip file with LLM JSON
+    zip_path = tmp_path / "import.zip"
+    llm_data = {
+        "cache_key": {
+            "model": "gpt-4",
+            "messages": [{"role": "user", "content": "zip test"}],
+            "temperature": 0.1,
+        },
+        "response": {"content": "response from zip"},
+        "metadata": {},
+    }
+
+    with zipfile.ZipFile(zip_path, "w") as zf:
+        zf.writestr("entry.json", json.dumps(llm_data))
+
+    # Import
+    cache_path = tmp_path / "cache.db"
+    runner = CliRunner()
+    result = runner.invoke(
+        cli, ["cache", "import", str(cache_path), str(zip_path)]
+    )
+
+    assert result.exit_code == 0
+    assert "zip archive" in result.output
+    assert "Imported 1 entries" in result.output
+
+    # Verify
+    with TokenCache(str(cache_path)) as cache:
+        cache.register_encoder("llm", LLMEntryEncoder())
+        assert cache.entry_count() == 1
+
+
+# Test cache import auto-detects generic JSON.
+def test_cli_cache_import_generic_json(tmp_path):
+    import json
+
+    from causaliq_knowledge.cache import TokenCache
+
+    # Create import directory with generic JSON (not LLM format)
+    import_dir = tmp_path / "import"
+    import_dir.mkdir()
+
+    generic_data = {"key": "value", "number": 42}
+    (import_dir / "generic.json").write_text(json.dumps(generic_data))
+
+    cache_path = tmp_path / "cache.db"
+    runner = CliRunner()
+    result = runner.invoke(
+        cli, ["cache", "import", str(cache_path), str(import_dir)]
+    )
+
+    assert result.exit_code == 0
+    assert "Imported 1 entries" in result.output
+    assert "JSON entries: 1" in result.output
+
+    # Verify - generic entries use filename as key
+    with TokenCache(str(cache_path)) as cache:
+        assert cache.entry_count() == 1
+
+
+# Test cache import JSON output.
+def test_cli_cache_import_json_output(tmp_path):
+    import json
+
+    # Create import directory
+    import_dir = tmp_path / "import"
+    import_dir.mkdir()
+
+    llm_data = {
+        "cache_key": {"model": "gpt-4", "messages": []},
+        "response": {"content": "test"},
+        "metadata": {},
+    }
+    (import_dir / "entry.json").write_text(json.dumps(llm_data))
+
+    cache_path = tmp_path / "cache.db"
+    runner = CliRunner()
+    result = runner.invoke(
+        cli, ["cache", "import", str(cache_path), str(import_dir), "--json"]
+    )
+
+    assert result.exit_code == 0
+    output = json.loads(result.output)
+    assert output["imported"] == 1
+    assert output["llm_entries"] == 1
+    assert output["format"] == "directory"
+
+
+# Test cache import skips invalid JSON files.
+def test_cli_cache_import_skips_invalid_files(tmp_path):
+    import json
+
+    import_dir = tmp_path / "import"
+    import_dir.mkdir()
+
+    # Valid JSON
+    (import_dir / "valid.json").write_text(json.dumps({"key": "value"}))
+    # Invalid JSON
+    (import_dir / "invalid.json").write_text("not valid json {{{")
+    # Non-JSON file (should be ignored)
+    (import_dir / "readme.txt").write_text("This is a readme")
+
+    cache_path = tmp_path / "cache.db"
+    runner = CliRunner()
+    result = runner.invoke(
+        cli, ["cache", "import", str(cache_path), str(import_dir)]
+    )
+
+    assert result.exit_code == 0
+    assert "Imported 1 entries" in result.output
+    assert "Skipped: 1" in result.output
+
+
+# Test cache import with empty directory.
+def test_cli_cache_import_empty_directory(tmp_path):
+    import_dir = tmp_path / "empty"
+    import_dir.mkdir()
+
+    cache_path = tmp_path / "cache.db"
+    runner = CliRunner()
+    result = runner.invoke(
+        cli, ["cache", "import", str(cache_path), str(import_dir)]
+    )
+
+    assert result.exit_code == 0
+    assert "Imported 0 entries" in result.output
+
+
+# Test cache import round-trip (export then import).
+def test_cli_cache_import_export_roundtrip(tmp_path):
+    from causaliq_knowledge.cache import TokenCache
+    from causaliq_knowledge.llm.cache import LLMCacheEntry, LLMEntryEncoder
+
+    # Create original cache with data
+    original_cache = tmp_path / "original.db"
+    with TokenCache(str(original_cache)) as cache:
+        encoder = LLMEntryEncoder()
+        cache.register_encoder("llm", encoder)
+        entry = LLMCacheEntry.create(
+            model="gpt-4",
+            messages=[{"role": "user", "content": "roundtrip test"}],
+            content="This is the response",
+            provider="openai",
+        )
+        cache.put_data("original_key", "llm", entry.to_dict())
+
+    # Export to zip
+    zip_path = tmp_path / "export.zip"
+    runner = CliRunner()
+    result = runner.invoke(
+        cli, ["cache", "export", str(original_cache), str(zip_path)]
+    )
+    assert result.exit_code == 0
+
+    # Import into new cache
+    new_cache = tmp_path / "new.db"
+    result = runner.invoke(
+        cli, ["cache", "import", str(new_cache), str(zip_path)]
+    )
+    assert result.exit_code == 0
+    assert "Imported 1 entries" in result.output
+
+    # Verify data matches
+    with TokenCache(str(new_cache)) as cache:
+        cache.register_encoder("llm", LLMEntryEncoder())
+        assert cache.entry_count() == 1
+        types = cache.list_entry_types()
+        assert "llm" in types
+
+
+# Test cache import handles JSON arrays (non-dict) correctly.
+def test_cli_cache_import_handles_json_array(tmp_path):
+    import json
+
+    import_dir = tmp_path / "import"
+    import_dir.mkdir()
+
+    # JSON file containing an array - should be treated as generic JSON
+    (import_dir / "array_data.json").write_text(json.dumps([1, 2, 3]))
+
+    cache_path = tmp_path / "cache.db"
+    runner = CliRunner()
+    result = runner.invoke(
+        cli, ["cache", "import", str(cache_path), str(import_dir)]
+    )
+
+    assert result.exit_code == 0
+    assert "Imported 1 entries" in result.output
+    assert "JSON entries: 1" in result.output
+
+
+# Test cache import error handling with invalid cache path.
+def test_cli_cache_import_error_invalid_cache(tmp_path):
+    import json
+
+    # Create valid import directory
+    import_dir = tmp_path / "import"
+    import_dir.mkdir()
+    (import_dir / "test.json").write_text(json.dumps({"key": "value"}))
+
+    # Use a directory as cache path (invalid - should be a file)
+    invalid_cache = tmp_path / "invalid_cache_dir"
+    invalid_cache.mkdir()
+    # Create a subdirectory to make it non-empty/invalid for SQLite
+    (invalid_cache / "subdir").mkdir()
+
+    runner = CliRunner()
+    result = runner.invoke(
+        cli,
+        ["cache", "import", str(invalid_cache / "subdir"), str(import_dir)],
+    )
+
+    assert result.exit_code == 1
+    assert "Error importing cache" in result.output
