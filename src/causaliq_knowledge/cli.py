@@ -405,6 +405,72 @@ def list_models(provider: Optional[str]) -> None:
     click.echo()
 
 
+# ============================================================================
+# Cache Commands
+# ============================================================================
+
+
+@cli.group("cache")
+def cache_group() -> None:
+    """Manage the LLM response cache.
+
+    Commands for inspecting, exporting, and importing cached LLM responses.
+
+    Examples:
+
+        cqknow cache stats ./llm_cache.db
+
+        cqknow cache export ./llm_cache.db ./export_dir
+
+        cqknow cache import ./llm_cache.db ./import_dir
+    """
+    pass
+
+
+@cache_group.command("stats")
+@click.argument("cache_path", type=click.Path(exists=True))
+@click.option(
+    "--json",
+    "output_json",
+    is_flag=True,
+    help="Output result as JSON.",
+)
+def cache_stats(cache_path: str, output_json: bool) -> None:
+    """Show cache statistics.
+
+    CACHE_PATH is the path to the SQLite cache database.
+
+    Examples:
+
+        cqknow cache stats ./llm_cache.db
+
+        cqknow cache stats ./llm_cache.db --json
+    """
+    from causaliq_knowledge.cache import TokenCache
+
+    try:
+        with TokenCache(cache_path) as cache:
+            entry_count = cache.entry_count()
+            token_count = cache.token_count()
+
+            if output_json:
+                output = {
+                    "cache_path": cache_path,
+                    "entry_count": entry_count,
+                    "token_count": token_count,
+                }
+                click.echo(json.dumps(output, indent=2))
+            else:
+                click.echo(f"\nCache: {cache_path}")
+                click.echo("=" * 40)
+                click.echo(f"Entries:  {entry_count:,}")
+                click.echo(f"Tokens:   {token_count:,}")
+                click.echo()
+    except Exception as e:
+        click.echo(f"Error opening cache: {e}", err=True)
+        sys.exit(1)
+
+
 def main() -> None:
     """Entry point for the CLI."""
     cli()
