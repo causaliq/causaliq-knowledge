@@ -217,6 +217,33 @@ cqknow query smoking lung_cancer --model groq/llama-3.1-8b-instant
 python -m causaliq_knowledge.cli query smoking lung_cancer --model ollama/llama3
 ```
 
+## Cache Management
+
+CausalIQ Knowledge includes a caching system that stores LLM responses to avoid redundant API calls. You can inspect, export, and import your cache using the CLI:
+
+```bash
+# View cache statistics
+cqknow cache stats ./llm_cache.db
+
+# Export cache entries to human-readable JSON files
+cqknow cache export ./llm_cache.db ./export_dir
+
+# Export to a zip archive for sharing
+cqknow cache export ./llm_cache.db ./export.zip
+
+# Import cache entries (auto-detects entry types)
+cqknow cache import ./new_cache.db ./export.zip
+```
+
+Exported files use human-readable names like `gpt4_smoking_lung_edge_a1b2.json`.
+
+The cache stores:
+
+- **Entry count**: Number of cached LLM responses
+- **Token count**: Total tokens across all cached entries
+
+For programmatic cache usage, see [Caching Architecture](../architecture/caching.md).
+
 ## What's Next?
 
 - [Architecture Overview](../architecture/overview.md) - Understand how the package works

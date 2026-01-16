@@ -12,6 +12,14 @@ The base client module provides:
 - **LLMConfig** - Base configuration dataclass for all clients
 - **LLMResponse** - Unified response format from any LLM provider
 
+### Caching Support
+
+BaseLLMClient includes built-in caching integration:
+
+- **set_cache()** - Configure a TokenCache for response caching
+- **cached_completion()** - Make completion requests with automatic caching
+- **_build_cache_key()** - Generate deterministic cache keys (SHA-256)
+
 ## Design Philosophy
 
 We use vendor-specific API clients rather than wrapper libraries like
@@ -50,6 +58,43 @@ gemini = GeminiClient()
 
 result1 = query_llm(groq, "What is 2+2?")
 result2 = query_llm(gemini, "What is 2+2?")
+```
+
+### Caching LLM Responses
+
+Enable caching to avoid redundant API calls:
+
+```python
+from causaliq_knowledge.cache import TokenCache
+from causaliq_knowledge.llm import GroqClient, LLMConfig
+
+# Create a persistent cache
+with TokenCache("llm_cache.db") as cache:
+    client = GroqClient(LLMConfig(model="llama-3.1-8b-instant"))
+    client.set_cache(cache)
+    
+    messages = [{"role": "user", "content": "What is Python?"}]
+    
+    # First call - hits API, stores in cache
+    response1 = client.cached_completion(messages)
+    
+    # Second call - returns from cache, no API call
+    response2 = client.cached_completion(messages)
+    
+    assert response1.content == response2.content
+    assert client.call_count == 1  # Only one API call made
+```
+
+The cache uses the LLMEntryEncoder automatically, storing:
+
+- Request details (model, messages, temperature, max_tokens)
+- Response content
+- Metadata (provider, token counts, cost, latency)
+
+Each cached entry captures latency timing automatically using `time.perf_counter()`,
+enabling performance analysis across providers and models.
+
+See [LLM Cache](llm/cache.md) for details on the cache entry structure.
 ```
 
 ## Creating a Custom Client

@@ -110,15 +110,18 @@ See [Ollama Library](https://ollama.com/library) for all available models.
 ## Troubleshooting
 
 **"Could not connect to Ollama"**
+
 - Ensure Ollama is installed and running
 - Run `ollama serve` in a terminal, or start the Ollama app
 - Check that nothing else is using port 11434
 
 **"Model not found"**
+
 - Run `ollama pull <model-name>` to download the model
 - Run `ollama list` to see installed models
 
 **Slow responses**
+
 - Local inference is CPU/GPU bound
 - Use smaller models like `llama3.2:1b`
 - Increase the timeout in `OllamaConfig`

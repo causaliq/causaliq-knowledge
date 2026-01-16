@@ -10,6 +10,12 @@ Core models are available from the top-level package:
 from causaliq_knowledge import EdgeKnowledge, EdgeDirection, KnowledgeProvider
 ```
 
+Cache infrastructure is available from the `cache` submodule:
+
+```python
+from causaliq_knowledge.cache import TokenCache
+```
+
 LLM-specific classes should be imported from the `llm` submodule:
 
 ```python
@@ -49,6 +55,12 @@ Core Pydantic models for representing causal knowledge:
 
 - **EdgeDirection** - Enum for causal edge direction (a_to_b, b_to_a, undirected)
 - **EdgeKnowledge** - Structured knowledge about a potential causal edge
+
+### [Cache](cache/overview.md)
+
+SQLite-backed caching infrastructure:
+
+- **TokenCache** - Cache with connection management and transaction support
 
 ### [Base](base.md)
 

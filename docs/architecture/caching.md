@@ -263,6 +263,7 @@ datasets/
 ```
 
 This organisation means:
+
 - Queries like "What does BMI mean?" are shared across all experiments on that dataset
 - Different experiment series (algorithms, parameters) reuse the same cached LLM knowledge
 - The cache represents "what the LLM has learned about this dataset"

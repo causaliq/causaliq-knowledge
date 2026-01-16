@@ -55,18 +55,24 @@ nav:
   - API Reference: 
     - API Overview: api/overview.md
     - Models: api/models.md
+    - Cache (Core):
+      - Cache Overview: api/cache/overview.md
+      - Encoders:
+        - JsonEncoder: api/cache/encoders/json_encoder.md
+    - LLM:
+      - LLM Cache: api/llm/cache.md
+      - LLM Provider: api/provider.md
+      - LLM Client Interface: api/base_client.md
+      - Vendor API Clients:
+        - Anthropic: api/clients/anthropic.md
+        - DeepSeek: api/clients/deepseek.md
+        - Gemini: api/clients/gemini.md
+        - Groq: api/clients/groq.md
+        - Mistral: api/clients/mistral.md
+        - Ollama: api/clients/ollama.md
+        - OpenAI: api/clients/openai.md
+      - Prompts: api/prompts.md
     - Base: api/base.md
-    - LLM Provider: api/provider.md
-    - LLM Client Interface: api/base_client.md
-    - Vendor API Clients:
-      - Anthropic: api/clients/anthropic.md
-      - DeepSeek: api/clients/deepseek.md
-      - Gemini: api/clients/gemini.md
-      - Groq: api/clients/groq.md
-      - Mistral: api/clients/mistral.md
-      - Ollama: api/clients/ollama.md
-      - OpenAI: api/clients/openai.md
-    - Prompts: api/prompts.md
     - CLI: api/cli.md
 
 plugins:
