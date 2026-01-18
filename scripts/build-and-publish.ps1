@@ -1,7 +1,7 @@
 # Build and publish script for Windows
 # This script builds the package and optionally publishes to PyPI
 
-$CurrentVersion = "0.2.0"
+$CurrentVersion = "0.3.0"
 $Version = Read-Host "Enter version number (current: $CurrentVersion)"
 if (-not $Version) { $Version = $CurrentVersion }
 

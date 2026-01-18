@@ -5,7 +5,7 @@ causaliq-knowledge: LLM and human knowledge for causal discovery.
 from causaliq_knowledge.base import KnowledgeProvider
 from causaliq_knowledge.models import EdgeDirection, EdgeKnowledge
 
-__version__ = "0.2.0"
+__version__ = "0.3.0"
 __author__ = "CausalIQ"
 __email__ = "info@causaliq.com"
 
@@ -16,8 +16,8 @@ __description__ = "LLM and human knowledge for causal discovery"
 __url__ = "https://github.com/causaliq/causaliq-knowledge"
 __license__ = "MIT"
 
-# Version tuple for programmatic access
-VERSION = tuple(map(int, __version__.split(".")))
+# Version tuple for programmatic access (major, minor, patch)
+VERSION = (0, 3, 0)
 
 __all__ = [
     "__version__",

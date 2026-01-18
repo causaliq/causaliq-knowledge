@@ -1,16 +1,35 @@
 # CausalIQ Knowledge - Development Roadmap
 
-**Last updated**: January 10, 2026  
+**Last updated**: January 18, 2026  
 
 This project roadmap fits into the [overall ecosystem roadmap](https://causaliq.org/projects/ecosystem_roadmap/)
 
 ## 🎯 Current Release
 
+### Release v0.3.0 - LLM Caching [January 2026] *In Development*
+
+SQLite-based response caching with CLI tools for cache management.
+
+**Scope:**
+
+- `TokenCache` - SQLite storage with WAL mode for concurrent access
+- `CacheEncoder` system - Extensible serialization (JsonEncoder, LLMEntryEncoder)
+- `LLMCacheEntry` - Structured model for cached responses
+- `BaseLLMClient` caching integration - Automatic cache-first lookup
+- CLI commands: `cache stats`, `cache export`, `cache import`
+- Human-readable export filenames with edge query detection
+- Zip archive support for export/import
+
+
+---
+
+## ✅ Previous Releases
+
 ### Release v0.2.0 - Additional LLMs [January 2026]
 
 Expanded LLM provider support from 2 to 7 providers.
 
-**Scope:**
+**Delivered:**
 
 - OpenAI client for GPT-4o and GPT-4o-mini models
 - Anthropic client for Claude models
@@ -19,12 +38,7 @@ Expanded LLM provider support from 2 to 7 providers.
 - Ollama client for local LLM inference
 - OpenAI-compatible base client for API-compatible providers
 - Integration tests for all providers
-- Cost estimation utilities for each provider
 
-
----
-
-## ✅ Previous Releases
 
 ### Release v0.1.0 - Foundation LLM [January 2026]
 
@@ -44,13 +58,6 @@ Simple LLM queries to 1 or 2 LLMs about edge existence and orientation to suppor
 
 
 ## 🛣️ Upcoming Releases
-
-### Release v0.3.0 - LLM Caching
-
-- Disk-based response caching (diskcache)
-- Cache key: (node_a, node_b, context_hash, model)
-- Cache invalidation strategies
-- Semantic similarity caching (optional)
 
 ### Release v0.4.0 - LLM Context
 
@@ -74,15 +81,12 @@ Simple LLM queries to 1 or 2 LLMs about edge existence and orientation to suppor
 ## 📦 Dependencies Evolution
 
 ```toml
-# v0.1.0 (current)
+# v0.1.0 - v0.3.0 (current)
 dependencies = [
     "click>=8.0.0",
     "httpx>=0.24.0",
     "pydantic>=2.0.0",
 ]
-
-# v0.3.0 (add)
-"diskcache>=5.0.0"
 
 # v0.4.0 (evaluate - prefer lightweight solutions)
 # Consider: llama-index, simple RAG, or custom implementation

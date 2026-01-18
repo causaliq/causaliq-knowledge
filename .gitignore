@@ -178,3 +178,6 @@ ehthumbs.db
 Desktop.ini
 
 # causaliq-knowledge specific
+
+# resources which will be migrated to causaliq-research (aka causaliq-papers)
+research/

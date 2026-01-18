@@ -32,6 +32,33 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Nothing yet
 
 
+## [0.3.0] - LLM Caching - 2026-01-26
+
+### Added
+
+- **TokenCache**: SQLite-based caching system for LLM responses
+  - Disk-based persistence with WAL mode for concurrent access
+  - Token counting for cost tracking
+  - Entry count and type listing methods
+- **CacheEncoder System**: Extensible serialization framework
+  - `CacheEncoder` abstract base class
+  - `JsonEncoder` for generic JSON serialization with compression
+  - `LLMEntryEncoder` for LLM-specific entry handling
+- **LLMCacheEntry**: Structured data model for cached LLM responses
+  - Pydantic model with cache_key, response, and metadata
+  - Factory method for easy creation from API responses
+- **BaseLLMClient Caching**: Automatic response caching in all LLM clients
+  - Cache-first lookup with fallback to API
+  - Configurable cache path
+- **CLI Cache Commands**:
+  - `cqknow cache stats` - View entry and token counts
+  - `cqknow cache export` - Export to directory or zip archive
+  - `cqknow cache import` - Import from directory or zip with auto-detection
+- **Human-Readable Export Filenames**: Edge query detection for meaningful names
+  - Pattern: `{model}_{node_a}_{node_b}_edge_{hash}.json`
+- **Zip Archive Support**: Export/import with automatic .zip detection
+
+
 ## [0.2.0] - Additional LLMs - 2026-01-10
 
 Expanded LLM provider support from 2 to 7 providers, covering major commercial and open-source options.
