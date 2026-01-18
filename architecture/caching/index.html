@@ -3070,10 +3070,12 @@
 </span><span id="__span-2-4"><a id="__codelineno-2-4" name="__codelineno-2-4" href="#__codelineno-2-4"></a>  economic_data/
 </span><span id="__span-2-5"><a id="__codelineno-2-5" name="__codelineno-2-5" href="#__codelineno-2-5"></a>    llm_cache.db          # Separate cache for different dataset
 </span></code></pre></div>
-<p>This organisation means:
-- Queries like "What does BMI mean?" are shared across all experiments on that dataset
-- Different experiment series (algorithms, parameters) reuse the same cached LLM knowledge
-- The cache represents "what the LLM has learned about this dataset"</p>
+<p>This organisation means:</p>
+<ul>
+<li>Queries like "What does BMI mean?" are shared across all experiments on that dataset</li>
+<li>Different experiment series (algorithms, parameters) reuse the same cached LLM knowledge</li>
+<li>The cache represents "what the LLM has learned about this dataset"</li>
+</ul>
 <h3 id="integration-with-basellmclient">Integration with BaseLLMClient<a class="headerlink" href="#integration-with-basellmclient" title="Permanent link">&para;</a></h3>
 <div class="language-python highlight"><pre><span></span><code><span id="__span-3-1"><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a><span class="k">class</span><span class="w"> </span><span class="nc">BaseLLMClient</span><span class="p">:</span>
 </span><span id="__span-3-2"><a id="__codelineno-3-2" name="__codelineno-3-2" href="#__codelineno-3-2"></a>    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">cache</span><span class="p">:</span> <span class="n">TokenCache</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n">use_cache</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">):</span>

@@ -780,6 +780,17 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#cache-management" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Cache Management
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#whats-next" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -2110,6 +2121,17 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#cache-management" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Cache Management
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#whats-next" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -2295,6 +2317,27 @@ reliability and minimal dependencies. Currently supported:</p>
 </span><span id="__span-14-4"><a id="__codelineno-14-4" name="__codelineno-14-4" href="#__codelineno-14-4"></a><span class="c1"># Or with Python module</span>
 </span><span id="__span-14-5"><a id="__codelineno-14-5" name="__codelineno-14-5" href="#__codelineno-14-5"></a>python<span class="w"> </span>-m<span class="w"> </span>causaliq_knowledge.cli<span class="w"> </span>query<span class="w"> </span>smoking<span class="w"> </span>lung_cancer<span class="w"> </span>--model<span class="w"> </span>ollama/llama3
 </span></code></pre></div>
+<h2 id="cache-management">Cache Management<a class="headerlink" href="#cache-management" title="Permanent link">&para;</a></h2>
+<p>CausalIQ Knowledge includes a caching system that stores LLM responses to avoid redundant API calls. You can inspect, export, and import your cache using the CLI:</p>
+<div class="language-bash highlight"><pre><span></span><code><span id="__span-15-1"><a id="__codelineno-15-1" name="__codelineno-15-1" href="#__codelineno-15-1"></a><span class="c1"># View cache statistics</span>
+</span><span id="__span-15-2"><a id="__codelineno-15-2" name="__codelineno-15-2" href="#__codelineno-15-2"></a>cqknow<span class="w"> </span>cache<span class="w"> </span>stats<span class="w"> </span>./llm_cache.db
+</span><span id="__span-15-3"><a id="__codelineno-15-3" name="__codelineno-15-3" href="#__codelineno-15-3"></a>
+</span><span id="__span-15-4"><a id="__codelineno-15-4" name="__codelineno-15-4" href="#__codelineno-15-4"></a><span class="c1"># Export cache entries to human-readable JSON files</span>
+</span><span id="__span-15-5"><a id="__codelineno-15-5" name="__codelineno-15-5" href="#__codelineno-15-5"></a>cqknow<span class="w"> </span>cache<span class="w"> </span><span class="nb">export</span><span class="w"> </span>./llm_cache.db<span class="w"> </span>./export_dir
+</span><span id="__span-15-6"><a id="__codelineno-15-6" name="__codelineno-15-6" href="#__codelineno-15-6"></a>
+</span><span id="__span-15-7"><a id="__codelineno-15-7" name="__codelineno-15-7" href="#__codelineno-15-7"></a><span class="c1"># Export to a zip archive for sharing</span>
+</span><span id="__span-15-8"><a id="__codelineno-15-8" name="__codelineno-15-8" href="#__codelineno-15-8"></a>cqknow<span class="w"> </span>cache<span class="w"> </span><span class="nb">export</span><span class="w"> </span>./llm_cache.db<span class="w"> </span>./export.zip
+</span><span id="__span-15-9"><a id="__codelineno-15-9" name="__codelineno-15-9" href="#__codelineno-15-9"></a>
+</span><span id="__span-15-10"><a id="__codelineno-15-10" name="__codelineno-15-10" href="#__codelineno-15-10"></a><span class="c1"># Import cache entries (auto-detects entry types)</span>
+</span><span id="__span-15-11"><a id="__codelineno-15-11" name="__codelineno-15-11" href="#__codelineno-15-11"></a>cqknow<span class="w"> </span>cache<span class="w"> </span>import<span class="w"> </span>./new_cache.db<span class="w"> </span>./export.zip
+</span></code></pre></div>
+<p>Exported files use human-readable names like <code>gpt4_smoking_lung_edge_a1b2.json</code>.</p>
+<p>The cache stores:</p>
+<ul>
+<li><strong>Entry count</strong>: Number of cached LLM responses</li>
+<li><strong>Token count</strong>: Total tokens across all cached entries</li>
+</ul>
+<p>For programmatic cache usage, see <a href="../../architecture/caching/">Caching Architecture</a>.</p>
 <h2 id="whats-next">What's Next?<a class="headerlink" href="#whats-next" title="Permanent link">&para;</a></h2>
 <ul>
 <li><a href="../../architecture/overview/">Architecture Overview</a> - Understand how the package works</li>
