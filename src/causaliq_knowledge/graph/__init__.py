@@ -19,6 +19,12 @@ from causaliq_knowledge.graph.models import (
     ViewDefinition,
     Views,
 )
+from causaliq_knowledge.graph.prompts import (
+    ADJACENCY_MATRIX_RESPONSE_SCHEMA,
+    EDGE_LIST_RESPONSE_SCHEMA,
+    GraphQueryPrompt,
+    OutputFormat,
+)
 from causaliq_knowledge.graph.view_filter import ViewFilter, ViewLevel
 
 __all__ = [
@@ -42,4 +48,9 @@ __all__ = [
     "ViewLevel",
     # Disguising
     "VariableDisguiser",
+    # Prompts
+    "GraphQueryPrompt",
+    "OutputFormat",
+    "EDGE_LIST_RESPONSE_SCHEMA",
+    "ADJACENCY_MATRIX_RESPONSE_SCHEMA",
 ]

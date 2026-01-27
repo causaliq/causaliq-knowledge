@@ -77,9 +77,11 @@ class ViewFilter:
 
         Returns:
             Dictionary with only the fields specified by the view level.
+            Enum values are converted to their string representations.
         """
         include_fields = self.get_include_fields(level)
-        var_dict = variable.model_dump()
+        # Use mode="json" to convert enums to their string values
+        var_dict = variable.model_dump(mode="json")
 
         return {
             key: value
