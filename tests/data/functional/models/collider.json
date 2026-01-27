@@ -1,0 +1,159 @@
+{
+    "schema_version": "2.0",
+    "dataset_id": "collider",
+    "domain": "epidemiology",
+    "purpose": "Classic collider structure for testing v-structures",
+    "provenance": {
+        "source_network": "synthetic",
+        "notes": "Test fixture for collider detection"
+    },
+    "llm_guidance": {
+        "usage_notes": [
+            "This is a classic collider structure.",
+            "Two independent causes converge on a common effect."
+        ],
+        "do_not_provide": [
+            "Ground truth edges during generation"
+        ]
+    },
+    "views": {
+        "minimal": {
+            "description": "Variable names only",
+            "include_fields": [
+                "name"
+            ]
+        },
+        "standard": {
+            "description": "Names with descriptions",
+            "include_fields": [
+                "name",
+                "type",
+                "short_description",
+                "states"
+            ]
+        },
+        "rich": {
+            "description": "Full metadata",
+            "include_fields": [
+                "name",
+                "type",
+                "role",
+                "short_description",
+                "extended_description",
+                "states"
+            ]
+        }
+    },
+    "variables": [
+        {
+            "name": "genetic_factor",
+            "canonical_name": "Gene",
+            "type": "binary",
+            "states": [
+                "wild_type",
+                "variant"
+            ],
+            "role": "exogenous",
+            "category": "genetic",
+            "short_description": "Genetic predisposition factor.",
+            "extended_description": "A genetic variant that increases risk."
+        },
+        {
+            "name": "environmental_exposure",
+            "canonical_name": "Environment",
+            "type": "binary",
+            "states": [
+                "low",
+                "high"
+            ],
+            "role": "exogenous",
+            "category": "environmental",
+            "short_description": "Environmental exposure level.",
+            "extended_description": "Exposure to environmental risk factors."
+        },
+        {
+            "name": "disease_status",
+            "canonical_name": "Disease",
+            "type": "binary",
+            "states": [
+                "healthy",
+                "affected"
+            ],
+            "role": "endogenous",
+            "category": "outcome",
+            "short_description": "Disease diagnosis status.",
+            "extended_description": "Whether the patient has the disease."
+        }
+    ],
+    "constraints": {
+        "forbidden_edges": [
+            [
+                "genetic_factor",
+                "environmental_exposure"
+            ],
+            [
+                "environmental_exposure",
+                "genetic_factor"
+            ]
+        ],
+        "partial_order": [
+            [
+                "genetic_factor",
+                "disease_status"
+            ],
+            [
+                "environmental_exposure",
+                "disease_status"
+            ]
+        ],
+        "tiers": {
+            "causes": [
+                "genetic_factor",
+                "environmental_exposure"
+            ],
+            "effects": [
+                "disease_status"
+            ]
+        }
+    },
+    "causal_principles": [
+        {
+            "id": "collider_structure",
+            "statement": "Disease is a collider with two independent causes.",
+            "references": [
+                "Pearl2009"
+            ]
+        }
+    ],
+    "ground_truth": {
+        "edges_canonical": [
+            [
+                "Gene",
+                "Disease"
+            ],
+            [
+                "Environment",
+                "Disease"
+            ]
+        ],
+        "edges_experiment": [
+            [
+                "genetic_factor",
+                "disease_status"
+            ],
+            [
+                "environmental_exposure",
+                "disease_status"
+            ]
+        ],
+        "v_structures": [
+            {
+                "canonical": [
+                    "Gene",
+                    "Disease",
+                    "Environment"
+                ]
+            }
+        ]
+    }
+}

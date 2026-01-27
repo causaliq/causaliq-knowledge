@@ -1,0 +1,50 @@
+{
+    "schema_version": "2.0",
+    "dataset_id": "simple_chain",
+    "domain": "test_domain",
+    "purpose": "Simple A -> B -> C chain for testing",
+    "variables": [
+        {
+            "name": "cause",
+            "type": "binary",
+            "states": [
+                "absent",
+                "present"
+            ],
+            "role": "exogenous",
+            "short_description": "The root cause variable."
+        },
+        {
+            "name": "mediator",
+            "type": "binary",
+            "states": [
+                "low",
+                "high"
+            ],
+            "role": "endogenous",
+            "short_description": "Intermediate variable in the chain."
+        },
+        {
+            "name": "effect",
+            "type": "binary",
+            "states": [
+                "no",
+                "yes"
+            ],
+            "role": "endogenous",
+            "short_description": "The outcome variable."
+        }
+    ],
+    "ground_truth": {
+        "edges_experiment": [
+            [
+                "cause",
+                "mediator"
+            ],
+            [
+                "mediator",
+                "effect"
+            ]
+        ]
+    }
+}

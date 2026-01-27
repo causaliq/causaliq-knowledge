@@ -1,0 +1,15 @@
+{
+    "schema_version": "2.0",
+    "dataset_id": "minimal",
+    "domain": "testing",
+    "variables": [
+        {
+            "name": "x",
+            "type": "continuous"
+        },
+        {
+            "name": "y",
+            "type": "continuous"
+        }
+    ]
+}
