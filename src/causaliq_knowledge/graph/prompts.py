@@ -18,7 +18,15 @@ from causaliq_knowledge.graph.view_filter import ViewFilter, ViewLevel
 
 
 class OutputFormat(str, Enum):
-    """Output format for graph generation responses."""
+    """Output format for graph generation responses.
+
+    Determines the structure of the JSON response expected from the LLM.
+
+    Attributes:
+        EDGE_LIST: Graph as a list of edges with source, target, confidence.
+        ADJACENCY_MATRIX: Graph as a square matrix where entry (i,j)
+            represents confidence that variable i causes variable j.
+    """
 
     EDGE_LIST = "edge_list"
     ADJACENCY_MATRIX = "adjacency_matrix"
@@ -70,7 +78,7 @@ Respond ONLY with valid JSON in this exact format:
 
 Guidelines:
 - List variables in the order you will use in the matrix
-- adjacency_matrix[i][j] = confidence that variables[i] causes variables[j]
+- adjacency_matrix(i,j) = confidence that variables(i) causes variables(j)
 - Values range from 0.0 (no edge) to 1.0 (certain edge)
 - Diagonal elements must be 0.0 (no self-loops)
 - Consider domain knowledge and temporal ordering
@@ -246,10 +254,24 @@ class GraphQueryPrompt:
     system_prompt: Optional[str] = None
 
     def build(self) -> tuple[str, str]:
-        """Build the system and user prompts.
+        """Build the system and user prompts for LLM graph generation.
+
+        Constructs a system prompt (instructions for the LLM) and a user
+        prompt (the actual query with variable information) based on the
+        configured output format, view level, and domain context.
 
         Returns:
-            Tuple of (system_prompt, user_prompt).
+            Tuple of (system_prompt, user_prompt) strings ready for use
+            with an LLM client.
+
+        Example:
+            >>> prompt = GraphQueryPrompt(
+            ...     variables=[{"name": "age"}, {"name": "income"}],
+            ...     level=ViewLevel.MINIMAL,
+            ... )
+            >>> system, user = prompt.build()
+            >>> # system contains JSON format instructions
+            >>> # user contains the variable query
         """
         # Select system prompt based on output format
         if self.system_prompt:
@@ -266,6 +288,10 @@ class GraphQueryPrompt:
 
     def _build_user_prompt(self) -> str:
         """Build the user prompt based on view level and domain.
+
+        Selects the appropriate template based on view level (minimal,
+        standard, or rich) and whether a domain context is provided.
+        Formats variable information according to the selected template.
 
         Returns:
             The formatted user prompt string.
@@ -304,10 +330,22 @@ class GraphQueryPrompt:
         return USER_PROMPT_RICH.format(variable_details=variable_details)
 
     def get_variable_names(self) -> list[str]:
-        """Get the list of variable names.
+        """Get the list of variable names from the filtered variables.
+
+        Extracts the name field from each variable dictionary. Useful for
+        validating LLM responses to ensure they reference valid variables.
 
         Returns:
-            List of variable names from the filtered variables.
+            List of variable names. Returns "unknown" for any variable
+            missing a name field.
+
+        Example:
+            >>> prompt = GraphQueryPrompt(
+            ...     variables=[{"name": "age"}, {"name": "income"}],
+            ...     level=ViewLevel.MINIMAL,
+            ... )
+            >>> prompt.get_variable_names()
+            ['age', 'income']
         """
         return [v.get("name", "unknown") for v in self.variables]
 
@@ -321,17 +359,31 @@ class GraphQueryPrompt:
     ) -> "GraphQueryPrompt":
         """Create a GraphQueryPrompt from a ModelSpec.
 
-        This is a convenience method that handles view filtering
-        automatically.
+        Convenience factory method that automatically applies view
+        filtering to extract variables at the specified level. This is
+        the recommended way to create prompts when working with ModelSpec
+        objects.
 
         Args:
-            spec: The model specification.
-            level: The view level (minimal, standard, rich).
-            output_format: Desired output format.
-            system_prompt: Custom system prompt (optional).
+            spec: The model specification containing variable definitions.
+            level: The view level determining context depth. Defaults to
+                STANDARD which includes names, types, and descriptions.
+            output_format: Desired output format for LLM response. Defaults
+                to EDGE_LIST.
+            system_prompt: Custom system prompt to override the default.
+                If None, uses the appropriate default for the output format.
 
         Returns:
-            GraphQueryPrompt instance.
+            GraphQueryPrompt instance configured with filtered variables
+            and domain context from the specification.
+
+        Example:
+            >>> spec = ModelLoader.load("model.json")
+            >>> prompt = GraphQueryPrompt.from_model_spec(
+            ...     spec,
+            ...     level=ViewLevel.RICH,
+            ... )
+            >>> system, user = prompt.build()
         """
         view_filter = ViewFilter(spec)
         variables = view_filter.filter_variables(level)

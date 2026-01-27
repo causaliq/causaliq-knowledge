@@ -5,6 +5,10 @@ from variable specifications.
 """
 
 from causaliq_knowledge.graph.disguiser import VariableDisguiser
+from causaliq_knowledge.graph.generator import (
+    GraphGenerator,
+    GraphGeneratorConfig,
+)
 from causaliq_knowledge.graph.loader import ModelLoader, ModelLoadError
 from causaliq_knowledge.graph.models import (
     CausalPrinciple,
@@ -24,6 +28,14 @@ from causaliq_knowledge.graph.prompts import (
     EDGE_LIST_RESPONSE_SCHEMA,
     GraphQueryPrompt,
     OutputFormat,
+)
+from causaliq_knowledge.graph.response import (
+    GeneratedGraph,
+    GenerationMetadata,
+    ProposedEdge,
+    parse_adjacency_matrix_response,
+    parse_edge_list_response,
+    parse_graph_response,
 )
 from causaliq_knowledge.graph.view_filter import ViewFilter, ViewLevel
 
@@ -53,4 +65,14 @@ __all__ = [
     "OutputFormat",
     "EDGE_LIST_RESPONSE_SCHEMA",
     "ADJACENCY_MATRIX_RESPONSE_SCHEMA",
+    # Response models
+    "ProposedEdge",
+    "GeneratedGraph",
+    "GenerationMetadata",
+    "parse_edge_list_response",
+    "parse_adjacency_matrix_response",
+    "parse_graph_response",
+    # Generator
+    "GraphGenerator",
+    "GraphGeneratorConfig",
 ]
