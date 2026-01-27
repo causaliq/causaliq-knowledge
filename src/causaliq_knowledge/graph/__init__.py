@@ -4,6 +4,7 @@ This module provides functionality for LLM-based causal graph generation
 from variable specifications.
 """
 
+from causaliq_knowledge.graph.disguiser import VariableDisguiser
 from causaliq_knowledge.graph.loader import ModelLoader, ModelLoadError
 from causaliq_knowledge.graph.models import (
     CausalPrinciple,
@@ -18,6 +19,7 @@ from causaliq_knowledge.graph.models import (
     ViewDefinition,
     Views,
 )
+from causaliq_knowledge.graph.view_filter import ViewFilter, ViewLevel
 
 __all__ = [
     # Models
@@ -35,4 +37,9 @@ __all__ = [
     # Loader
     "ModelLoader",
     "ModelLoadError",
+    # Filtering
+    "ViewFilter",
+    "ViewLevel",
+    # Disguising
+    "VariableDisguiser",
 ]
