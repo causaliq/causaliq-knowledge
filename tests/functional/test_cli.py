@@ -192,6 +192,7 @@ def test_cli_cache_export_creates_files(tmp_path):
             messages=[{"role": "user", "content": "smoking and lung_cancer"}],
             content="Yes, there is a causal relationship.",
             provider="openai",
+            request_id="test_export",
         )
         cache.put_data("abc123", "llm", entry.to_dict())
 
@@ -205,12 +206,12 @@ def test_cli_cache_export_creates_files(tmp_path):
     assert result.exit_code == 0
     assert "Exported 1 entries" in result.output
 
-    # Check file was created with human-readable name
+    # Check file was created with new format: id_timestamp_provider.json
     files = list(export_dir.glob("*.json"))
     assert len(files) == 1
-    assert "gpt4" in files[0].name
-    assert "smoking" in files[0].name
-    assert "edge" in files[0].name
+    # Filename should start with request_id and end with provider
+    assert files[0].name.startswith("test_export_")
+    assert "_openai.json" in files[0].name
 
 
 # Test cache export JSON output.
@@ -344,6 +345,7 @@ def test_cli_cache_export_to_zip(tmp_path):
             messages=[{"role": "user", "content": "smoking and lung_cancer"}],
             content="Yes, there is a causal relationship.",
             provider="openai",
+            request_id="zip_test",
         )
         cache.put_data("abc123", "llm", entry.to_dict())
 
@@ -358,12 +360,13 @@ def test_cli_cache_export_to_zip(tmp_path):
     assert "zip archive" in result.output
     assert zip_path.exists()
 
-    # Verify zip contents
+    # Verify zip contents - new format: id_timestamp_provider.json
     with zipfile.ZipFile(zip_path, "r") as zf:
         names = zf.namelist()
         assert len(names) == 1
         assert names[0].endswith(".json")
-        assert "gpt4" in names[0]
+        assert names[0].startswith("zip_test_")
+        assert "_openai.json" in names[0]
 
 
 # Test cache export to zip with JSON output.
@@ -738,6 +741,7 @@ def test_cli_generate_graph_shows_help():
     assert "--llm" in result.output
     assert "--output" in result.output
     assert "--format" in result.output
+    assert "--id" in result.output
 
 
 # Test generate graph requires model-spec.

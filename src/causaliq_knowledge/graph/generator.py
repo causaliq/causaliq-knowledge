@@ -65,6 +65,7 @@ class GraphGeneratorConfig:
         output_format: Desired output format (edge_list or adjacency_matrix).
         view_level: Context level for variable information.
         use_llm_names: Use llm_name instead of benchmark name in prompts.
+        request_id: Optional identifier for requests (stored in metadata).
     """
 
     temperature: float = 0.1
@@ -73,6 +74,7 @@ class GraphGeneratorConfig:
     output_format: OutputFormat = OutputFormat.EDGE_LIST
     view_level: ViewLevel = ViewLevel.STANDARD
     use_llm_names: bool = True
+    request_id: str = ""
 
 
 class GraphGenerator:
@@ -402,7 +404,9 @@ class GraphGenerator:
         from_cache = False
 
         if self._cache is not None and self._client.use_cache:
-            response = self._client.cached_completion(messages)
+            response = self._client.cached_completion(
+                messages, request_id=self._config.request_id
+            )
             # Check if response was from cache by comparing timing
             latency_ms = int((time.perf_counter() - start_time) * 1000)
             # If latency is very low, likely from cache

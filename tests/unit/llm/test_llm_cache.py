@@ -58,6 +58,7 @@ def test_llm_metadata_defaults():
     assert meta.tokens == LLMTokenUsage()
     assert meta.cost_usd == 0.0
     assert meta.cache_hit is False
+    assert meta.request_id == ""
 
 
 # Test LLMMetadata with custom values.
@@ -70,6 +71,7 @@ def test_llm_metadata_custom_values():
         tokens=tokens,
         cost_usd=0.025,
         cache_hit=True,
+        request_id="expt42",
     )
     assert meta.provider == "anthropic"
     assert meta.timestamp == "2024-01-15T10:30:00+00:00"
@@ -77,6 +79,7 @@ def test_llm_metadata_custom_values():
     assert meta.tokens == tokens
     assert meta.cost_usd == 0.025
     assert meta.cache_hit is True
+    assert meta.request_id == "expt42"
 
 
 # Test LLMMetadata to_dict conversion.
@@ -89,6 +92,7 @@ def test_llm_metadata_to_dict():
         tokens=tokens,
         cost_usd=0.01,
         cache_hit=False,
+        request_id="test123",
     )
     result = meta.to_dict()
     expected = {
@@ -98,6 +102,7 @@ def test_llm_metadata_to_dict():
         "tokens": {"input": 100, "output": 50, "total": 150},
         "cost_usd": 0.01,
         "cache_hit": False,
+        "request_id": "test123",
     }
     assert result == expected
 
@@ -111,6 +116,7 @@ def test_llm_metadata_from_dict():
         "tokens": {"input": 200, "output": 100, "total": 300},
         "cost_usd": 0.005,
         "cache_hit": True,
+        "request_id": "run01",
     }
     meta = LLMMetadata.from_dict(data)
     assert meta.provider == "gemini"
@@ -121,6 +127,7 @@ def test_llm_metadata_from_dict():
     assert meta.tokens.total == 300
     assert meta.cost_usd == 0.005
     assert meta.cache_hit is True
+    assert meta.request_id == "run01"
 
 
 # Test LLMMetadata from_dict with missing fields uses defaults.
@@ -135,6 +142,7 @@ def test_llm_metadata_from_dict_missing_fields():
     assert meta.tokens.total == 0
     assert meta.cost_usd == 0.0
     assert meta.cache_hit is False
+    assert meta.request_id == ""
 
 
 # Test LLMMetadata round-trip via dict.
@@ -147,6 +155,7 @@ def test_llm_metadata_round_trip():
         tokens=tokens,
         cost_usd=0.075,
         cache_hit=False,
+        request_id="batch_run_42",
     )
     restored = LLMMetadata.from_dict(original.to_dict())
     assert restored.provider == original.provider
@@ -157,6 +166,7 @@ def test_llm_metadata_round_trip():
     assert restored.tokens.total == original.tokens.total
     assert restored.cost_usd == original.cost_usd
     assert restored.cache_hit == original.cache_hit
+    assert restored.request_id == original.request_id
 
 
 # =============================================================================
@@ -497,6 +507,7 @@ def test_llm_cache_entry_create_full():
         input_tokens=20,
         output_tokens=100,
         cost_usd=0.05,
+        request_id="expt_batch_01",
     )
     assert entry.model == "claude-3-opus"
     assert entry.temperature == 0.7
@@ -511,6 +522,7 @@ def test_llm_cache_entry_create_full():
     assert entry.metadata.tokens.total == 120
     assert entry.metadata.cost_usd == 0.05
     assert entry.metadata.cache_hit is False
+    assert entry.metadata.request_id == "expt_batch_01"
 
 
 # Test LLMCacheEntry.create generates valid timestamp.
@@ -944,111 +956,176 @@ def test_llm_entry_encoder_shared_tokens():
 # =============================================================================
 
 
-# Test generate_export_filename for edge query.
-def test_generate_export_filename_edge_query():
+# Test generate_export_filename with request_id and provider.
+def test_generate_export_filename_with_request_id():
     encoder = LLMEntryEncoder()
     entry = LLMCacheEntry.create(
         model="gpt-4",
-        messages=[{"role": "user", "content": "smoking and lung_cancer"}],
+        messages=[{"role": "user", "content": "test"}],
         content="Response",
+        provider="openai",
+        request_id="expt23",
     )
     filename = encoder.generate_export_filename(entry, "abc12345")
 
     assert filename.endswith(".json")
-    assert "gpt4" in filename
-    assert "smoking" in filename
-    assert "lung" in filename  # lung_cancer parsed as lung
-    assert "edge" in filename
-    assert "abc1" in filename  # 4-char hash suffix
+    assert filename.startswith("expt23_")
+    assert "_openai.json" in filename
+    # Format: expt23_yyyy-mm-dd-hhmmss_openai.json
+    parts = filename.replace(".json", "").split("_")
+    assert len(parts) == 3
+    assert parts[0] == "expt23"
+    assert parts[2] == "openai"
 
 
-# Test generate_export_filename with 'between X and Y' pattern.
-def test_generate_export_filename_between_pattern():
-    encoder = LLMEntryEncoder()
-    entry = LLMCacheEntry.create(
-        model="gemini-2.5-flash",
-        messages=[
-            {
-                "role": "user",
-                "content": "relationship between exercise and health",
-            }
-        ],
-        content="Response",
-    )
-    filename = encoder.generate_export_filename(entry, "def456")
-
-    assert "gemini25flash" in filename
-    assert "exercise" in filename
-    assert "health" in filename
-    assert "edge" in filename
-
-
-# Test generate_export_filename fallback for non-edge queries.
-def test_generate_export_filename_fallback():
+# Test generate_export_filename falls back to hash when no request_id.
+def test_generate_export_filename_no_request_id():
     encoder = LLMEntryEncoder()
     entry = LLMCacheEntry.create(
         model="gpt-4",
-        messages=[{"role": "user", "content": "What is machine learning?"}],
-        content="Response",
-    )
-    filename = encoder.generate_export_filename(entry, "xyz789")
-
-    assert filename.endswith(".json")
-    assert "gpt4" in filename
-    assert "machine" in filename
-    assert "learning" in filename
-    assert "xyz7" in filename
-
-
-# Test generate_export_filename truncates long model names.
-def test_generate_export_filename_long_model():
-    encoder = LLMEntryEncoder()
-    entry = LLMCacheEntry.create(
-        model="very-long-model-name-that-exceeds-limit",
         messages=[{"role": "user", "content": "test"}],
         content="Response",
+        provider="openai",
     )
-    filename = encoder.generate_export_filename(entry, "hash")
+    filename = encoder.generate_export_filename(entry, "abc12345def")
 
-    # Model portion should be truncated to 15 chars
-    model_part = filename.split("_")[0]
-    assert len(model_part) <= 15
+    assert filename.endswith(".json")
+    # Should use first 8 chars of hash as fallback
+    assert filename.startswith("abc12345_")
+    assert "_openai.json" in filename
 
 
-# Test generate_export_filename with empty messages.
-def test_generate_export_filename_empty_messages():
+# Test generate_export_filename sanitises request_id.
+def test_generate_export_filename_sanitises_request_id():
     encoder = LLMEntryEncoder()
     entry = LLMCacheEntry.create(
         model="gpt-4",
-        messages=[],
+        messages=[{"role": "user", "content": "test"}],
         content="Response",
+        provider="openai",
+        request_id="test/with:special@chars!",
     )
-    filename = encoder.generate_export_filename(entry, "abc123")
+    filename = encoder.generate_export_filename(entry, "abc12345")
 
     assert filename.endswith(".json")
-    assert "gpt4" in filename
-    assert "abc1" in filename
+    # Special chars should be removed
+    assert filename.startswith("testwithspecialchars_")
 
 
-# Test generate_export_filename truncates long prompts.
-def test_generate_export_filename_long_prompt():
+# Test generate_export_filename with different providers.
+def test_generate_export_filename_various_providers():
     encoder = LLMEntryEncoder()
-    # Create a prompt with long words that will exceed 30 char slug limit
-    # Using long words so first 4 words exceed 30 chars
-    long_prompt = "verylongword1 verylongword2 verylongword3 verylongword4"
+
+    for provider in ["groq", "anthropic", "gemini", "deepseek"]:
+        entry = LLMCacheEntry.create(
+            model="test-model",
+            messages=[{"role": "user", "content": "test"}],
+            content="Response",
+            provider=provider,
+            request_id="test",
+        )
+        filename = encoder.generate_export_filename(entry, "hash123")
+
+        assert filename.endswith(f"_{provider}.json")
+
+
+# Test generate_export_filename handles missing provider.
+def test_generate_export_filename_missing_provider():
+    encoder = LLMEntryEncoder()
     entry = LLMCacheEntry.create(
         model="gpt-4",
-        messages=[{"role": "user", "content": long_prompt}],
+        messages=[{"role": "user", "content": "test"}],
         content="Response",
+        request_id="test",
     )
     filename = encoder.generate_export_filename(entry, "abc123")
 
+    assert filename.endswith("_unknown.json")
+
+
+# Test generate_export_filename handles missing timestamp.
+def test_generate_export_filename_missing_timestamp():
+    encoder = LLMEntryEncoder()
+    entry = LLMCacheEntry.create(
+        model="gpt-4",
+        messages=[{"role": "user", "content": "test"}],
+        content="Response",
+        provider="openai",
+        request_id="test",
+    )
+    # Clear the timestamp
+    entry.metadata.timestamp = ""
+    filename = encoder.generate_export_filename(entry, "abc123")
+
     assert filename.endswith(".json")
-    # Slug portion should be truncated to max 30 chars
-    # Format: model_slug_hash.json
-    parts = filename.replace(".json", "").split("_")
-    # Parts: [model, word1, word2, ..., hash]
-    # The middle parts are the slug
-    slug_parts = parts[1:-1]  # Remove model and hash
-    slug = "_".join(slug_parts)
-    assert len(slug) <= 30
+    assert "_unknown_" in filename
+
+
+# Test generate_export_filename timestamp format.
+def test_generate_export_filename_timestamp_format():
+    encoder = LLMEntryEncoder()
+    entry = LLMCacheEntry.create(
+        model="gpt-4",
+        messages=[{"role": "user", "content": "test"}],
+        content="Response",
+        provider="openai",
+        request_id="test",
+    )
+    # Set a known timestamp
+    entry.metadata.timestamp = "2026-01-29T14:30:52+00:00"
+    filename = encoder.generate_export_filename(entry, "abc123")
+
+    # Should format as yyyy-mm-dd-hhmmss
+    assert "2026-01-29-143052" in filename
+    assert filename == "test_2026-01-29-143052_openai.json"
+
+
+# Test generate_export_filename with request_id that sanitises to empty.
+def test_generate_export_filename_request_id_sanitises_to_empty():
+    encoder = LLMEntryEncoder()
+    entry = LLMCacheEntry.create(
+        model="gpt-4",
+        messages=[{"role": "user", "content": "test"}],
+        content="Response",
+        provider="openai",
+        request_id="@#$%^&*()",  # All special chars, sanitises to empty
+    )
+    filename = encoder.generate_export_filename(entry, "fallback123")
+
+    # Should use first 8 chars of cache_key as fallback
+    assert filename.startswith("fallback_")
+    assert "_openai.json" in filename
+
+
+# Test generate_export_filename with invalid timestamp format.
+def test_generate_export_filename_invalid_timestamp():
+    encoder = LLMEntryEncoder()
+    entry = LLMCacheEntry.create(
+        model="gpt-4",
+        messages=[{"role": "user", "content": "test"}],
+        content="Response",
+        provider="openai",
+        request_id="test",
+    )
+    # Set an invalid timestamp that will fail to parse
+    entry.metadata.timestamp = "not-a-valid-timestamp"
+    filename = encoder.generate_export_filename(entry, "abc123")
+
+    # Should use "unknown" for timestamp
+    assert filename == "test_unknown_openai.json"
+
+
+# Test generate_export_filename with provider that sanitises to empty.
+def test_generate_export_filename_provider_sanitises_to_empty():
+    encoder = LLMEntryEncoder()
+    entry = LLMCacheEntry.create(
+        model="gpt-4",
+        messages=[{"role": "user", "content": "test"}],
+        content="Response",
+        provider="@#$%",  # All special chars, sanitises to empty
+        request_id="test",
+    )
+    filename = encoder.generate_export_filename(entry, "abc123")
+
+    # Should use "unknown" for provider
+    assert filename.endswith("_unknown.json")

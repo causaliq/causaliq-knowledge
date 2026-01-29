@@ -48,6 +48,7 @@ class LLMMetadata:
         tokens: Token usage statistics.
         cost_usd: Estimated cost of the request in USD.
         cache_hit: Whether this was served from cache.
+        request_id: Optional identifier for the request (not in cache key).
     """
 
     provider: str = ""
@@ -56,6 +57,7 @@ class LLMMetadata:
     tokens: LLMTokenUsage = field(default_factory=LLMTokenUsage)
     cost_usd: float = 0.0
     cache_hit: bool = False
+    request_id: str = ""
 
     def to_dict(self) -> dict[str, Any]:
         """Convert to dictionary for JSON serialisation."""
@@ -66,6 +68,7 @@ class LLMMetadata:
             "tokens": asdict(self.tokens),
             "cost_usd": self.cost_usd,
             "cache_hit": self.cache_hit,
+            "request_id": self.request_id,
         }
 
     @classmethod
@@ -83,6 +86,7 @@ class LLMMetadata:
             ),
             cost_usd=data.get("cost_usd", 0.0),
             cache_hit=data.get("cache_hit", False),
+            request_id=data.get("request_id", ""),
         )
 
 
@@ -250,6 +254,7 @@ class LLMCacheEntry:
         input_tokens: int = 0,
         output_tokens: int = 0,
         cost_usd: float = 0.0,
+        request_id: str = "",
     ) -> LLMCacheEntry:
         """Create a cache entry with common parameters.
 
@@ -266,6 +271,7 @@ class LLMCacheEntry:
             input_tokens: Number of input tokens.
             output_tokens: Number of output tokens.
             cost_usd: Estimated cost in USD.
+            request_id: Optional identifier for the request (not part of hash).
 
         Returns:
             Configured LLMCacheEntry.
@@ -291,6 +297,7 @@ class LLMCacheEntry:
                 ),
                 cost_usd=cost_usd,
                 cache_hit=False,
+                request_id=request_id,
             ),
         )
 
@@ -356,18 +363,14 @@ class LLMEntryEncoder(JsonEncoder):
     ) -> str:
         """Generate a human-readable filename for export.
 
-        Creates a filename from model name and query details, with a
-        short hash suffix for uniqueness.
+        Creates a filename using request_id, timestamp, and provider:
+            {request_id}_{yyyy-mm-dd-hhmmss}_{provider}.json
 
-        For edge queries, extracts node names for format:
-            {model}_{node_a}_{node_b}_edge_{hash}.json
-
-        For other queries, uses prompt excerpt:
-            {model}_{prompt_excerpt}_{hash}.json
+        If request_id is not set, falls back to a short hash prefix.
 
         Args:
             entry: The cache entry to generate filename for.
-            cache_key: The cache key (hash) for uniqueness suffix.
+            cache_key: The cache key (hash) for fallback uniqueness.
 
         Returns:
             Human-readable filename with .json extension.
@@ -376,58 +379,45 @@ class LLMEntryEncoder(JsonEncoder):
             >>> encoder = LLMEntryEncoder()
             >>> entry = LLMCacheEntry.create(
             ...     model="gpt-4",
-            ...     messages=[{"role": "user", "content": "smoking and lung"}],
-            ...     content="Yes...",
+            ...     messages=[{"role": "user", "content": "test"}],
+            ...     content="Response",
+            ...     provider="openai",
+            ...     request_id="expt23",
             ... )
-            >>> encoder.generate_export_filename(entry, "a1b2c3d4e5f6")
-            'gpt4_smoking_lung_edge_a1b2.json'
+            >>> # Returns something like: expt23_2026-01-29-143052_openai.json
         """
         import re
+        from datetime import datetime
 
-        # Sanitize model name (alphanumeric only, lowercase)
-        model = re.sub(r"[^a-z0-9]", "", entry.model.lower())
-        if len(model) > 15:
-            model = model[:15]
+        # Get request_id or use hash prefix as fallback
+        request_id = entry.metadata.request_id or cache_key[:8]
+        # Sanitise request_id (alphanumeric, hyphens, underscores only)
+        request_id = re.sub(r"[^a-zA-Z0-9_-]", "", request_id)
+        if not request_id:
+            request_id = cache_key[:8] if cache_key else "unknown"
 
-        # Extract user message content
-        prompt = ""
-        for msg in entry.messages:
-            if msg.get("role") == "user":
-                prompt = msg.get("content", "")
-                break
+        # Parse timestamp and format as yyyy-mm-dd-hhmmss
+        timestamp_str = entry.metadata.timestamp
+        if timestamp_str:
+            try:
+                # Parse ISO format timestamp
+                dt = datetime.fromisoformat(
+                    timestamp_str.replace("Z", "+00:00")
+                )
+                formatted_ts = dt.strftime("%Y-%m-%d-%H%M%S")
+            except ValueError:
+                formatted_ts = "unknown"
+        else:
+            formatted_ts = "unknown"
 
-        # Try to extract node names for edge queries
-        # Look for patterns like "X and Y", "X cause Y", "between X and Y"
-        prompt_lower = prompt.lower()
-        slug = ""
+        # Get provider, sanitised
+        provider = entry.metadata.provider or "unknown"
+        provider = re.sub(r"[^a-z0-9]", "", provider.lower())
+        if not provider:
+            provider = "unknown"
 
-        # Pattern: "between X and Y" or "X and Y"
-        match = re.search(r"(?:between\s+)?(\w+)\s+and\s+(\w+)", prompt_lower)
-        if match:
-            node_a = match.group(1)[:15]
-            node_b = match.group(2)[:15]
-            slug = f"{node_a}_{node_b}_edge"
-
-        # Fallback: extract first significant words from prompt
-        if not slug:
-            # Remove common words, keep alphanumeric
-            cleaned = re.sub(r"[^a-z0-9\s]", "", prompt_lower)
-            words = [
-                w
-                for w in cleaned.split()
-                if w
-                not in ("the", "a", "an", "is", "are", "does", "do", "can")
-            ]
-            slug = "_".join(words[:4])
-            if len(slug) > 30:
-                slug = slug[:30].rstrip("_")
-
-        # Short hash suffix for uniqueness (4 chars)
-        hash_suffix = cache_key[:4] if cache_key else "0000"
-
-        # Build filename
-        parts = [p for p in [model, slug, hash_suffix] if p]
-        return "_".join(parts) + ".json"
+        # Build filename: id_timestamp_provider.json
+        return f"{request_id}_{formatted_ts}_{provider}.json"
 
     def export_entry(self, entry: LLMCacheEntry, path: Path) -> None:
         """Export an LLMCacheEntry to a JSON file.

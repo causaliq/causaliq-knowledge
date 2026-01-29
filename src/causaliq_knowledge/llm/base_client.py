@@ -297,6 +297,8 @@ class BaseLLMClient(ABC):
         Args:
             messages: List of message dicts with "role" and "content" keys.
             **kwargs: Provider-specific options (temperature, max_tokens, etc.)
+                Also accepts request_id (str) for identifying requests in
+                exports. Note: request_id is NOT part of the cache key.
 
         Returns:
             LLMResponse with the generated content and metadata.
@@ -305,6 +307,9 @@ class BaseLLMClient(ABC):
 
         cache = self.cache
         use_cache = self.use_cache
+
+        # Extract request_id (not part of cache key)
+        request_id = kwargs.pop("request_id", "")
 
         # Build cache key
         temperature = kwargs.get("temperature")
@@ -354,6 +359,7 @@ class BaseLLMClient(ABC):
                 input_tokens=response.input_tokens,
                 output_tokens=response.output_tokens,
                 cost_usd=response.cost,
+                request_id=request_id,
             )
             cache.put_data(cache_key, "llm", entry.to_dict())
 

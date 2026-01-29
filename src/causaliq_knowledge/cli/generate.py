@@ -177,6 +177,12 @@ def generate_group() -> None:
     is_flag=True,
     help="Output result as JSON (default if --output is specified).",
 )
+@click.option(
+    "--id",
+    "request_id",
+    default="cli",
+    help="Request identifier for export filenames. Default: 'cli'.",
+)
 def generate_graph(
     model_spec: Path,
     view_level: str,
@@ -190,6 +196,7 @@ def generate_graph(
     cache_path: Optional[Path],
     temperature: float,
     output_json: bool,
+    request_id: str,
 ) -> None:
     """Generate a causal graph from a model specification.
 
@@ -261,10 +268,10 @@ def generate_graph(
     cache: Optional[TokenCache] = None
     if use_cache:
         # Default cache path: alongside model spec file
-        # e.g., cancer.json -> cancer_cache.db
+        # e.g., cancer.json -> cancer_llm.db
         if cache_path is None:
             stem = model_spec.stem
-            cache_path = model_spec.parent / f"{stem}_cache.db"
+            cache_path = model_spec.parent / f"{stem}_llm.db"
         try:
             cache = TokenCache(str(cache_path))
             cache.open()
@@ -280,6 +287,7 @@ def generate_graph(
             output_format=fmt,
             view_level=level,
             use_llm_names=use_llm_names,
+            request_id=request_id,
         )
         generator = GraphGenerator(model=model, config=config, cache=cache)
     except ValueError as e:
