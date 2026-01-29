@@ -173,7 +173,8 @@ class JsonEncoder(EntryEncoder):
         """Encode a string value with tokenisation.
 
         Strings are split into tokens (words/punctuation) with special
-        markers for string start/end.
+        markers for string start/end. Double quotes within the string
+        are encoded as '\\"' token to distinguish from string delimiters.
 
         Args:
             value: String to encode.
@@ -184,7 +185,11 @@ class JsonEncoder(EntryEncoder):
         # Split on whitespace and punctuation, keeping delimiters
         tokens = self._tokenise_string(value)
         for token in tokens:
-            self._encode_token(token, token_cache, result)
+            # Escape embedded quotes to distinguish from string delimiter
+            if token == '"':
+                self._encode_token('\\"', token_cache, result)
+            else:
+                self._encode_token(token, token_cache, result)
         self._encode_token('"', token_cache, result)
 
     def _encode_list(
@@ -296,6 +301,9 @@ class JsonEncoder(EntryEncoder):
     ) -> tuple[str, int]:
         """Decode a string value (after opening quote consumed).
 
+        Handles escaped quotes ('\\"' token) which represent literal
+        double quotes within the string content.
+
         Args:
             blob: Binary data to decode.
             offset: Current position (after opening quote).
@@ -317,7 +325,11 @@ class JsonEncoder(EntryEncoder):
             if token == '"':
                 # End of string
                 return "".join(parts), offset
-            parts.append(token)
+            elif token == '\\"':
+                # Escaped quote - append literal quote character
+                parts.append('"')
+            else:
+                parts.append(token)
         raise ValueError("Unterminated string")
 
     def _decode_list(

@@ -49,8 +49,8 @@ def test_simple_chain_ground_truth() -> None:
     spec = ModelLoader.load(MODELS_DIR / "simple_chain.json")
 
     assert spec.ground_truth is not None
-    assert len(spec.ground_truth.edges_experiment) == 2
-    assert ["cause", "mediator"] in spec.ground_truth.edges_experiment
+    assert len(spec.ground_truth.edges) == 2
+    assert ["cause", "mediator"] in spec.ground_truth.edges
 
 
 # --- Collider model tests ---
@@ -109,11 +109,11 @@ def test_collider_causal_principles() -> None:
     assert spec.causal_principles[0].id == "collider_structure"
 
 
-# Test collider canonical name mapping.
-def test_collider_canonical_mapping() -> None:
+# Test collider llm_name to name mapping.
+def test_collider_llm_to_name_mapping() -> None:
     spec = ModelLoader.load(MODELS_DIR / "collider.json")
 
-    mapping = spec.get_canonical_name_mapping()
+    mapping = spec.get_llm_to_name_mapping()
     assert mapping["genetic_factor"] == "Gene"
     assert mapping["environmental_exposure"] == "Environment"
     assert mapping["disease_status"] == "Disease"

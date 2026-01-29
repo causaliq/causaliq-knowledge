@@ -74,8 +74,8 @@ def test_variable_spec_minimal() -> None:
 # Test creating variable with all fields populated.
 def test_variable_spec_full() -> None:
     var = VariableSpec(
-        name="tobacco_history",
-        canonical_name="Smoker",
+        name="Smoker",
+        llm_name="tobacco_history",
         display_name="Tobacco Use History",
         aliases=["smoking", "cigarette_use"],
         type="binary",
@@ -89,8 +89,8 @@ def test_variable_spec_full() -> None:
         related_domain_knowledge=["Fact 1", "Fact 2"],
         references=["Ref1", "Ref2"],
     )
-    assert var.name == "tobacco_history"
-    assert var.canonical_name == "Smoker"
+    assert var.name == "Smoker"
+    assert var.llm_name == "tobacco_history"
     assert var.type == VariableType.BINARY
     assert var.role == VariableRole.EXOGENOUS
     assert var.states == ["never", "ever"]
@@ -274,19 +274,17 @@ def test_causal_principle_full() -> None:
 # Test creating ground truth with defaults.
 def test_ground_truth_empty() -> None:
     gt = GroundTruth()
-    assert gt.edges_canonical == []
-    assert gt.edges_experiment == []
+    assert gt.edges == []
     assert gt.v_structures == []
 
 
 # Test creating ground truth with all fields populated.
 def test_ground_truth_full() -> None:
     gt = GroundTruth(
-        edges_canonical=[["A", "B"], ["B", "C"]],
-        edges_experiment=[["a", "b"], ["b", "c"]],
-        v_structures=[{"canonical": ["A", "B", "C"]}],
+        edges=[["A", "B"], ["B", "C"]],
+        v_structures=[{"parents": ["A", "B"], "child": "C"}],
     )
-    assert len(gt.edges_canonical) == 2
+    assert len(gt.edges) == 2
     assert len(gt.v_structures) == 1
 
 
@@ -371,21 +369,77 @@ def test_model_spec_get_variable_names() -> None:
     assert names == ["a", "b", "c"]
 
 
-# Test get_canonical_name_mapping returns correct mapping.
-def test_model_spec_get_canonical_name_mapping() -> None:
+# Test get_llm_names returns list of llm_name values.
+def test_model_spec_get_llm_names() -> None:
     spec = ModelSpec(
         dataset_id="test",
         domain="test",
         variables=[
-            VariableSpec(
-                name="smoking", type="binary", canonical_name="Smoker"
-            ),
-            VariableSpec(
-                name="cancer", type="binary", canonical_name="Cancer"
-            ),
-            VariableSpec(name="age", type="continuous"),  # No canonical
+            VariableSpec(name="smoke", llm_name="tobacco_use", type="binary"),
+            VariableSpec(name="lung", llm_name="cancer_status", type="binary"),
+            VariableSpec(name="age", type="continuous"),  # llm_name defaults
         ],
     )
-    mapping = spec.get_canonical_name_mapping()
-    assert mapping == {"smoking": "Smoker", "cancer": "Cancer"}
-    assert "age" not in mapping
+    llm_names = spec.get_llm_names()
+    assert llm_names == ["tobacco_use", "cancer_status", "age"]
+
+
+# Test get_llm_to_name_mapping returns correct mapping.
+def test_model_spec_get_llm_to_name_mapping() -> None:
+    spec = ModelSpec(
+        dataset_id="test",
+        domain="test",
+        variables=[
+            VariableSpec(name="smoke", llm_name="tobacco_use", type="binary"),
+            VariableSpec(name="lung", llm_name="cancer_status", type="binary"),
+        ],
+    )
+    mapping = spec.get_llm_to_name_mapping()
+    assert mapping == {"tobacco_use": "smoke", "cancer_status": "lung"}
+
+
+# Test get_name_to_llm_mapping returns correct mapping.
+def test_model_spec_get_name_to_llm_mapping() -> None:
+    spec = ModelSpec(
+        dataset_id="test",
+        domain="test",
+        variables=[
+            VariableSpec(name="smoke", llm_name="tobacco_use", type="binary"),
+            VariableSpec(name="lung", llm_name="cancer_status", type="binary"),
+        ],
+    )
+    mapping = spec.get_name_to_llm_mapping()
+    assert mapping == {"smoke": "tobacco_use", "lung": "cancer_status"}
+
+
+# Test uses_distinct_llm_names returns True when names differ.
+def test_model_spec_uses_distinct_llm_names_true() -> None:
+    spec = ModelSpec(
+        dataset_id="test",
+        domain="test",
+        variables=[
+            VariableSpec(name="smoke", llm_name="tobacco_use", type="binary"),
+            VariableSpec(name="lung", type="binary"),  # llm_name = name
+        ],
+    )
+    assert spec.uses_distinct_llm_names() is True
+
+
+# Test uses_distinct_llm_names returns False when all names same.
+def test_model_spec_uses_distinct_llm_names_false() -> None:
+    spec = ModelSpec(
+        dataset_id="test",
+        domain="test",
+        variables=[
+            VariableSpec(name="a", type="binary"),  # llm_name defaults to "a"
+            VariableSpec(name="b", type="binary"),  # llm_name defaults to "b"
+        ],
+    )
+    assert spec.uses_distinct_llm_names() is False
+
+
+# Test llm_name defaults to name when not specified.
+def test_variable_spec_llm_name_defaults_to_name() -> None:
+    var = VariableSpec(name="test_var", type="binary")
+    assert var.name == "test_var"
+    assert var.llm_name == "test_var"  # Should default to name

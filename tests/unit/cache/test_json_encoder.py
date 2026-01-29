@@ -152,6 +152,28 @@ def test_encode_decode_sentence():
         assert encoder.decode(blob, cache) == text
 
 
+# Test encoding and decoding string with embedded double quotes.
+def test_encode_decode_string_with_embedded_quotes():
+    with TokenCache(":memory:") as cache:
+        encoder = JsonEncoder()
+        text = 'He said "hello" to her'
+        blob = encoder.encode(text, cache)
+        assert encoder.decode(blob, cache) == text
+
+
+# Test encoding JSON content as string value (common in LLM responses).
+def test_encode_decode_json_string_content():
+    with TokenCache(":memory:") as cache:
+        encoder = JsonEncoder()
+        # JSON content embedded as a string value
+        json_content = '{"edges": [{"source": "A", "target": "B"}]}'
+        data = {"content": json_content}
+        blob = encoder.encode(data, cache)
+        result = encoder.decode(blob, cache)
+        assert result == data
+        assert result["content"] == json_content
+
+
 # --- Encoding/decoding lists ---
 
 

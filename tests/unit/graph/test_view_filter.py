@@ -193,3 +193,19 @@ def test_view_level_is_string_enum() -> None:
     assert ViewLevel.MINIMAL.value == "minimal"
     assert ViewLevel.STANDARD.value == "standard"
     assert ViewLevel.RICH.value == "rich"
+
+
+# Test get_variable_names returns benchmark names when use_llm_names=False.
+def test_get_variable_names_with_use_llm_names_false() -> None:
+    spec = ModelSpec(
+        dataset_id="test",
+        domain="test",
+        variables=[
+            VariableSpec(name="smoke", llm_name="tobacco_use", type="binary"),
+            VariableSpec(name="lung", llm_name="cancer_status", type="binary"),
+        ],
+    )
+    view_filter = ViewFilter(spec, use_llm_names=False)
+    names = view_filter.get_variable_names()
+    # Should return benchmark names, not llm_names
+    assert names == ["smoke", "lung"]

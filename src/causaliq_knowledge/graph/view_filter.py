@@ -26,20 +26,27 @@ class ViewFilter:
     This class extracts variable information according to the view
     definitions in the model specification (minimal, standard, rich).
 
+    By default, llm_name is substituted for name in the output to prevent
+    LLM memorisation of benchmark networks. Use use_llm_names=False to
+    output benchmark names directly (for memorisation testing).
+
     Example:
         >>> spec = ModelLoader.load("model.json")
         >>> view_filter = ViewFilter(spec)
         >>> minimal_vars = view_filter.filter_variables(ViewLevel.MINIMAL)
-        >>> # Returns list of dicts with only 'name' field
+        >>> # Returns list of dicts with llm_name as 'name' field
     """
 
-    def __init__(self, spec: ModelSpec) -> None:
+    def __init__(self, spec: ModelSpec, *, use_llm_names: bool = True) -> None:
         """Initialise the view filter.
 
         Args:
             spec: The model specification to filter.
+            use_llm_names: If True (default), output llm_name as 'name'.
+                If False, output benchmark name as 'name'.
         """
         self._spec = spec
+        self._use_llm_names = use_llm_names
 
     @property
     def spec(self) -> ModelSpec:
@@ -78,15 +85,23 @@ class ViewFilter:
         Returns:
             Dictionary with only the fields specified by the view level.
             Enum values are converted to their string representations.
+            If use_llm_names is True, the 'name' field contains llm_name.
         """
         include_fields = self.get_include_fields(level)
         # Use mode="json" to convert enums to their string values
         var_dict = variable.model_dump(mode="json")
 
+        # If using llm_names, substitute llm_name for name in output
+        if self._use_llm_names and "name" in include_fields:
+            var_dict["name"] = var_dict.get("llm_name", var_dict["name"])
+
+        # Never include llm_name in output (it's internal)
         return {
             key: value
             for key, value in var_dict.items()
-            if key in include_fields and value is not None
+            if key in include_fields
+            and key != "llm_name"
+            and value is not None
         }
 
     def filter_variables(self, level: ViewLevel) -> list[dict[str, Any]]:
@@ -103,11 +118,16 @@ class ViewFilter:
         ]
 
     def get_variable_names(self) -> list[str]:
-        """Get all variable names from the specification.
+        """Get all variable names for LLM output.
+
+        Returns benchmark names if use_llm_names is False,
+        otherwise returns llm_names.
 
         Returns:
             List of variable names.
         """
+        if self._use_llm_names:
+            return self._spec.get_llm_names()
         return self._spec.get_variable_names()
 
     def get_domain(self) -> str:

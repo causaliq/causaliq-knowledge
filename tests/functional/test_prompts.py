@@ -172,7 +172,7 @@ def test_simple_chain_variable_names(simple_chain_spec) -> None:
     assert "effect" in names
 
 
-# Test get_variable_names returns disguised names from collider.
+# Test get_variable_names returns llm_names from collider.
 def test_collider_variable_names(collider_spec) -> None:
     prompt = GraphQueryPrompt.from_model_spec(
         collider_spec,
@@ -181,11 +181,11 @@ def test_collider_variable_names(collider_spec) -> None:
     names = prompt.get_variable_names()
 
     assert len(names) == 3
-    # Should return name field, not canonical_name
+    # Should return llm_name field (default), not benchmark name
     assert "genetic_factor" in names
     assert "environmental_exposure" in names
     assert "disease_status" in names
-    # Should NOT contain canonical names
+    # Should NOT contain benchmark names
     assert "Gene" not in names
     assert "Environment" not in names
     assert "Disease" not in names

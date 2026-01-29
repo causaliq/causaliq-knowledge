@@ -46,8 +46,7 @@
     },
     "variables": [
         {
-            "name": "genetic_factor",
-            "canonical_name": "Gene",
+            "name": "Gene",
             "type": "binary",
             "states": [
                 "wild_type",
@@ -56,11 +55,11 @@
             "role": "exogenous",
             "category": "genetic",
             "short_description": "Genetic predisposition factor.",
-            "extended_description": "A genetic variant that increases risk."
+            "extended_description": "A genetic variant that increases risk.",
+            "llm_name": "genetic_factor"
         },
         {
-            "name": "environmental_exposure",
-            "canonical_name": "Environment",
+            "name": "Environment",
             "type": "binary",
             "states": [
                 "low",
@@ -69,11 +68,11 @@
             "role": "exogenous",
             "category": "environmental",
             "short_description": "Environmental exposure level.",
-            "extended_description": "Exposure to environmental risk factors."
+            "extended_description": "Exposure to environmental risk factors.",
+            "llm_name": "environmental_exposure"
         },
         {
-            "name": "disease_status",
-            "canonical_name": "Disease",
+            "name": "Disease",
             "type": "binary",
             "states": [
                 "healthy",
@@ -82,7 +81,8 @@
             "role": "endogenous",
             "category": "outcome",
             "short_description": "Disease diagnosis status.",
-            "extended_description": "Whether the patient has the disease."
+            "extended_description": "Whether the patient has the disease.",
+            "llm_name": "disease_status"
         }
     ],
     "constraints": {
@@ -126,26 +126,6 @@
         }
     ],
     "ground_truth": {
-        "edges_canonical": [
-            [
-                "Gene",
-                "Disease"
-            ],
-            [
-                "Environment",
-                "Disease"
-            ]
-        ],
-        "edges_experiment": [
-            [
-                "genetic_factor",
-                "disease_status"
-            ],
-            [
-                "environmental_exposure",
-                "disease_status"
-            ]
-        ],
         "v_structures": [
             {
                 "canonical": [
@@ -154,6 +134,16 @@
                     "Environment"
                 ]
             }
+        ],
+        "edges": [
+            [
+                "Gene",
+                "Disease"
+            ],
+            [
+                "Environment",
+                "Disease"
+            ]
         ]
     }
 }

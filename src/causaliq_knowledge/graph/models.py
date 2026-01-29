@@ -9,7 +9,7 @@ from __future__ import annotations
 from enum import Enum
 from typing import Any, Optional
 
-from pydantic import BaseModel, Field, field_validator
+from pydantic import BaseModel, Field, field_validator, model_validator
 
 
 class VariableType(str, Enum):
@@ -36,8 +36,9 @@ class VariableSpec(BaseModel):
     to provide context to LLMs for graph generation.
 
     Attributes:
-        name: Primary identifier used in experiments (may be disguised).
-        canonical_name: Original/benchmark name (for evaluation only).
+        name: Benchmark/literature name used for ground truth and reporting.
+        llm_name: Name used when querying LLMs (prevents memorisation).
+            Defaults to name if not specified.
         display_name: Human-readable name for display.
         aliases: Alternative names for the variable.
         type: Variable type (binary, categorical, ordinal, continuous).
@@ -54,7 +55,8 @@ class VariableSpec(BaseModel):
 
     Example:
         >>> var = VariableSpec(
-        ...     name="tobacco_history",
+        ...     name="smoke",
+        ...     llm_name="tobacco_history",
         ...     type="binary",
         ...     states=["never", "ever"],
         ...     role="exogenous",
@@ -62,9 +64,12 @@ class VariableSpec(BaseModel):
         ... )
     """
 
-    name: str = Field(..., description="Primary variable identifier")
-    canonical_name: Optional[str] = Field(
-        default=None, description="Original benchmark name (evaluation only)"
+    name: str = Field(
+        ..., description="Benchmark/literature name for ground truth"
+    )
+    llm_name: str = Field(
+        default="",
+        description="Name used for LLM queries (defaults to name)",
     )
     display_name: Optional[str] = Field(
         default=None, description="Human-readable display name"
@@ -80,6 +85,15 @@ class VariableSpec(BaseModel):
     role: Optional[VariableRole] = Field(
         default=None, description="Causal role in the structure"
     )
+
+    @model_validator(mode="after")
+    def set_llm_name_default(self) -> "VariableSpec":
+        """Set llm_name to name if not specified or empty."""
+        if not self.llm_name:
+            # Use object.__setattr__ since Pydantic models may be frozen
+            object.__setattr__(self, "llm_name", self.name)
+        return self
+
     category: Optional[str] = Field(
         default=None, description="Domain-specific category"
     )
@@ -276,17 +290,13 @@ class GroundTruth(BaseModel):
     Note: This should NOT be provided to LLMs during generation.
 
     Attributes:
-        edges_canonical: Ground truth edges using canonical names.
-        edges_experiment: Ground truth edges using experiment names.
+        edges: Ground truth edges using benchmark variable names.
         v_structures: V-structure definitions.
         adjacency_matrix: Adjacency matrix representation.
     """
 
-    edges_canonical: list[list[str]] = Field(
-        default_factory=list, description="Edges with canonical names"
-    )
-    edges_experiment: list[list[str]] = Field(
-        default_factory=list, description="Edges with experiment names"
+    edges: list[list[str]] = Field(
+        default_factory=list, description="Edges with benchmark variable names"
     )
     v_structures: list[dict[str, Any]] = Field(
         default_factory=list, description="V-structure definitions"
@@ -321,8 +331,12 @@ class ModelSpec(BaseModel):
         ...     dataset_id="cancer",
         ...     domain="pulmonary_oncology",
         ...     variables=[
-        ...         VariableSpec(name="smoking", type="binary"),
-        ...         VariableSpec(name="cancer", type="binary"),
+        ...         VariableSpec(
+        ...             name="smoking", llm_name="tobacco_use", type="binary"
+        ...         ),
+        ...         VariableSpec(
+        ...             name="cancer", llm_name="malignancy", type="binary"
+        ...         ),
         ...     ]
         ... )
     """
@@ -368,21 +382,41 @@ class ModelSpec(BaseModel):
         return None
 
     def get_variable_names(self) -> list[str]:
-        """Get list of all variable names.
+        """Get list of all benchmark variable names.
 
         Returns:
             List of variable names.
         """
         return [var.name for var in self.variables]
 
-    def get_canonical_name_mapping(self) -> dict[str, str]:
-        """Get mapping from experiment names to canonical names.
+    def get_llm_names(self) -> list[str]:
+        """Get list of all LLM variable names.
 
         Returns:
-            Dict mapping name -> canonical_name (where canonical exists).
+            List of llm_name values.
         """
-        return {
-            var.name: var.canonical_name
-            for var in self.variables
-            if var.canonical_name is not None
-        }
+        return [var.llm_name for var in self.variables]
+
+    def get_llm_to_name_mapping(self) -> dict[str, str]:
+        """Get mapping from LLM names to benchmark names.
+
+        Returns:
+            Dict mapping llm_name -> name.
+        """
+        return {var.llm_name: var.name for var in self.variables}
+
+    def get_name_to_llm_mapping(self) -> dict[str, str]:
+        """Get mapping from benchmark names to LLM names.
+
+        Returns:
+            Dict mapping name -> llm_name.
+        """
+        return {var.name: var.llm_name for var in self.variables}
+
+    def uses_distinct_llm_names(self) -> bool:
+        """Check if any variable has a different llm_name from name.
+
+        Returns:
+            True if at least one variable has llm_name != name.
+        """
+        return any(var.llm_name != var.name for var in self.variables)

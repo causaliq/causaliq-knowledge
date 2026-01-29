@@ -356,6 +356,7 @@ class GraphQueryPrompt:
         level: ViewLevel = ViewLevel.STANDARD,
         output_format: OutputFormat = OutputFormat.EDGE_LIST,
         system_prompt: Optional[str] = None,
+        use_llm_names: bool = True,
     ) -> "GraphQueryPrompt":
         """Create a GraphQueryPrompt from a ModelSpec.
 
@@ -372,6 +373,8 @@ class GraphQueryPrompt:
                 to EDGE_LIST.
             system_prompt: Custom system prompt to override the default.
                 If None, uses the appropriate default for the output format.
+            use_llm_names: If True (default), use llm_name for variables in
+                the prompt. If False, use benchmark names directly.
 
         Returns:
             GraphQueryPrompt instance configured with filtered variables
@@ -385,7 +388,7 @@ class GraphQueryPrompt:
             ... )
             >>> system, user = prompt.build()
         """
-        view_filter = ViewFilter(spec)
+        view_filter = ViewFilter(spec, use_llm_names=use_llm_names)
         variables = view_filter.filter_variables(level)
 
         return cls(

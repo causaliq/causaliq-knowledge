@@ -64,6 +64,7 @@ class GraphGeneratorConfig:
         timeout: Request timeout in seconds.
         output_format: Desired output format (edge_list or adjacency_matrix).
         view_level: Context level for variable information.
+        use_llm_names: Use llm_name instead of benchmark name in prompts.
     """
 
     temperature: float = 0.1
@@ -71,6 +72,7 @@ class GraphGeneratorConfig:
     timeout: float = 60.0
     output_format: OutputFormat = OutputFormat.EDGE_LIST
     view_level: ViewLevel = ViewLevel.STANDARD
+    use_llm_names: bool = True
 
 
 class GraphGenerator:
@@ -334,6 +336,7 @@ class GraphGenerator:
         level: Optional[ViewLevel] = None,
         output_format: Optional[OutputFormat] = None,
         system_prompt: Optional[str] = None,
+        use_llm_names: Optional[bool] = None,
     ) -> GeneratedGraph:
         """Generate a causal graph from a ModelSpec.
 
@@ -345,6 +348,8 @@ class GraphGenerator:
             level: View level for context. Uses config default if None.
             output_format: Output format. Uses config default if None.
             system_prompt: Custom system prompt (optional).
+            use_llm_names: Use llm_name instead of benchmark name.
+                Uses config default if None.
 
         Returns:
             GeneratedGraph with proposed edges and metadata.
@@ -354,6 +359,11 @@ class GraphGenerator:
         """
         level = level or self._config.view_level
         output_format = output_format or self._config.output_format
+        use_llm = (
+            use_llm_names
+            if use_llm_names is not None
+            else self._config.use_llm_names
+        )
 
         # Use the class method to create prompt from spec
         prompt = GraphQueryPrompt.from_model_spec(
@@ -361,6 +371,7 @@ class GraphGenerator:
             level=level,
             output_format=output_format,
             system_prompt=system_prompt,
+            use_llm_names=use_llm,
         )
 
         return self._execute_query(prompt)

@@ -10,6 +10,7 @@ The base cache infrastructure will migrate to causaliq-core.
 
 from __future__ import annotations
 
+import json
 from dataclasses import asdict, dataclass, field
 from datetime import datetime, timezone
 from pathlib import Path
@@ -107,11 +108,33 @@ class LLMResponse:
             "model_version": self.model_version,
         }
 
+    def to_export_dict(self) -> dict[str, Any]:
+        """Convert to dictionary for export, parsing JSON content if valid.
+
+        Unlike to_dict(), this attempts to parse the content as JSON
+        for more readable exported files.
+        """
+        # Try to parse content as JSON for cleaner export
+        try:
+            parsed_content = json.loads(self.content)
+        except (json.JSONDecodeError, TypeError):
+            parsed_content = self.content
+
+        return {
+            "content": parsed_content,
+            "finish_reason": self.finish_reason,
+            "model_version": self.model_version,
+        }
+
     @classmethod
     def from_dict(cls, data: dict[str, Any]) -> LLMResponse:
         """Create from dictionary."""
+        content = data.get("content", "")
+        # Handle both string and parsed JSON content (from export files)
+        if isinstance(content, dict):
+            content = json.dumps(content)
         return cls(
-            content=data.get("content", ""),
+            content=content,
             finish_reason=data.get("finish_reason", "stop"),
             model_version=data.get("model_version", ""),
         )
@@ -137,6 +160,30 @@ class LLMCacheEntry:
     response: LLMResponse = field(default_factory=LLMResponse)
     metadata: LLMMetadata = field(default_factory=LLMMetadata)
 
+    @staticmethod
+    def _split_message_content(messages: list[dict[str, Any]]) -> list[Any]:
+        """Convert message content with newlines into arrays of lines."""
+        result = []
+        for msg in messages:
+            new_msg = dict(msg)
+            content = new_msg.get("content", "")
+            if isinstance(content, str) and "\n" in content:
+                new_msg["content"] = content.split("\n")
+            result.append(new_msg)
+        return result
+
+    @staticmethod
+    def _join_message_content(messages: list[Any]) -> list[dict[str, Any]]:
+        """Convert message content arrays back into strings with newlines."""
+        result = []
+        for msg in messages:
+            new_msg = dict(msg)
+            content = new_msg.get("content", "")
+            if isinstance(content, list):
+                new_msg["content"] = "\n".join(content)
+            result.append(new_msg)
+        return result
+
     def to_dict(self) -> dict[str, Any]:
         """Convert to dictionary for JSON serialisation."""
         return {
@@ -150,13 +197,37 @@ class LLMCacheEntry:
             "metadata": self.metadata.to_dict(),
         }
 
+    def to_export_dict(self) -> dict[str, Any]:
+        """Convert to dictionary for export with readable formatting.
+
+        - Message content with newlines is split into arrays of lines
+        - Response JSON content is parsed into a proper JSON structure
+        """
+        return {
+            "cache_key": {
+                "model": self.model,
+                "messages": self._split_message_content(self.messages),
+                "temperature": self.temperature,
+                "max_tokens": self.max_tokens,
+            },
+            "response": self.response.to_export_dict(),
+            "metadata": self.metadata.to_dict(),
+        }
+
     @classmethod
     def from_dict(cls, data: dict[str, Any]) -> LLMCacheEntry:
-        """Create from dictionary."""
+        """Create from dictionary.
+
+        Handles both internal format (string content) and export format
+        (array of lines for content).
+        """
         cache_key = data.get("cache_key", {})
+        messages = cache_key.get("messages", [])
+        # Handle export format where content is array of lines
+        messages = cls._join_message_content(messages)
         return cls(
             model=cache_key.get("model", ""),
-            messages=cache_key.get("messages", []),
+            messages=messages,
             temperature=cache_key.get("temperature", 0.0),
             max_tokens=cache_key.get("max_tokens"),
             response=LLMResponse.from_dict(data.get("response", {})),
@@ -361,11 +432,13 @@ class LLMEntryEncoder(JsonEncoder):
     def export_entry(self, entry: LLMCacheEntry, path: Path) -> None:
         """Export an LLMCacheEntry to a JSON file.
 
+        Uses to_export_dict() to parse JSON content for readability.
+
         Args:
             entry: The cache entry to export.
             path: Destination file path.
         """
-        self.export(entry.to_dict(), path)
+        self.export(entry.to_export_dict(), path)
 
     def import_entry(self, path: Path) -> LLMCacheEntry:
         """Import an LLMCacheEntry from a JSON file.

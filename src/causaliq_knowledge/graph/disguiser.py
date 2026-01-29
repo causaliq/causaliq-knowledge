@@ -12,6 +12,7 @@ from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:  # pragma: no cover
     from causaliq_knowledge.graph.models import ModelSpec
+    from causaliq_knowledge.graph.response import GeneratedGraph
 
 
 class VariableDisguiser:
@@ -185,3 +186,69 @@ class VariableDisguiser:
             List of original variable names.
         """
         return [self.reveal_name(name) for name in names]
+
+    def disguise_spec(self) -> "ModelSpec":
+        """Create a copy of the ModelSpec with disguised variable names.
+
+        Returns:
+            New ModelSpec with variables renamed to disguised names.
+        """
+        from causaliq_knowledge.graph.models import ModelSpec, VariableSpec
+
+        disguised_vars = []
+        for var in self._spec.variables:
+            # Create new variable with disguised name
+            disguised_name = self._original_to_disguised[var.name]
+            var_dict = var.model_dump()
+            var_dict["name"] = disguised_name
+            # Clear descriptions to avoid leaking information
+            var_dict["short_description"] = f"Variable {disguised_name}"
+            var_dict["long_description"] = None
+            disguised_vars.append(VariableSpec(**var_dict))
+
+        return ModelSpec(
+            dataset_id=self._spec.dataset_id,
+            domain=self._spec.domain,
+            variables=disguised_vars,
+            views=self._spec.views,
+            provenance=self._spec.provenance,
+        )
+
+    def undisguise_graph(self, graph: "GeneratedGraph") -> "GeneratedGraph":
+        """Convert a graph with disguised names back to original names.
+
+        Args:
+            graph: GeneratedGraph with disguised variable names.
+
+        Returns:
+            New GeneratedGraph with original variable names.
+        """
+        from causaliq_knowledge.graph.response import (
+            GeneratedGraph,
+            ProposedEdge,
+        )
+
+        undisguised_edges = []
+        for edge in graph.edges:
+            source = self._disguised_to_original.get(edge.source, edge.source)
+            target = self._disguised_to_original.get(edge.target, edge.target)
+            undisguised_edges.append(
+                ProposedEdge(
+                    source=source,
+                    target=target,
+                    confidence=edge.confidence,
+                    reasoning=self.reveal_text(edge.reasoning or ""),
+                )
+            )
+
+        # Convert disguised variable names back to original names
+        undisguised_vars = [
+            self._disguised_to_original.get(v, v) for v in graph.variables
+        ]
+
+        return GeneratedGraph(
+            edges=undisguised_edges,
+            variables=undisguised_vars,
+            metadata=graph.metadata,
+            raw_response=graph.raw_response,
+        )

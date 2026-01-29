@@ -82,7 +82,8 @@ def test_disguiser_text_reveal() -> None:
 def test_disguiser_collider_variables() -> None:
     spec = ModelLoader.load(TEST_MODELS_DIR / "collider.json")
     disguiser = VariableDisguiser(spec, seed=42)
-    names = ["genetic_factor", "environmental_exposure", "disease_status"]
+    # Use benchmark names (name field), not llm_name
+    names = ["Gene", "Environment", "Disease"]
     disguised = disguiser.disguise_names_list(names)
     revealed = disguiser.reveal_names_list(disguised)
     assert revealed == names

@@ -51,6 +51,8 @@ class TokenCache:
             data BLOB NOT NULL,
             created_at TEXT NOT NULL,
             metadata BLOB,
+            hit_count INTEGER DEFAULT 0,
+            last_accessed_at TEXT,
             PRIMARY KEY (hash, entry_type)
         );
 
@@ -239,6 +241,28 @@ class TokenCache:
         row = cursor.fetchone()
         return int(row[0]) if row else 0
 
+    def total_hits(self, entry_type: str | None = None) -> int:
+        """Get total cache hits across all entries.
+
+        Args:
+            entry_type: If provided, count only hits for this entry type.
+
+        Returns:
+            Total hit count.
+        """
+        if entry_type is None:
+            cursor = self.conn.execute(
+                "SELECT COALESCE(SUM(hit_count), 0) FROM cache_entries"
+            )
+        else:
+            cursor = self.conn.execute(
+                "SELECT COALESCE(SUM(hit_count), 0) FROM cache_entries "
+                "WHERE entry_type = ?",
+                (entry_type,),
+            )
+        row = cursor.fetchone()
+        return int(row[0]) if row else 0
+
     def get_or_create_token(self, token: str) -> int:
         """Get token ID, creating a new entry if needed.
 
@@ -319,7 +343,7 @@ class TokenCache:
         self.conn.commit()
 
     def get(self, hash: str, entry_type: str) -> bytes | None:
-        """Retrieve a cache entry.
+        """Retrieve a cache entry and increment hit count.
 
         Args:
             hash: Unique identifier for the entry.
@@ -334,7 +358,17 @@ class TokenCache:
             (hash, entry_type),
         )
         row = cursor.fetchone()
-        return row[0] if row else None
+        if row:
+            # Increment hit count and update last accessed time
+            self.conn.execute(
+                "UPDATE cache_entries SET hit_count = hit_count + 1, "
+                "last_accessed_at = ? WHERE hash = ? AND entry_type = ?",
+                (self._utcnow_iso(), hash, entry_type),
+            )
+            self.conn.commit()
+            result: bytes = row[0]
+            return result
+        return None
 
     def get_with_metadata(
         self, hash: str, entry_type: str

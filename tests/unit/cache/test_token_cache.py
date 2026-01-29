@@ -43,7 +43,15 @@ def test_cache_entries_table_has_correct_columns() -> None:
     with TokenCache(":memory:") as cache:
         cursor = cache.conn.execute("PRAGMA table_info(cache_entries)")
         columns = {row[1] for row in cursor.fetchall()}
-        expected = {"hash", "entry_type", "data", "created_at", "metadata"}
+        expected = {
+            "hash",
+            "entry_type",
+            "data",
+            "created_at",
+            "metadata",
+            "hit_count",
+            "last_accessed_at",
+        }
         assert columns == expected
 
 
@@ -508,3 +516,90 @@ def test_import_entries_raises_for_missing_directory() -> None:
 
         with pytest.raises(FileNotFoundError):
             cache.import_entries(Path("/nonexistent/path"), "json")
+
+
+# ============================================================================
+# Cache hit tracking tests
+# ============================================================================
+
+
+# Test that get increments hit count
+def test_get_increments_hit_count() -> None:
+    """Verify get() increments hit_count for existing entries."""
+    with TokenCache(":memory:") as cache:
+        cache.put("key1", "test", b"data")
+
+        # First get
+        cache.get("key1", "test")
+        cursor = cache.conn.execute(
+            "SELECT hit_count FROM cache_entries WHERE hash = 'key1'"
+        )
+        assert cursor.fetchone()[0] == 1
+
+        # Second get
+        cache.get("key1", "test")
+        cursor = cache.conn.execute(
+            "SELECT hit_count FROM cache_entries WHERE hash = 'key1'"
+        )
+        assert cursor.fetchone()[0] == 2
+
+
+# Test that get updates last_accessed_at
+def test_get_updates_last_accessed_at() -> None:
+    """Verify get() updates last_accessed_at timestamp."""
+    with TokenCache(":memory:") as cache:
+        cache.put("key1", "test", b"data")
+
+        # First get
+        cache.get("key1", "test")
+        cursor = cache.conn.execute(
+            "SELECT last_accessed_at FROM cache_entries WHERE hash = 'key1'"
+        )
+        first_access = cursor.fetchone()[0]
+        assert first_access is not None
+
+
+# Test that get returns None for missing entry without error
+def test_get_missing_entry_does_not_increment() -> None:
+    """Verify get() for non-existent entry returns None without error."""
+    with TokenCache(":memory:") as cache:
+        result = cache.get("nonexistent", "test")
+        assert result is None
+
+
+# Test total_hits returns sum of all hit counts
+def test_total_hits_returns_sum() -> None:
+    """Verify total_hits() returns sum of all hit counts."""
+    with TokenCache(":memory:") as cache:
+        cache.put("key1", "test", b"data1")
+        cache.put("key2", "test", b"data2")
+
+        # Access key1 twice, key2 once
+        cache.get("key1", "test")
+        cache.get("key1", "test")
+        cache.get("key2", "test")
+
+        assert cache.total_hits() == 3
+
+
+# Test total_hits with entry_type filter
+def test_total_hits_by_entry_type() -> None:
+    """Verify total_hits() filters by entry_type."""
+    with TokenCache(":memory:") as cache:
+        cache.put("key1", "llm", b"data1")
+        cache.put("key2", "graph", b"data2")
+
+        cache.get("key1", "llm")
+        cache.get("key1", "llm")
+        cache.get("key2", "graph")
+
+        assert cache.total_hits("llm") == 2
+        assert cache.total_hits("graph") == 1
+        assert cache.total_hits() == 3
+
+
+# Test total_hits returns zero for empty cache
+def test_total_hits_empty_cache() -> None:
+    """Verify total_hits() returns 0 for empty cache."""
+    with TokenCache(":memory:") as cache:
+        assert cache.total_hits() == 0

@@ -233,6 +233,35 @@ def test_llm_response_round_trip():
     assert restored == original
 
 
+# Test LLMResponse to_export_dict parses JSON content.
+def test_llm_response_to_export_dict_parses_json():
+    json_content = '{"edges": [{"source": "A", "target": "B"}]}'
+    resp = LLMResponse(content=json_content, finish_reason="stop")
+    export = resp.to_export_dict()
+    assert export["content"] == {"edges": [{"source": "A", "target": "B"}]}
+    assert export["finish_reason"] == "stop"
+
+
+# Test LLMResponse to_export_dict keeps non-JSON as string.
+def test_llm_response_to_export_dict_keeps_string_for_non_json():
+    resp = LLMResponse(content="Plain text response", finish_reason="stop")
+    export = resp.to_export_dict()
+    assert export["content"] == "Plain text response"
+
+
+# Test LLMResponse from_dict handles parsed JSON content from export files.
+def test_llm_response_from_dict_handles_parsed_json():
+    data = {
+        "content": {"edges": [{"source": "A", "target": "B"}]},
+        "finish_reason": "stop",
+        "model_version": "test-model",
+    }
+    resp = LLMResponse.from_dict(data)
+    # Content should be serialised back to string
+    assert resp.content == '{"edges": [{"source": "A", "target": "B"}]}'
+    assert resp.finish_reason == "stop"
+
+
 # =============================================================================
 # LLMCacheEntry Tests
 # =============================================================================
@@ -301,6 +330,61 @@ def test_llm_cache_entry_to_dict():
     assert result["response"]["content"] == "4"
     assert "metadata" in result
     assert result["metadata"]["provider"] == "openai"
+
+
+# Test LLMCacheEntry to_export_dict parses JSON response content.
+def test_llm_cache_entry_to_export_dict():
+    json_content = '{"edges": [{"source": "A", "target": "B"}]}'
+    entry = LLMCacheEntry(
+        model="test-model",
+        messages=[{"role": "user", "content": "Test"}],
+        response=LLMResponse(content=json_content, finish_reason="stop"),
+    )
+    result = entry.to_export_dict()
+    # Response content should be parsed JSON
+    assert result["response"]["content"] == {
+        "edges": [{"source": "A", "target": "B"}]
+    }
+    assert result["cache_key"]["model"] == "test-model"
+
+
+# Test LLMCacheEntry to_export_dict splits multiline message content.
+def test_llm_cache_entry_to_export_dict_splits_message_lines():
+    multiline_content = "Line 1\nLine 2\nLine 3"
+    entry = LLMCacheEntry(
+        model="test-model",
+        messages=[
+            {"role": "system", "content": multiline_content},
+            {"role": "user", "content": "Single line"},
+        ],
+    )
+    result = entry.to_export_dict()
+    # Multiline content should be split into array
+    assert result["cache_key"]["messages"][0]["content"] == [
+        "Line 1",
+        "Line 2",
+        "Line 3",
+    ]
+    # Single line content stays as string
+    assert result["cache_key"]["messages"][1]["content"] == "Single line"
+
+
+# Test LLMCacheEntry from_dict joins array message content.
+def test_llm_cache_entry_from_dict_joins_array_content():
+    data = {
+        "cache_key": {
+            "model": "test-model",
+            "messages": [
+                {"role": "system", "content": ["Line 1", "Line 2", "Line 3"]},
+                {"role": "user", "content": "Single line"},
+            ],
+        },
+    }
+    entry = LLMCacheEntry.from_dict(data)
+    # Array content should be joined with newlines
+    assert entry.messages[0]["content"] == "Line 1\nLine 2\nLine 3"
+    # String content stays as string
+    assert entry.messages[1]["content"] == "Single line"
 
 
 # Test LLMCacheEntry from_dict conversion.
