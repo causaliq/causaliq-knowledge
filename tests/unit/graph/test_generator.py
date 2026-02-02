@@ -10,7 +10,7 @@ from causaliq_knowledge.graph.generator import (
 )
 from causaliq_knowledge.graph.prompts import OutputFormat
 from causaliq_knowledge.graph.response import GeneratedGraph
-from causaliq_knowledge.graph.view_filter import ViewLevel
+from causaliq_knowledge.graph.view_filter import PromptDetail
 from causaliq_knowledge.llm.base_client import LLMResponse
 
 
@@ -36,7 +36,7 @@ def test_generator_config_defaults() -> None:
     assert config.max_tokens == 2000
     assert config.timeout == 60.0
     assert config.output_format == OutputFormat.EDGE_LIST
-    assert config.view_level == ViewLevel.STANDARD
+    assert config.prompt_detail == PromptDetail.STANDARD
 
 
 # Test GraphGeneratorConfig custom values.
@@ -46,13 +46,13 @@ def test_generator_config_custom_values() -> None:
         max_tokens=1000,
         timeout=30.0,
         output_format=OutputFormat.ADJACENCY_MATRIX,
-        view_level=ViewLevel.RICH,
+        prompt_detail=PromptDetail.RICH,
     )
     assert config.temperature == 0.5
     assert config.max_tokens == 1000
     assert config.timeout == 30.0
     assert config.output_format == OutputFormat.ADJACENCY_MATRIX
-    assert config.view_level == ViewLevel.RICH
+    assert config.prompt_detail == PromptDetail.RICH
 
 
 # --- GraphGenerator creation tests ---
@@ -218,8 +218,8 @@ def test_generate_graph_increments_call_count(mocker) -> None:
     assert generator.call_count == 2
 
 
-# Test generate_graph with custom view level.
-def test_generate_graph_with_view_level(mocker) -> None:
+# Test generate_graph with custom prompt_detail level.
+def test_generate_graph_with_prompt_detail(mocker) -> None:
     mock_groq = mocker.patch("causaliq_knowledge.graph.generator.GroqClient")
     mock_client = mocker.MagicMock()
     mock_client.completion.return_value = LLMResponse(
@@ -231,7 +231,7 @@ def test_generate_graph_with_view_level(mocker) -> None:
 
     generator = GraphGenerator(model="groq/test-model")
     variables = [{"name": "a", "type": "binary", "short_description": "desc"}]
-    graph = generator.generate_graph(variables, level=ViewLevel.RICH)
+    graph = generator.generate_graph(variables, level=PromptDetail.RICH)
 
     assert isinstance(graph, GeneratedGraph)
 
@@ -384,7 +384,7 @@ def test_cache_key_has_graph_prefix(mocker) -> None:
 
     prompt = GraphQueryPrompt(
         variables=[{"name": "a"}],
-        level=ViewLevel.MINIMAL,
+        level=PromptDetail.MINIMAL,
     )
     system, user = prompt.build()
     key = generator._build_cache_key(prompt, system, user)
@@ -402,7 +402,7 @@ def test_cache_key_is_deterministic(mocker) -> None:
 
     prompt = GraphQueryPrompt(
         variables=[{"name": "a"}],
-        level=ViewLevel.MINIMAL,
+        level=PromptDetail.MINIMAL,
     )
     system, user = prompt.build()
 
@@ -422,11 +422,11 @@ def test_cache_key_differs_for_different_prompts(mocker) -> None:
 
     prompt1 = GraphQueryPrompt(
         variables=[{"name": "a"}],
-        level=ViewLevel.MINIMAL,
+        level=PromptDetail.MINIMAL,
     )
     prompt2 = GraphQueryPrompt(
         variables=[{"name": "b"}],
-        level=ViewLevel.MINIMAL,
+        level=PromptDetail.MINIMAL,
     )
 
     system1, user1 = prompt1.build()
@@ -482,8 +482,8 @@ def test_generate_from_spec_returns_graph(mocker) -> None:
     assert generator.call_count == 1
 
 
-# Test generate_from_spec with custom view level.
-def test_generate_from_spec_with_view_level(mocker) -> None:
+# Test generate_from_spec with custom prompt_detail level.
+def test_generate_from_spec_with_prompt_detail(mocker) -> None:
     from causaliq_knowledge.graph.models import (
         ModelSpec,
         VariableSpec,
@@ -517,7 +517,7 @@ def test_generate_from_spec_with_view_level(mocker) -> None:
     )
 
     generator = GraphGenerator(model="groq/test-model")
-    graph = generator.generate_from_spec(spec, level=ViewLevel.RICH)
+    graph = generator.generate_from_spec(spec, level=PromptDetail.RICH)
 
     assert isinstance(graph, GeneratedGraph)
 

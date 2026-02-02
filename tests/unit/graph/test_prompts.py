@@ -11,7 +11,7 @@ from causaliq_knowledge.graph.prompts import (
     OutputFormat,
     _format_variable_details,
 )
-from causaliq_knowledge.graph.view_filter import ViewLevel
+from causaliq_knowledge.graph.view_filter import PromptDetail
 
 
 # Test OutputFormat enum values.
@@ -60,7 +60,7 @@ def test_adjacency_matrix_response_schema_structure() -> None:
 # Test format variable details for minimal view.
 def test_format_variable_details_minimal() -> None:
     variables = [{"name": "A"}, {"name": "B"}, {"name": "C"}]
-    result = _format_variable_details(variables, ViewLevel.MINIMAL)
+    result = _format_variable_details(variables, PromptDetail.MINIMAL)
     assert "- A" in result
     assert "- B" in result
     assert "- C" in result
@@ -76,7 +76,7 @@ def test_format_variable_details_standard() -> None:
             "states": ["no", "yes"],
         }
     ]
-    result = _format_variable_details(variables, ViewLevel.STANDARD)
+    result = _format_variable_details(variables, PromptDetail.STANDARD)
     assert "- smoking" in result
     assert "Type: binary" in result
     assert "Description: Whether patient smokes" in result
@@ -86,7 +86,7 @@ def test_format_variable_details_standard() -> None:
 # Test format variable details for standard view with missing fields.
 def test_format_variable_details_standard_partial() -> None:
     variables = [{"name": "X", "type": "continuous"}]
-    result = _format_variable_details(variables, ViewLevel.STANDARD)
+    result = _format_variable_details(variables, PromptDetail.STANDARD)
     assert "- X" in result
     assert "Type: continuous" in result
     assert "Description:" not in result  # No description provided
@@ -107,7 +107,7 @@ def test_format_variable_details_rich() -> None:
             "related_domain_knowledge": ["Causes inflammation"],
         }
     ]
-    result = _format_variable_details(variables, ViewLevel.RICH)
+    result = _format_variable_details(variables, PromptDetail.RICH)
     assert "- tobacco_use" in result
     assert "Type: binary" in result
     assert "Role: exogenous" in result
@@ -122,14 +122,14 @@ def test_format_variable_details_rich() -> None:
 # Test format variable details handles missing name.
 def test_format_variable_details_missing_name() -> None:
     variables = [{"type": "binary"}]
-    result = _format_variable_details(variables, ViewLevel.MINIMAL)
+    result = _format_variable_details(variables, PromptDetail.MINIMAL)
     assert "- unknown" in result
 
 
 # Test GraphQueryPrompt build returns tuple of strings.
 def test_graph_query_prompt_build_returns_tuple() -> None:
     variables = [{"name": "A"}, {"name": "B"}]
-    prompt = GraphQueryPrompt(variables=variables, level=ViewLevel.MINIMAL)
+    prompt = GraphQueryPrompt(variables=variables, level=PromptDetail.MINIMAL)
     system, user = prompt.build()
     assert isinstance(system, str)
     assert isinstance(user, str)
@@ -140,7 +140,7 @@ def test_graph_query_prompt_edge_list_format() -> None:
     variables = [{"name": "A"}]
     prompt = GraphQueryPrompt(
         variables=variables,
-        level=ViewLevel.MINIMAL,
+        level=PromptDetail.MINIMAL,
         output_format=OutputFormat.EDGE_LIST,
     )
     system, _ = prompt.build()
@@ -153,7 +153,7 @@ def test_graph_query_prompt_adjacency_format() -> None:
     variables = [{"name": "A"}]
     prompt = GraphQueryPrompt(
         variables=variables,
-        level=ViewLevel.MINIMAL,
+        level=PromptDetail.MINIMAL,
         output_format=OutputFormat.ADJACENCY_MATRIX,
     )
     system, _ = prompt.build()
@@ -166,7 +166,7 @@ def test_graph_query_prompt_custom_system_prompt() -> None:
     custom = "You are a custom assistant."
     prompt = GraphQueryPrompt(
         variables=variables,
-        level=ViewLevel.MINIMAL,
+        level=PromptDetail.MINIMAL,
         system_prompt=custom,
     )
     system, _ = prompt.build()
@@ -176,7 +176,7 @@ def test_graph_query_prompt_custom_system_prompt() -> None:
 # Test GraphQueryPrompt minimal level without domain.
 def test_graph_query_prompt_minimal_no_domain() -> None:
     variables = [{"name": "X"}, {"name": "Y"}, {"name": "Z"}]
-    prompt = GraphQueryPrompt(variables=variables, level=ViewLevel.MINIMAL)
+    prompt = GraphQueryPrompt(variables=variables, level=PromptDetail.MINIMAL)
     _, user = prompt.build()
     assert "Variables: X, Y, Z" in user
     # Should not have "In the domain of" phrase
@@ -188,7 +188,7 @@ def test_graph_query_prompt_minimal_with_domain() -> None:
     variables = [{"name": "A"}, {"name": "B"}]
     prompt = GraphQueryPrompt(
         variables=variables,
-        level=ViewLevel.MINIMAL,
+        level=PromptDetail.MINIMAL,
         domain="epidemiology",
     )
     _, user = prompt.build()
@@ -201,7 +201,7 @@ def test_graph_query_prompt_standard_no_domain() -> None:
     variables = [
         {"name": "smoking", "type": "binary", "short_description": "Smoker"}
     ]
-    prompt = GraphQueryPrompt(variables=variables, level=ViewLevel.STANDARD)
+    prompt = GraphQueryPrompt(variables=variables, level=PromptDetail.STANDARD)
     _, user = prompt.build()
     assert "smoking" in user
     assert "Type: binary" in user
@@ -213,7 +213,7 @@ def test_graph_query_prompt_standard_with_domain() -> None:
     variables = [{"name": "X", "type": "continuous"}]
     prompt = GraphQueryPrompt(
         variables=variables,
-        level=ViewLevel.STANDARD,
+        level=PromptDetail.STANDARD,
         domain="climate_science",
     )
     _, user = prompt.build()
@@ -230,7 +230,7 @@ def test_graph_query_prompt_rich_no_domain() -> None:
             "short_description": "Surface temp",
         }
     ]
-    prompt = GraphQueryPrompt(variables=variables, level=ViewLevel.RICH)
+    prompt = GraphQueryPrompt(variables=variables, level=PromptDetail.RICH)
     _, user = prompt.build()
     assert "temperature" in user
     assert "Role: endogenous" in user
@@ -242,7 +242,7 @@ def test_graph_query_prompt_rich_with_domain() -> None:
     variables = [{"name": "A", "type": "binary", "role": "exogenous"}]
     prompt = GraphQueryPrompt(
         variables=variables,
-        level=ViewLevel.RICH,
+        level=PromptDetail.RICH,
         domain="genetics",
     )
     _, user = prompt.build()
@@ -253,7 +253,7 @@ def test_graph_query_prompt_rich_with_domain() -> None:
 # Test get_variable_names returns correct list.
 def test_get_variable_names() -> None:
     variables = [{"name": "X"}, {"name": "Y"}, {"name": "Z"}]
-    prompt = GraphQueryPrompt(variables=variables, level=ViewLevel.MINIMAL)
+    prompt = GraphQueryPrompt(variables=variables, level=PromptDetail.MINIMAL)
     names = prompt.get_variable_names()
     assert names == ["X", "Y", "Z"]
 
@@ -261,7 +261,7 @@ def test_get_variable_names() -> None:
 # Test get_variable_names handles missing names.
 def test_get_variable_names_missing() -> None:
     variables = [{"name": "A"}, {"type": "binary"}, {"name": "C"}]
-    prompt = GraphQueryPrompt(variables=variables, level=ViewLevel.MINIMAL)
+    prompt = GraphQueryPrompt(variables=variables, level=PromptDetail.MINIMAL)
     names = prompt.get_variable_names()
     assert names == ["A", "unknown", "C"]
 
@@ -279,7 +279,7 @@ def test_from_model_spec(sample_model_spec) -> None:
 def test_from_model_spec_minimal(sample_model_spec) -> None:
     prompt = GraphQueryPrompt.from_model_spec(
         sample_model_spec,
-        level=ViewLevel.MINIMAL,
+        level=PromptDetail.MINIMAL,
     )
     _, user = prompt.build()
     # Should have variable names but minimal detail
@@ -311,7 +311,7 @@ def test_from_model_spec_custom_system(sample_model_spec) -> None:
 def test_graph_query_prompt_defaults() -> None:
     variables = [{"name": "A"}]
     prompt = GraphQueryPrompt(variables=variables)
-    assert prompt.level == ViewLevel.STANDARD
+    assert prompt.level == PromptDetail.STANDARD
     assert prompt.domain is None
     assert prompt.output_format == OutputFormat.EDGE_LIST
     assert prompt.system_prompt is None

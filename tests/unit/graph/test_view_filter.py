@@ -10,7 +10,7 @@ from causaliq_knowledge.graph.models import (
     ViewDefinition,
     Views,
 )
-from causaliq_knowledge.graph.view_filter import ViewFilter, ViewLevel
+from causaliq_knowledge.graph.view_filter import PromptDetail, ViewFilter
 
 
 def _create_test_spec() -> ModelSpec:
@@ -53,19 +53,19 @@ def _create_test_spec() -> ModelSpec:
     )
 
 
-# Test ViewLevel enum values.
+# Test PromptDetail enum values.
 def test_view_level_minimal_value() -> None:
-    assert ViewLevel.MINIMAL.value == "minimal"
+    assert PromptDetail.MINIMAL.value == "minimal"
 
 
-# Test ViewLevel enum standard value.
+# Test PromptDetail enum standard value.
 def test_view_level_standard_value() -> None:
-    assert ViewLevel.STANDARD.value == "standard"
+    assert PromptDetail.STANDARD.value == "standard"
 
 
-# Test ViewLevel enum rich value.
+# Test PromptDetail enum rich value.
 def test_view_level_rich_value() -> None:
-    assert ViewLevel.RICH.value == "rich"
+    assert PromptDetail.RICH.value == "rich"
 
 
 # Test ViewFilter initialisation stores spec.
@@ -79,7 +79,7 @@ def test_view_filter_init_stores_spec() -> None:
 def test_get_include_fields_minimal() -> None:
     spec = _create_test_spec()
     view_filter = ViewFilter(spec)
-    fields = view_filter.get_include_fields(ViewLevel.MINIMAL)
+    fields = view_filter.get_include_fields(PromptDetail.MINIMAL)
     assert fields == ["name"]
 
 
@@ -87,7 +87,7 @@ def test_get_include_fields_minimal() -> None:
 def test_get_include_fields_standard() -> None:
     spec = _create_test_spec()
     view_filter = ViewFilter(spec)
-    fields = view_filter.get_include_fields(ViewLevel.STANDARD)
+    fields = view_filter.get_include_fields(PromptDetail.STANDARD)
     assert fields == ["name", "short_description", "type"]
 
 
@@ -95,7 +95,7 @@ def test_get_include_fields_standard() -> None:
 def test_get_include_fields_rich() -> None:
     spec = _create_test_spec()
     view_filter = ViewFilter(spec)
-    fields = view_filter.get_include_fields(ViewLevel.RICH)
+    fields = view_filter.get_include_fields(PromptDetail.RICH)
     assert "extended_description" in fields
     assert "sensitivity_hints" in fields
 
@@ -104,7 +104,9 @@ def test_get_include_fields_rich() -> None:
 def test_filter_variable_minimal() -> None:
     spec = _create_test_spec()
     view_filter = ViewFilter(spec)
-    result = view_filter.filter_variable(spec.variables[0], ViewLevel.MINIMAL)
+    result = view_filter.filter_variable(
+        spec.variables[0], PromptDetail.MINIMAL
+    )
     assert result == {"name": "smoking"}
 
 
@@ -112,7 +114,9 @@ def test_filter_variable_minimal() -> None:
 def test_filter_variable_standard() -> None:
     spec = _create_test_spec()
     view_filter = ViewFilter(spec)
-    result = view_filter.filter_variable(spec.variables[0], ViewLevel.STANDARD)
+    result = view_filter.filter_variable(
+        spec.variables[0], PromptDetail.STANDARD
+    )
     assert result["name"] == "smoking"
     assert result["short_description"] == "Daily cigarette consumption"
     assert result["type"] == "binary"
@@ -122,7 +126,7 @@ def test_filter_variable_standard() -> None:
 def test_filter_variable_rich() -> None:
     spec = _create_test_spec()
     view_filter = ViewFilter(spec)
-    result = view_filter.filter_variable(spec.variables[0], ViewLevel.RICH)
+    result = view_filter.filter_variable(spec.variables[0], PromptDetail.RICH)
     assert result["role"] == "exogenous"
     assert result["extended_description"] == "Known risk factor for cancer"
 
@@ -132,7 +136,7 @@ def test_filter_variable_excludes_none() -> None:
     spec = _create_test_spec()
     view_filter = ViewFilter(spec)
     # Second variable has no domain_context
-    result = view_filter.filter_variable(spec.variables[1], ViewLevel.RICH)
+    result = view_filter.filter_variable(spec.variables[1], PromptDetail.RICH)
     assert "domain_context" not in result
 
 
@@ -140,7 +144,7 @@ def test_filter_variable_excludes_none() -> None:
 def test_filter_variables_returns_all() -> None:
     spec = _create_test_spec()
     view_filter = ViewFilter(spec)
-    results = view_filter.filter_variables(ViewLevel.MINIMAL)
+    results = view_filter.filter_variables(PromptDetail.MINIMAL)
     assert len(results) == 2
     assert results[0] == {"name": "smoking"}
     assert results[1] == {"name": "cancer"}
@@ -150,7 +154,7 @@ def test_filter_variables_returns_all() -> None:
 def test_filter_variables_standard() -> None:
     spec = _create_test_spec()
     view_filter = ViewFilter(spec)
-    results = view_filter.filter_variables(ViewLevel.STANDARD)
+    results = view_filter.filter_variables(PromptDetail.STANDARD)
     assert all("short_description" in r for r in results)
 
 
@@ -173,7 +177,7 @@ def test_get_domain() -> None:
 def test_get_context_summary_minimal() -> None:
     spec = _create_test_spec()
     view_filter = ViewFilter(spec)
-    summary = view_filter.get_context_summary(ViewLevel.MINIMAL)
+    summary = view_filter.get_context_summary(PromptDetail.MINIMAL)
     assert summary["domain"] == "epidemiology"
     assert summary["dataset_id"] == "test"
     assert len(summary["variables"]) == 2
@@ -183,16 +187,16 @@ def test_get_context_summary_minimal() -> None:
 def test_get_context_summary_variables_filtered() -> None:
     spec = _create_test_spec()
     view_filter = ViewFilter(spec)
-    summary = view_filter.get_context_summary(ViewLevel.MINIMAL)
+    summary = view_filter.get_context_summary(PromptDetail.MINIMAL)
     for var in summary["variables"]:
         assert list(var.keys()) == ["name"]
 
 
-# Test ViewLevel is string enum.
+# Test PromptDetail is string enum.
 def test_view_level_is_string_enum() -> None:
-    assert ViewLevel.MINIMAL.value == "minimal"
-    assert ViewLevel.STANDARD.value == "standard"
-    assert ViewLevel.RICH.value == "rich"
+    assert PromptDetail.MINIMAL.value == "minimal"
+    assert PromptDetail.STANDARD.value == "standard"
+    assert PromptDetail.RICH.value == "rich"
 
 
 # Test get_variable_names returns benchmark names when use_llm_names=False.

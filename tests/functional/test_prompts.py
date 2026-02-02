@@ -13,7 +13,7 @@ from causaliq_knowledge.graph.prompts import (
     GraphQueryPrompt,
     OutputFormat,
 )
-from causaliq_knowledge.graph.view_filter import ViewLevel
+from causaliq_knowledge.graph.view_filter import PromptDetail
 
 # Path to test model files.
 MODELS_DIR = Path(__file__).parent.parent / "data" / "functional" / "models"
@@ -35,7 +35,7 @@ def collider_spec():
 def test_simple_chain_minimal_prompt(simple_chain_spec) -> None:
     prompt = GraphQueryPrompt.from_model_spec(
         simple_chain_spec,
-        level=ViewLevel.MINIMAL,
+        level=PromptDetail.MINIMAL,
     )
     system, user = prompt.build()
 
@@ -57,7 +57,7 @@ def test_simple_chain_minimal_prompt(simple_chain_spec) -> None:
 def test_simple_chain_standard_prompt(simple_chain_spec) -> None:
     prompt = GraphQueryPrompt.from_model_spec(
         simple_chain_spec,
-        level=ViewLevel.STANDARD,
+        level=PromptDetail.STANDARD,
     )
     _, user = prompt.build()
 
@@ -74,7 +74,7 @@ def test_simple_chain_standard_prompt(simple_chain_spec) -> None:
 def test_simple_chain_rich_prompt(simple_chain_spec) -> None:
     prompt = GraphQueryPrompt.from_model_spec(
         simple_chain_spec,
-        level=ViewLevel.RICH,
+        level=PromptDetail.RICH,
     )
     _, user = prompt.build()
 
@@ -90,7 +90,7 @@ def test_simple_chain_rich_prompt(simple_chain_spec) -> None:
 def test_collider_minimal_prompt(collider_spec) -> None:
     prompt = GraphQueryPrompt.from_model_spec(
         collider_spec,
-        level=ViewLevel.MINIMAL,
+        level=PromptDetail.MINIMAL,
     )
     _, user = prompt.build()
 
@@ -107,7 +107,7 @@ def test_collider_minimal_prompt(collider_spec) -> None:
 def test_collider_standard_prompt(collider_spec) -> None:
     prompt = GraphQueryPrompt.from_model_spec(
         collider_spec,
-        level=ViewLevel.STANDARD,
+        level=PromptDetail.STANDARD,
     )
     _, user = prompt.build()
 
@@ -125,7 +125,7 @@ def test_collider_standard_prompt(collider_spec) -> None:
 def test_collider_rich_prompt(collider_spec) -> None:
     prompt = GraphQueryPrompt.from_model_spec(
         collider_spec,
-        level=ViewLevel.RICH,
+        level=PromptDetail.RICH,
     )
     _, user = prompt.build()
 
@@ -162,7 +162,7 @@ def test_collider_adjacency_format(collider_spec) -> None:
 def test_simple_chain_variable_names(simple_chain_spec) -> None:
     prompt = GraphQueryPrompt.from_model_spec(
         simple_chain_spec,
-        level=ViewLevel.MINIMAL,
+        level=PromptDetail.MINIMAL,
     )
     names = prompt.get_variable_names()
 
@@ -176,7 +176,7 @@ def test_simple_chain_variable_names(simple_chain_spec) -> None:
 def test_collider_variable_names(collider_spec) -> None:
     prompt = GraphQueryPrompt.from_model_spec(
         collider_spec,
-        level=ViewLevel.MINIMAL,
+        level=PromptDetail.MINIMAL,
     )
     names = prompt.get_variable_names()
 
@@ -208,7 +208,7 @@ def test_custom_system_prompt_with_model(simple_chain_spec) -> None:
 def test_prompt_includes_model_domain(collider_spec) -> None:
     prompt = GraphQueryPrompt.from_model_spec(
         collider_spec,
-        level=ViewLevel.MINIMAL,
+        level=PromptDetail.MINIMAL,
     )
 
     assert prompt.domain == "epidemiology"
@@ -217,10 +217,10 @@ def test_prompt_includes_model_domain(collider_spec) -> None:
 
 
 # Test all view levels produce non-empty prompts.
-@pytest.mark.parametrize("level", list(ViewLevel))
+@pytest.mark.parametrize("level", list(PromptDetail))
 def test_all_view_levels_produce_prompts(
     simple_chain_spec,
-    level: ViewLevel,
+    level: PromptDetail,
 ) -> None:
     prompt = GraphQueryPrompt.from_model_spec(simple_chain_spec, level=level)
     system, user = prompt.build()
@@ -231,8 +231,8 @@ def test_all_view_levels_produce_prompts(
 
 
 # Test all view levels with collider model.
-@pytest.mark.parametrize("level", list(ViewLevel))
-def test_all_view_levels_collider(collider_spec, level: ViewLevel) -> None:
+@pytest.mark.parametrize("level", list(PromptDetail))
+def test_all_view_levels_collider(collider_spec, level: PromptDetail) -> None:
     prompt = GraphQueryPrompt.from_model_spec(collider_spec, level=level)
     system, user = prompt.build()
 

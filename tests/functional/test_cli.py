@@ -64,7 +64,7 @@ def test_cli_version():
     result = runner.invoke(cli, ["--version"])
 
     assert result.exit_code == 0
-    assert "0.3.0" in result.output
+    assert "0.4.0" in result.output
 
 
 # ============================================================================
@@ -736,7 +736,7 @@ def test_cli_generate_graph_shows_help():
 
     assert result.exit_code == 0
     assert "--model-spec" in result.output
-    assert "--view" in result.output
+    assert "--prompt-detail" in result.output
     assert "--disguise" in result.output
     assert "--llm" in result.output
     assert "--output" in result.output
@@ -1036,12 +1036,12 @@ def test_cli_generate_graph_use_benchmark_names(tmp_path, mocker):
     assert "benchmark names" in result.output.lower()
 
 
-# Test generate graph with --view minimal flag.
-def test_cli_generate_graph_view_minimal(tmp_path, mocker):
+# Test generate graph with --prompt-detail minimal flag.
+def test_cli_generate_graph_prompt_detail_minimal(tmp_path, mocker):
     import json
 
     spec_data = {
-        "dataset_id": "view-test",
+        "dataset_id": "prompt-detail-test",
         "domain": "testing",
         "variables": [
             {"name": "A", "type": "binary", "short_description": "Variable A"},
@@ -1068,7 +1068,14 @@ def test_cli_generate_graph_view_minimal(tmp_path, mocker):
     runner = CliRunner()
     result = runner.invoke(
         cli,
-        ["generate", "graph", "-s", str(spec_file), "--view", "minimal"],
+        [
+            "generate",
+            "graph",
+            "-s",
+            str(spec_file),
+            "--prompt-detail",
+            "minimal",
+        ],
     )
 
     assert result.exit_code == 0
@@ -1321,12 +1328,12 @@ def test_cli_generate_graph_llm_option(tmp_path, mocker):
     assert call_kwargs[1]["model"] == "gemini/gemini-2.5-flash"
 
 
-# Test generate graph with invalid view level.
-def test_cli_generate_graph_invalid_view_level(tmp_path):
+# Test generate graph with invalid prompt_detail level.
+def test_cli_generate_graph_invalid_prompt_detail_level(tmp_path):
     import json
 
     spec_data = {
-        "dataset_id": "invalid-view-test",
+        "dataset_id": "invalid-prompt-detail-test",
         "domain": "testing",
         "variables": [
             {"name": "A", "type": "binary", "short_description": "Variable A"},
@@ -1338,7 +1345,14 @@ def test_cli_generate_graph_invalid_view_level(tmp_path):
     runner = CliRunner()
     result = runner.invoke(
         cli,
-        ["generate", "graph", "-s", str(spec_file), "--view", "invalid"],
+        [
+            "generate",
+            "graph",
+            "-s",
+            str(spec_file),
+            "--prompt-detail",
+            "invalid",
+        ],
     )
 
     assert result.exit_code != 0

@@ -1,7 +1,16 @@
 # Build and publish script for Windows
 # This script builds the package and optionally publishes to PyPI
 
-$CurrentVersion = "0.3.0"
+# Extract version from __init__.py
+$InitFile = Join-Path $PSScriptRoot "..\src\causaliq_knowledge\__init__.py"
+$VersionLine = Get-Content $InitFile | Select-String -Pattern '__version__\s*=\s*"([^"]+)"'
+if ($VersionLine) {
+    $CurrentVersion = $VersionLine.Matches[0].Groups[1].Value
+} else {
+    Write-Host "Could not extract version from __init__.py" -ForegroundColor Red
+    exit 1
+}
+
 $Version = Read-Host "Enter version number (current: $CurrentVersion)"
 if (-not $Version) { $Version = $CurrentVersion }
 

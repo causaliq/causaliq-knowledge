@@ -6,8 +6,8 @@ from pathlib import Path
 
 from causaliq_knowledge.graph import (
     ModelLoader,
+    PromptDetail,
     ViewFilter,
-    ViewLevel,
 )
 
 # Path to test model files.
@@ -20,7 +20,7 @@ TEST_MODELS_DIR = (
 def test_view_filter_simple_chain_minimal() -> None:
     spec = ModelLoader.load(TEST_MODELS_DIR / "simple_chain.json")
     view_filter = ViewFilter(spec)
-    results = view_filter.filter_variables(ViewLevel.MINIMAL)
+    results = view_filter.filter_variables(PromptDetail.MINIMAL)
     assert len(results) == 3
     # Minimal view should only have name field
     for var in results:
@@ -32,7 +32,7 @@ def test_view_filter_simple_chain_minimal() -> None:
 def test_view_filter_simple_chain_standard() -> None:
     spec = ModelLoader.load(TEST_MODELS_DIR / "simple_chain.json")
     view_filter = ViewFilter(spec)
-    results = view_filter.filter_variables(ViewLevel.STANDARD)
+    results = view_filter.filter_variables(PromptDetail.STANDARD)
     assert len(results) == 3
     # Standard view includes name, type, short_description
     for var in results:
@@ -46,9 +46,9 @@ def test_view_filter_collider_custom_views() -> None:
     spec = ModelLoader.load(TEST_MODELS_DIR / "collider.json")
     view_filter = ViewFilter(spec)
     # Collider has explicit view definitions
-    minimal_fields = view_filter.get_include_fields(ViewLevel.MINIMAL)
+    minimal_fields = view_filter.get_include_fields(PromptDetail.MINIMAL)
     assert minimal_fields == ["name"]
-    standard_fields = view_filter.get_include_fields(ViewLevel.STANDARD)
+    standard_fields = view_filter.get_include_fields(PromptDetail.STANDARD)
     assert "states" in standard_fields
 
 
@@ -56,7 +56,7 @@ def test_view_filter_collider_custom_views() -> None:
 def test_view_filter_collider_rich_view() -> None:
     spec = ModelLoader.load(TEST_MODELS_DIR / "collider.json")
     view_filter = ViewFilter(spec)
-    results = view_filter.filter_variables(ViewLevel.RICH)
+    results = view_filter.filter_variables(PromptDetail.RICH)
     # genetic_factor has extended_description
     genetic = next(v for v in results if v["name"] == "genetic_factor")
     assert "extended_description" in genetic
@@ -67,7 +67,7 @@ def test_view_filter_collider_rich_view() -> None:
 def test_view_filter_context_summary_structure() -> None:
     spec = ModelLoader.load(TEST_MODELS_DIR / "collider.json")
     view_filter = ViewFilter(spec)
-    summary = view_filter.get_context_summary(ViewLevel.STANDARD)
+    summary = view_filter.get_context_summary(PromptDetail.STANDARD)
     assert summary["domain"] == "epidemiology"
     assert summary["dataset_id"] == "collider"
     assert len(summary["variables"]) == 3
@@ -92,7 +92,7 @@ def test_view_filter_get_domain() -> None:
 def test_view_filter_minimal_excludes_none_fields() -> None:
     spec = ModelLoader.load(TEST_MODELS_DIR / "minimal.json")
     view_filter = ViewFilter(spec)
-    results = view_filter.filter_variables(ViewLevel.RICH)
+    results = view_filter.filter_variables(PromptDetail.RICH)
     # Minimal model has variables without extended descriptions
     for var in results:
         # None values should not be present in filtered output

@@ -20,7 +20,7 @@ from causaliq_knowledge.graph.response import (
     GenerationMetadata,
     parse_graph_response,
 )
-from causaliq_knowledge.graph.view_filter import ViewLevel
+from causaliq_knowledge.graph.view_filter import PromptDetail
 from causaliq_knowledge.llm.anthropic_client import (
     AnthropicClient,
     AnthropicConfig,
@@ -63,7 +63,7 @@ class GraphGeneratorConfig:
         max_tokens: Maximum tokens in LLM response.
         timeout: Request timeout in seconds.
         output_format: Desired output format (edge_list or adjacency_matrix).
-        view_level: Context level for variable information.
+        prompt_detail: Detail level for variable information in prompts.
         use_llm_names: Use llm_name instead of benchmark name in prompts.
         request_id: Optional identifier for requests (stored in metadata).
     """
@@ -72,7 +72,7 @@ class GraphGeneratorConfig:
     max_tokens: int = 2000
     timeout: float = 60.0
     output_format: OutputFormat = OutputFormat.EDGE_LIST
-    view_level: ViewLevel = ViewLevel.STANDARD
+    prompt_detail: PromptDetail = PromptDetail.STANDARD
     use_llm_names: bool = True
     request_id: str = ""
 
@@ -287,7 +287,7 @@ class GraphGenerator:
             "type": "graph_generation",
             "model": self._model,
             "output_format": self._config.output_format.value,
-            "view_level": prompt.level.value,
+            "prompt_detail": prompt.level.value,
             "system_prompt": system_prompt,
             "user_prompt": user_prompt,
             "temperature": self._config.temperature,
@@ -298,7 +298,7 @@ class GraphGenerator:
     def generate_graph(
         self,
         variables: List[Dict[str, Any]],
-        level: Optional[ViewLevel] = None,
+        level: Optional[PromptDetail] = None,
         domain: Optional[str] = None,
         output_format: Optional[OutputFormat] = None,
         system_prompt: Optional[str] = None,
@@ -318,7 +318,7 @@ class GraphGenerator:
         Raises:
             ValueError: If LLM response cannot be parsed.
         """
-        level = level or self._config.view_level
+        level = level or self._config.prompt_detail
         output_format = output_format or self._config.output_format
 
         # Build the prompt
@@ -335,7 +335,7 @@ class GraphGenerator:
     def generate_from_spec(
         self,
         spec: "ModelSpec",
-        level: Optional[ViewLevel] = None,
+        level: Optional[PromptDetail] = None,
         output_format: Optional[OutputFormat] = None,
         system_prompt: Optional[str] = None,
         use_llm_names: Optional[bool] = None,
@@ -359,7 +359,7 @@ class GraphGenerator:
         Raises:
             ValueError: If LLM response cannot be parsed.
         """
-        level = level or self._config.view_level
+        level = level or self._config.prompt_detail
         output_format = output_format or self._config.output_format
         use_llm = (
             use_llm_names

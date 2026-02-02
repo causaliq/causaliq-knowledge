@@ -14,23 +14,23 @@ from typing import TYPE_CHECKING, Optional
 import click
 
 from causaliq_knowledge.graph.prompts import OutputFormat
-from causaliq_knowledge.graph.view_filter import ViewLevel
+from causaliq_knowledge.graph.view_filter import PromptDetail
 
 if TYPE_CHECKING:  # pragma: no cover
     from causaliq_knowledge.graph.models import ModelSpec
     from causaliq_knowledge.graph.response import GeneratedGraph
 
 
-def _parse_view_level(value: str) -> ViewLevel:
-    """Convert view level string to enum.
+def _parse_prompt_detail(value: str) -> PromptDetail:
+    """Convert prompt detail string to enum.
 
     Args:
-        value: View level string (minimal, standard, rich).
+        value: Prompt detail string (minimal, standard, rich).
 
     Returns:
-        ViewLevel enum value.
+        PromptDetail enum value.
     """
-    return ViewLevel(value.lower())
+    return PromptDetail(value.lower())
 
 
 def _parse_output_format(value: str) -> OutputFormat:
@@ -105,12 +105,12 @@ def generate_group() -> None:
     help="Path to model specification JSON file.",
 )
 @click.option(
-    "--view",
+    "--prompt-detail",
     "-v",
-    "view_level",
+    "prompt_detail",
     default="standard",
     type=click.Choice(["minimal", "standard", "rich"], case_sensitive=False),
-    help="Context level for variable information.",
+    help="Detail level for variable information in prompts.",
 )
 @click.option(
     "--disguise",
@@ -185,7 +185,7 @@ def generate_group() -> None:
 )
 def generate_graph(
     model_spec: Path,
-    view_level: str,
+    prompt_detail: str,
     disguise: bool,
     use_benchmark_names: bool,
     seed: Optional[int],
@@ -228,7 +228,7 @@ def generate_graph(
     )
 
     # Parse enums
-    level = _parse_view_level(view_level)
+    level = _parse_prompt_detail(prompt_detail)
     fmt = _parse_output_format(output_format)
 
     # Load model specification
@@ -285,7 +285,7 @@ def generate_graph(
         config = GraphGeneratorConfig(
             temperature=temperature,
             output_format=fmt,
-            view_level=level,
+            prompt_detail=level,
             use_llm_names=use_llm_names,
             request_id=request_id,
         )
@@ -349,7 +349,7 @@ def _build_output(
     graph: GeneratedGraph,
     spec: ModelSpec,
     model: str,
-    level: ViewLevel,
+    level: PromptDetail,
     fmt: OutputFormat,
     disguised: bool,
 ) -> dict:
@@ -385,7 +385,7 @@ def _build_output(
         "edges": edges,
         "generation": {
             "model": model,
-            "view_level": level.value,
+            "prompt_detail": level.value,
             "output_format": fmt.value,
             "disguised": disguised,
         },

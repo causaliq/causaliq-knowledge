@@ -1,7 +1,7 @@
-"""View filtering for model specifications.
+"""Prompt detail filtering for model specifications.
 
 This module provides functionality to extract filtered views
-(minimal, standard, rich) from model specifications.
+(minimal, standard, rich) from model specifications for LLM prompts.
 """
 
 from __future__ import annotations
@@ -12,8 +12,8 @@ from typing import Any
 from causaliq_knowledge.graph.models import ModelSpec, VariableSpec
 
 
-class ViewLevel(str, Enum):
-    """Level of detail for variable context views."""
+class PromptDetail(str, Enum):
+    """Level of detail for variable information in prompts."""
 
     MINIMAL = "minimal"
     STANDARD = "standard"
@@ -21,7 +21,7 @@ class ViewLevel(str, Enum):
 
 
 class ViewFilter:
-    """Filter model specifications to extract specific view levels.
+    """Filter model specifications to extract specific detail levels.
 
     This class extracts variable information according to the view
     definitions in the model specification (minimal, standard, rich).
@@ -33,7 +33,7 @@ class ViewFilter:
     Example:
         >>> spec = ModelLoader.load("model.json")
         >>> view_filter = ViewFilter(spec)
-        >>> minimal_vars = view_filter.filter_variables(ViewLevel.MINIMAL)
+        >>> minimal_vars = view_filter.filter_variables(PromptDetail.MINIMAL)
         >>> # Returns list of dicts with llm_name as 'name' field
     """
 
@@ -53,37 +53,37 @@ class ViewFilter:
         """Return the model specification."""
         return self._spec
 
-    def get_include_fields(self, level: ViewLevel) -> list[str]:
-        """Get the fields to include for a given view level.
+    def get_include_fields(self, level: PromptDetail) -> list[str]:
+        """Get the fields to include for a given detail level.
 
         Args:
-            level: The view level (minimal, standard, rich).
+            level: The prompt detail level (minimal, standard, rich).
 
         Returns:
             List of field names to include.
         """
-        if level == ViewLevel.MINIMAL:
+        if level == PromptDetail.MINIMAL:
             return self._spec.views.minimal.include_fields
-        elif level == ViewLevel.STANDARD:
+        elif level == PromptDetail.STANDARD:
             return self._spec.views.standard.include_fields
-        elif level == ViewLevel.RICH:
+        elif level == PromptDetail.RICH:
             return self._spec.views.rich.include_fields
         else:  # pragma: no cover
-            raise ValueError(f"Unknown view level: {level}")
+            raise ValueError(f"Unknown prompt detail level: {level}")
 
     def filter_variable(
         self,
         variable: VariableSpec,
-        level: ViewLevel,
+        level: PromptDetail,
     ) -> dict[str, Any]:
         """Filter a single variable to include only specified fields.
 
         Args:
             variable: The variable specification to filter.
-            level: The view level determining which fields to include.
+            level: The prompt detail level determining which fields to include.
 
         Returns:
-            Dictionary with only the fields specified by the view level.
+            Dictionary with only the fields specified by the detail level.
             Enum values are converted to their string representations.
             If use_llm_names is True, the 'name' field contains llm_name.
         """
@@ -104,11 +104,11 @@ class ViewFilter:
             and value is not None
         }
 
-    def filter_variables(self, level: ViewLevel) -> list[dict[str, Any]]:
-        """Filter all variables to the specified view level.
+    def filter_variables(self, level: PromptDetail) -> list[dict[str, Any]]:
+        """Filter all variables to the specified detail level.
 
         Args:
-            level: The view level (minimal, standard, rich).
+            level: The prompt detail level (minimal, standard, rich).
 
         Returns:
             List of filtered variable dictionaries.
@@ -138,11 +138,11 @@ class ViewFilter:
         """
         return self._spec.domain
 
-    def get_context_summary(self, level: ViewLevel) -> dict[str, Any]:
+    def get_context_summary(self, level: PromptDetail) -> dict[str, Any]:
         """Get a complete context summary for LLM prompts.
 
         Args:
-            level: The view level for variable filtering.
+            level: The prompt detail level for variable filtering.
 
         Returns:
             Dictionary with domain and filtered variables.

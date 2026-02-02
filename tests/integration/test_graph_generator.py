@@ -18,13 +18,13 @@ def test_generator_generates_edges():
         GeneratedGraph,
         GraphGenerator,
         GraphGeneratorConfig,
-        ViewLevel,
+        PromptDetail,
     )
 
     config = GraphGeneratorConfig(
         temperature=0.1,
         max_tokens=500,
-        view_level=ViewLevel.MINIMAL,
+        prompt_detail=PromptDetail.MINIMAL,
     )
     generator = GraphGenerator(
         model="groq/llama-3.1-8b-instant", config=config
@@ -55,13 +55,13 @@ def test_generator_with_standard_view():
         GeneratedGraph,
         GraphGenerator,
         GraphGeneratorConfig,
-        ViewLevel,
+        PromptDetail,
     )
 
     config = GraphGeneratorConfig(
         temperature=0.1,
         max_tokens=500,
-        view_level=ViewLevel.STANDARD,
+        prompt_detail=PromptDetail.STANDARD,
     )
     generator = GraphGenerator(
         model="groq/llama-3.1-8b-instant", config=config
@@ -99,13 +99,13 @@ def test_generator_adjacency_matrix_format():
         GraphGenerator,
         GraphGeneratorConfig,
         OutputFormat,
-        ViewLevel,
+        PromptDetail,
     )
 
     config = GraphGeneratorConfig(
         temperature=0.1,
         max_tokens=500,
-        view_level=ViewLevel.MINIMAL,
+        prompt_detail=PromptDetail.MINIMAL,
         output_format=OutputFormat.ADJACENCY_MATRIX,
     )
     generator = GraphGenerator(
@@ -132,13 +132,13 @@ def test_generator_call_count():
     from causaliq_knowledge.graph import (
         GraphGenerator,
         GraphGeneratorConfig,
-        ViewLevel,
+        PromptDetail,
     )
 
     config = GraphGeneratorConfig(
         temperature=0.1,
         max_tokens=200,
-        view_level=ViewLevel.MINIMAL,
+        prompt_detail=PromptDetail.MINIMAL,
     )
     generator = GraphGenerator(
         model="groq/llama-3.1-8b-instant", config=config
@@ -158,13 +158,13 @@ def test_generator_get_stats():
     from causaliq_knowledge.graph import (
         GraphGenerator,
         GraphGeneratorConfig,
-        ViewLevel,
+        PromptDetail,
     )
 
     config = GraphGeneratorConfig(
         temperature=0.1,
         max_tokens=200,
-        view_level=ViewLevel.MINIMAL,
+        prompt_detail=PromptDetail.MINIMAL,
     )
     generator = GraphGenerator(
         model="groq/llama-3.1-8b-instant", config=config

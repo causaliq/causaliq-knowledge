@@ -14,7 +14,7 @@ from typing import TYPE_CHECKING, Any, Optional
 if TYPE_CHECKING:  # pragma: no cover
     from causaliq_knowledge.graph.models import ModelSpec
 
-from causaliq_knowledge.graph.view_filter import ViewFilter, ViewLevel
+from causaliq_knowledge.graph.view_filter import PromptDetail, ViewFilter
 
 
 class OutputFormat(str, Enum):
@@ -157,7 +157,7 @@ Identify which variables directly cause others."""
 
 def _format_variable_details(
     variables: list[dict[str, Any]],
-    level: ViewLevel,
+    level: PromptDetail,
 ) -> str:
     """Format variable details for prompt inclusion.
 
@@ -173,9 +173,9 @@ def _format_variable_details(
     for var in variables:
         name = var.get("name", "unknown")
 
-        if level == ViewLevel.MINIMAL:
+        if level == PromptDetail.MINIMAL:
             lines.append(f"- {name}")
-        elif level == ViewLevel.STANDARD:
+        elif level == PromptDetail.STANDARD:
             var_type = var.get("type", "")
             desc = var.get("short_description", "")
             states = var.get("states", [])
@@ -238,17 +238,17 @@ class GraphQueryPrompt:
     Example:
         >>> spec = ModelLoader.load("model.json")
         >>> view_filter = ViewFilter(spec)
-        >>> variables = view_filter.filter_variables(ViewLevel.STANDARD)
+        >>> variables = view_filter.filter_variables(PromptDetail.STANDARD)
         >>> prompt = GraphQueryPrompt(
         ...     variables=variables,
-        ...     level=ViewLevel.STANDARD,
+        ...     level=PromptDetail.STANDARD,
         ...     domain=spec.domain,
         ... )
         >>> system, user = prompt.build()
     """
 
     variables: list[dict[str, Any]]
-    level: ViewLevel = ViewLevel.STANDARD
+    level: PromptDetail = PromptDetail.STANDARD
     domain: Optional[str] = None
     output_format: OutputFormat = OutputFormat.EDGE_LIST
     system_prompt: Optional[str] = None
@@ -267,7 +267,7 @@ class GraphQueryPrompt:
         Example:
             >>> prompt = GraphQueryPrompt(
             ...     variables=[{"name": "age"}, {"name": "income"}],
-            ...     level=ViewLevel.MINIMAL,
+            ...     level=PromptDetail.MINIMAL,
             ... )
             >>> system, user = prompt.build()
             >>> # system contains JSON format instructions
@@ -296,7 +296,7 @@ class GraphQueryPrompt:
         Returns:
             The formatted user prompt string.
         """
-        if self.level == ViewLevel.MINIMAL:
+        if self.level == PromptDetail.MINIMAL:
             # Extract just the names for minimal view
             names = [v.get("name", "unknown") for v in self.variables]
             variable_names = ", ".join(names)
@@ -311,7 +311,7 @@ class GraphQueryPrompt:
         # Standard and Rich views use detailed variable info
         variable_details = _format_variable_details(self.variables, self.level)
 
-        if self.level == ViewLevel.STANDARD:
+        if self.level == PromptDetail.STANDARD:
             if self.domain:
                 return USER_PROMPT_STANDARD_WITH_DOMAIN.format(
                     domain=self.domain,
@@ -342,7 +342,7 @@ class GraphQueryPrompt:
         Example:
             >>> prompt = GraphQueryPrompt(
             ...     variables=[{"name": "age"}, {"name": "income"}],
-            ...     level=ViewLevel.MINIMAL,
+            ...     level=PromptDetail.MINIMAL,
             ... )
             >>> prompt.get_variable_names()
             ['age', 'income']
@@ -353,7 +353,7 @@ class GraphQueryPrompt:
     def from_model_spec(
         cls,
         spec: "ModelSpec",
-        level: ViewLevel = ViewLevel.STANDARD,
+        level: PromptDetail = PromptDetail.STANDARD,
         output_format: OutputFormat = OutputFormat.EDGE_LIST,
         system_prompt: Optional[str] = None,
         use_llm_names: bool = True,
@@ -384,7 +384,7 @@ class GraphQueryPrompt:
             >>> spec = ModelLoader.load("model.json")
             >>> prompt = GraphQueryPrompt.from_model_spec(
             ...     spec,
-            ...     level=ViewLevel.RICH,
+            ...     level=PromptDetail.RICH,
             ... )
             >>> system, user = prompt.build()
         """
