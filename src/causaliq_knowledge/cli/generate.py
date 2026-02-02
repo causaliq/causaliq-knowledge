@@ -91,7 +91,7 @@ def generate_group() -> None:
 
         cqknow generate graph -s model.json -m groq/llama-3.1-8b-instant
 
-        cqknow generate graph -s model.json --view rich --disguise
+        cqknow generate graph -s model.json --prompt-detail rich
     """
     pass
 
@@ -113,22 +113,10 @@ def generate_group() -> None:
     help="Detail level for variable information in prompts.",
 )
 @click.option(
-    "--disguise",
-    "-D",
-    is_flag=True,
-    help="Enable variable name disguising to reduce LLM memorisation.",
-)
-@click.option(
     "--use-benchmark-names/--use-llm-names",
     "use_benchmark_names",
     default=False,
     help="Use benchmark names instead of LLM names (test memorisation).",
-)
-@click.option(
-    "--seed",
-    type=int,
-    default=None,
-    help="Random seed for reproducible disguising (requires --disguise).",
 )
 @click.option(
     "--llm",
@@ -186,9 +174,7 @@ def generate_group() -> None:
 def generate_graph(
     model_spec: Path,
     prompt_detail: str,
-    disguise: bool,
     use_benchmark_names: bool,
-    seed: Optional[int],
     model: str,
     output: Optional[Path],
     output_format: str,
@@ -212,16 +198,13 @@ def generate_graph(
 
         cqknow generate graph -s model.json -m gemini/gemini-2.5-flash
 
-        cqknow generate graph -s model.json --view rich -o graph.json
+        cqknow generate graph -s model.json --prompt-detail rich -o graph.json
 
         cqknow generate graph -s model.json --use-benchmark-names
-
-        cqknow generate graph -s model.json --disguise --seed 42
     """
     # Import here to avoid slow startup for --help
     from causaliq_knowledge.cache import TokenCache
     from causaliq_knowledge.graph import ModelLoader
-    from causaliq_knowledge.graph.disguiser import VariableDisguiser
     from causaliq_knowledge.graph.generator import (
         GraphGenerator,
         GraphGeneratorConfig,
@@ -253,16 +236,6 @@ def generate_graph(
         click.echo("Using LLM names (prevents memorisation)", err=True)
     elif use_benchmark_names:
         click.echo("Using benchmark names (memorisation test)", err=True)
-
-    # Apply disguising if requested
-    disguiser: Optional[VariableDisguiser] = None
-    if disguise:
-        disguiser = VariableDisguiser(spec, seed=seed)
-        spec = disguiser.disguise_spec()
-        click.echo(
-            f"Applied variable disguising (seed={disguiser.seed})",
-            err=True,
-        )
 
     # Set up cache (enabled by default)
     cache: Optional[TokenCache] = None
@@ -304,18 +277,13 @@ def generate_graph(
         click.echo(f"Error generating graph: {e}", err=True)
         sys.exit(1)
 
-    # Reverse disguising if applied
-    if disguiser:
-        graph = disguiser.undisguise_graph(graph)
-        click.echo("Reversed variable disguising in output", err=True)
-
     # Map LLM names back to benchmark names
     if llm_to_benchmark_mapping:
         graph = _map_graph_names(graph, llm_to_benchmark_mapping)
         click.echo("Mapped LLM names back to benchmark names", err=True)
 
     # Build output
-    result = _build_output(graph, spec, model, level, fmt, disguise)
+    result = _build_output(graph, spec, model, level, fmt)
 
     # Output results
     if output:
@@ -351,7 +319,6 @@ def _build_output(
     model: str,
     level: PromptDetail,
     fmt: OutputFormat,
-    disguised: bool,
 ) -> dict:
     """Build output dictionary for the generated graph.
 
@@ -361,7 +328,6 @@ def _build_output(
         model: LLM model identifier.
         level: View level used.
         fmt: Output format used.
-        disguised: Whether disguising was applied.
 
     Returns:
         Dictionary suitable for JSON output.
@@ -387,7 +353,6 @@ def _build_output(
             "model": model,
             "prompt_detail": level.value,
             "output_format": fmt.value,
-            "disguised": disguised,
         },
     }
 

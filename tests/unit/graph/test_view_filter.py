@@ -4,11 +4,11 @@ from __future__ import annotations
 
 from causaliq_knowledge.graph.models import (
     ModelSpec,
+    PromptDetails,
     VariableRole,
     VariableSpec,
     VariableType,
     ViewDefinition,
-    Views,
 )
 from causaliq_knowledge.graph.view_filter import PromptDetail, ViewFilter
 
@@ -34,7 +34,7 @@ def _create_test_spec() -> ModelSpec:
                 role=VariableRole.ENDOGENOUS,
             ),
         ],
-        views=Views(
+        prompt_details=PromptDetails(
             minimal=ViewDefinition(include_fields=["name"]),
             standard=ViewDefinition(
                 include_fields=["name", "short_description", "type"]

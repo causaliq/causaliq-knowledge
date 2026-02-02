@@ -57,7 +57,7 @@ def test_load_cancer_model() -> None:
     assert spec.dataset_id == "cancer"
     assert spec.domain == "pulmonary_oncology_screening"
     assert len(spec.variables) >= 5
-    assert spec.views is not None
+    assert spec.prompt_details is not None
     assert spec.provenance is not None
 
 

@@ -8,12 +8,12 @@ from causaliq_knowledge.graph.models import (
     GroundTruth,
     LLMGuidance,
     ModelSpec,
+    PromptDetails,
     Provenance,
     VariableRole,
     VariableSpec,
     VariableType,
     ViewDefinition,
-    Views,
 )
 
 # --- VariableType enum tests ---
@@ -199,26 +199,26 @@ def test_view_definition_full() -> None:
     assert view.include_fields == ["name", "type"]
 
 
-# --- Views model tests ---
+# --- PromptDetails model tests ---
 
 
-# Test Views has sensible default field selections.
-def test_views_default() -> None:
-    views = Views()
-    assert "name" in views.minimal.include_fields
-    assert "type" in views.standard.include_fields
-    assert "extended_description" in views.rich.include_fields
+# Test PromptDetails has sensible default field selections.
+def test_prompt_details_default() -> None:
+    prompt_details = PromptDetails()
+    assert "name" in prompt_details.minimal.include_fields
+    assert "type" in prompt_details.standard.include_fields
+    assert "extended_description" in prompt_details.rich.include_fields
 
 
-# Test creating Views with custom view definitions.
-def test_views_custom() -> None:
-    views = Views(
+# Test creating PromptDetails with custom view definitions.
+def test_prompt_details_custom() -> None:
+    prompt_details = PromptDetails(
         minimal=ViewDefinition(include_fields=["name"]),
         standard=ViewDefinition(include_fields=["name", "type"]),
         rich=ViewDefinition(include_fields=["name", "type", "description"]),
     )
-    assert views.minimal.include_fields == ["name"]
-    assert len(views.standard.include_fields) == 2
+    assert prompt_details.minimal.include_fields == ["name"]
+    assert len(prompt_details.standard.include_fields) == 2
 
 
 # --- Constraints model tests ---
@@ -312,7 +312,7 @@ def test_model_spec_full() -> None:
         purpose="Testing",
         provenance=Provenance(source_network="cancer"),
         llm_guidance=LLMGuidance(usage_notes=["Note"]),
-        views=Views(),
+        prompt_details=PromptDetails(),
         variables=[
             VariableSpec(name="smoking", type="binary", states=["no", "yes"]),
             VariableSpec(name="cancer", type="binary", states=["no", "yes"]),

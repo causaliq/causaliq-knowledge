@@ -94,7 +94,7 @@ def test_collider_minimal_prompt(collider_spec) -> None:
     )
     _, user = prompt.build()
 
-    # Should contain disguised variable names (not canonical)
+    # Should contain LLM names (not benchmark names)
     assert "genetic_factor" in user
     assert "environmental_exposure" in user
     assert "disease_status" in user

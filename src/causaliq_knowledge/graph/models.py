@@ -202,8 +202,8 @@ class ViewDefinition(BaseModel):
     )
 
 
-class Views(BaseModel):
-    """Collection of view definitions.
+class PromptDetails(BaseModel):
+    """Collection of prompt detail definitions.
 
     Attributes:
         minimal: Minimal view (typically just variable names).
@@ -319,7 +319,7 @@ class ModelSpec(BaseModel):
         purpose: Purpose of the model specification.
         provenance: Source and provenance information.
         llm_guidance: Guidance for LLM usage.
-        views: View definitions (minimal, standard, rich).
+    views: View definitions (minimal, standard, rich).
         variables: List of variable specifications.
         constraints: Structural constraints.
         causal_principles: Domain causal principles.
@@ -353,7 +353,11 @@ class ModelSpec(BaseModel):
     llm_guidance: Optional[LLMGuidance] = Field(
         default=None, description="Guidance for LLM usage"
     )
-    views: Views = Field(default_factory=Views, description="View definitions")
+    prompt_details: PromptDetails = Field(
+        default_factory=PromptDetails,
+        description="Prompt detail definitions",
+        alias="prompt_details",
+    )
     variables: list[VariableSpec] = Field(
         default_factory=list, description="Variable specifications"
     )

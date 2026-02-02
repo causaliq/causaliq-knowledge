@@ -46,7 +46,6 @@ def test_action_inputs_specification() -> None:
     assert "action" in action.inputs
     assert "model_spec" in action.inputs
     assert "prompt_detail" in action.inputs
-    assert "disguise" in action.inputs
     assert "llm" in action.inputs
     assert "output" in action.inputs
     assert "output_format" in action.inputs
@@ -144,26 +143,6 @@ def test_validate_inputs_invalid_llm() -> None:
         )
 
     assert "provider" in str(exc_info.value).lower()
-
-
-# Test validate_inputs validates seed requires disguise.
-def test_validate_inputs_seed_without_disguise() -> None:
-    """Test validation fails when seed provided without disguise."""
-    from causaliq_workflow.action import ActionValidationError
-
-    action = GenerateGraphAction()
-
-    with pytest.raises(ActionValidationError) as exc_info:
-        action.validate_inputs(
-            {
-                "action": "generate_graph",
-                "model_spec": "model.json",
-                "seed": 42,
-                "disguise": False,
-            }
-        )
-
-    assert "disguise" in str(exc_info.value).lower()
 
 
 # Test dry-run mode returns skipped status.

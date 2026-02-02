@@ -82,13 +82,13 @@ def test_collider_llm_guidance() -> None:
     assert len(spec.llm_guidance.do_not_provide) == 1
 
 
-# Test collider views are correctly configured.
-def test_collider_views() -> None:
+# Test collider prompt_details are correctly configured.
+def test_collider_prompt_details() -> None:
     spec = ModelLoader.load(MODELS_DIR / "collider.json")
 
-    assert "name" in spec.views.minimal.include_fields
-    assert "short_description" in spec.views.standard.include_fields
-    assert "extended_description" in spec.views.rich.include_fields
+    assert "name" in spec.prompt_details.minimal.include_fields
+    assert "short_description" in spec.prompt_details.standard.include_fields
+    assert "extended_description" in spec.prompt_details.rich.include_fields
 
 
 # Test collider constraints are loaded.

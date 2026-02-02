@@ -4,7 +4,6 @@ This module provides functionality for LLM-based causal graph generation
 from variable specifications.
 """
 
-from causaliq_knowledge.graph.disguiser import VariableDisguiser
 from causaliq_knowledge.graph.generator import (
     GraphGenerator,
     GraphGeneratorConfig,
@@ -16,12 +15,12 @@ from causaliq_knowledge.graph.models import (
     GroundTruth,
     LLMGuidance,
     ModelSpec,
+    PromptDetails,
     Provenance,
     VariableRole,
     VariableSpec,
     VariableType,
     ViewDefinition,
-    Views,
 )
 from causaliq_knowledge.graph.params import GenerateGraphParams
 from causaliq_knowledge.graph.prompts import (
@@ -46,7 +45,7 @@ __all__ = [
     "Provenance",
     "LLMGuidance",
     "ViewDefinition",
-    "Views",
+    "PromptDetails",
     "VariableSpec",
     "VariableRole",
     "VariableType",
@@ -61,8 +60,6 @@ __all__ = [
     # Filtering
     "ViewFilter",
     "PromptDetail",
-    # Disguising
-    "VariableDisguiser",
     # Prompts
     "GraphQueryPrompt",
     "OutputFormat",

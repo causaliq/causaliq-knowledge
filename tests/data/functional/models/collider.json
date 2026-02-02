@@ -16,7 +16,7 @@
             "Ground truth edges during generation"
         ]
     },
-    "views": {
+    "prompt_details": {
         "minimal": {
             "description": "Variable names only",
             "include_fields": [

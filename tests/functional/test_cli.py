@@ -737,7 +737,6 @@ def test_cli_generate_graph_shows_help():
     assert result.exit_code == 0
     assert "--model-spec" in result.output
     assert "--prompt-detail" in result.output
-    assert "--disguise" in result.output
     assert "--llm" in result.output
     assert "--output" in result.output
     assert "--format" in result.output
@@ -914,73 +913,6 @@ def test_cli_generate_graph_output_file(tmp_path, mocker):
     content = json.loads(output_file.read_text())
     assert content["dataset_id"] == "file-output-test"
     assert len(content["edges"]) == 1
-
-
-# Test generate graph with --disguise flag.
-def test_cli_generate_graph_disguise(tmp_path, mocker):
-    import json
-
-    # Create a valid model specification
-    spec_data = {
-        "dataset_id": "disguise-test",
-        "domain": "testing",
-        "variables": [
-            {
-                "name": "smoking",
-                "type": "binary",
-                "short_description": "Smokes",
-            },
-            {
-                "name": "cancer",
-                "type": "binary",
-                "short_description": "Has cancer",
-            },
-        ],
-    }
-    spec_file = tmp_path / "model.json"
-    spec_file.write_text(json.dumps(spec_data))
-
-    # Mock the GraphGenerator
-    from causaliq_knowledge.graph.response import GeneratedGraph, ProposedEdge
-
-    mock_graph = GeneratedGraph(
-        edges=[ProposedEdge(source="V1", target="V2", confidence=0.85)],
-        variables=["V1", "V2"],
-    )
-    mock_generator = mocker.MagicMock()
-    mock_generator.generate_from_spec.return_value = mock_graph
-    mock_generator.get_stats.return_value = {
-        "call_count": 1,
-        "client_call_count": 1,
-    }
-    mocker.patch(
-        "causaliq_knowledge.graph.generator.GraphGenerator",
-        return_value=mock_generator,
-    )
-
-    runner = CliRunner()
-    result = runner.invoke(
-        cli,
-        ["generate", "graph", "-s", str(spec_file), "--disguise", "--json"],
-    )
-
-    assert result.exit_code == 0
-    assert "disguising" in result.output.lower() or "Applied" in result.output
-    # Find JSON in output by tracking brace depth
-    lines = result.output.split("\n")
-    json_lines = []
-    brace_depth = 0
-    in_json = False
-    for line in lines:
-        if not in_json and line.strip().startswith("{"):
-            in_json = True
-        if in_json:
-            json_lines.append(line)
-            brace_depth += line.count("{") - line.count("}")
-            if brace_depth == 0:
-                break
-    output = json.loads("\n".join(json_lines))
-    assert output["generation"]["disguised"] is True
 
 
 # Test generate graph with --use-benchmark-names flag.

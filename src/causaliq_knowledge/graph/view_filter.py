@@ -63,11 +63,11 @@ class ViewFilter:
             List of field names to include.
         """
         if level == PromptDetail.MINIMAL:
-            return self._spec.views.minimal.include_fields
+            return self._spec.prompt_details.minimal.include_fields
         elif level == PromptDetail.STANDARD:
-            return self._spec.views.standard.include_fields
+            return self._spec.prompt_details.standard.include_fields
         elif level == PromptDetail.RICH:
-            return self._spec.views.rich.include_fields
+            return self._spec.prompt_details.rich.include_fields
         else:  # pragma: no cover
             raise ValueError(f"Unknown prompt detail level: {level}")
 

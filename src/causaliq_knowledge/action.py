@@ -74,26 +74,12 @@ def _create_action_inputs() -> Dict[str, Any]:
             default="standard",
             type_hint="str",
         ),
-        "disguise": ActionInput(
-            name="disguise",
-            description="Enable variable name disguising",
-            required=False,
-            default=False,
-            type_hint="bool",
-        ),
         "use_benchmark_names": ActionInput(
             name="use_benchmark_names",
             description="Use benchmark names instead of LLM names",
             required=False,
             default=False,
             type_hint="bool",
-        ),
-        "seed": ActionInput(
-            name="seed",
-            description="Random seed for reproducible disguising",
-            required=False,
-            default=None,
-            type_hint="Optional[int]",
         ),
         "llm": ActionInput(
             name="llm",
@@ -352,7 +338,6 @@ class GenerateGraphAction(BaseCausalIQAction):
         # Import here to avoid slow startup and circular imports
         from causaliq_knowledge.cache import TokenCache
         from causaliq_knowledge.graph import ModelLoader
-        from causaliq_knowledge.graph.disguiser import VariableDisguiser
         from causaliq_knowledge.graph.generator import (
             GraphGenerator,
             GraphGeneratorConfig,
@@ -377,12 +362,6 @@ class GenerateGraphAction(BaseCausalIQAction):
         use_llm_names = not params.use_benchmark_names
         if use_llm_names and spec.uses_distinct_llm_names():
             llm_to_benchmark_mapping = spec.get_llm_to_name_mapping()
-
-        # Apply disguising if requested
-        disguiser: Optional[VariableDisguiser] = None
-        if params.disguise:
-            disguiser = VariableDisguiser(spec, seed=params.seed)
-            spec = disguiser.disguise_spec()
 
         # Set up cache
         cache: Optional[TokenCache] = None
@@ -411,10 +390,6 @@ class GenerateGraphAction(BaseCausalIQAction):
             graph = generator.generate_from_spec(
                 spec, level=params.prompt_detail
             )
-
-            # Reverse disguising if applied
-            if disguiser:
-                graph = disguiser.undisguise_graph(graph)
 
             # Map LLM names back to benchmark names
             if llm_to_benchmark_mapping:

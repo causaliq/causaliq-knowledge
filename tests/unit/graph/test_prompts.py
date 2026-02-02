@@ -323,16 +323,16 @@ def sample_model_spec():
     """Create a sample ModelSpec for testing."""
     from causaliq_knowledge.graph.models import (
         ModelSpec,
+        PromptDetails,
         VariableSpec,
         VariableType,
         ViewDefinition,
-        Views,
     )
 
     return ModelSpec(
         dataset_id="test_model",
         domain="test_domain",
-        views=Views(
+        prompt_details=PromptDetails(
             minimal=ViewDefinition(
                 description="Minimal view",
                 include_fields=["name"],

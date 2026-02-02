@@ -9,7 +9,7 @@ from __future__ import annotations
 from pathlib import Path
 from typing import Any, Optional
 
-from pydantic import BaseModel, Field, field_validator, model_validator
+from pydantic import BaseModel, Field, field_validator
 
 from causaliq_knowledge.graph.prompts import OutputFormat
 from causaliq_knowledge.graph.view_filter import PromptDetail
@@ -25,9 +25,7 @@ class GenerateGraphParams(BaseModel):
     Attributes:
         model_spec: Path to model specification JSON file.
         prompt_detail: Detail level for variable information in prompts.
-        disguise: Enable variable name disguising.
         use_benchmark_names: Use benchmark names instead of LLM names.
-        seed: Random seed for reproducible disguising.
         llm: LLM model identifier with provider prefix.
         output: Output file path for results.
         output_format: Format for generated graph output.
@@ -42,7 +40,6 @@ class GenerateGraphParams(BaseModel):
         ...     prompt_detail=PromptDetail.STANDARD,
         ...     llm="groq/llama-3.1-8b-instant",
         ... )
-        >>> params.validate_consistency()
     """
 
     model_spec: Path = Field(
@@ -53,17 +50,9 @@ class GenerateGraphParams(BaseModel):
         default=PromptDetail.STANDARD,
         description="Detail level for variable information in prompts",
     )
-    disguise: bool = Field(
-        default=False,
-        description="Enable variable name disguising",
-    )
     use_benchmark_names: bool = Field(
         default=False,
         description="Use benchmark names instead of LLM names",
-    )
-    seed: Optional[int] = Field(
-        default=None,
-        description="Random seed for reproducible disguising",
     )
     llm: str = Field(
         default="groq/llama-3.1-8b-instant",
@@ -117,17 +106,6 @@ class GenerateGraphParams(BaseModel):
                 f"Valid prefixes: {', '.join(valid_prefixes)}. Got: {v}"
             )
         return v
-
-    @model_validator(mode="after")
-    def validate_consistency(self) -> "GenerateGraphParams":
-        """Validate parameter consistency.
-
-        Raises:
-            ValueError: If seed is provided without disguise enabled.
-        """
-        if self.seed is not None and not self.disguise:
-            raise ValueError("seed parameter requires disguise to be enabled")
-        return self
 
     @classmethod
     def from_dict(cls, data: dict[str, Any]) -> "GenerateGraphParams":

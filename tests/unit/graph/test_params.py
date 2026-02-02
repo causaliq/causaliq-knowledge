@@ -22,9 +22,7 @@ def test_params_minimal_required() -> None:
 
     assert params.model_spec == Path("model.json")
     assert params.prompt_detail == PromptDetail.STANDARD
-    assert params.disguise is False
     assert params.use_benchmark_names is False
-    assert params.seed is None
     assert params.llm == "groq/llama-3.1-8b-instant"
     assert params.output is None
     assert params.output_format == OutputFormat.EDGE_LIST
@@ -40,9 +38,7 @@ def test_params_all_fields() -> None:
     params = GenerateGraphParams(
         model_spec=Path("test/model.json"),
         prompt_detail=PromptDetail.RICH,
-        disguise=True,
         use_benchmark_names=False,
-        seed=42,
         llm="gemini/gemini-2.5-flash",
         output=Path("output/graph.json"),
         output_format=OutputFormat.ADJACENCY_MATRIX,
@@ -54,8 +50,6 @@ def test_params_all_fields() -> None:
 
     assert params.model_spec == Path("test/model.json")
     assert params.prompt_detail == PromptDetail.RICH
-    assert params.disguise is True
-    assert params.seed == 42
     assert params.llm == "gemini/gemini-2.5-flash"
     assert params.output == Path("output/graph.json")
     assert params.output_format == OutputFormat.ADJACENCY_MATRIX
@@ -110,33 +104,6 @@ def test_params_llm_missing_provider() -> None:
     errors = exc_info.value.errors()
     assert len(errors) == 1
     assert "provider prefix" in errors[0]["msg"].lower()
-
-
-# Test seed without disguise validation error.
-def test_params_seed_requires_disguise() -> None:
-    """Test that seed parameter requires disguise to be enabled."""
-    with pytest.raises(ValidationError) as exc_info:
-        GenerateGraphParams(
-            model_spec=Path("model.json"),
-            seed=42,
-            disguise=False,
-        )
-
-    errors = exc_info.value.errors()
-    assert len(errors) == 1
-    assert "disguise" in errors[0]["msg"].lower()
-
-
-# Test seed with disguise is valid.
-def test_params_seed_with_disguise_valid() -> None:
-    """Test that seed with disguise enabled is accepted."""
-    params = GenerateGraphParams(
-        model_spec=Path("model.json"),
-        seed=42,
-        disguise=True,
-    )
-    assert params.seed == 42
-    assert params.disguise is True
 
 
 # Test temperature validation bounds.
