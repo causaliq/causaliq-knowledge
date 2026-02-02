@@ -46,6 +46,7 @@ nav:
   - Roadmap: roadmap.md
   - User Guide:
     - User Guide Introduction: userguide/introduction.md
+    - Model Specification Format: userguide/model_specification.md
   - Architecture: 
     - Architectural Overview: architecture/overview.md
     - Design Notes: 
@@ -55,6 +56,15 @@ nav:
   - API Reference: 
     - API Overview: api/overview.md
     - Models: api/models.md
+    - Graph:
+      - Graph Overview: api/graph/overview.md
+      - Model Specification: api/graph/models.md
+      - Model Loader: api/graph/loader.md
+      - View Filter: api/graph/view_filter.md
+      - Variable Disguiser: api/graph/disguiser.md
+      - Graph Prompts: api/graph/prompts.md
+      - Response Models: api/graph/response.md
+      - Graph Generator: api/graph/generator.md
     - Cache (Core):
       - Cache Overview: api/cache/overview.md
       - Encoders:

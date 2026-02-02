@@ -217,6 +217,110 @@ cqknow query smoking lung_cancer --model groq/llama-3.1-8b-instant
 python -m causaliq_knowledge.cli query smoking lung_cancer --model ollama/llama3
 ```
 
+## Graph Generation
+
+CausalIQ Knowledge can generate complete causal graphs from model
+specifications using LLMs. This is useful for creating prior knowledge
+structures or comparing LLM-generated graphs against ground truth.
+
+### Command Overview
+
+```bash
+cqknow generate graph -s <model_spec.json> [options]
+```
+
+### Basic Examples
+
+```bash
+# Generate a graph using default settings (Groq, standard view)
+cqknow generate graph -s research/models/cancer/cancer.json
+
+# Use a specific LLM model
+cqknow generate graph -s model.json -m gemini/gemini-2.5-flash
+
+# Use rich context level for more detailed prompts
+cqknow generate graph -s model.json --prompt-detail rich
+
+# Save output to a JSON file
+cqknow generate graph -s model.json -o graph.json
+```
+
+### Options
+
+| Option | Short | Description |
+|--------|-------|-------------|
+| `--model-spec` | `-s` | Path to model specification JSON file (required) |
+| `--prompt-detail` | `-p` | Context level: `minimal`, `standard`, or `rich` (default: standard) |
+| `--llm` | `-m` | LLM model to use (default: groq/llama-3.1-8b-instant) |
+| `--output` | `-o` | Output file path (JSON). Prints to stdout if not specified |
+| `--format` | `-f` | Output format: `edge_list` or `adjacency_matrix` |
+| `--json` | | Output result as JSON to stdout |
+| `--id` | | Request identifier for export filenames (default: cli) |
+| `--disguise` | `-D` | Enable variable name disguising to reduce LLM memorisation |
+| `--seed` | | Random seed for reproducible disguising (requires --disguise) |
+| `--use-benchmark-names` | | Use benchmark names instead of LLM names (test memorisation) |
+| `--cache/--no-cache` | | Enable/disable LLM response caching (default: enabled) |
+| `--cache-path` | `-c` | Path to cache database (default: `<model_spec>_llm.db`) |
+| `--temperature` | `-t` | LLM temperature 0.0-1.0 (default: 0.1) |
+
+### Prompt Detail Levels
+
+The `--prompt-detail` option controls how much context is provided to the LLM:
+
+- **minimal**: Variable names only - tests LLM's general knowledge
+- **standard**: Names with types, states, and short descriptions
+- **rich**: Full context including extended descriptions and sensitivity hints
+
+### Variable Disguising
+
+To reduce LLM memorisation of well-known benchmark networks, you can disguise
+variable names:
+
+```bash
+# Disguise variable names with random seed for reproducibility
+cqknow generate graph -s model.json --disguise --seed 42
+```
+
+The disguised names are automatically reversed in the output.
+
+### Output Format
+
+By default, the command prints human-readable output:
+
+```
+======================================================================
+Generated Causal Graph: cancer
+======================================================================
+Domain:     epidemiology
+Variables:  5
+Model:      groq/llama-3.1-8b-instant
+======================================================================
+
+Proposed Edges (4):
+
+   1. smoking → lung_cancer  [██████████] 100.0%
+   2. pollution → lung_cancer  [████████░░]  80.0%
+   ...
+```
+
+Use `--json` or `--output` for machine-readable JSON output.
+
+### Caching
+
+Graph generation requests are cached by default. The cache is stored alongside
+your model specification file (e.g., `cancer.json` → `cancer_llm.db`).
+
+```bash
+# Disable caching
+cqknow generate graph -s model.json --no-cache
+
+# Use a custom cache path
+cqknow generate graph -s model.json --cache-path /path/to/cache.db
+```
+
+For more information on model specification format, see
+[Model Specification Format](model_specification.md).
+
 ## Cache Management
 
 CausalIQ Knowledge includes a caching system that stores LLM responses to avoid redundant API calls. You can inspect, export, and import your cache using the CLI:
@@ -235,7 +339,9 @@ cqknow cache export ./llm_cache.db ./export.zip
 cqknow cache import ./new_cache.db ./export.zip
 ```
 
-Exported files use human-readable names like `gpt4_smoking_lung_edge_a1b2.json`.
+Exported files use the naming format `{id}_{timestamp}_{provider}.json`, for
+example `cli_2026-01-29-143052_groq.json`. The `id` comes from the `--id`
+option when generating graphs (default: "cli").
 
 The cache stores:
 

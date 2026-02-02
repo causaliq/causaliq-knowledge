@@ -214,6 +214,7 @@ Each cache entry stores both the response and rich metadata for analysis:
   },
   "metadata": {
     "provider": "openai",
+    "request_id": "expt01",
     "timestamp": "2026-01-11T10:15:32.456Z",
     "latency_ms": 1847,
     "tokens": {
@@ -242,6 +243,7 @@ Each cache entry stores both the response and rich metadata for analysis:
 | Field | Description | Use Case |
 |-------|-------------|----------|
 | `provider` | LLM provider name (openai, anthropic, etc.) | Analysis across providers |
+| `request_id` | User-defined request identifier (not part of cache key) | Export naming, experiment tracking |
 | `timestamp` | When the original request was made | Tracking model evolution |
 | `latency_ms` | Response time in milliseconds | Performance analysis |
 | `tokens.input` | Prompt token count | Cost tracking |

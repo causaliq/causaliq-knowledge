@@ -87,6 +87,62 @@ causaliq_knowledge/
 └─────────────────────────────────────────────────────────────────┘
 ```
 
+### Graph Generation Components (v0.4.0)
+
+```
+causaliq_knowledge/
+└── graph/
+    ├── __init__.py          # Module exports
+    ├── models.py            # Pydantic models for model specification
+    │                        # (ModelSpec, VariableSpec, Views, etc.)
+    ├── loader.py            # ModelLoader for JSON file loading
+    ├── view_filter.py       # ViewFilter for context level extraction
+    └── disguiser.py         # VariableDisguiser for name obfuscation
+```
+
+### Graph Generation Data Flow
+
+```
+┌─────────────────────────────────────────────────────────────────┐
+│                    Graph Generation Flow                         │
+│                                                                 │
+│   model_spec.json                                               │
+│       │                                                         │
+│       ▼                                                         │
+│   ┌───────────────┐                                             │
+│   │  ModelLoader  │  Load and validate JSON specification       │
+│   └───────────────┘                                             │
+│       │                                                         │
+│       ▼                                                         │
+│   ┌───────────────┐    ┌─────────────────────┐                    │
+│   │  ViewFilter   │───▶│ PromptDetail.MINIMAL │  Names only        │
+│   │               │    │ PromptDetail.STANDARD│  + descriptions    │
+│   │               │    │ PromptDetail.RICH    │  Full metadata     │
+│   └───────────────┘    └─────────────────────┘                    │
+│       │                                                         │
+│       ▼                                                         │
+│   ┌───────────────────┐                                         │
+│   │VariableDisguiser  │  smoking → V1, cancer → V2 (optional)   │
+│   │   (seed=42)       │  Reproducible mapping                   │
+│   └───────────────────┘                                         │
+│       │                                                         │
+│       ▼                                                         │
+│   ┌───────────────┐                                             │
+│   │  LLM Client   │  Generate causal graph                      │
+│   │  + TokenCache │  (cached responses)                         │
+│   └───────────────┘                                             │
+│       │                                                         │
+│       ▼                                                         │
+│   ┌───────────────────┐                                         │
+│   │VariableDisguiser  │  V1 → smoking, V2 → cancer              │
+│   │   .reveal_text()  │  Translate response back                │
+│   └───────────────────┘                                         │
+│       │                                                         │
+│       ▼                                                         │
+│   GeneratedGraph(edges=[("smoking", "cancer"), ...])            │
+└─────────────────────────────────────────────────────────────────┘
+```
+
 ## Technology Choices
 
 ### Vendor-Specific APIs over Wrapper Libraries

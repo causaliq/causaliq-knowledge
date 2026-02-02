@@ -1,6 +1,6 @@
 # CausalIQ Knowledge API Reference
 
-API documentation for causaliq-knowledge, organized by module.
+API documentation for causaliq-knowledge, organised by module.
 
 ## Import Patterns
 
@@ -8,6 +8,32 @@ Core models are available from the top-level package:
 
 ```python
 from causaliq_knowledge import EdgeKnowledge, EdgeDirection, KnowledgeProvider
+```
+
+Graph generation classes are available from the `graph` submodule:
+
+```python
+from causaliq_knowledge.graph import (
+    # Model specification
+    ModelSpec,
+    VariableSpec,
+    VariableType,
+    VariableRole,
+    Views,
+    ViewDefinition,
+    Provenance,
+    LLMGuidance,
+    Constraints,
+    GroundTruth,
+    # Loading
+    ModelLoader,
+    ModelLoadError,
+    # Filtering
+    ViewFilter,
+    PromptDetail,
+    # Disguising
+    VariableDisguiser,
+)
 ```
 
 Cache infrastructure is available from the `cache` submodule:
@@ -55,6 +81,20 @@ Core Pydantic models for representing causal knowledge:
 
 - **EdgeDirection** - Enum for causal edge direction (a_to_b, b_to_a, undirected)
 - **EdgeKnowledge** - Structured knowledge about a potential causal edge
+
+### [Graph Module](graph/overview.md)
+
+LLM-based causal graph generation from variable specifications:
+
+- **[Model Specification](graph/models.md)** - Pydantic models for model specs
+  - ModelSpec, VariableSpec, VariableType, VariableRole
+  - Views, ViewDefinition, Provenance, Constraints
+- **[Model Loader](graph/loader.md)** - Load and validate JSON model files
+  - ModelLoader, ModelLoadError
+- **[View Filter](graph/view_filter.md)** - Extract context levels
+  - ViewFilter, PromptDetail (MINIMAL, STANDARD, RICH)
+- **[Variable Disguiser](graph/disguiser.md)** - Name obfuscation
+  - VariableDisguiser with reproducible seed-based mapping
 
 ### [Cache](cache/overview.md)
 

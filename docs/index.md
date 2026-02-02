@@ -1,6 +1,7 @@
 # CausalIQ Knowledge
 
 ![Python Versions](https://img.shields.io/badge/python-3.9%20%7C%203.10%20%7C%203.11%20%7C%203.12%20%7C%203.13-blue)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 ![Coverage](https://img.shields.io/badge/coverage-100%25-brightgreen)
 
 ## Welcome
@@ -31,8 +32,10 @@ For a quickstart guide and installation instructions, see the [README on GitHub]
 
 - [Development Roadmap](roadmap.md): Roadmap of upcoming features
 - [User Guide](userguide/introduction.md): Comprehensive user guide
+  - [Model Specification Format](userguide/model_specification.md): JSON format for model specs
 - [Architecture](architecture/overview.md): Overall architecture and design notes
 - [API Reference](api/overview.md): Complete reference for Python code
+  - [Graph Module](api/graph/overview.md): Model specs, filtering, disguising
 - [Development Guidelines](https://github.com/causaliq/causaliq-knowledge/blob/main/CONTRIBUTING.md): CausalIQ guidelines for developers
 - [Changelog](https://github.com/causaliq/causaliq-knowledge/blob/main/CHANGELOG.md)
 - [License](https://github.com/causaliq/causaliq-knowledge/blob/main/LICENSE)
