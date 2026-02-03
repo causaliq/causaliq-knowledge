@@ -68,8 +68,9 @@ function Install-InEnvironment {
         & $PythonExe -m pip install  --upgrade pip setuptools wheel --quiet
         
         # Install the package with dependencies
+        # Use Test PyPI for causaliq-workflow pre-releases
         Write-Host "  Installing causaliq-knowledge with dev dependencies..." -ForegroundColor Gray
-        & $PythonExe -m pip install --force-reinstall -e ".[dev,test,docs]"
+        & $PythonExe -m pip install --force-reinstall --index-url https://pypi.org/simple/ --extra-index-url https://test.pypi.org/simple/ -e ".[dev,test,docs]"
         
         deactivate
         Write-Host "  $DisplayName installation complete!" -ForegroundColor Green
