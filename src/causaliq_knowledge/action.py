@@ -11,6 +11,7 @@ from __future__ import annotations
 
 import json
 import logging
+from pathlib import Path
 from typing import TYPE_CHECKING, Any, Dict, Optional
 
 from causaliq_workflow.action import (
@@ -81,8 +82,8 @@ def _create_action_inputs() -> Dict[str, Any]:
             default=False,
             type_hint="bool",
         ),
-        "llm": ActionInput(
-            name="llm",
+        "llm_model": ActionInput(
+            name="llm_model",
             description="LLM model identifier (e.g., groq/llama-3.1-8b)",
             required=False,
             default="groq/llama-3.1-8b-instant",
@@ -90,45 +91,22 @@ def _create_action_inputs() -> Dict[str, Any]:
         ),
         "output": ActionInput(
             name="output",
-            description="Output file path for results",
-            required=False,
-            default=None,
-            type_hint="Optional[str]",
-        ),
-        "output_format": ActionInput(
-            name="output_format",
-            description="Output format: edge_list or adjacency_matrix",
-            required=False,
-            default="edge_list",
+            description="Output: .json file path or 'none' for stdout",
+            required=True,
             type_hint="str",
         ),
-        "cache": ActionInput(
-            name="cache",
-            description="Enable LLM response caching",
-            required=False,
-            default=True,
-            type_hint="bool",
+        "llm_cache": ActionInput(
+            name="llm_cache",
+            description="Path to cache database (.db) or 'none' to disable",
+            required=True,
+            type_hint="str",
         ),
-        "cache_path": ActionInput(
-            name="cache_path",
-            description="Path to cache database file",
-            required=False,
-            default=None,
-            type_hint="Optional[str]",
-        ),
-        "temperature": ActionInput(
-            name="temperature",
+        "llm_temperature": ActionInput(
+            name="llm_temperature",
             description="LLM sampling temperature (0.0-2.0)",
             required=False,
             default=0.1,
             type_hint="float",
-        ),
-        "request_id": ActionInput(
-            name="request_id",
-            description="Identifier for requests (stored in metadata)",
-            required=False,
-            default="workflow",
-            type_hint="str",
         ),
     }
 
@@ -159,8 +137,9 @@ class GenerateGraphAction(BaseCausalIQAction):
             with:
               action: generate_graph
               model_spec: "{{data_dir}}/cancer.json"
+              llm_cache: "{{data_dir}}/cancer_llm.db"
               prompt_detail: standard
-              llm: groq/llama-3.1-8b-instant
+              llm_model: groq/llama-3.1-8b-instant
         ```
     """
 
@@ -284,10 +263,6 @@ class GenerateGraphAction(BaseCausalIQAction):
         # Build params (excluding 'action')
         params_dict = {k: v for k, v in inputs.items() if k != "action"}
 
-        # Set default request_id if not provided
-        if "request_id" not in params_dict or not params_dict["request_id"]:
-            params_dict["request_id"] = "workflow"
-
         try:
             params = GenerateGraphParams.from_dict(params_dict)
         except (ValidationError, ValueError) as e:
@@ -319,9 +294,9 @@ class GenerateGraphAction(BaseCausalIQAction):
             "status": "skipped",
             "message": "Dry-run mode: would generate graph",
             "model_spec": str(params.model_spec),
-            "llm": params.llm,
+            "llm_model": params.llm_model,
             "prompt_detail": params.prompt_detail.value,
-            "output_format": params.output_format.value,
+            "output": params.output,
         }
 
     def _execute_generate_graph(
@@ -374,16 +349,25 @@ class GenerateGraphAction(BaseCausalIQAction):
                 raise ActionExecutionError(f"Failed to open cache: {e}")
 
         try:
-            # Create generator
+            # Import OutputFormat for generator config
+            from causaliq_knowledge.graph.prompts import OutputFormat
+
+            # Create generator - always use edge_list format
+            # Derive request_id from output filename stem
+            if params.output.lower() == "none":
+                request_id = "none"
+            else:
+                request_id = Path(params.output).stem
+
             config = GraphGeneratorConfig(
-                temperature=params.temperature,
-                output_format=params.output_format,
+                temperature=params.llm_temperature,
+                output_format=OutputFormat.EDGE_LIST,
                 prompt_detail=params.prompt_detail,
                 use_llm_names=use_llm_names,
-                request_id=params.request_id,
+                request_id=request_id,
             )
             generator = GraphGenerator(
-                model=params.llm, config=config, cache=cache
+                model=params.llm_model, config=config, cache=cache
             )
 
             # Generate graph
@@ -404,25 +388,26 @@ class GenerateGraphAction(BaseCausalIQAction):
                 "graph": self._graph_to_dict(graph),
                 "edge_count": len(graph.edges),
                 "variable_count": len(graph.variables),
-                "model_used": params.llm,
+                "model_used": params.llm_model,
                 "cached": stats.get("cache_hits", 0) > 0,
                 "outputs": {
                     "graph": self._graph_to_dict(graph),
                     "edge_count": len(graph.edges),
                     "variable_count": len(graph.variables),
-                    "model_used": params.llm,
+                    "model_used": params.llm_model,
                     "cached": stats.get("cache_hits", 0) > 0,
                 },
             }
 
             # Write output file if specified
-            if params.output:
-                params.output.parent.mkdir(parents=True, exist_ok=True)
-                params.output.write_text(
+            output_path = params.get_effective_output_path()
+            if output_path:
+                output_path.parent.mkdir(parents=True, exist_ok=True)
+                output_path.write_text(
                     json.dumps(result["graph"], indent=2),
                     encoding="utf-8",
                 )
-                result["output_file"] = str(params.output)
+                result["output_file"] = str(output_path)
 
             return result
 

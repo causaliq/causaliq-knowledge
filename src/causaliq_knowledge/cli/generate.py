@@ -13,7 +13,6 @@ from typing import TYPE_CHECKING, Optional
 
 import click
 
-from causaliq_knowledge.graph.prompts import OutputFormat
 from causaliq_knowledge.graph.view_filter import PromptDetail
 
 if TYPE_CHECKING:  # pragma: no cover
@@ -31,18 +30,6 @@ def _parse_prompt_detail(value: str) -> PromptDetail:
         PromptDetail enum value.
     """
     return PromptDetail(value.lower())
-
-
-def _parse_output_format(value: str) -> OutputFormat:
-    """Convert output format string to enum.
-
-    Args:
-        value: Output format string (edge_list, adjacency_matrix).
-
-    Returns:
-        OutputFormat enum value.
-    """
-    return OutputFormat(value.lower())
 
 
 def _map_graph_names(
@@ -87,11 +74,11 @@ def generate_group() -> None:
 
     Examples:
 
-        cqknow generate graph -s model.json
+        cqknow generate graph -s model.json -c model_llm.db -o none
 
-        cqknow generate graph -s model.json -m groq/llama-3.1-8b-instant
+        cqknow generate graph -s model.json -c cache.db -o graph.json
 
-        cqknow generate graph -s model.json --prompt-detail rich
+        cqknow generate graph -s model.json -c none -o none --prompt-detail
     """
     pass
 
@@ -119,70 +106,40 @@ def generate_group() -> None:
     help="Use benchmark names instead of LLM names (test memorisation).",
 )
 @click.option(
-    "--llm",
+    "--llm-model",
     "-m",
-    "model",
+    "llm_model",
     default="groq/llama-3.1-8b-instant",
     help="LLM model to use (e.g., groq/llama-3.1-8b-instant).",
 )
 @click.option(
     "--output",
     "-o",
-    type=click.Path(dir_okay=False, path_type=Path),
-    help="Output file path (JSON). Prints to stdout if not specified.",
+    required=True,
+    help="Output: .json file path or 'none' for adjacency matrix to stdout.",
 )
 @click.option(
-    "--format",
-    "-f",
-    "output_format",
-    default="edge_list",
-    type=click.Choice(["edge_list", "adjacency_matrix"], case_sensitive=False),
-    help="Output format for the generated graph.",
-)
-@click.option(
-    "--cache/--no-cache",
-    "use_cache",
-    default=True,
-    help="Enable/disable LLM response caching. Default: enabled.",
-)
-@click.option(
-    "--cache-path",
+    "--llm-cache",
     "-c",
-    "cache_path",
-    type=click.Path(dir_okay=False, path_type=Path),
-    help="Path to cache database. Default: <model_spec>_cache.db",
+    "llm_cache",
+    required=True,
+    help="Path to cache database (.db) or 'none' to disable caching.",
 )
 @click.option(
-    "--temperature",
+    "--llm-temperature",
     "-t",
     type=float,
     default=0.1,
     help="LLM temperature (0.0-1.0). Lower = more deterministic.",
 )
-@click.option(
-    "--json",
-    "output_json",
-    is_flag=True,
-    help="Output result as JSON (default if --output is specified).",
-)
-@click.option(
-    "--id",
-    "request_id",
-    default="cli",
-    help="Request identifier for export filenames. Default: 'cli'.",
-)
 def generate_graph(
     model_spec: Path,
     prompt_detail: str,
     use_benchmark_names: bool,
-    model: str,
-    output: Optional[Path],
-    output_format: str,
-    use_cache: bool,
-    cache_path: Optional[Path],
-    temperature: float,
-    output_json: bool,
-    request_id: str,
+    llm_model: str,
+    output: str,
+    llm_cache: str,
+    llm_temperature: float,
 ) -> None:
     """Generate a causal graph from a model specification.
 
@@ -192,15 +149,17 @@ def generate_graph(
     By default, LLM names are used in prompts to prevent memorisation.
     Use --use-benchmark-names to test with original benchmark names.
 
+    Output behaviour:
+    - If output is a .json file: writes JSON to file, prints edges to stdout
+    - If output is 'none': prints adjacency matrix to stdout, edges to stderr
+
     Examples:
 
-        cqknow generate graph -s research/models/cancer/cancer.json
+        cqknow generate graph -s model.json -c cache.db -o graph.json
 
-        cqknow generate graph -s model.json -m gemini/gemini-2.5-flash
+        cqknow generate graph -s model.json -c cache.db -o none
 
-        cqknow generate graph -s model.json --prompt-detail rich -o graph.json
-
-        cqknow generate graph -s model.json --use-benchmark-names
+        cqknow generate graph -s model.json -c none -o none --use-benchmark
     """
     # Import here to avoid slow startup for --help
     from causaliq_knowledge.cache import TokenCache
@@ -209,10 +168,21 @@ def generate_graph(
         GraphGenerator,
         GraphGeneratorConfig,
     )
+    from causaliq_knowledge.graph.prompts import OutputFormat
 
     # Parse enums
     level = _parse_prompt_detail(prompt_detail)
-    fmt = _parse_output_format(output_format)
+
+    # Validate output parameter
+    output_path: Optional[Path] = None
+    if output.lower() != "none":
+        if not output.endswith(".json"):
+            click.echo(
+                "Error: --output must be 'none' or a path ending with .json",
+                err=True,
+            )
+            sys.exit(1)
+        output_path = Path(output)
 
     # Load model specification
     try:
@@ -237,14 +207,17 @@ def generate_graph(
     elif use_benchmark_names:
         click.echo("Using benchmark names (memorisation test)", err=True)
 
-    # Set up cache (enabled by default)
+    # Set up cache
     cache: Optional[TokenCache] = None
-    if use_cache:
-        # Default cache path: alongside model spec file
-        # e.g., cancer.json -> cancer_llm.db
-        if cache_path is None:
-            stem = model_spec.stem
-            cache_path = model_spec.parent / f"{stem}_llm.db"
+    if llm_cache.lower() != "none":
+        # Validate .db suffix
+        if not llm_cache.endswith(".db"):
+            click.echo(
+                "Error: --llm-cache must be 'none' or a path ending with .db",
+                err=True,
+            )
+            sys.exit(1)
+        cache_path = Path(llm_cache)
         try:
             cache = TokenCache(str(cache_path))
             cache.open()
@@ -252,24 +225,32 @@ def generate_graph(
         except Exception as e:
             click.echo(f"Error opening cache: {e}", err=True)
             sys.exit(1)
+    else:
+        click.echo("Cache disabled", err=True)
 
-    # Create generator
+    # Create generator - use edge_list format for structured output
     try:
+        # Derive request_id from output filename stem
+        if output.lower() == "none":
+            request_id = "none"
+        else:
+            request_id = Path(output).stem
+
         config = GraphGeneratorConfig(
-            temperature=temperature,
-            output_format=fmt,
+            temperature=llm_temperature,
+            output_format=OutputFormat.EDGE_LIST,
             prompt_detail=level,
             use_llm_names=use_llm_names,
             request_id=request_id,
         )
-        generator = GraphGenerator(model=model, config=config, cache=cache)
+        generator = GraphGenerator(model=llm_model, config=config, cache=cache)
     except ValueError as e:
         click.echo(f"Error creating generator: {e}", err=True)
         sys.exit(1)
 
     # Generate graph
-    click.echo(f"Generating graph using {model}...", err=True)
-    click.echo(f"View level: {level.value}, Format: {fmt.value}", err=True)
+    click.echo(f"Generating graph using {llm_model}...", err=True)
+    click.echo(f"View level: {level.value}", err=True)
 
     try:
         graph = generator.generate_from_spec(spec, level=level)
@@ -282,22 +263,22 @@ def generate_graph(
         graph = _map_graph_names(graph, llm_to_benchmark_mapping)
         click.echo("Mapped LLM names back to benchmark names", err=True)
 
-    # Build output
-    result = _build_output(graph, spec, model, level, fmt)
+    # Build JSON output
+    result = _build_output(graph, spec, llm_model, level)
 
-    # Output results
-    if output:
-        # Write to file
-        output.parent.mkdir(parents=True, exist_ok=True)
-        output.write_text(json.dumps(result, indent=2), encoding="utf-8")
-        click.echo(f"\nOutput written to: {output}", err=True)
-        _print_summary(graph, err=True)
-    elif output_json:
-        # JSON to stdout
-        click.echo(json.dumps(result, indent=2))
+    # Output results - always print edges summary to stdout
+    _print_edges(graph)
+    _print_summary(graph, err=False)
+
+    if output_path:
+        # Write JSON to file
+        output_path.parent.mkdir(parents=True, exist_ok=True)
+        output_path.write_text(json.dumps(result, indent=2), encoding="utf-8")
+        click.echo(f"\nOutput written to: {output_path}", err=True)
     else:
-        # Human-readable to stdout
-        _print_human_readable(graph, spec, model)
+        # Print adjacency matrix to stdout
+        click.echo()
+        _print_adjacency_matrix(graph, spec)
 
     # Show stats
     stats = generator.get_stats()
@@ -316,18 +297,16 @@ def generate_graph(
 def _build_output(
     graph: GeneratedGraph,
     spec: ModelSpec,
-    model: str,
+    llm_model: str,
     level: PromptDetail,
-    fmt: OutputFormat,
 ) -> dict:
     """Build output dictionary for the generated graph.
 
     Args:
         graph: The GeneratedGraph result.
         spec: The ModelSpec used.
-        model: LLM model identifier.
+        llm_model: LLM model identifier.
         level: View level used.
-        fmt: Output format used.
 
     Returns:
         Dictionary suitable for JSON output.
@@ -350,9 +329,8 @@ def _build_output(
         "edge_count": len(edges),
         "edges": edges,
         "generation": {
-            "model": model,
+            "model": llm_model,
             "prompt_detail": level.value,
-            "output_format": fmt.value,
         },
     }
 
@@ -369,43 +347,12 @@ def _build_output(
     return result
 
 
-def _print_summary(graph: GeneratedGraph, err: bool = False) -> None:
-    """Print a brief summary of the generated graph.
+def _print_edges(graph: GeneratedGraph) -> None:
+    """Print proposed edges with confidence bars.
 
     Args:
         graph: The GeneratedGraph result.
-        err: Whether to print to stderr.
     """
-    edge_count = len(graph.edges)
-    high_conf = sum(1 for e in graph.edges if e.confidence >= 0.7)
-    med_conf = sum(1 for e in graph.edges if 0.4 <= e.confidence < 0.7)
-    low_conf = sum(1 for e in graph.edges if e.confidence < 0.4)
-
-    click.echo(f"\nGenerated {edge_count} edges:", err=err)
-    click.echo(f"  High confidence (>=0.7): {high_conf}", err=err)
-    click.echo(f"  Medium confidence (0.4-0.7): {med_conf}", err=err)
-    click.echo(f"  Low confidence (<0.4): {low_conf}", err=err)
-
-
-def _print_human_readable(
-    graph: GeneratedGraph, spec: ModelSpec, model: str
-) -> None:
-    """Print human-readable output for the generated graph.
-
-    Args:
-        graph: The GeneratedGraph result.
-        spec: The ModelSpec used.
-        model: LLM model identifier.
-    """
-    click.echo()
-    click.echo("=" * 70)
-    click.echo(f"Generated Causal Graph: {spec.dataset_id}")
-    click.echo("=" * 70)
-    click.echo(f"Domain:     {spec.domain}")
-    click.echo(f"Variables:  {len(spec.variables)}")
-    click.echo(f"Model:      {model}")
-    click.echo("=" * 70)
-
     if not graph.edges:
         click.echo("\nNo edges proposed by the LLM.")
         return
@@ -433,5 +380,55 @@ def _print_human_readable(
                 reasoning += "..."
             click.echo(f"      {reasoning}")
 
-    _print_summary(graph, err=False)
+
+def _print_summary(graph: GeneratedGraph, err: bool = False) -> None:
+    """Print a brief summary of the generated graph.
+
+    Args:
+        graph: The GeneratedGraph result.
+        err: Whether to print to stderr.
+    """
+    edge_count = len(graph.edges)
+    high_conf = sum(1 for e in graph.edges if e.confidence >= 0.7)
+    med_conf = sum(1 for e in graph.edges if 0.4 <= e.confidence < 0.7)
+    low_conf = sum(1 for e in graph.edges if e.confidence < 0.4)
+
+    click.echo(f"\nEdge Confidence Summary ({edge_count} edges):", err=err)
+    click.echo(f"  High confidence (>=0.7): {high_conf}", err=err)
+    click.echo(f"  Medium confidence (0.4-0.7): {med_conf}", err=err)
+    click.echo(f"  Low confidence (<0.4): {low_conf}", err=err)
+
+
+def _print_adjacency_matrix(graph: GeneratedGraph, spec: ModelSpec) -> None:
+    """Print adjacency matrix representation of the graph.
+
+    Args:
+        graph: The GeneratedGraph result.
+        spec: The ModelSpec used for variable names.
+    """
+    # Get variable names in order
+    var_names = [v.name for v in spec.variables]
+
+    # Build edge lookup (source, target) -> confidence
+    edge_lookup = {(e.source, e.target): e.confidence for e in graph.edges}
+
+    click.echo("Adjacency Matrix:")
     click.echo()
+
+    # Header row
+    max_name_len = max(len(name) for name in var_names)
+    header = " " * (max_name_len + 2)
+    for name in var_names:
+        header += f"{name[:3]:>4}"
+    click.echo(header)
+
+    # Data rows
+    for i, row_name in enumerate(var_names):
+        row = f"{row_name:<{max_name_len}}  "
+        for j, col_name in enumerate(var_names):
+            if (row_name, col_name) in edge_lookup:
+                conf = edge_lookup[(row_name, col_name)]
+                row += f"{conf:4.1f}"
+            else:
+                row += "   ."
+        click.echo(row)

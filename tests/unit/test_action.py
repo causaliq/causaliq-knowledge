@@ -46,12 +46,10 @@ def test_action_inputs_specification() -> None:
     assert "action" in action.inputs
     assert "model_spec" in action.inputs
     assert "prompt_detail" in action.inputs
-    assert "llm" in action.inputs
+    assert "llm_model" in action.inputs
     assert "output" in action.inputs
-    assert "output_format" in action.inputs
-    assert "cache" in action.inputs
-    assert "temperature" in action.inputs
-    assert "request_id" in action.inputs
+    assert "llm_cache" in action.inputs
+    assert "llm_temperature" in action.inputs
 
 
 # Test action has outputs specification.
@@ -120,6 +118,8 @@ def test_validate_inputs_valid_generate_graph() -> None:
         {
             "action": "generate_graph",
             "model_spec": "model.json",
+            "output": "none",
+            "llm_cache": "cache.db",
         }
     )
 
@@ -138,7 +138,9 @@ def test_validate_inputs_invalid_llm() -> None:
             {
                 "action": "generate_graph",
                 "model_spec": "model.json",
-                "llm": "invalid/model",
+                "llm_model": "invalid/model",
+                "output": "none",
+                "llm_cache": "cache.db",
             }
         )
 
@@ -161,13 +163,15 @@ def test_run_dry_run_mode(tmp_path: Path) -> None:
         inputs={
             "action": "generate_graph",
             "model_spec": str(model_spec),
+            "output": "none",
+            "llm_cache": "cache.db",
         },
         mode="dry-run",
     )
 
     assert result["status"] == "skipped"
     assert "dry-run" in result.get("message", "").lower()
-    assert result["llm"] == "groq/llama-3.1-8b-instant"
+    assert result["llm_model"] == "groq/llama-3.1-8b-instant"
     assert result["prompt_detail"] == "standard"
 
 
@@ -183,6 +187,8 @@ def test_run_model_spec_not_found() -> None:
             inputs={
                 "action": "generate_graph",
                 "model_spec": "/nonexistent/model.json",
+                "output": "none",
+                "llm_cache": "cache.db",
             },
             mode="run",
         )
@@ -228,7 +234,8 @@ def test_run_execute_mode(tmp_path: Path) -> None:
             inputs={
                 "action": "generate_graph",
                 "model_spec": str(model_spec),
-                "cache": False,  # Disable cache for simpler test
+                "output": "none",
+                "llm_cache": "none",  # Disable cache for simpler test
             },
             mode="run",
         )
@@ -282,7 +289,7 @@ def test_run_with_output_file(tmp_path: Path) -> None:
                 "action": "generate_graph",
                 "model_spec": str(model_spec),
                 "output": str(output_file),
-                "cache": False,
+                "llm_cache": "none",
             },
             mode="run",
         )
@@ -373,9 +380,9 @@ def test_map_graph_names_partial() -> None:
     assert result.edges[0].target == "keep_b"
 
 
-# Test request_id defaults to 'workflow'.
-def test_run_default_request_id(tmp_path: Path) -> None:
-    """Test request_id defaults to 'workflow' for workflow execution."""
+# Test request_id is derived from output filename.
+def test_run_request_id_from_output(tmp_path: Path) -> None:
+    """Test request_id is derived from output filename stem."""
     from causaliq_knowledge.graph.response import GeneratedGraph
 
     # Create a minimal model spec file
@@ -409,11 +416,12 @@ def test_run_default_request_id(tmp_path: Path) -> None:
             inputs={
                 "action": "generate_graph",
                 "model_spec": str(model_spec),
-                "cache": False,
+                "output": "results/expt01.json",
+                "llm_cache": "none",
             },
             mode="run",
         )
 
-    # Check request_id was set to 'workflow'
+    # Check request_id was derived from output filename
     assert captured_config.get("config") is not None
-    assert captured_config["config"].request_id == "workflow"
+    assert captured_config["config"].request_id == "expt01"

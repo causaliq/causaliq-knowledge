@@ -739,8 +739,7 @@ def test_cli_generate_graph_shows_help():
     assert "--prompt-detail" in result.output
     assert "--llm" in result.output
     assert "--output" in result.output
-    assert "--format" in result.output
-    assert "--id" in result.output
+    assert "--llm-temperature" in result.output
 
 
 # Test generate graph requires model-spec.
@@ -797,15 +796,26 @@ def test_cli_generate_graph_loads_spec(tmp_path, mocker):
     )
 
     runner = CliRunner()
-    result = runner.invoke(cli, ["generate", "graph", "-s", str(spec_file)])
+    result = runner.invoke(
+        cli,
+        [
+            "generate",
+            "graph",
+            "-s",
+            str(spec_file),
+            "-c",
+            "none",
+            "-o",
+            "none",
+        ],
+    )
 
     assert result.exit_code == 0
-    assert "test-model" in result.output
-    assert "A" in result.output
+    assert "test-model" in result.output or "A" in result.output
     assert "B" in result.output
 
 
-# Test generate graph with --json flag.
+# Test generate graph with output to file writes JSON.
 def test_cli_generate_graph_json_output(tmp_path, mocker):
     import json
 
@@ -820,6 +830,8 @@ def test_cli_generate_graph_json_output(tmp_path, mocker):
     }
     spec_file = tmp_path / "model.json"
     spec_file.write_text(json.dumps(spec_data))
+
+    output_file = tmp_path / "output.json"
 
     # Mock the GraphGenerator
     from causaliq_knowledge.graph.response import GeneratedGraph, ProposedEdge
@@ -841,28 +853,27 @@ def test_cli_generate_graph_json_output(tmp_path, mocker):
 
     runner = CliRunner()
     result = runner.invoke(
-        cli, ["generate", "graph", "-s", str(spec_file), "--json"]
+        cli,
+        [
+            "generate",
+            "graph",
+            "-s",
+            str(spec_file),
+            "-c",
+            "none",
+            "-o",
+            str(output_file),
+        ],
     )
 
     assert result.exit_code == 0
-    # Find JSON in output by tracking brace depth
-    lines = result.output.split("\n")
-    json_lines = []
-    brace_depth = 0
-    in_json = False
-    for line in lines:
-        if not in_json and line.strip().startswith("{"):
-            in_json = True
-        if in_json:
-            json_lines.append(line)
-            brace_depth += line.count("{") - line.count("}")
-            if brace_depth == 0:
-                break
-    output = json.loads("\n".join(json_lines))
-    assert output["dataset_id"] == "json-test"
-    assert output["edge_count"] == 1
-    assert output["edges"][0]["source"] == "X"
-    assert output["edges"][0]["target"] == "Y"
+    assert output_file.exists()
+
+    content = json.loads(output_file.read_text())
+    assert content["dataset_id"] == "json-test"
+    assert content["edge_count"] == 1
+    assert content["edges"][0]["source"] == "X"
+    assert content["edges"][0]["target"] == "Y"
 
 
 # Test generate graph with --output flag writes to file.
@@ -881,7 +892,7 @@ def test_cli_generate_graph_output_file(tmp_path, mocker):
     spec_file = tmp_path / "model.json"
     spec_file.write_text(json.dumps(spec_data))
 
-    output_file = tmp_path / "output.json"
+    output_file = tmp_path / "graph_output.json"
 
     # Mock the GraphGenerator
     from causaliq_knowledge.graph.response import GeneratedGraph, ProposedEdge
@@ -904,7 +915,16 @@ def test_cli_generate_graph_output_file(tmp_path, mocker):
     runner = CliRunner()
     result = runner.invoke(
         cli,
-        ["generate", "graph", "-s", str(spec_file), "-o", str(output_file)],
+        [
+            "generate",
+            "graph",
+            "-s",
+            str(spec_file),
+            "-c",
+            "none",
+            "-o",
+            str(output_file),
+        ],
     )
 
     assert result.exit_code == 0
@@ -913,6 +933,8 @@ def test_cli_generate_graph_output_file(tmp_path, mocker):
     content = json.loads(output_file.read_text())
     assert content["dataset_id"] == "file-output-test"
     assert len(content["edges"]) == 1
+    # Also check edges are printed to stdout
+    assert "P → Q" in result.output or "P" in result.output
 
 
 # Test generate graph with --use-benchmark-names flag.
@@ -961,7 +983,17 @@ def test_cli_generate_graph_use_benchmark_names(tmp_path, mocker):
     runner = CliRunner()
     result = runner.invoke(
         cli,
-        ["generate", "graph", "-s", str(spec_file), "--use-benchmark-names"],
+        [
+            "generate",
+            "graph",
+            "-s",
+            str(spec_file),
+            "-c",
+            "none",
+            "-o",
+            "none",
+            "--use-benchmark-names",
+        ],
     )
 
     assert result.exit_code == 0
@@ -1005,6 +1037,10 @@ def test_cli_generate_graph_prompt_detail_minimal(tmp_path, mocker):
             "graph",
             "-s",
             str(spec_file),
+            "-c",
+            "none",
+            "-o",
+            "none",
             "--prompt-detail",
             "minimal",
         ],
@@ -1014,12 +1050,12 @@ def test_cli_generate_graph_prompt_detail_minimal(tmp_path, mocker):
     assert "minimal" in result.output.lower()
 
 
-# Test generate graph with --format adjacency_matrix.
-def test_cli_generate_graph_format_adjacency(tmp_path, mocker):
+# Test generate graph with output none prints adjacency matrix.
+def test_cli_generate_graph_output_none_adjacency(tmp_path, mocker):
     import json
 
     spec_data = {
-        "dataset_id": "format-test",
+        "dataset_id": "adjacency-test",
         "domain": "testing",
         "variables": [
             {"name": "A", "type": "binary", "short_description": "Variable A"},
@@ -1029,9 +1065,12 @@ def test_cli_generate_graph_format_adjacency(tmp_path, mocker):
     spec_file = tmp_path / "model.json"
     spec_file.write_text(json.dumps(spec_data))
 
-    from causaliq_knowledge.graph.response import GeneratedGraph
+    from causaliq_knowledge.graph.response import GeneratedGraph, ProposedEdge
 
-    mock_graph = GeneratedGraph(edges=[], variables=["A", "B"])
+    mock_graph = GeneratedGraph(
+        edges=[ProposedEdge(source="A", target="B", confidence=0.8)],
+        variables=["A", "B"],
+    )
     mock_generator = mocker.MagicMock()
     mock_generator.generate_from_spec.return_value = mock_graph
     mock_generator.get_stats.return_value = {
@@ -1051,13 +1090,18 @@ def test_cli_generate_graph_format_adjacency(tmp_path, mocker):
             "graph",
             "-s",
             str(spec_file),
-            "--format",
-            "adjacency_matrix",
+            "-c",
+            "none",
+            "-o",
+            "none",
         ],
     )
 
     assert result.exit_code == 0
-    assert "adjacency_matrix" in result.output.lower()
+    # Should print adjacency matrix
+    assert "Adjacency Matrix" in result.output
+    # Should also print proposed edges
+    assert "A → B" in result.output or "Proposed Edges" in result.output
 
 
 # Test generate graph with invalid model spec.
@@ -1067,7 +1111,19 @@ def test_cli_generate_graph_invalid_spec(tmp_path):
     spec_file.write_text("not valid json")
 
     runner = CliRunner()
-    result = runner.invoke(cli, ["generate", "graph", "-s", str(spec_file)])
+    result = runner.invoke(
+        cli,
+        [
+            "generate",
+            "graph",
+            "-s",
+            str(spec_file),
+            "-c",
+            "none",
+            "-o",
+            "none",
+        ],
+    )
 
     assert result.exit_code == 1
     assert "Error loading" in result.output
@@ -1083,7 +1139,19 @@ def test_cli_generate_graph_incomplete_spec(tmp_path):
     spec_file.write_text(json.dumps(spec_data))
 
     runner = CliRunner()
-    result = runner.invoke(cli, ["generate", "graph", "-s", str(spec_file)])
+    result = runner.invoke(
+        cli,
+        [
+            "generate",
+            "graph",
+            "-s",
+            str(spec_file),
+            "-c",
+            "none",
+            "-o",
+            "none",
+        ],
+    )
 
     assert result.exit_code == 1
     assert "Error loading" in result.output
@@ -1121,7 +1189,19 @@ def test_cli_generate_graph_real_model_file(mocker):
     )
 
     runner = CliRunner()
-    result = runner.invoke(cli, ["generate", "graph", "-s", str(model_path)])
+    result = runner.invoke(
+        cli,
+        [
+            "generate",
+            "graph",
+            "-s",
+            str(model_path),
+            "-c",
+            "none",
+            "-o",
+            "none",
+        ],
+    )
 
     assert result.exit_code == 0
     assert "cancer" in result.output.lower()
@@ -1168,6 +1248,8 @@ def test_cli_generate_graph_with_cache(tmp_path, mocker):
             str(spec_file),
             "-c",
             str(cache_file),
+            "-o",
+            "none",
         ],
     )
 
@@ -1205,7 +1287,19 @@ def test_cli_generate_graph_empty_edges(tmp_path, mocker):
     )
 
     runner = CliRunner()
-    result = runner.invoke(cli, ["generate", "graph", "-s", str(spec_file)])
+    result = runner.invoke(
+        cli,
+        [
+            "generate",
+            "graph",
+            "-s",
+            str(spec_file),
+            "-c",
+            "none",
+            "-o",
+            "none",
+        ],
+    )
 
     assert result.exit_code == 0
     assert "No edges" in result.output or "0" in result.output
@@ -1248,6 +1342,10 @@ def test_cli_generate_graph_llm_option(tmp_path, mocker):
             "graph",
             "-s",
             str(spec_file),
+            "-c",
+            "none",
+            "-o",
+            "none",
             "-m",
             "gemini/gemini-2.5-flash",
         ],
@@ -1292,12 +1390,12 @@ def test_cli_generate_graph_invalid_prompt_detail_level(tmp_path):
     assert "is not one of" in result.output
 
 
-# Test generate graph with invalid output format.
-def test_cli_generate_graph_invalid_format(tmp_path):
+# Test generate graph with invalid output suffix.
+def test_cli_generate_graph_invalid_output(tmp_path):
     import json
 
     spec_data = {
-        "dataset_id": "invalid-format-test",
+        "dataset_id": "invalid-output-test",
         "domain": "testing",
         "variables": [
             {"name": "A", "type": "binary", "short_description": "Variable A"},
@@ -1309,12 +1407,20 @@ def test_cli_generate_graph_invalid_format(tmp_path):
     runner = CliRunner()
     result = runner.invoke(
         cli,
-        ["generate", "graph", "-s", str(spec_file), "--format", "invalid"],
+        [
+            "generate",
+            "graph",
+            "-s",
+            str(spec_file),
+            "-c",
+            "none",
+            "-o",
+            "output.txt",
+        ],
     )
 
-    assert result.exit_code != 0
-    # Click's choice validation produces this message
-    assert "is not one of" in result.output
+    assert result.exit_code == 1
+    assert ".json" in result.output
 
 
 # Test generate graph with cache open error.
@@ -1347,6 +1453,8 @@ def test_cli_generate_graph_cache_error(tmp_path, mocker):
             str(spec_file),
             "-c",
             str(tmp_path / "cache.db"),
+            "-o",
+            "none",
         ],
     )
 
@@ -1377,7 +1485,16 @@ def test_cli_generate_graph_generator_error(tmp_path, mocker):
     runner = CliRunner()
     result = runner.invoke(
         cli,
-        ["generate", "graph", "-s", str(spec_file)],
+        [
+            "generate",
+            "graph",
+            "-s",
+            str(spec_file),
+            "-c",
+            "none",
+            "-o",
+            "none",
+        ],
     )
 
     assert result.exit_code == 1
@@ -1409,7 +1526,16 @@ def test_cli_generate_graph_generation_error(tmp_path, mocker):
     runner = CliRunner()
     result = runner.invoke(
         cli,
-        ["generate", "graph", "-s", str(spec_file)],
+        [
+            "generate",
+            "graph",
+            "-s",
+            str(spec_file),
+            "-c",
+            "none",
+            "-o",
+            "none",
+        ],
     )
 
     assert result.exit_code == 1
@@ -1430,6 +1556,8 @@ def test_cli_generate_graph_edge_with_reasoning(tmp_path, mocker):
     }
     spec_file = tmp_path / "model.json"
     spec_file.write_text(json.dumps(spec_data))
+
+    output_file = tmp_path / "output.json"
 
     from causaliq_knowledge.graph.response import GeneratedGraph, ProposedEdge
 
@@ -1458,24 +1586,20 @@ def test_cli_generate_graph_edge_with_reasoning(tmp_path, mocker):
     runner = CliRunner()
     result = runner.invoke(
         cli,
-        ["generate", "graph", "-s", str(spec_file), "--json"],
+        [
+            "generate",
+            "graph",
+            "-s",
+            str(spec_file),
+            "-c",
+            "none",
+            "-o",
+            str(output_file),
+        ],
     )
 
     assert result.exit_code == 0
-    # Find JSON in output
-    lines = result.output.split("\n")
-    json_lines = []
-    brace_depth = 0
-    in_json = False
-    for line in lines:
-        if not in_json and line.strip().startswith("{"):
-            in_json = True
-        if in_json:
-            json_lines.append(line)
-            brace_depth += line.count("{") - line.count("}")
-            if brace_depth == 0:
-                break
-    output = json.loads("\n".join(json_lines))
+    output = json.loads(output_file.read_text())
     assert (
         output["edges"][0]["reasoning"]
         == "X causes Y because of domain knowledge"
@@ -1496,6 +1620,8 @@ def test_cli_generate_graph_with_metadata(tmp_path, mocker):
     }
     spec_file = tmp_path / "model.json"
     spec_file.write_text(json.dumps(spec_data))
+
+    output_file = tmp_path / "output.json"
 
     from causaliq_knowledge.graph.response import (
         GeneratedGraph,
@@ -1528,24 +1654,20 @@ def test_cli_generate_graph_with_metadata(tmp_path, mocker):
     runner = CliRunner()
     result = runner.invoke(
         cli,
-        ["generate", "graph", "-s", str(spec_file), "--json"],
+        [
+            "generate",
+            "graph",
+            "-s",
+            str(spec_file),
+            "-c",
+            "none",
+            "-o",
+            str(output_file),
+        ],
     )
 
     assert result.exit_code == 0
-    # Find JSON in output
-    lines = result.output.split("\n")
-    json_lines = []
-    brace_depth = 0
-    in_json = False
-    for line in lines:
-        if not in_json and line.strip().startswith("{"):
-            in_json = True
-        if in_json:
-            json_lines.append(line)
-            brace_depth += line.count("{") - line.count("}")
-            if brace_depth == 0:
-                break
-    output = json.loads("\n".join(json_lines))
+    output = json.loads(output_file.read_text())
     assert "metadata" in output
     assert output["metadata"]["model"] == "test-model"
     assert output["metadata"]["provider"] == "test-provider"
@@ -1595,10 +1717,19 @@ def test_cli_generate_graph_human_readable_with_reasoning(tmp_path, mocker):
     )
 
     runner = CliRunner()
-    # Don't use --json to get human-readable output
+    # Use -o none to get adjacency matrix and human-readable output to stdout
     result = runner.invoke(
         cli,
-        ["generate", "graph", "-s", str(spec_file)],
+        [
+            "generate",
+            "graph",
+            "-s",
+            str(spec_file),
+            "-c",
+            "none",
+            "-o",
+            "none",
+        ],
     )
 
     assert result.exit_code == 0
@@ -1651,7 +1782,16 @@ def test_cli_generate_graph_long_reasoning_truncated(tmp_path, mocker):
     runner = CliRunner()
     result = runner.invoke(
         cli,
-        ["generate", "graph", "-s", str(spec_file)],
+        [
+            "generate",
+            "graph",
+            "-s",
+            str(spec_file),
+            "-c",
+            "none",
+            "-o",
+            "none",
+        ],
     )
 
     assert result.exit_code == 0

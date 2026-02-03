@@ -55,7 +55,7 @@ def cli() -> None:
     help="Output result as JSON.",
 )
 @click.option(
-    "--temperature",
+    "--llm-temperature",
     "-t",
     type=float,
     default=0.1,
@@ -68,7 +68,7 @@ def query_edge(
     domain: Optional[str],
     strategy: str,
     output_json: bool,
-    temperature: float,
+    llm_temperature: float,
 ) -> None:
     """Query LLMs about a causal relationship between two variables.
 
@@ -96,7 +96,7 @@ def query_edge(
         provider = LLMKnowledge(
             models=list(model),
             consensus_strategy=strategy,
-            temperature=temperature,
+            temperature=llm_temperature,
         )
     except Exception as e:
         click.echo(f"Error creating provider: {e}", err=True)
