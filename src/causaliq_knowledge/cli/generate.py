@@ -12,24 +12,14 @@ from pathlib import Path
 from typing import TYPE_CHECKING, Optional
 
 import click
+from pydantic import ValidationError
 
+from causaliq_knowledge.graph.params import GenerateGraphParams
 from causaliq_knowledge.graph.view_filter import PromptDetail
 
 if TYPE_CHECKING:  # pragma: no cover
     from causaliq_knowledge.graph.models import ModelSpec
     from causaliq_knowledge.graph.response import GeneratedGraph
-
-
-def _parse_prompt_detail(value: str) -> PromptDetail:
-    """Convert prompt detail string to enum.
-
-    Args:
-        value: Prompt detail string (minimal, standard, rich).
-
-    Returns:
-        PromptDetail enum value.
-    """
-    return PromptDetail(value.lower())
 
 
 def _map_graph_names(
@@ -66,24 +56,7 @@ def _map_graph_names(
     )
 
 
-@click.group("generate")
-def generate_group() -> None:
-    """Generate causal structures using LLMs.
-
-    Commands for generating causal graphs from model specifications.
-
-    Examples:
-
-        cqknow generate graph -s model.json -c model_llm.db -o none
-
-        cqknow generate graph -s model.json -c cache.db -o graph.json
-
-        cqknow generate graph -s model.json -c none -o none --prompt-detail
-    """
-    pass
-
-
-@generate_group.command("graph")
+@click.command("generate_graph")
 @click.option(
     "--model-spec",
     "-s",
@@ -93,7 +66,7 @@ def generate_group() -> None:
 )
 @click.option(
     "--prompt-detail",
-    "-v",
+    "-p",
     "prompt_detail",
     default="standard",
     type=click.Choice(["minimal", "standard", "rich"], case_sensitive=False),
@@ -155,11 +128,11 @@ def generate_graph(
 
     Examples:
 
-        cqknow generate graph -s model.json -c cache.db -o graph.json
+        cqknow generate_graph -s model.json -c cache.db -o graph.json
 
-        cqknow generate graph -s model.json -c cache.db -o none
+        cqknow generate_graph -s model.json -c cache.db -o none
 
-        cqknow generate graph -s model.json -c none -o none --use-benchmark
+        cqknow generate_graph -s model.json -c none -o none --use-benchmark
     """
     # Import here to avoid slow startup for --help
     from causaliq_knowledge.cache import TokenCache
@@ -170,23 +143,31 @@ def generate_graph(
     )
     from causaliq_knowledge.graph.prompts import OutputFormat
 
-    # Parse enums
-    level = _parse_prompt_detail(prompt_detail)
+    # Validate all parameters using shared model
+    try:
+        params = GenerateGraphParams(
+            model_spec=model_spec,
+            prompt_detail=PromptDetail(prompt_detail.lower()),
+            use_benchmark_names=use_benchmark_names,
+            llm_model=llm_model,
+            output=output,
+            llm_cache=llm_cache,
+            llm_temperature=llm_temperature,
+        )
+    except ValidationError as e:
+        # Format Pydantic errors for CLI
+        for error in e.errors():
+            field = error.get("loc", ["unknown"])[0]
+            msg = error.get("msg", "validation error")
+            click.echo(f"Error: --{field}: {msg}", err=True)
+        sys.exit(1)
 
-    # Validate output parameter
-    output_path: Optional[Path] = None
-    if output.lower() != "none":
-        if not output.endswith(".json"):
-            click.echo(
-                "Error: --output must be 'none' or a path ending with .json",
-                err=True,
-            )
-            sys.exit(1)
-        output_path = Path(output)
+    # Get effective paths from validated params
+    output_path = params.get_effective_output_path()
 
     # Load model specification
     try:
-        spec = ModelLoader.load(model_spec)
+        spec = ModelLoader.load(params.model_spec)
         click.echo(
             f"Loaded model specification: {spec.dataset_id} "
             f"({len(spec.variables)} variables)",
@@ -200,24 +181,17 @@ def generate_graph(
     llm_to_benchmark_mapping: dict[str, str] = {}
 
     # Determine naming mode
-    use_llm_names = not use_benchmark_names
+    use_llm_names = not params.use_benchmark_names
     if use_llm_names and spec.uses_distinct_llm_names():
         llm_to_benchmark_mapping = spec.get_llm_to_name_mapping()
         click.echo("Using LLM names (prevents memorisation)", err=True)
-    elif use_benchmark_names:
+    elif params.use_benchmark_names:
         click.echo("Using benchmark names (memorisation test)", err=True)
 
     # Set up cache
     cache: Optional[TokenCache] = None
-    if llm_cache.lower() != "none":
-        # Validate .db suffix
-        if not llm_cache.endswith(".db"):
-            click.echo(
-                "Error: --llm-cache must be 'none' or a path ending with .db",
-                err=True,
-            )
-            sys.exit(1)
-        cache_path = Path(llm_cache)
+    cache_path = params.get_effective_cache_path()
+    if cache_path is not None:
         try:
             cache = TokenCache(str(cache_path))
             cache.open()
@@ -231,29 +205,31 @@ def generate_graph(
     # Create generator - use edge_list format for structured output
     try:
         # Derive request_id from output filename stem
-        if output.lower() == "none":
+        if params.output.lower() == "none":
             request_id = "none"
         else:
-            request_id = Path(output).stem
+            request_id = Path(params.output).stem
 
         config = GraphGeneratorConfig(
-            temperature=llm_temperature,
+            temperature=params.llm_temperature,
             output_format=OutputFormat.EDGE_LIST,
-            prompt_detail=level,
+            prompt_detail=params.prompt_detail,
             use_llm_names=use_llm_names,
             request_id=request_id,
         )
-        generator = GraphGenerator(model=llm_model, config=config, cache=cache)
+        generator = GraphGenerator(
+            model=params.llm_model, config=config, cache=cache
+        )
     except ValueError as e:
         click.echo(f"Error creating generator: {e}", err=True)
         sys.exit(1)
 
     # Generate graph
-    click.echo(f"Generating graph using {llm_model}...", err=True)
-    click.echo(f"View level: {level.value}", err=True)
+    click.echo(f"Generating graph using {params.llm_model}...", err=True)
+    click.echo(f"View level: {params.prompt_detail.value}", err=True)
 
     try:
-        graph = generator.generate_from_spec(spec, level=level)
+        graph = generator.generate_from_spec(spec, level=params.prompt_detail)
     except Exception as e:
         click.echo(f"Error generating graph: {e}", err=True)
         sys.exit(1)
@@ -264,7 +240,7 @@ def generate_graph(
         click.echo("Mapped LLM names back to benchmark names", err=True)
 
     # Build JSON output
-    result = _build_output(graph, spec, llm_model, level)
+    result = _build_output(graph, spec, params.llm_model, params.prompt_detail)
 
     # Output results - always print edges summary to stdout
     _print_edges(graph)

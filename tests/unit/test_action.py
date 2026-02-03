@@ -407,6 +407,8 @@ def test_run_request_id_from_output(tmp_path: Path) -> None:
         mock.get_stats.return_value = {"cache_hits": 0}
         return mock
 
+    output_file = tmp_path / "results" / "expt01.json"
+
     with patch(
         "causaliq_knowledge.graph.generator.GraphGenerator",
         side_effect=capture_config,
@@ -416,7 +418,7 @@ def test_run_request_id_from_output(tmp_path: Path) -> None:
             inputs={
                 "action": "generate_graph",
                 "model_spec": str(model_spec),
-                "output": "results/expt01.json",
+                "output": str(output_file),
                 "llm_cache": "none",
             },
             mode="run",
@@ -425,3 +427,229 @@ def test_run_request_id_from_output(tmp_path: Path) -> None:
     # Check request_id was derived from output filename
     assert captured_config.get("config") is not None
     assert captured_config["config"].request_id == "expt01"
+
+    # Cleanup is automatic via tmp_path fixture
+
+
+# Test run fails for parameter validation error.
+def test_run_generate_graph_validation_error(tmp_path: Path) -> None:
+    """Test _run_generate_graph fails when param validation fails."""
+    from causaliq_workflow.action import ActionExecutionError
+
+    action = GenerateGraphAction()
+
+    # Call _run_generate_graph directly with invalid temperature
+    # This bypasses validate_inputs and hits lines 268-269
+    with pytest.raises(ActionExecutionError) as exc_info:
+        action._run_generate_graph(
+            inputs={
+                "model_spec": str(tmp_path / "model.json"),
+                "output": "none",
+                "llm_cache": "none",
+                "llm_temperature": 5.0,  # Invalid: must be 0.0-2.0
+            },
+            mode="run",
+            context=None,
+            logger=None,
+        )
+
+    assert "validation failed" in str(exc_info.value).lower()
+
+
+# Test run fails when model spec loading fails.
+def test_run_model_spec_load_error(tmp_path: Path) -> None:
+    """Test run fails when model specification fails to load."""
+    from causaliq_workflow.action import ActionExecutionError
+
+    # Create a model spec file with invalid JSON structure
+    model_spec = tmp_path / "model.json"
+    model_spec.write_text('{"invalid": "not a valid model spec"}')
+
+    action = GenerateGraphAction()
+
+    with pytest.raises(ActionExecutionError) as exc_info:
+        action.run(
+            inputs={
+                "action": "generate_graph",
+                "model_spec": str(model_spec),
+                "output": "none",
+                "llm_cache": "none",
+            },
+            mode="run",
+        )
+
+    assert "failed to load model specification" in str(exc_info.value).lower()
+
+
+# Test run uses LLM name mapping when spec has distinct names.
+def test_run_with_llm_name_mapping(tmp_path: Path) -> None:
+    """Test run maps LLM names back to benchmark names when distinct."""
+    from causaliq_knowledge.graph.response import (
+        GeneratedGraph,
+        ProposedEdge,
+    )
+
+    # Create model spec with distinct llm_names
+    model_spec = tmp_path / "model.json"
+    model_spec.write_text(
+        '{"schema_version": "2.0", "dataset_id": "test", '
+        '"domain": "test", "variables": ['
+        '{"name": "X1", "llm_name": "Variable One", "type": "binary"}, '
+        '{"name": "X2", "llm_name": "Variable Two", "type": "binary"}]}'
+    )
+
+    # Mock graph returns LLM names
+    mock_graph = GeneratedGraph(
+        edges=[
+            ProposedEdge(
+                source="Variable One", target="Variable Two", confidence=0.8
+            )
+        ],
+        variables=["Variable One", "Variable Two"],
+        reasoning="Test reasoning",
+    )
+
+    with patch(
+        "causaliq_knowledge.graph.generator.GraphGenerator"
+    ) as mock_generator_class:
+        mock_generator = MagicMock()
+        mock_generator.generate_from_spec.return_value = mock_graph
+        mock_generator.get_stats.return_value = {"cache_hits": 0}
+        mock_generator_class.return_value = mock_generator
+
+        action = GenerateGraphAction()
+
+        result = action.run(
+            inputs={
+                "action": "generate_graph",
+                "model_spec": str(model_spec),
+                "output": "none",
+                "llm_cache": "none",
+                "use_benchmark_names": False,  # Explicitly use LLM names
+            },
+            mode="run",
+        )
+
+    # Graph should have benchmark names (X1, X2), not LLM names
+    assert result["status"] == "success"
+    assert result["graph"]["variables"] == ["X1", "X2"]
+    assert result["graph"]["edges"][0]["source"] == "X1"
+    assert result["graph"]["edges"][0]["target"] == "X2"
+
+
+# Test run fails when cache fails to open.
+def test_run_cache_open_error(tmp_path: Path) -> None:
+    """Test run fails when cache database fails to open."""
+    from causaliq_workflow.action import ActionExecutionError
+
+    # Create a minimal model spec file
+    model_spec = tmp_path / "model.json"
+    model_spec.write_text(
+        '{"schema_version": "2.0", "dataset_id": "test", '
+        '"domain": "test", "variables": [{"name": "x", "type": "binary"}]}'
+    )
+
+    action = GenerateGraphAction()
+
+    with patch("causaliq_knowledge.cache.TokenCache") as mock_cache_class:
+        mock_cache = MagicMock()
+        mock_cache.open.side_effect = Exception("Database locked")
+        mock_cache_class.return_value = mock_cache
+
+        with pytest.raises(ActionExecutionError) as exc_info:
+            action.run(
+                inputs={
+                    "action": "generate_graph",
+                    "model_spec": str(model_spec),
+                    "output": "none",
+                    "llm_cache": str(tmp_path / "cache.db"),  # Use actual path
+                },
+                mode="run",
+            )
+
+    assert "failed to open cache" in str(exc_info.value).lower()
+
+
+# Test run fails when graph generation fails.
+def test_run_graph_generation_error(tmp_path: Path) -> None:
+    """Test run fails when graph generation raises an error."""
+    from causaliq_workflow.action import ActionExecutionError
+
+    # Create a minimal model spec file
+    model_spec = tmp_path / "model.json"
+    model_spec.write_text(
+        '{"schema_version": "2.0", "dataset_id": "test", '
+        '"domain": "test", "variables": ['
+        '{"name": "x", "type": "binary"}, '
+        '{"name": "y", "type": "binary"}]}'
+    )
+
+    with patch(
+        "causaliq_knowledge.graph.generator.GraphGenerator"
+    ) as mock_generator_class:
+        mock_generator = MagicMock()
+        mock_generator.generate_from_spec.side_effect = RuntimeError(
+            "LLM API unavailable"
+        )
+        mock_generator_class.return_value = mock_generator
+
+        action = GenerateGraphAction()
+
+        with pytest.raises(ActionExecutionError) as exc_info:
+            action.run(
+                inputs={
+                    "action": "generate_graph",
+                    "model_spec": str(model_spec),
+                    "output": "none",
+                    "llm_cache": "none",
+                },
+                mode="run",
+            )
+
+    assert "graph generation failed" in str(exc_info.value).lower()
+
+
+# Test cache is closed even when generation fails.
+def test_run_cache_closed_on_error(tmp_path: Path) -> None:
+    """Test cache is closed in finally block even when generation fails."""
+    # Create a minimal model spec file
+    model_spec = tmp_path / "model.json"
+    model_spec.write_text(
+        '{"schema_version": "2.0", "dataset_id": "test", '
+        '"domain": "test", "variables": ['
+        '{"name": "x", "type": "binary"}, '
+        '{"name": "y", "type": "binary"}]}'
+    )
+
+    mock_cache = MagicMock()
+
+    with (
+        patch("causaliq_knowledge.cache.TokenCache") as mock_cache_class,
+        patch(
+            "causaliq_knowledge.graph.generator.GraphGenerator"
+        ) as mock_generator_class,
+    ):
+        mock_cache_class.return_value = mock_cache
+
+        mock_generator = MagicMock()
+        mock_generator.generate_from_spec.side_effect = RuntimeError(
+            "Generation error"
+        )
+        mock_generator_class.return_value = mock_generator
+
+        action = GenerateGraphAction()
+
+        with pytest.raises(Exception):
+            action.run(
+                inputs={
+                    "action": "generate_graph",
+                    "model_spec": str(model_spec),
+                    "output": "none",
+                    "llm_cache": str(tmp_path / "cache.db"),
+                },
+                mode="run",
+            )
+
+    # Verify cache was opened and closed
+    mock_cache.open.assert_called_once()
+    mock_cache.close.assert_called_once()

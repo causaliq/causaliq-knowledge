@@ -155,11 +155,11 @@ def query_edge(
 
 # Import and register command groups
 from causaliq_knowledge.cli.cache import cache_group  # noqa: E402
-from causaliq_knowledge.cli.generate import generate_group  # noqa: E402
+from causaliq_knowledge.cli.generate import generate_graph  # noqa: E402
 from causaliq_knowledge.cli.models import list_models  # noqa: E402
 
 cli.add_command(cache_group)
-cli.add_command(generate_group)
+cli.add_command(generate_graph)
 cli.add_command(list_models)
 
 

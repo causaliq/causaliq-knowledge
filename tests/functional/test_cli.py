@@ -711,28 +711,28 @@ def test_cli_cache_import_error_invalid_cache(tmp_path):
 # ============================================================================
 
 
-# Test generate command group shows help.
-def test_cli_generate_shows_help():
+# Test generate_graph command shows help.
+def test_cli_generate_graph_shows_help():
     runner = CliRunner()
-    result = runner.invoke(cli, ["generate", "--help"])
+    result = runner.invoke(cli, ["generate_graph", "--help"])
 
     assert result.exit_code == 0
     assert "generate" in result.output.lower()
     assert "graph" in result.output.lower()
 
 
-# Test generate command appears in main help.
-def test_cli_main_help_shows_generate():
+# Test generate_graph command appears in main help.
+def test_cli_main_help_shows_generate_graph():
     runner = CliRunner()
     result = runner.invoke(cli, [])
 
-    assert "generate" in result.output
+    assert "generate_graph" in result.output
 
 
-# Test generate graph command shows help.
-def test_cli_generate_graph_shows_help():
+# Test generate_graph command shows options in help.
+def test_cli_generate_graph_shows_options():
     runner = CliRunner()
-    result = runner.invoke(cli, ["generate", "graph", "--help"])
+    result = runner.invoke(cli, ["generate_graph", "--help"])
 
     assert result.exit_code == 0
     assert "--model-spec" in result.output
@@ -745,7 +745,7 @@ def test_cli_generate_graph_shows_help():
 # Test generate graph requires model-spec.
 def test_cli_generate_graph_requires_model_spec():
     runner = CliRunner()
-    result = runner.invoke(cli, ["generate", "graph"])
+    result = runner.invoke(cli, ["generate_graph"])
 
     assert result.exit_code != 0
     assert "Missing option" in result.output or "required" in result.output
@@ -754,9 +754,7 @@ def test_cli_generate_graph_requires_model_spec():
 # Test generate graph with non-existent file.
 def test_cli_generate_graph_missing_file():
     runner = CliRunner()
-    result = runner.invoke(
-        cli, ["generate", "graph", "-s", "nonexistent.json"]
-    )
+    result = runner.invoke(cli, ["generate_graph", "-s", "nonexistent.json"])
 
     assert result.exit_code != 0
 
@@ -799,8 +797,7 @@ def test_cli_generate_graph_loads_spec(tmp_path, mocker):
     result = runner.invoke(
         cli,
         [
-            "generate",
-            "graph",
+            "generate_graph",
             "-s",
             str(spec_file),
             "-c",
@@ -855,8 +852,7 @@ def test_cli_generate_graph_json_output(tmp_path, mocker):
     result = runner.invoke(
         cli,
         [
-            "generate",
-            "graph",
+            "generate_graph",
             "-s",
             str(spec_file),
             "-c",
@@ -916,8 +912,7 @@ def test_cli_generate_graph_output_file(tmp_path, mocker):
     result = runner.invoke(
         cli,
         [
-            "generate",
-            "graph",
+            "generate_graph",
             "-s",
             str(spec_file),
             "-c",
@@ -984,8 +979,7 @@ def test_cli_generate_graph_use_benchmark_names(tmp_path, mocker):
     result = runner.invoke(
         cli,
         [
-            "generate",
-            "graph",
+            "generate_graph",
             "-s",
             str(spec_file),
             "-c",
@@ -1033,8 +1027,7 @@ def test_cli_generate_graph_prompt_detail_minimal(tmp_path, mocker):
     result = runner.invoke(
         cli,
         [
-            "generate",
-            "graph",
+            "generate_graph",
             "-s",
             str(spec_file),
             "-c",
@@ -1086,8 +1079,7 @@ def test_cli_generate_graph_output_none_adjacency(tmp_path, mocker):
     result = runner.invoke(
         cli,
         [
-            "generate",
-            "graph",
+            "generate_graph",
             "-s",
             str(spec_file),
             "-c",
@@ -1114,8 +1106,7 @@ def test_cli_generate_graph_invalid_spec(tmp_path):
     result = runner.invoke(
         cli,
         [
-            "generate",
-            "graph",
+            "generate_graph",
             "-s",
             str(spec_file),
             "-c",
@@ -1142,8 +1133,7 @@ def test_cli_generate_graph_incomplete_spec(tmp_path):
     result = runner.invoke(
         cli,
         [
-            "generate",
-            "graph",
+            "generate_graph",
             "-s",
             str(spec_file),
             "-c",
@@ -1192,8 +1182,7 @@ def test_cli_generate_graph_real_model_file(mocker):
     result = runner.invoke(
         cli,
         [
-            "generate",
-            "graph",
+            "generate_graph",
             "-s",
             str(model_path),
             "-c",
@@ -1242,8 +1231,7 @@ def test_cli_generate_graph_with_cache(tmp_path, mocker):
     result = runner.invoke(
         cli,
         [
-            "generate",
-            "graph",
+            "generate_graph",
             "-s",
             str(spec_file),
             "-c",
@@ -1290,8 +1278,7 @@ def test_cli_generate_graph_empty_edges(tmp_path, mocker):
     result = runner.invoke(
         cli,
         [
-            "generate",
-            "graph",
+            "generate_graph",
             "-s",
             str(spec_file),
             "-c",
@@ -1338,8 +1325,7 @@ def test_cli_generate_graph_llm_option(tmp_path, mocker):
     result = runner.invoke(
         cli,
         [
-            "generate",
-            "graph",
+            "generate_graph",
             "-s",
             str(spec_file),
             "-c",
@@ -1376,8 +1362,7 @@ def test_cli_generate_graph_invalid_prompt_detail_level(tmp_path):
     result = runner.invoke(
         cli,
         [
-            "generate",
-            "graph",
+            "generate_graph",
             "-s",
             str(spec_file),
             "--prompt-detail",
@@ -1408,8 +1393,7 @@ def test_cli_generate_graph_invalid_output(tmp_path):
     result = runner.invoke(
         cli,
         [
-            "generate",
-            "graph",
+            "generate_graph",
             "-s",
             str(spec_file),
             "-c",
@@ -1447,8 +1431,7 @@ def test_cli_generate_graph_cache_error(tmp_path, mocker):
     result = runner.invoke(
         cli,
         [
-            "generate",
-            "graph",
+            "generate_graph",
             "-s",
             str(spec_file),
             "-c",
@@ -1486,8 +1469,7 @@ def test_cli_generate_graph_generator_error(tmp_path, mocker):
     result = runner.invoke(
         cli,
         [
-            "generate",
-            "graph",
+            "generate_graph",
             "-s",
             str(spec_file),
             "-c",
@@ -1527,8 +1509,7 @@ def test_cli_generate_graph_generation_error(tmp_path, mocker):
     result = runner.invoke(
         cli,
         [
-            "generate",
-            "graph",
+            "generate_graph",
             "-s",
             str(spec_file),
             "-c",
@@ -1587,8 +1568,7 @@ def test_cli_generate_graph_edge_with_reasoning(tmp_path, mocker):
     result = runner.invoke(
         cli,
         [
-            "generate",
-            "graph",
+            "generate_graph",
             "-s",
             str(spec_file),
             "-c",
@@ -1655,8 +1635,7 @@ def test_cli_generate_graph_with_metadata(tmp_path, mocker):
     result = runner.invoke(
         cli,
         [
-            "generate",
-            "graph",
+            "generate_graph",
             "-s",
             str(spec_file),
             "-c",
@@ -1721,8 +1700,7 @@ def test_cli_generate_graph_human_readable_with_reasoning(tmp_path, mocker):
     result = runner.invoke(
         cli,
         [
-            "generate",
-            "graph",
+            "generate_graph",
             "-s",
             str(spec_file),
             "-c",
@@ -1783,8 +1761,7 @@ def test_cli_generate_graph_long_reasoning_truncated(tmp_path, mocker):
     result = runner.invoke(
         cli,
         [
-            "generate",
-            "graph",
+            "generate_graph",
             "-s",
             str(spec_file),
             "-c",
