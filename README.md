@@ -36,13 +36,14 @@ Currently implemented releases:
 - **Release v0.1.0 - Foundation LLM**: Simple LLM queries to 1 or 2 LLMs about edge existence and orientation to support graph averaging
 - **Release v0.2.0 - Additional LLMs**: Support for 7 LLM providers (Groq, Gemini, OpenAI, Anthropic, DeepSeek, Mistral, Ollama)
 - **Release v0.3.0 - LLM Caching**: SQLite-based response caching with CLI tools for cache management
-- **Release v0.4.0 - Graph Generation** *(in development)*: CLI and CausalIQ workflow action for LLM-generated causal graphs
+- **Release v0.4.0 - Graph Generation**: CLI and CausalIQ workflow action for LLM-generated causal graphs
 
 Planned:
 
-- **Release v0.5.0 - LLM Cost Tracking**: Query LLM provider APIs for usage and cost statistics
-- **Release v0.6.0 - LLM Context**: Variable/role/literature etc context
-- **Release v0.7.0 - Algorithm integration**: Integration into structure learning algorithms
+- **Release v0.5.0 - Graph Caching**: save generated graphs to Workflow caches
+- **Release v0.6.0 - LLM Cost Tracking**: Query LLM provider APIs for usage and cost statistics
+- **Release v0.7.0 - LLM Context**: Variable/role/literature etc context
+- **Release v0.8.0 - Algorithm integration**: Integration into structure learning algorithms
 
 ## Implementation Approach
 

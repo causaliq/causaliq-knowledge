@@ -53,7 +53,7 @@ dev = [
 ]
 test = [
     "causaliq-core>=0.3.0",
-    "causaliq-workflow>=0.1.1.dev1",
+    "causaliq-workflow>=0.1.1.dev3",
     "pytest>=7.0.0",
     "pytest-cov>=4.0.0",
     "pytest-mock>=3.10.0",
