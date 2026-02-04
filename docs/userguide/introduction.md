@@ -223,45 +223,42 @@ CausalIQ Knowledge can generate complete causal graphs from model
 specifications using LLMs. This is useful for creating prior knowledge
 structures or comparing LLM-generated graphs against ground truth.
 
-### Command Overview
+### Command Line Interface
 
 ```bash
-cqknow generate graph -s <model_spec.json> [options]
+cqknow generate_graph -s <model_spec.json> -o <output> -c <cache> [options]
 ```
 
 ### Basic Examples
 
 ```bash
-# Generate a graph using default settings (Groq, standard view)
-cqknow generate graph -s research/models/cancer/cancer.json
+# Generate a graph, save to JSON file with caching
+cqknow generate_graph -s model.json -o graph.json -c cache.db
+
+# Generate without caching, print adjacency matrix to stdout
+cqknow generate_graph -s model.json -o none -c none
 
 # Use a specific LLM model
-cqknow generate graph -s model.json -m gemini/gemini-2.5-flash
+cqknow generate_graph -s model.json -o graph.json -c cache.db -m gemini/gemini-2.5-flash
 
 # Use rich context level for more detailed prompts
-cqknow generate graph -s model.json --prompt-detail rich
+cqknow generate_graph -s model.json -o graph.json -c cache.db -p rich
 
-# Save output to a JSON file
-cqknow generate graph -s model.json -o graph.json
+# Test benchmark memorisation with original variable names
+cqknow generate_graph -s model.json -o graph.json -c cache.db --use-benchmark-names
 ```
 
-### Options
+### CLI Options
 
-| Option | Short | Description |
-|--------|-------|-------------|
-| `--model-spec` | `-s` | Path to model specification JSON file (required) |
-| `--prompt-detail` | `-p` | Context level: `minimal`, `standard`, or `rich` (default: standard) |
-| `--llm` | `-m` | LLM model to use (default: groq/llama-3.1-8b-instant) |
-| `--output` | `-o` | Output file path (JSON). Prints to stdout if not specified |
-| `--format` | `-f` | Output format: `edge_list` or `adjacency_matrix` |
-| `--json` | | Output result as JSON to stdout |
-| `--id` | | Request identifier for export filenames (default: cli) |
-| `--disguise` | `-D` | Enable variable name disguising to reduce LLM memorisation |
-| `--seed` | | Random seed for reproducible disguising (requires --disguise) |
-| `--use-benchmark-names` | | Use benchmark names instead of LLM names (test memorisation) |
-| `--cache/--no-cache` | | Enable/disable LLM response caching (default: enabled) |
-| `--cache-path` | `-c` | Path to cache database (default: `<model_spec>_llm.db`) |
-| `--temperature` | `-t` | LLM temperature 0.0-1.0 (default: 0.1) |
+| Option | Short | Default | Description |
+|--------|-------|---------|-------------|
+| `--model-spec` | `-s` | (required) | Path to model specification JSON file |
+| `--output` | `-o` | (required) | Output: `.json` file path or `none` for stdout |
+| `--llm-cache` | `-c` | (required) | Cache: `.db` file path or `none` to disable |
+| `--prompt-detail` | `-p` | `standard` | Detail level: `minimal`, `standard`, or `rich` |
+| `--llm-model` | `-m` | `groq/llama-3.1-8b-instant` | LLM model with provider prefix |
+| `--llm-temperature` | `-t` | `0.1` | Temperature (0.0-2.0), lower = deterministic |
+| `--use-benchmark-names` | | `False` | Use benchmark names (test memorisation) |
 
 ### Prompt Detail Levels
 
@@ -271,51 +268,153 @@ The `--prompt-detail` option controls how much context is provided to the LLM:
 - **standard**: Names with types, states, and short descriptions
 - **rich**: Full context including extended descriptions and sensitivity hints
 
-### Variable Disguising
+### Output Behaviour
 
-To reduce LLM memorisation of well-known benchmark networks, you can disguise
-variable names:
-
-```bash
-# Disguise variable names with random seed for reproducibility
-cqknow generate graph -s model.json --disguise --seed 42
-```
-
-The disguised names are automatically reversed in the output.
-
-### Output Format
-
-By default, the command prints human-readable output:
-
-```
-======================================================================
-Generated Causal Graph: cancer
-======================================================================
-Domain:     epidemiology
-Variables:  5
-Model:      groq/llama-3.1-8b-instant
-======================================================================
-
-Proposed Edges (4):
-
-   1. smoking → lung_cancer  [██████████] 100.0%
-   2. pollution → lung_cancer  [████████░░]  80.0%
-   ...
-```
-
-Use `--json` or `--output` for machine-readable JSON output.
+- **With `-o graph.json`**: Writes JSON to file, prints summary to stdout
+- **With `-o none`**: Prints adjacency matrix to stdout
 
 ### Caching
 
-Graph generation requests are cached by default. The cache is stored alongside
-your model specification file (e.g., `cancer.json` → `cancer_llm.db`).
+LLM responses are cached to avoid redundant API calls. The cache stores
+request/response pairs keyed by model, prompt, and parameters.
 
 ```bash
-# Disable caching
-cqknow generate graph -s model.json --no-cache
+# Enable caching (recommended for development)
+cqknow generate_graph -s model.json -o graph.json -c cache.db
 
-# Use a custom cache path
-cqknow generate graph -s model.json --cache-path /path/to/cache.db
+# Disable caching (for fresh responses)
+cqknow generate_graph -s model.json -o graph.json -c none
+```
+
+---
+
+## Using with CausalIQ Workflows
+
+CausalIQ Knowledge integrates with [causaliq-workflow](https://github.com/causaliq/causaliq-workflow)
+for reproducible, automated causal discovery experiments.
+
+### Installation
+
+Ensure both packages are installed:
+
+```bash
+pip install causaliq-knowledge causaliq-workflow
+```
+
+### Basic Workflow Example
+
+Create a workflow file `generate_graph.yaml`:
+
+```yaml
+description: "Generate causal graph using LLM"
+id: "llm-graph-generation"
+
+steps:
+  - name: "Generate Graph"
+    uses: "causaliq-knowledge"
+    with:
+      action: "generate_graph"
+      model_spec: "models/cancer.json"
+      output: "results/cancer_graph.json"
+      llm_cache: "cache/cancer.db"
+      llm_model: "groq/llama-3.1-8b-instant"
+      prompt_detail: "standard"
+```
+
+Run the workflow:
+
+```bash
+# Dry-run (validate without executing)
+causaliq-workflow generate_graph.yaml --mode dry-run
+
+# Execute the workflow
+causaliq-workflow generate_graph.yaml --mode run
+```
+
+### Workflow Action Parameters
+
+| Parameter | Required | Default | Description |
+|-----------|----------|---------|-------------|
+| `action` | Yes | - | Must be `generate_graph` |
+| `model_spec` | Yes | - | Path to model specification JSON |
+| `output` | Yes | - | Output `.json` file path or `none` |
+| `llm_cache` | Yes | - | Cache `.db` file path or `none` |
+| `llm_model` | No | `groq/llama-3.1-8b-instant` | LLM model identifier |
+| `prompt_detail` | No | `standard` | `minimal`, `standard`, or `rich` |
+| `use_benchmark_names` | No | `false` | Use original benchmark names |
+| `llm_temperature` | No | `0.1` | LLM temperature (0.0-2.0) |
+
+### Matrix Expansion Example
+
+Run the same analysis across multiple models and prompt detail levels:
+
+```yaml
+description: "Compare LLM graph generation across models"
+id: "llm-comparison"
+
+matrix:
+  model:
+    - "groq/llama-3.1-8b-instant"
+    - "gemini/gemini-2.5-flash"
+  detail:
+    - "minimal"
+    - "standard"
+    - "rich"
+
+steps:
+  - name: "Generate Graph"
+    uses: "causaliq-knowledge"
+    with:
+      action: "generate_graph"
+      model_spec: "models/cancer.json"
+      output: "results/{{model}}/{{detail}}/graph.json"
+      llm_cache: "cache/{{model}}.db"
+      llm_model: "{{model}}"
+      prompt_detail: "{{detail}}"
+```
+
+This generates 6 graphs (2 models × 3 detail levels) in separate directories.
+
+### Multi-Network Comparison
+
+Compare graph generation across different causal networks:
+
+```yaml
+description: "Generate graphs for multiple networks"
+id: "multi-network"
+
+matrix:
+  network:
+    - "asia"
+    - "cancer"
+    - "earthquake"
+
+steps:
+  - name: "Generate Graph"
+    uses: "causaliq-knowledge"
+    with:
+      action: "generate_graph"
+      model_spec: "models/{{network}}/{{network}}.json"
+      output: "results/{{network}}/graph.json"
+      llm_cache: "cache/{{network}}.db"
+      llm_model: "groq/llama-3.1-8b-instant"
+```
+
+### Workflow Output
+
+When a workflow step completes, the action returns:
+
+```json
+{
+  "status": "success",
+  "edges_count": 5,
+  "variables_count": 8,
+  "output_file": "results/cancer_graph.json",
+  "cache_stats": {
+    "cache_hits": 2,
+    "cache_misses": 6
+  }
+}
 ```
 
 For more information on model specification format, see

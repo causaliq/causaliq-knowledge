@@ -46,6 +46,7 @@ nav:
   - Roadmap: roadmap.md
   - User Guide:
     - User Guide Introduction: userguide/introduction.md
+    - Workflow Integration: userguide/workflow_integration.md
     - Model Specification Format: userguide/model_specification.md
   - Architecture: 
     - Architectural Overview: architecture/overview.md

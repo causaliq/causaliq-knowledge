@@ -94,7 +94,7 @@ causaliq_knowledge/
 └── graph/
     ├── __init__.py          # Module exports
     ├── models.py            # Pydantic models for model specification
-    │                        # (ModelSpec, VariableSpec, Views, etc.)
+    │                        # (ModelSpec, VariableSpec, PromptDetails, etc.)
     ├── loader.py            # ModelLoader for JSON file loading
     ├── view_filter.py       # ViewFilter for context level extraction
     └── disguiser.py         # VariableDisguiser for name obfuscation

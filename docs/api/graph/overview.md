@@ -3,6 +3,28 @@
 The `graph` module provides functionality for LLM-based causal graph generation
 from variable specifications.
 
+## Quick Start
+
+Generate a causal graph in Python:
+
+```python
+from causaliq_knowledge.graph import GraphGenerator, ModelLoader
+
+# Create a generator with your chosen model
+generator = GraphGenerator(model="groq/llama-3.1-8b-instant")
+
+# Load a model specification and generate
+spec = ModelLoader.load("research/models/asia/asia.json")
+graph = generator.generate_from_spec(spec)
+
+# Access the results
+for edge in graph.edges:
+    print(f"{edge.source} -> {edge.target}")
+```
+
+For complete examples and configuration options, see
+[Graph Generator](generator.md).
+
 ## Import Patterns
 
 All graph module classes are available from `causaliq_knowledge.graph`:
@@ -14,7 +36,7 @@ from causaliq_knowledge.graph import (
     VariableSpec,
     VariableType,
     VariableRole,
-    Views,
+    PromptDetails,
     ViewDefinition,
     Provenance,
     LLMGuidance,
@@ -55,7 +77,7 @@ Pydantic models for defining causal model specifications:
 - **VariableSpec** - Single variable definition with type, role, descriptions
 - **VariableType** - Enum for variable types (binary, categorical, ordinal, continuous)
 - **VariableRole** - Enum for causal roles (exogenous, endogenous, latent)
-- **Views** - View definitions for minimal/standard/rich context levels
+- **PromptDetails** - Prompt detail definitions for minimal/standard/rich context levels
 - **ViewDefinition** - Single view configuration with included fields
 
 ### [Model Loader](loader.md)

@@ -9,20 +9,64 @@ complete causal graphs from variable specifications using LLMs.
 from causaliq_knowledge.graph import (
     GraphGenerator,
     GraphGeneratorConfig,
+    ModelLoader,
+    GeneratedGraph,
+    PromptDetail,
+    OutputFormat,
 )
+from causaliq_knowledge.cache import TokenCache
 ```
 
 ## Overview
 
 `GraphGenerator` orchestrates the full graph generation workflow:
 
-1. Load and validate model specifications
-2. Apply view filtering (minimal/standard/rich context)
-3. Optionally disguise variable names
-4. Build prompts for LLM queries
-5. Execute queries with caching support
-6. Parse and validate responses
-7. Return structured `GeneratedGraph` objects
+1. Create a generator with model and configuration
+2. Optionally set up caching with `TokenCache`
+3. Generate graphs from variable dictionaries or `ModelSpec` files
+4. Receive structured `GeneratedGraph` objects with edges and metadata
+
+## Quick Start
+
+Here's a complete working example:
+
+```python
+from causaliq_knowledge.graph import (
+    GraphGenerator,
+    GraphGeneratorConfig,
+    ModelLoader,
+    PromptDetail,
+    OutputFormat,
+)
+
+# Create generator with model identifier
+# Format: "provider/model_name"
+generator = GraphGenerator(model="groq/llama-3.1-8b-instant")
+
+# Option 1: Generate from a list of variables
+graph = generator.generate_graph(
+    variables=[
+        {"name": "smoking"},
+        {"name": "lung_cancer"},
+        {"name": "age"},
+    ],
+    domain="oncology",
+)
+
+# Option 2: Generate from a model specification file
+spec = ModelLoader.load("research/models/my_model.json")
+graph = generator.generate_from_spec(spec)
+
+# Access the results
+print(f"Generated {len(graph.edges)} edges")
+for edge in graph.edges:
+    print(f"  {edge.source} -> {edge.target} ({edge.confidence:.2f})")
+
+# Access metadata
+print(f"Model: {graph.metadata.model}")
+print(f"Latency: {graph.metadata.latency_ms}ms")
+print(f"Cost: ${graph.metadata.cost_usd:.4f}")
+```
 
 ## Configuration
 
@@ -31,115 +75,148 @@ from causaliq_knowledge.graph import (
 Configuration dataclass for graph generation parameters.
 
 ```python
-from causaliq_knowledge.graph import GraphGeneratorConfig
+from causaliq_knowledge.graph import GraphGeneratorConfig, PromptDetail, OutputFormat
 
 config = GraphGeneratorConfig(
-    view_level="standard",
-    output_format="edge_list",
-    disguise=False,
-    disguise_seed=None,
-    cache_enabled=True,
-    confidence_threshold=0.0
+    temperature=0.1,              # LLM sampling temperature
+    max_tokens=2000,              # Maximum response tokens
+    timeout=60.0,                 # Request timeout in seconds
+    output_format=OutputFormat.EDGE_LIST,  # or ADJACENCY_MATRIX
+    prompt_detail=PromptDetail.STANDARD,   # MINIMAL, STANDARD, or RICH
+    use_llm_names=True,           # Use llm_name field from specs
+    request_id="",                # Optional request identifier
 )
 ```
 
 **Attributes:**
 
-- `view_level` (str): Context level - "minimal", "standard", or "rich"
-- `output_format` (str): Response format - "edge_list" or "adjacency_matrix"
-- `disguise` (bool): Whether to disguise variable names
-- `disguise_seed` (int, optional): Seed for reproducible disguising
-- `cache_enabled` (bool): Whether to use response caching
-- `confidence_threshold` (float): Minimum confidence for including edges
+| Attribute | Type | Default | Description |
+|-----------|------|---------|-------------|
+| `temperature` | float | 0.1 | LLM sampling temperature (lower = more deterministic) |
+| `max_tokens` | int | 2000 | Maximum tokens in LLM response |
+| `timeout` | float | 60.0 | Request timeout in seconds |
+| `output_format` | OutputFormat | EDGE_LIST | Response format (EDGE_LIST or ADJACENCY_MATRIX) |
+| `prompt_detail` | PromptDetail | STANDARD | Detail level (MINIMAL, STANDARD, or RICH) |
+| `use_llm_names` | bool | True | Use llm_name instead of benchmark name |
+| `request_id` | str | "" | Optional identifier for requests |
 
-## Basic Usage
-
-### Creating a Generator
+## Creating a Generator
 
 ```python
 from causaliq_knowledge.graph import GraphGenerator, GraphGeneratorConfig
-from causaliq_knowledge.llm import LLMClient
+from causaliq_knowledge.cache import TokenCache
 
-# Create with default configuration
-generator = GraphGenerator()
+# Basic creation with just a model
+generator = GraphGenerator(model="groq/llama-3.1-8b-instant")
 
-# Create with custom configuration
+# With custom configuration
 config = GraphGeneratorConfig(
-    view_level="rich",
-    output_format="edge_list",
-    disguise=True,
-    disguise_seed=42
+    temperature=0.2,
+    prompt_detail=PromptDetail.RICH,
 )
-generator = GraphGenerator(config=config)
+generator = GraphGenerator(model="gemini/gemini-2.0-flash", config=config)
 
-# Create with a specific LLM client
-client = LLMClient.create("gemini", model="gemini-2.0-flash")
-generator = GraphGenerator(client=client)
+# With caching enabled
+cache = TokenCache(db_path="graph_cache.db")
+generator = GraphGenerator(
+    model="openai/gpt-4o",
+    config=config,
+    cache=cache,
+)
+
+# Or set cache after creation
+generator = GraphGenerator(model="anthropic/claude-sonnet-4-20250514")
+generator.set_cache(cache, use_cache=True)
 ```
 
-### Generating from Variables
+## Generating from Variables
+
+Use `generate_graph()` when you have a list of variable dictionaries:
 
 ```python
-from causaliq_knowledge.graph import GraphGenerator
+from causaliq_knowledge.graph import GraphGenerator, PromptDetail
 
-generator = GraphGenerator()
+generator = GraphGenerator(model="groq/llama-3.1-8b-instant")
 
-# Generate a graph from variable names
+# Minimal - just variable names
 graph = generator.generate_graph(
-    variables=["smoking", "lung_cancer", "age", "genetics"],
+    variables=[
+        {"name": "smoking"},
+        {"name": "lung_cancer"},
+        {"name": "age"},
+        {"name": "genetics"},
+    ],
     domain="oncology",
-    model="gemini-2.0-flash"
+)
+
+# With more context
+graph = generator.generate_graph(
+    variables=[
+        {
+            "name": "smoking",
+            "type": "binary",
+            "description": "Whether the patient smokes",
+        },
+        {
+            "name": "lung_cancer",
+            "type": "binary",
+            "description": "Diagnosis of lung cancer",
+        },
+    ],
+    domain="oncology",
+    level=PromptDetail.RICH,  # Override config's prompt_detail
 )
 
 # Access results
 for edge in graph.edges:
-    print(f"{edge.source} -> {edge.target} ({edge.confidence:.2f})")
+    print(f"{edge.source} -> {edge.target}")
+    print(f"  Confidence: {edge.confidence}")
+    print(f"  Rationale: {edge.rationale}")
 ```
 
-### Generating from Model Specification
+## Generating from Model Specifications
+
+Use `generate_from_spec()` when you have a JSON model specification file:
 
 ```python
-from causaliq_knowledge.graph import GraphGenerator, ModelLoader
+from causaliq_knowledge.graph import GraphGenerator, ModelLoader, PromptDetail
 
-generator = GraphGenerator()
+generator = GraphGenerator(model="gemini/gemini-2.0-flash")
 
-# Load a model specification
-spec = ModelLoader.load("research/models/cancer/cancer.json")
+# Load the specification
+spec = ModelLoader.load("research/models/asia/asia.json")
 
-# Generate using the specification
+# Generate with default settings from config
+graph = generator.generate_from_spec(spec)
+
+# Override settings for this specific call
 graph = generator.generate_from_spec(
     spec=spec,
-    model="gemini-2.0-flash"
+    level=PromptDetail.MINIMAL,
+    use_llm_names=False,  # Use benchmark names instead
 )
 ```
 
-## LLM Provider Support
+## Supported LLM Providers
 
-GraphGenerator supports all LLM providers available in causaliq-knowledge:
+GraphGenerator supports all providers via the `provider/model` format:
+
+| Provider | Example Model String |
+|----------|---------------------|
+| Anthropic | `anthropic/claude-sonnet-4-20250514` |
+| DeepSeek | `deepseek/deepseek-chat` |
+| Gemini | `gemini/gemini-2.0-flash` |
+| Groq | `groq/llama-3.1-8b-instant` |
+| Mistral | `mistral/mistral-large-latest` |
+| Ollama | `ollama/llama3.2` |
+| OpenAI | `openai/gpt-4o` |
 
 ```python
-from causaliq_knowledge.graph import GraphGenerator
-
-generator = GraphGenerator()
-
-# Use different providers
-graph_gemini = generator.generate_graph(
-    variables=["A", "B", "C"],
-    domain="example",
-    model="gemini-2.0-flash"
-)
-
-graph_openai = generator.generate_graph(
-    variables=["A", "B", "C"],
-    domain="example",
-    model="gpt-4o"
-)
-
-graph_anthropic = generator.generate_graph(
-    variables=["A", "B", "C"],
-    domain="example",
-    model="claude-sonnet-4-20250514"
-)
+# Using different providers
+gen_groq = GraphGenerator(model="groq/llama-3.1-8b-instant")
+gen_gemini = GraphGenerator(model="gemini/gemini-2.0-flash")
+gen_openai = GraphGenerator(model="openai/gpt-4o")
+gen_anthropic = GraphGenerator(model="anthropic/claude-sonnet-4-20250514")
 ```
 
 ## Caching
@@ -147,68 +224,178 @@ graph_anthropic = generator.generate_graph(
 GraphGenerator integrates with `TokenCache` for response caching:
 
 ```python
-from causaliq_knowledge.graph import GraphGenerator, GraphGeneratorConfig
+from causaliq_knowledge.graph import GraphGenerator
 from causaliq_knowledge.cache import TokenCache
 
-# Enable caching (default)
-config = GraphGeneratorConfig(cache_enabled=True)
-generator = GraphGenerator(config=config)
-
-# Provide a custom cache
-cache = TokenCache(db_path="my_cache.db")
-generator = GraphGenerator(config=config, cache=cache)
-
-# Disable caching
-config = GraphGeneratorConfig(cache_enabled=False)
-generator = GraphGenerator(config=config)
-```
-
-Cache keys are generated to distinguish graph generation queries from
-edge-by-edge queries, ensuring proper cache isolation.
-
-## Variable Disguising
-
-To counteract potential LLM memorisation of known causal relationships:
-
-```python
-from causaliq_knowledge.graph import GraphGenerator, GraphGeneratorConfig
-
-config = GraphGeneratorConfig(
-    disguise=True,
-    disguise_seed=42  # For reproducibility
-)
-generator = GraphGenerator(config=config)
-
-# Variable names are disguised before sending to LLM
-# and automatically mapped back in the response
-graph = generator.generate_graph(
-    variables=["smoking", "lung_cancer"],
-    domain="oncology",
-    model="gemini-2.0-flash"
+# Create cache and generator
+cache = TokenCache(db_path="graph_cache.db")
+generator = GraphGenerator(
+    model="gemini/gemini-2.0-flash",
+    cache=cache,
 )
 
-# Results use original variable names
-print(graph.edges[0].source)  # "smoking", not "VAR_A"
+# First call - hits the LLM
+graph1 = generator.generate_graph(
+    variables=[{"name": "A"}, {"name": "B"}],
+    domain="test",
+)
+print(f"From cache: {graph1.metadata.from_cache}")  # False
+
+# Second call with same inputs - uses cache
+graph2 = generator.generate_graph(
+    variables=[{"name": "A"}, {"name": "B"}],
+    domain="test",
+)
+print(f"From cache: {graph2.metadata.from_cache}")  # True
+
+# Disable caching for specific generator
+generator.set_cache(cache, use_cache=False)
 ```
 
-## View Levels
+## Prompt Detail Levels
 
 Control the amount of context provided to the LLM:
 
 | Level | Description |
 |-------|-------------|
-| `minimal` | Variable names only |
-| `standard` | Names, types, and brief descriptions |
-| `rich` | Full descriptions, roles, states, and constraints |
+| `PromptDetail.MINIMAL` | Variable names only |
+| `PromptDetail.STANDARD` | Names, types, and brief descriptions |
+| `PromptDetail.RICH` | Full descriptions, roles, states, and constraints |
 
 ```python
-from causaliq_knowledge.graph import GraphGenerator, GraphGeneratorConfig
+from causaliq_knowledge.graph import GraphGenerator, GraphGeneratorConfig, PromptDetail
 
-# Minimal context - tests LLM's inherent knowledge
-config = GraphGeneratorConfig(view_level="minimal")
+# Set at config level (default for all calls)
+config = GraphGeneratorConfig(prompt_detail=PromptDetail.MINIMAL)
+generator = GraphGenerator(model="groq/llama-3.1-8b-instant", config=config)
 
-# Rich context - provides maximum guidance
-config = GraphGeneratorConfig(view_level="rich")
+# Override per call
+graph = generator.generate_graph(
+    variables=[{"name": "A"}, {"name": "B"}],
+    domain="test",
+    level=PromptDetail.RICH,  # Use rich for this call only
+)
+```
+
+## Output Formats
+
+Choose between edge list and adjacency matrix output:
+
+```python
+from causaliq_knowledge.graph import GraphGenerator, GraphGeneratorConfig, OutputFormat
+
+# Edge list format (default)
+config = GraphGeneratorConfig(output_format=OutputFormat.EDGE_LIST)
+generator = GraphGenerator(model="groq/llama-3.1-8b-instant", config=config)
+
+# Adjacency matrix format
+config = GraphGeneratorConfig(output_format=OutputFormat.ADJACENCY_MATRIX)
+generator = GraphGenerator(model="groq/llama-3.1-8b-instant", config=config)
+```
+
+## Working with Results
+
+### GeneratedGraph
+
+The result of generation is a `GeneratedGraph` object:
+
+```python
+graph = generator.generate_graph(...)
+
+# Access edges
+for edge in graph.edges:
+    print(f"Source: {edge.source}")
+    print(f"Target: {edge.target}")
+    print(f"Confidence: {edge.confidence}")
+    print(f"Rationale: {edge.rationale}")
+
+# Access metadata
+meta = graph.metadata
+print(f"Model: {meta.model}")
+print(f"Provider: {meta.provider}")
+print(f"Timestamp: {meta.timestamp}")
+print(f"Latency: {meta.latency_ms}ms")
+print(f"Input tokens: {meta.input_tokens}")
+print(f"Output tokens: {meta.output_tokens}")
+print(f"Cost: ${meta.cost_usd:.6f}")
+print(f"From cache: {meta.from_cache}")
+```
+
+### Generator Statistics
+
+```python
+generator = GraphGenerator(model="groq/llama-3.1-8b-instant")
+
+# After some generations...
+stats = generator.get_stats()
+print(f"Model: {stats['model']}")
+print(f"Call count: {stats['call_count']}")
+print(f"Client call count: {stats['client_call_count']}")
+```
+
+## Complete Example
+
+Here's a full example showing a typical workflow:
+
+```python
+"""Generate a causal graph from a model specification."""
+
+from pathlib import Path
+
+from causaliq_knowledge.graph import (
+    GraphGenerator,
+    GraphGeneratorConfig,
+    ModelLoader,
+    PromptDetail,
+    OutputFormat,
+)
+from causaliq_knowledge.cache import TokenCache
+
+
+def main():
+    # Set up caching
+    cache = TokenCache(db_path=Path("cache/graph_cache.db"))
+
+    # Configure the generator
+    config = GraphGeneratorConfig(
+        temperature=0.1,
+        max_tokens=2000,
+        prompt_detail=PromptDetail.STANDARD,
+        output_format=OutputFormat.EDGE_LIST,
+    )
+
+    # Create generator
+    generator = GraphGenerator(
+        model="groq/llama-3.1-8b-instant",
+        config=config,
+        cache=cache,
+    )
+
+    # Load model specification
+    spec = ModelLoader.load("research/models/asia/asia.json")
+    print(f"Loaded spec: {spec.name}")
+    print(f"Variables: {len(spec.variables)}")
+
+    # Generate graph
+    graph = generator.generate_from_spec(spec)
+
+    # Display results
+    print(f"\nGenerated {len(graph.edges)} edges:")
+    for edge in graph.edges:
+        print(f"  {edge.source} -> {edge.target} ({edge.confidence:.2f})")
+
+    # Show metadata
+    print(f"\nMetadata:")
+    print(f"  Model: {graph.metadata.provider}/{graph.metadata.model}")
+    print(f"  Latency: {graph.metadata.latency_ms}ms")
+    print(f"  Tokens: {graph.metadata.input_tokens} in, "
+          f"{graph.metadata.output_tokens} out")
+    print(f"  Cost: ${graph.metadata.cost_usd:.6f}")
+    print(f"  Cached: {graph.metadata.from_cache}")
+
+
+if __name__ == "__main__":
+    main()
 ```
 
 ## API Reference

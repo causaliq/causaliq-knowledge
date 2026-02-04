@@ -19,7 +19,6 @@ from causaliq_knowledge.graph import (
     VariableSpec,
     VariableType,
     VariableRole,
-    Views,
     ViewDefinition,
     Provenance,
     LLMGuidance,
@@ -86,9 +85,12 @@ Core Pydantic models for representing causal knowledge:
 
 LLM-based causal graph generation from variable specifications:
 
+- **[Graph Generator](graph/generator.md)** - Generate complete causal graphs
+  - GraphGenerator, GraphGeneratorConfig
+  - GeneratedGraph, ProposedEdge, GenerationMetadata
 - **[Model Specification](graph/models.md)** - Pydantic models for model specs
   - ModelSpec, VariableSpec, VariableType, VariableRole
-  - Views, ViewDefinition, Provenance, Constraints
+  - PromptDetails, ViewDefinition, Provenance, Constraints
 - **[Model Loader](graph/loader.md)** - Load and validate JSON model files
   - ModelLoader, ModelLoadError
 - **[View Filter](graph/view_filter.md)** - Extract context levels

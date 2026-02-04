@@ -55,7 +55,7 @@ A comprehensive model specification with all optional fields:
         "expected_difficulty": "medium"
     },
     
-    "views": {
+    "prompt_details": {
         "minimal": {
             "description": "Variable names only",
             "include_fields": ["name"]
@@ -148,7 +148,7 @@ A comprehensive model specification with all optional fields:
 | `purpose` | string | No | Purpose or description of the model |
 | `provenance` | object | No | Source and provenance information |
 | `llm_guidance` | object | No | Guidance for LLM interactions |
-| `views` | object | No | Custom view definitions |
+| `prompt_details` | object | No | Custom prompt detail definitions |
 | `variables` | array | Yes | List of variable specifications |
 | `constraints` | object | No | Structural constraints |
 | `ground_truth` | object | No | Ground truth for evaluation |
@@ -221,9 +221,9 @@ abstract disguising approach using opaque identifiers (V1, V2, etc.).
 - **endogenous** - Has parents (caused by other variables)
 - **latent** - Unobserved/hidden variable
 
-## Views
+## Prompt Details
 
-Views control how much variable information is provided to LLMs:
+Prompt details control how much variable information is provided to LLMs:
 
 ### Minimal View
 
@@ -345,7 +345,7 @@ Example model specifications are in the `research/models/` directory:
 
 1. **Use meaningful variable names** - Aids human review
 2. **Provide short descriptions** - Essential context for LLMs
-3. **Define custom views** - Control information disclosure
+3. **Define custom prompt details** - Control information disclosure
 4. **Set provenance** - Document data sources
 5. **Include ground truth** - Enable evaluation
 6. **Add constraints** - Encode domain knowledge

@@ -13,7 +13,7 @@ from causaliq_knowledge.graph import (
     VariableSpec,
     VariableType,
     VariableRole,
-    Views,
+    PromptDetails,
     ViewDefinition,
 )
 ```
@@ -126,9 +126,9 @@ standard_view = ViewDefinition(
 )
 ```
 
-## Views
+## PromptDetails
 
-Container for the three standard view levels.
+Container for the three standard prompt detail levels.
 
 ### Attributes
 
@@ -138,12 +138,12 @@ Container for the three standard view levels.
 | `standard` | `ViewDefinition` | Standard context (names + descriptions) |
 | `rich` | `ViewDefinition` | Rich context (full metadata) |
 
-### Default Views
+### Default Prompt Details
 
 If not specified, the following defaults are used:
 
 ```python
-Views(
+PromptDetails(
     minimal=ViewDefinition(include_fields=["name"]),
     standard=ViewDefinition(
         include_fields=["name", "type", "short_description", "states"]
@@ -224,7 +224,7 @@ Complete model specification combining all components.
 | `variables` | `list[VariableSpec]` | Yes | List of variable specifications |
 | `provenance` | `Provenance` | No | Source and provenance information |
 | `llm_guidance` | `LLMGuidance` | No | Guidance for LLM interactions |
-| `views` | `Views` | No | View definitions (uses defaults if omitted) |
+| `prompt_details` | `PromptDetails` | No | Prompt detail definitions (uses defaults if omitted) |
 | `constraints` | `Constraints` | No | Structural constraints |
 | `ground_truth` | `GroundTruth` | No | Ground truth for evaluation |
 

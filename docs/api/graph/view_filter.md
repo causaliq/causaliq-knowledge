@@ -247,13 +247,13 @@ for level in PromptDetail:
 # rich: ['extended_description', 'name', 'role', 'short_description', ...]
 ```
 
-### Custom Views
+### Custom Prompt Details
 
-Models can define custom view configurations:
+Models can define custom prompt detail configurations:
 
 ```json
 {
-    "views": {
+    "prompt_details": {
         "minimal": {
             "include_fields": ["name"]
         },
