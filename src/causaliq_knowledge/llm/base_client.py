@@ -16,7 +16,7 @@ from dataclasses import dataclass, field
 from typing import TYPE_CHECKING, Any, Dict, List, Optional
 
 if TYPE_CHECKING:  # pragma: no cover
-    from causaliq_knowledge.cache import TokenCache
+    from causaliq_core.cache import TokenCache
 
 logger = logging.getLogger(__name__)
 

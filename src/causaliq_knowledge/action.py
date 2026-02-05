@@ -311,7 +311,8 @@ class GenerateGraphAction(BaseCausalIQAction):
             Result dictionary with generated graph.
         """
         # Import here to avoid slow startup and circular imports
-        from causaliq_knowledge.cache import TokenCache
+        from causaliq_core.cache import TokenCache
+
         from causaliq_knowledge.graph import ModelLoader
         from causaliq_knowledge.graph.generator import (
             GraphGenerator,

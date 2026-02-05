@@ -11,7 +11,8 @@ from causaliq_knowledge.cli import cli
 
 # Test cache stats displays LLM model breakdown table.
 def test_cli_cache_stats_llm_model_breakdown(tmp_path):
-    from causaliq_knowledge.cache import TokenCache
+    from causaliq_core.cache import TokenCache
+
     from causaliq_knowledge.llm.cache import LLMCacheEntry, LLMEntryEncoder
 
     cache_path = tmp_path / "llm_cache.db"
@@ -51,7 +52,8 @@ def test_cli_cache_stats_llm_model_breakdown(tmp_path):
 
 # Test cache stats displays multiple models.
 def test_cli_cache_stats_multiple_models(tmp_path):
-    from causaliq_knowledge.cache import TokenCache
+    from causaliq_core.cache import TokenCache
+
     from causaliq_knowledge.llm.cache import LLMCacheEntry, LLMEntryEncoder
 
     cache_path = tmp_path / "llm_cache.db"
@@ -84,7 +86,8 @@ def test_cli_cache_stats_multiple_models(tmp_path):
 
 # Test cache stats shows token totals.
 def test_cli_cache_stats_token_totals(tmp_path):
-    from causaliq_knowledge.cache import TokenCache
+    from causaliq_core.cache import TokenCache
+
     from causaliq_knowledge.llm.cache import LLMCacheEntry, LLMEntryEncoder
 
     cache_path = tmp_path / "llm_cache.db"
@@ -114,7 +117,8 @@ def test_cli_cache_stats_token_totals(tmp_path):
 
 # Test cache stats calculates estimated savings from hits.
 def test_cli_cache_stats_estimated_savings(tmp_path):
-    from causaliq_knowledge.cache import TokenCache
+    from causaliq_core.cache import TokenCache
+
     from causaliq_knowledge.llm.cache import LLMCacheEntry, LLMEntryEncoder
 
     cache_path = tmp_path / "llm_cache.db"
@@ -148,7 +152,8 @@ def test_cli_cache_stats_estimated_savings(tmp_path):
 
 # Test cache stats calculates average latency.
 def test_cli_cache_stats_average_latency(tmp_path):
-    from causaliq_knowledge.cache import TokenCache
+    from causaliq_core.cache import TokenCache
+
     from causaliq_knowledge.llm.cache import LLMCacheEntry, LLMEntryEncoder
 
     cache_path = tmp_path / "llm_cache.db"
@@ -179,7 +184,8 @@ def test_cli_cache_stats_average_latency(tmp_path):
 
 # Test cache stats aggregates entries per model.
 def test_cli_cache_stats_aggregates_by_model(tmp_path):
-    from causaliq_knowledge.cache import TokenCache
+    from causaliq_core.cache import TokenCache
+
     from causaliq_knowledge.llm.cache import LLMCacheEntry, LLMEntryEncoder
 
     cache_path = tmp_path / "llm_cache.db"
@@ -211,7 +217,8 @@ def test_cli_cache_stats_aggregates_by_model(tmp_path):
 
 # Test cache stats hit rate calculation.
 def test_cli_cache_stats_hit_rate(tmp_path):
-    from causaliq_knowledge.cache import TokenCache
+    from causaliq_core.cache import TokenCache
+
     from causaliq_knowledge.llm.cache import LLMCacheEntry, LLMEntryEncoder
 
     cache_path = tmp_path / "llm_cache.db"
@@ -245,7 +252,8 @@ def test_cli_cache_stats_hit_rate(tmp_path):
 def test_cli_cache_stats_json_includes_models(tmp_path):
     import json
 
-    from causaliq_knowledge.cache import TokenCache
+    from causaliq_core.cache import TokenCache
+
     from causaliq_knowledge.llm.cache import LLMCacheEntry, LLMEntryEncoder
 
     cache_path = tmp_path / "llm_cache.db"
@@ -278,7 +286,8 @@ def test_cli_cache_stats_json_includes_models(tmp_path):
 
 # Test cache stats truncates long model names.
 def test_cli_cache_stats_truncates_long_model_name(tmp_path):
-    from causaliq_knowledge.cache import TokenCache
+    from causaliq_core.cache import TokenCache
+
     from causaliq_knowledge.llm.cache import LLMCacheEntry, LLMEntryEncoder
 
     cache_path = tmp_path / "llm_cache.db"
@@ -310,7 +319,7 @@ def test_cli_cache_stats_truncates_long_model_name(tmp_path):
 
 # Test cache stats with zero entries shows no model table.
 def test_cli_cache_stats_empty_llm_cache(tmp_path):
-    from causaliq_knowledge.cache import TokenCache
+    from causaliq_core.cache import TokenCache
 
     cache_path = tmp_path / "empty_cache.db"
     with TokenCache(str(cache_path)):
@@ -330,7 +339,8 @@ def test_cli_cache_stats_empty_llm_cache(tmp_path):
 def test_cli_cache_stats_skips_invalid_entries(tmp_path):
     from datetime import datetime, timezone
 
-    from causaliq_knowledge.cache import TokenCache
+    from causaliq_core.cache import TokenCache
+
     from causaliq_knowledge.llm.cache import LLMCacheEntry, LLMEntryEncoder
 
     cache_path = tmp_path / "mixed_cache.db"
@@ -354,11 +364,13 @@ def test_cli_cache_stats_skips_invalid_entries(tmp_path):
         timestamp = datetime.now(timezone.utc).isoformat()
         cache.conn.execute(
             "INSERT INTO cache_entries "
-            "(hash, entry_type, data, created_at, hit_count) "
-            "VALUES (?, ?, ?, ?, ?)",
+            "(hash, entry_type, seq, key_json, data, created_at, hit_count) "
+            "VALUES (?, ?, ?, ?, ?, ?, ?)",
             (
                 "invalid_hash",
                 "llm",
+                0,
+                "",
                 "corrupted_data_not_valid_tokens",
                 timestamp,
                 0,

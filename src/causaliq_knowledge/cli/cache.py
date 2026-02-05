@@ -54,7 +54,8 @@ def cache_stats(cache_path: str, output_json: bool) -> None:
 
         cqknow cache stats ./llm_cache.db --json
     """
-    from causaliq_knowledge.cache import TokenCache
+    from causaliq_core.cache import TokenCache
+
     from causaliq_knowledge.llm.cache import LLMCacheEntry, LLMEntryEncoder
 
     try:
@@ -234,7 +235,9 @@ def cache_export(cache_path: str, output_dir: str, output_json: bool) -> None:
     import zipfile
     from pathlib import Path
 
-    from causaliq_knowledge.cache import TokenCache
+    from causaliq_core.cache import TokenCache
+    from causaliq_core.cache.encoders import JsonEncoder
+
     from causaliq_knowledge.llm.cache import LLMCacheEntry, LLMEntryEncoder
 
     output_path = Path(output_dir)
@@ -247,7 +250,6 @@ def cache_export(cache_path: str, output_dir: str, output_json: bool) -> None:
             cache.register_encoder("llm", encoder)
 
             # Register generic JsonEncoder for other types
-            from causaliq_knowledge.cache.encoders import JsonEncoder
 
             json_encoder = JsonEncoder()
             cache.register_encoder("json", json_encoder)
@@ -380,8 +382,9 @@ def cache_import(cache_path: str, input_path: str, output_json: bool) -> None:
     import zipfile
     from pathlib import Path
 
-    from causaliq_knowledge.cache import TokenCache
-    from causaliq_knowledge.cache.encoders import JsonEncoder
+    from causaliq_core.cache import TokenCache
+    from causaliq_core.cache.encoders import JsonEncoder
+
     from causaliq_knowledge.llm.cache import LLMEntryEncoder
 
     input_file = Path(input_path)

@@ -135,7 +135,8 @@ def generate_graph(
         cqknow generate_graph -s model.json -c none -o none --use-benchmark
     """
     # Import here to avoid slow startup for --help
-    from causaliq_knowledge.cache import TokenCache
+    from causaliq_core.cache import TokenCache
+
     from causaliq_knowledge.graph import ModelLoader
     from causaliq_knowledge.graph.generator import (
         GraphGenerator,

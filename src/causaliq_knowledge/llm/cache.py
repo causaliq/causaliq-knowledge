@@ -16,10 +16,10 @@ from datetime import datetime, timezone
 from pathlib import Path
 from typing import TYPE_CHECKING, Any
 
-from causaliq_knowledge.cache.encoders import JsonEncoder
+from causaliq_core.cache.encoders import JsonEncoder
 
 if TYPE_CHECKING:  # pragma: no cover
-    from causaliq_knowledge.cache.token_cache import TokenCache
+    from causaliq_core.cache.token_cache import TokenCache
 
 
 @dataclass

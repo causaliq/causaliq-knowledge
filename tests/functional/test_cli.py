@@ -101,8 +101,8 @@ def test_cli_cache_stats_requires_path():
 
 # Test cache stats shows entry and token counts.
 def test_cli_cache_stats_shows_counts(tmp_path):
-    from causaliq_knowledge.cache import TokenCache
-    from causaliq_knowledge.cache.encoders import JsonEncoder
+    from causaliq_core.cache import TokenCache
+    from causaliq_core.cache.encoders import JsonEncoder
 
     # Create cache with some data
     cache_path = tmp_path / "test_cache.db"
@@ -124,8 +124,8 @@ def test_cli_cache_stats_shows_counts(tmp_path):
 def test_cli_cache_stats_json_output(tmp_path):
     import json
 
-    from causaliq_knowledge.cache import TokenCache
-    from causaliq_knowledge.cache.encoders import JsonEncoder
+    from causaliq_core.cache import TokenCache
+    from causaliq_core.cache.encoders import JsonEncoder
 
     cache_path = tmp_path / "test_cache.db"
     with TokenCache(str(cache_path)) as cache:
@@ -179,7 +179,8 @@ def test_cli_cache_export_in_help():
 
 # Test cache export creates files with human-readable names.
 def test_cli_cache_export_creates_files(tmp_path):
-    from causaliq_knowledge.cache import TokenCache
+    from causaliq_core.cache import TokenCache
+
     from causaliq_knowledge.llm.cache import LLMCacheEntry, LLMEntryEncoder
 
     # Create cache with LLM data
@@ -218,7 +219,8 @@ def test_cli_cache_export_creates_files(tmp_path):
 def test_cli_cache_export_json_output(tmp_path):
     import json
 
-    from causaliq_knowledge.cache import TokenCache
+    from causaliq_core.cache import TokenCache
+
     from causaliq_knowledge.llm.cache import LLMCacheEntry, LLMEntryEncoder
 
     cache_path = tmp_path / "test_cache.db"
@@ -247,7 +249,7 @@ def test_cli_cache_export_json_output(tmp_path):
 
 # Test cache export with empty cache.
 def test_cli_cache_export_empty_cache(tmp_path):
-    from causaliq_knowledge.cache import TokenCache
+    from causaliq_core.cache import TokenCache
 
     cache_path = tmp_path / "empty_cache.db"
     with TokenCache(str(cache_path)):
@@ -267,7 +269,7 @@ def test_cli_cache_export_empty_cache(tmp_path):
 def test_cli_cache_export_empty_cache_json(tmp_path):
     import json
 
-    from causaliq_knowledge.cache import TokenCache
+    from causaliq_core.cache import TokenCache
 
     cache_path = tmp_path / "empty_cache.db"
     with TokenCache(str(cache_path)):
@@ -286,8 +288,8 @@ def test_cli_cache_export_empty_cache_json(tmp_path):
 
 # Test cache export with non-LLM entry types uses generic export.
 def test_cli_cache_export_non_llm_type(tmp_path):
-    from causaliq_knowledge.cache import TokenCache
-    from causaliq_knowledge.cache.encoders import JsonEncoder
+    from causaliq_core.cache import TokenCache
+    from causaliq_core.cache.encoders import JsonEncoder
 
     cache_path = tmp_path / "test_cache.db"
     with TokenCache(str(cache_path)) as cache:
@@ -332,7 +334,8 @@ def test_cli_cache_export_invalid_db(tmp_path):
 def test_cli_cache_export_to_zip(tmp_path):
     import zipfile
 
-    from causaliq_knowledge.cache import TokenCache
+    from causaliq_core.cache import TokenCache
+
     from causaliq_knowledge.llm.cache import LLMCacheEntry, LLMEntryEncoder
 
     # Create cache with LLM data
@@ -373,7 +376,8 @@ def test_cli_cache_export_to_zip(tmp_path):
 def test_cli_cache_export_to_zip_json_output(tmp_path):
     import json
 
-    from causaliq_knowledge.cache import TokenCache
+    from causaliq_core.cache import TokenCache
+
     from causaliq_knowledge.llm.cache import LLMCacheEntry, LLMEntryEncoder
 
     cache_path = tmp_path / "test_cache.db"
@@ -403,7 +407,8 @@ def test_cli_cache_export_to_zip_json_output(tmp_path):
 
 # Test cache export to zip creates parent directories.
 def test_cli_cache_export_to_zip_creates_parent_dirs(tmp_path):
-    from causaliq_knowledge.cache import TokenCache
+    from causaliq_core.cache import TokenCache
+
     from causaliq_knowledge.llm.cache import LLMCacheEntry, LLMEntryEncoder
 
     cache_path = tmp_path / "test_cache.db"
@@ -446,7 +451,8 @@ def test_cli_cache_import_in_help():
 def test_cli_cache_import_from_directory(tmp_path):
     import json
 
-    from causaliq_knowledge.cache import TokenCache
+    from causaliq_core.cache import TokenCache
+
     from causaliq_knowledge.llm.cache import LLMEntryEncoder
 
     # Create import directory with LLM JSON file
@@ -487,7 +493,8 @@ def test_cli_cache_import_from_zip(tmp_path):
     import json
     import zipfile
 
-    from causaliq_knowledge.cache import TokenCache
+    from causaliq_core.cache import TokenCache
+
     from causaliq_knowledge.llm.cache import LLMEntryEncoder
 
     # Create zip file with LLM JSON
@@ -526,7 +533,7 @@ def test_cli_cache_import_from_zip(tmp_path):
 def test_cli_cache_import_generic_json(tmp_path):
     import json
 
-    from causaliq_knowledge.cache import TokenCache
+    from causaliq_core.cache import TokenCache
 
     # Create import directory with generic JSON (not LLM format)
     import_dir = tmp_path / "import"
@@ -620,7 +627,8 @@ def test_cli_cache_import_empty_directory(tmp_path):
 
 # Test cache import round-trip (export then import).
 def test_cli_cache_import_export_roundtrip(tmp_path):
-    from causaliq_knowledge.cache import TokenCache
+    from causaliq_core.cache import TokenCache
+
     from causaliq_knowledge.llm.cache import LLMCacheEntry, LLMEntryEncoder
 
     # Create original cache with data
@@ -1421,9 +1429,9 @@ def test_cli_generate_graph_cache_error(tmp_path, mocker):
     spec_file = tmp_path / "model.json"
     spec_file.write_text(json.dumps(spec_data))
 
-    # Mock TokenCache to raise an exception - patch in cache module
+    # Mock TokenCache to raise an exception - patch in core cache module
     mocker.patch(
-        "causaliq_knowledge.cache.TokenCache",
+        "causaliq_core.cache.TokenCache",
         side_effect=Exception("Cache error"),
     )
 

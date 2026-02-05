@@ -6,7 +6,8 @@ testing cache hit/miss scenarios without making real API calls.
 
 from typing import Any, Dict, List
 
-from causaliq_knowledge.cache import TokenCache
+from causaliq_core.cache import TokenCache
+
 from causaliq_knowledge.llm.base_client import (
     BaseLLMClient,
     LLMConfig,

@@ -36,7 +36,8 @@ from causaliq_knowledge.llm.ollama_client import OllamaClient, OllamaConfig
 from causaliq_knowledge.llm.openai_client import OpenAIClient, OpenAIConfig
 
 if TYPE_CHECKING:  # pragma: no cover
-    from causaliq_knowledge.cache import TokenCache
+    from causaliq_core.cache import TokenCache
+
     from causaliq_knowledge.graph.models import ModelSpec
 
 logger = logging.getLogger(__name__)

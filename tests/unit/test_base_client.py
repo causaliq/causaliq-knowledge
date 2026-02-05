@@ -405,7 +405,7 @@ def test_build_cache_key_empty_messages():
 
 # Test that set_cache configures cache on client
 def test_set_cache_configures_client():
-    from causaliq_knowledge.cache import TokenCache
+    from causaliq_core.cache import TokenCache
 
     MockClient = _create_mock_client_class()
     client = MockClient(LLMConfig(model="test-model"))
@@ -451,7 +451,7 @@ def test_cached_completion_without_cache():
 
 # Test that cached_completion stores result in cache
 def test_cached_completion_stores_in_cache():
-    from causaliq_knowledge.cache import TokenCache
+    from causaliq_core.cache import TokenCache
 
     MockClient = _create_mock_client_class()
     client = MockClient(LLMConfig(model="test-model"))
@@ -468,7 +468,7 @@ def test_cached_completion_stores_in_cache():
 
 # Test that cached_completion returns cached result on second call
 def test_cached_completion_cache_hit():
-    from causaliq_knowledge.cache import TokenCache
+    from causaliq_core.cache import TokenCache
 
     MockClient = _create_mock_client_class()
     client = MockClient(LLMConfig(model="test-model"))
@@ -497,7 +497,7 @@ def test_cached_completion_cache_hit():
 
 # Test that cached_completion respects use_cache=False
 def test_cached_completion_respects_use_cache_false():
-    from causaliq_knowledge.cache import TokenCache
+    from causaliq_core.cache import TokenCache
 
     MockClient = _create_mock_client_class()
     client = MockClient(LLMConfig(model="test-model"))
@@ -514,7 +514,7 @@ def test_cached_completion_respects_use_cache_false():
 
 # Test that cached_completion uses correct cache key
 def test_cached_completion_different_messages_different_cache():
-    from causaliq_knowledge.cache import TokenCache
+    from causaliq_core.cache import TokenCache
 
     MockClient = _create_mock_client_class()
     client = MockClient(LLMConfig(model="test-model"))
@@ -535,7 +535,7 @@ def test_cached_completion_different_messages_different_cache():
 
 # Test that cached_completion registers LLMEntryEncoder automatically
 def test_cached_completion_registers_encoder():
-    from causaliq_knowledge.cache import TokenCache
+    from causaliq_core.cache import TokenCache
 
     MockClient = _create_mock_client_class()
     client = MockClient(LLMConfig(model="test-model"))
@@ -555,7 +555,8 @@ def test_cached_completion_registers_encoder():
 
 # Test that cached_completion captures latency
 def test_cached_completion_captures_latency():
-    from causaliq_knowledge.cache import TokenCache
+    from causaliq_core.cache import TokenCache
+
     from causaliq_knowledge.llm.cache import LLMCacheEntry
 
     MockClient = _create_mock_client_class()
@@ -580,7 +581,8 @@ def test_cached_completion_captures_latency():
 
 # Test that cached_completion captures timestamp
 def test_cached_completion_captures_timestamp():
-    from causaliq_knowledge.cache import TokenCache
+    from causaliq_core.cache import TokenCache
+
     from causaliq_knowledge.llm.cache import LLMCacheEntry
 
     MockClient = _create_mock_client_class()

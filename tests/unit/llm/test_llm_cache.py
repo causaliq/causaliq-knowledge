@@ -6,8 +6,8 @@ from datetime import datetime, timezone
 from pathlib import Path
 
 import pytest
+from causaliq_core.cache import TokenCache
 
-from causaliq_knowledge.cache import TokenCache
 from causaliq_knowledge.llm.cache import (
     LLMCacheEntry,
     LLMEntryEncoder,
@@ -566,7 +566,7 @@ def test_llm_cache_entry_create_model_version_explicit():
 
 # Test LLMEntryEncoder inherits from JsonEncoder.
 def test_llm_entry_encoder_is_json_encoder():
-    from causaliq_knowledge.cache.encoders import JsonEncoder
+    from causaliq_core.cache.encoders import JsonEncoder
 
     encoder = LLMEntryEncoder()
     assert isinstance(encoder, JsonEncoder)

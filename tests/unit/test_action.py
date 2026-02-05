@@ -551,7 +551,7 @@ def test_run_cache_open_error(tmp_path: Path) -> None:
 
     action = GenerateGraphAction()
 
-    with patch("causaliq_knowledge.cache.TokenCache") as mock_cache_class:
+    with patch("causaliq_core.cache.TokenCache") as mock_cache_class:
         mock_cache = MagicMock()
         mock_cache.open.side_effect = Exception("Database locked")
         mock_cache_class.return_value = mock_cache
@@ -624,7 +624,7 @@ def test_run_cache_closed_on_error(tmp_path: Path) -> None:
     mock_cache = MagicMock()
 
     with (
-        patch("causaliq_knowledge.cache.TokenCache") as mock_cache_class,
+        patch("causaliq_core.cache.TokenCache") as mock_cache_class,
         patch(
             "causaliq_knowledge.graph.generator.GraphGenerator"
         ) as mock_generator_class,
