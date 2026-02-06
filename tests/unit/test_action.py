@@ -12,6 +12,7 @@ import pytest
 
 from causaliq_knowledge.action import (
     SUPPORTED_ACTIONS,
+    ActionExecutionError,
     CausalIQAction,
     GenerateGraphAction,
 )
@@ -299,9 +300,9 @@ def test_run_with_output_file(tmp_path: Path) -> None:
     assert output_file.exists()
 
 
-# Test run writes to JSON file when .json output specified.
-def test_run_with_json_output_file(tmp_path: Path) -> None:
-    """Test run writes JSON output to file when .json path specified."""
+# Test run writes to directory when directory output specified.
+def test_run_with_directory_output(tmp_path: Path) -> None:
+    """Test run writes GraphML and JSON files to directory."""
     import json
 
     from causaliq_knowledge.graph.response import (
@@ -318,7 +319,7 @@ def test_run_with_json_output_file(tmp_path: Path) -> None:
         '{"name": "y", "type": "binary"}]}'
     )
 
-    output_file = tmp_path / "output" / "graph.json"
+    output_dir = tmp_path / "output"
 
     # Mock the graph generator
     mock_graph = GeneratedGraph(
@@ -341,20 +342,210 @@ def test_run_with_json_output_file(tmp_path: Path) -> None:
             inputs={
                 "action": "generate_graph",
                 "model_spec": str(model_spec),
-                "output": str(output_file),
+                "output": str(output_dir),
                 "llm_cache": "none",
             },
             mode="run",
         )
 
     assert result["status"] == "success"
-    assert "output_file" in result
-    assert output_file.exists()
+    assert "output_dir" in result
+    assert output_dir.exists()
 
-    # Verify JSON content
-    content = json.loads(output_file.read_text())
-    assert "edges" in content
-    assert len(content["edges"]) == 1
+    # Verify files created
+    assert (output_dir / "graph.graphml").exists()
+    assert (output_dir / "metadata.json").exists()
+    assert (output_dir / "confidences.json").exists()
+
+    # Verify confidences content
+    confidences = json.loads((output_dir / "confidences.json").read_text())
+    assert "x->y" in confidences
+    assert confidences["x->y"] == 0.8
+
+
+# Test directory output rejects matrix context.
+def test_run_directory_output_rejects_matrix_context(tmp_path: Path) -> None:
+    """Test directory output raises error when matrix context is present."""
+    from causaliq_knowledge.graph.response import (
+        GeneratedGraph,
+        ProposedEdge,
+    )
+
+    # Create a minimal model spec file
+    model_spec = tmp_path / "model.json"
+    model_spec.write_text(
+        '{"schema_version": "2.0", "dataset_id": "test", '
+        '"domain": "test", "variables": ['
+        '{"name": "x", "type": "binary"}, '
+        '{"name": "y", "type": "binary"}]}'
+    )
+
+    output_dir = tmp_path / "output"
+
+    # Mock the graph generator
+    mock_graph = GeneratedGraph(
+        edges=[ProposedEdge(source="x", target="y", confidence=0.8)],
+        variables=["x", "y"],
+    )
+
+    # Create a mock context with matrix
+    mock_context = MagicMock()
+    mock_context.matrix = {"model": "test-model"}
+
+    with patch(
+        "causaliq_knowledge.graph.generator.GraphGenerator"
+    ) as mock_generator_class:
+        mock_generator = MagicMock()
+        mock_generator.generate_from_spec.return_value = mock_graph
+        mock_generator.get_stats.return_value = {"cache_hits": 0}
+        mock_generator_class.return_value = mock_generator
+
+        action = GenerateGraphAction()
+
+        with pytest.raises(ActionExecutionError) as exc_info:
+            action.run(
+                inputs={
+                    "action": "generate_graph",
+                    "model_spec": str(model_spec),
+                    "output": str(output_dir),
+                    "llm_cache": "none",
+                },
+                mode="run",
+                context=mock_context,
+            )
+
+        assert "matrix variables requires .db output" in str(exc_info.value)
+
+
+# Test directory output includes edge reasoning.
+def test_run_directory_output_with_edge_reasoning(tmp_path: Path) -> None:
+    """Test directory output includes edge-level reasoning in metadata."""
+    import json
+
+    from causaliq_knowledge.graph.response import (
+        GeneratedGraph,
+        ProposedEdge,
+    )
+
+    # Create a minimal model spec file
+    model_spec = tmp_path / "model.json"
+    model_spec.write_text(
+        '{"schema_version": "2.0", "dataset_id": "test", '
+        '"domain": "test", "variables": ['
+        '{"name": "x", "type": "binary"}, '
+        '{"name": "y", "type": "binary"}]}'
+    )
+
+    output_dir = tmp_path / "output"
+
+    # Mock the graph generator with edge reasoning
+    mock_graph = GeneratedGraph(
+        edges=[
+            ProposedEdge(
+                source="x",
+                target="y",
+                confidence=0.8,
+                reasoning="X causes Y due to mechanism",
+            )
+        ],
+        variables=["x", "y"],
+    )
+
+    with patch(
+        "causaliq_knowledge.graph.generator.GraphGenerator"
+    ) as mock_generator_class:
+        mock_generator = MagicMock()
+        mock_generator.generate_from_spec.return_value = mock_graph
+        mock_generator.get_stats.return_value = {"cache_hits": 0}
+        mock_generator_class.return_value = mock_generator
+
+        action = GenerateGraphAction()
+
+        result = action.run(
+            inputs={
+                "action": "generate_graph",
+                "model_spec": str(model_spec),
+                "output": str(output_dir),
+                "llm_cache": "none",
+            },
+            mode="run",
+        )
+
+    assert result["status"] == "success"
+
+    # Verify edge reasoning in metadata
+    metadata = json.loads((output_dir / "metadata.json").read_text())
+    assert "edge_reasoning" in metadata
+    assert metadata["edge_reasoning"]["x->y"] == "X causes Y due to mechanism"
+
+
+# Test directory output includes generation metadata.
+def test_run_directory_output_with_generation_metadata(tmp_path: Path) -> None:
+    """Test directory output includes generation metadata."""
+    import json
+    from datetime import datetime, timezone
+
+    from causaliq_knowledge.graph.response import (
+        GeneratedGraph,
+        GenerationMetadata,
+        ProposedEdge,
+    )
+
+    # Create a minimal model spec file
+    model_spec = tmp_path / "model.json"
+    model_spec.write_text(
+        '{"schema_version": "2.0", "dataset_id": "test", '
+        '"domain": "test", "variables": ['
+        '{"name": "x", "type": "binary"}, '
+        '{"name": "y", "type": "binary"}]}'
+    )
+
+    output_dir = tmp_path / "output"
+
+    # Mock the graph generator with generation metadata
+    mock_graph = GeneratedGraph(
+        edges=[ProposedEdge(source="x", target="y", confidence=0.8)],
+        variables=["x", "y"],
+        metadata=GenerationMetadata(
+            model="test-model",
+            provider="test-provider",
+            timestamp=datetime(2026, 1, 1, 12, 0, 0, tzinfo=timezone.utc),
+            latency_ms=150.5,
+            input_tokens=100,
+            output_tokens=50,
+            from_cache=False,
+        ),
+    )
+
+    with patch(
+        "causaliq_knowledge.graph.generator.GraphGenerator"
+    ) as mock_generator_class:
+        mock_generator = MagicMock()
+        mock_generator.generate_from_spec.return_value = mock_graph
+        mock_generator.get_stats.return_value = {"cache_hits": 0}
+        mock_generator_class.return_value = mock_generator
+
+        action = GenerateGraphAction()
+
+        result = action.run(
+            inputs={
+                "action": "generate_graph",
+                "model_spec": str(model_spec),
+                "output": str(output_dir),
+                "llm_cache": "none",
+            },
+            mode="run",
+        )
+
+    assert result["status"] == "success"
+
+    # Verify generation metadata
+    metadata = json.loads((output_dir / "metadata.json").read_text())
+    assert "generation" in metadata
+    assert metadata["generation"]["model"] == "test-model"
+    assert metadata["generation"]["provider"] == "test-provider"
+    assert metadata["generation"]["input_tokens"] == 100
+    assert metadata["generation"]["output_tokens"] == 50
 
 
 # Test graph_to_dict conversion.

@@ -26,6 +26,7 @@ from pydantic import ValidationError
 from causaliq_knowledge.graph.params import GenerateGraphParams
 
 if TYPE_CHECKING:  # pragma: no cover
+    from causaliq_knowledge.graph.models import ModelSpec
     from causaliq_knowledge.graph.response import GeneratedGraph
 
 logger = logging.getLogger(__name__)
@@ -407,9 +408,9 @@ class GenerateGraphAction(BaseCausalIQAction):
             # Write output if specified
             output_path = params.get_effective_output_path()
             if output_path:
-                output_path.parent.mkdir(parents=True, exist_ok=True)
-                if str(output_path).endswith(".db"):
-                    # Write to Workflow Cache
+                if params.is_workflow_cache_output():
+                    # Write to Workflow Cache (.db file)
+                    output_path.parent.mkdir(parents=True, exist_ok=True)
                     self._write_to_workflow_cache(
                         output_path,
                         graph,
@@ -419,14 +420,22 @@ class GenerateGraphAction(BaseCausalIQAction):
                     )
                     result["output_cache"] = str(output_path)
                 else:
-                    # Write JSON file (for CLI compatibility)
-                    import json
-
-                    json_output = self._graph_to_dict(graph)
-                    output_path.write_text(
-                        json.dumps(json_output, indent=2), encoding="utf-8"
+                    # Directory output - check for matrix context conflict
+                    # Only block if context has non-empty matrix
+                    has_matrix = (
+                        context is not None
+                        and hasattr(context, "matrix")
+                        and context.matrix
                     )
-                    result["output_file"] = str(output_path)
+                    if has_matrix:
+                        raise ActionExecutionError(
+                            "Workflow with matrix variables requires .db "
+                            "output (Workflow Cache), not directory output. "
+                            "Each matrix combination would overwrite files."
+                        )
+                    # Write GraphML + JSON files to directory
+                    self._write_to_directory(output_path, graph, spec)
+                    result["output_dir"] = str(output_path)
 
             return result
 
@@ -486,6 +495,85 @@ class GenerateGraphAction(BaseCausalIQAction):
             "variables": graph.variables,
             "reasoning": graph.reasoning,
         }
+
+    def _write_to_directory(
+        self,
+        output_dir: Path,
+        graph: "GeneratedGraph",
+        spec: "ModelSpec",
+    ) -> None:
+        """Write graph output to directory as GraphML + JSON files.
+
+        Creates three files in the output directory:
+        - graph.graphml: Graph structure in GraphML format
+        - metadata.json: Variables, reasoning, generation info
+        - confidences.json: Edge confidence scores
+
+        Args:
+            output_dir: Directory path to write files to.
+            graph: Generated graph to write.
+            spec: Model specification (for additional metadata).
+        """
+        import json
+
+        from causaliq_core.graph.io import graphml
+        from causaliq_core.graph.sdg import SDG
+
+        # Create output directory
+        output_dir.mkdir(parents=True, exist_ok=True)
+
+        # Build SDG from edges - SDG requires 3-tuple (source, "->", target)
+        edges = [(edge.source, "->", edge.target) for edge in graph.edges]
+        sdg = SDG(list(graph.variables), edges)
+
+        # Write GraphML
+        graphml_path = output_dir / "graph.graphml"
+        graphml.write(sdg, str(graphml_path))
+
+        # Build and write metadata
+        metadata: Dict[str, Any] = {
+            "dataset_id": spec.dataset_id,
+            "domain": spec.domain,
+            "variables": graph.variables,
+            "edge_count": len(graph.edges),
+            "reasoning": graph.reasoning,
+        }
+
+        # Add edge-level reasoning if present
+        edge_reasoning = {}
+        for edge in graph.edges:
+            if edge.reasoning:
+                key = f"{edge.source}->{edge.target}"
+                edge_reasoning[key] = edge.reasoning
+        if edge_reasoning:
+            metadata["edge_reasoning"] = edge_reasoning
+
+        # Add generation metadata if present
+        if graph.metadata:
+            metadata["generation"] = {
+                "model": graph.metadata.model,
+                "provider": graph.metadata.provider,
+                "timestamp": graph.metadata.timestamp.isoformat(),
+                "latency_ms": graph.metadata.latency_ms,
+                "input_tokens": graph.metadata.input_tokens,
+                "output_tokens": graph.metadata.output_tokens,
+            }
+
+        metadata_path = output_dir / "metadata.json"
+        metadata_path.write_text(
+            json.dumps(metadata, indent=2), encoding="utf-8"
+        )
+
+        # Build and write confidences
+        confidences = {
+            f"{edge.source}->{edge.target}": edge.confidence
+            for edge in graph.edges
+        }
+
+        confidences_path = output_dir / "confidences.json"
+        confidences_path.write_text(
+            json.dumps(confidences, indent=2), encoding="utf-8"
+        )
 
     def _map_graph_names(
         self, graph: "GeneratedGraph", mapping: Dict[str, str]

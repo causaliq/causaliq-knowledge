@@ -58,7 +58,7 @@ class GenerateGraphParams(BaseModel):
     )
     output: str = Field(
         ...,
-        description="Output Workflow Cache .db path or 'none' for no persist",
+        description="Output: directory path, Workflow Cache .db, or 'none'",
     )
     llm_cache: str = Field(
         ...,
@@ -109,14 +109,16 @@ class GenerateGraphParams(BaseModel):
     @field_validator("output")
     @classmethod
     def validate_output_format(cls, v: str) -> str:
-        """Validate output is 'none', .json, or Workflow Cache .db path."""
+        """Validate output is 'none', directory, or Workflow Cache .db path.
+
+        Accepts:
+        - 'none': No output written
+        - Path ending in '.db': Workflow Cache database
+        - Any other path: Directory for GraphML/JSON files
+        """
         if v.lower() == "none":
             return "none"
-        if not v.endswith((".json", ".db")):
-            raise ValueError(
-                f"output must be 'none', a .json file, or a Workflow Cache "
-                f"path (.db). Got: {v}"
-            )
+        # .db is Workflow Cache, anything else is directory output
         return v
 
     @classmethod
@@ -168,8 +170,28 @@ class GenerateGraphParams(BaseModel):
         """Get the effective output path.
 
         Returns:
-            Path to output JSON file, or None for stdout.
+            Path to output (directory or .db file), or None for no output.
         """
         if self.output.lower() == "none":
             return None
         return Path(self.output)
+
+    def is_workflow_cache_output(self) -> bool:
+        """Check if output is a Workflow Cache database.
+
+        Returns:
+            True if output path ends with .db, False otherwise.
+        """
+        if self.output.lower() == "none":
+            return False
+        return self.output.endswith(".db")
+
+    def is_directory_output(self) -> bool:
+        """Check if output is a directory for GraphML/JSON files.
+
+        Returns:
+            True if output is not 'none' and not a .db file.
+        """
+        if self.output.lower() == "none":
+            return False
+        return not self.output.endswith(".db")

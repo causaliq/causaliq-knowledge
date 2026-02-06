@@ -344,16 +344,28 @@ def test_params_output_json_file() -> None:
     assert params.get_effective_output_path() == Path("output/graph.json")
 
 
-# Test output rejects invalid suffix.
-def test_params_output_invalid_suffix() -> None:
-    """Test output rejects paths not ending with .json or .db."""
-    with pytest.raises(ValidationError) as exc_info:
-        GenerateGraphParams(
-            model_spec=Path("test/model.json"),
-            output="output/graph.txt",
-            llm_cache="cache.db",
-        )
+# Test output accepts any path as directory output.
+def test_params_output_accepts_any_path() -> None:
+    """Test output accepts any path (interpreted as directory)."""
+    params = GenerateGraphParams(
+        model_spec=Path("test/model.json"),
+        output="output/results",
+        llm_cache="cache.db",
+    )
 
-    errors = exc_info.value.errors()
-    assert len(errors) == 1
-    assert ".json" in errors[0]["msg"] or ".db" in errors[0]["msg"]
+    assert params.output == "output/results"
+    assert params.is_directory_output() is True
+    assert params.is_workflow_cache_output() is False
+
+
+# Test is_workflow_cache_output returns False for 'none'.
+def test_params_is_workflow_cache_output_none() -> None:
+    """Test is_workflow_cache_output returns False when output is 'none'."""
+    params = GenerateGraphParams(
+        model_spec=Path("test/model.json"),
+        output="none",
+        llm_cache="cache.db",
+    )
+
+    assert params.is_workflow_cache_output() is False
+    assert params.is_directory_output() is False

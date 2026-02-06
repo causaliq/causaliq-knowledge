@@ -187,9 +187,9 @@ steps:
     assert step_results["Generate graph"]["edge_count"] == 1
 
 
-# Test workflow with output file via causaliq-workflow.
+# Test workflow with output directory via causaliq-workflow.
 def test_workflow_writes_output_file(tmp_path: Path) -> None:
-    """Test workflow writes output file when specified."""
+    """Test workflow writes output files to directory when specified."""
     from causaliq_workflow.workflow import WorkflowExecutor
 
     from causaliq_knowledge.graph.response import GeneratedGraph, ProposedEdge
@@ -203,7 +203,7 @@ def test_workflow_writes_output_file(tmp_path: Path) -> None:
         '{"name": "y", "type": "binary"}]}'
     )
 
-    output_file = tmp_path / "output" / "graph.json"
+    output_dir = tmp_path / "output"
 
     # Create workflow file
     workflow_yaml = tmp_path / "workflow.yaml"
@@ -218,7 +218,7 @@ steps:
     with:
       action: "generate_graph"
       model_spec: "{model_spec.as_posix()}"
-      output: "{output_file.as_posix()}"
+      output: "{output_dir.as_posix()}"
       llm_cache: "none"
 """
     )
@@ -242,15 +242,17 @@ steps:
         workflow = executor.parse_workflow(str(workflow_yaml))
         executor.execute_workflow(workflow, mode="run")
 
-    # Check output file was created
-    assert output_file.exists(), f"Output file not created: {output_file}"
+    # Check output directory was created with files
+    assert output_dir.exists(), f"Output directory not created: {output_dir}"
+    assert (output_dir / "graph.graphml").exists()
+    assert (output_dir / "metadata.json").exists()
+    assert (output_dir / "confidences.json").exists()
 
-    # Verify content
+    # Verify confidences content
     import json
 
-    content = json.loads(output_file.read_text())
-    assert "edges" in content
-    assert len(content["edges"]) == 1
+    confidences = json.loads((output_dir / "confidences.json").read_text())
+    assert "x->y" in confidences
 
 
 # Test workflow rejects invalid action parameter.

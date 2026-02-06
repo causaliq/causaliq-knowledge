@@ -9,7 +9,7 @@ from __future__ import annotations
 import json
 import sys
 from pathlib import Path
-from typing import TYPE_CHECKING, Optional
+from typing import TYPE_CHECKING, Any, Optional
 
 import click
 from pydantic import ValidationError
@@ -89,7 +89,7 @@ def _map_graph_names(
     "--output",
     "-o",
     required=True,
-    help="Output: .json file path or 'none' for adjacency matrix to stdout.",
+    help="Output: directory path for files, or 'none' for stdout.",
 )
 @click.option(
     "--llm-cache",
@@ -123,12 +123,15 @@ def generate_graph(
     Use --use-benchmark-names to test with original benchmark names.
 
     Output behaviour:
-    - If output is a .json file: writes JSON to file, prints edges to stdout
-    - If output is 'none': prints adjacency matrix to stdout, edges to stderr
+
+    \b
+    - If output is a directory: writes graph.graphml, metadata.json,
+      and confidences.json to that directory
+    - If output is 'none': prints adjacency matrix to stdout
 
     Examples:
 
-        cqknow generate_graph -s model.json -c cache.db -o graph.json
+        cqknow generate_graph -s model.json -c cache.db -o results/
 
         cqknow generate_graph -s model.json -c cache.db -o none
 
@@ -240,18 +243,17 @@ def generate_graph(
         graph = _map_graph_names(graph, llm_to_benchmark_mapping)
         click.echo("Mapped LLM names back to benchmark names", err=True)
 
-    # Build JSON output
-    result = _build_output(graph, spec, params.llm_model, params.prompt_detail)
-
-    # Output results - always print edges summary to stdout
+    # Output results - always print edges summary to stderr
     _print_edges(graph)
-    _print_summary(graph, err=False)
+    _print_summary(graph, err=True)
 
-    if output_path:
-        # Write JSON to file
-        output_path.parent.mkdir(parents=True, exist_ok=True)
-        output_path.write_text(json.dumps(result, indent=2), encoding="utf-8")
-        click.echo(f"\nOutput written to: {output_path}", err=True)
+    if params.is_directory_output():
+        # Write to directory: graph.graphml, metadata.json, confidences.json
+        assert output_path is not None  # Guaranteed by is_directory_output()
+        _write_to_directory(
+            output_path, graph, spec, params.llm_model, params.prompt_detail
+        )
+        click.echo(f"\nOutput written to: {output_path}/", err=True)
     else:
         # Print adjacency matrix to stdout
         click.echo()
@@ -271,70 +273,92 @@ def generate_graph(
         cache.close()
 
 
-def _build_output(
-    graph: GeneratedGraph,
-    spec: ModelSpec,
+def _write_to_directory(
+    output_dir: Path,
+    graph: "GeneratedGraph",
+    spec: "ModelSpec",
     llm_model: str,
-    level: PromptDetail,
-) -> dict:
-    """Build output dictionary for the generated graph.
+    prompt_detail: PromptDetail,
+) -> None:
+    """Write graph output files to a directory.
+
+    Creates three files:
+    - graph.graphml: The graph structure in GraphML format
+    - metadata.json: Dataset info, variables, reasoning, generation params
+    - confidences.json: Edge confidences as {"source->target": confidence}
 
     Args:
+        output_dir: Directory to write files to.
         graph: The GeneratedGraph result.
         spec: The ModelSpec used.
         llm_model: LLM model identifier.
-        level: View level used.
-
-    Returns:
-        Dictionary suitable for JSON output.
+        prompt_detail: Prompt detail level used.
     """
-    edges = []
-    for edge in graph.edges:
-        edge_dict = {
-            "source": edge.source,
-            "target": edge.target,
-            "confidence": edge.confidence,
-        }
-        if edge.reasoning:
-            edge_dict["reasoning"] = edge.reasoning
-        edges.append(edge_dict)
+    from causaliq_core.graph import SDG
+    from causaliq_core.graph.io import graphml
 
-    result = {
+    # Create directory
+    output_dir.mkdir(parents=True, exist_ok=True)
+
+    # Build SDG from edges - SDG requires nodes list and edges as tuples
+    nodes = [v.name for v in spec.variables]
+    edges = [(e.source, "->", e.target) for e in graph.edges]
+    sdg = SDG(nodes, edges)
+
+    # Write GraphML
+    graphml_path = output_dir / "graph.graphml"
+    graphml.write(sdg, str(graphml_path))
+
+    # Build metadata
+    generation_info: dict[str, Any] = {
+        "model": llm_model,
+        "prompt_detail": prompt_detail.value,
+    }
+    if graph.metadata:
+        generation_info["input_tokens"] = graph.metadata.input_tokens
+        generation_info["output_tokens"] = graph.metadata.output_tokens
+        generation_info["from_cache"] = graph.metadata.from_cache
+
+    metadata: dict[str, Any] = {
         "dataset_id": spec.dataset_id,
         "domain": spec.domain,
-        "variable_count": len(spec.variables),
-        "edge_count": len(edges),
-        "edges": edges,
-        "generation": {
-            "model": llm_model,
-            "prompt_detail": level.value,
+        "variables": [v.name for v in spec.variables],
+        "reasoning": graph.reasoning,
+        "edge_reasoning": {
+            f"{e.source}->{e.target}": e.reasoning
+            for e in graph.edges
+            if e.reasoning
         },
+        "generation": generation_info,
     }
 
-    # Add metadata if available
-    if graph.metadata:
-        result["metadata"] = {
-            "model": graph.metadata.model,
-            "provider": graph.metadata.provider,
-            "input_tokens": graph.metadata.input_tokens,
-            "output_tokens": graph.metadata.output_tokens,
-            "from_cache": graph.metadata.from_cache,
-        }
+    # Write metadata.json
+    metadata_path = output_dir / "metadata.json"
+    metadata_path.write_text(json.dumps(metadata, indent=2), encoding="utf-8")
 
-    return result
+    # Build confidences
+    confidences = {
+        f"{e.source}->{e.target}": e.confidence for e in graph.edges
+    }
+
+    # Write confidences.json
+    confidences_path = output_dir / "confidences.json"
+    confidences_path.write_text(
+        json.dumps(confidences, indent=2), encoding="utf-8"
+    )
 
 
-def _print_edges(graph: GeneratedGraph) -> None:
+def _print_edges(graph: "GeneratedGraph") -> None:
     """Print proposed edges with confidence bars.
 
     Args:
         graph: The GeneratedGraph result.
     """
     if not graph.edges:
-        click.echo("\nNo edges proposed by the LLM.")
+        click.echo("\nNo edges proposed by the LLM.", err=True)
         return
 
-    click.echo(f"\nProposed Edges ({len(graph.edges)}):\n")
+    click.echo(f"\nProposed Edges ({len(graph.edges)}):\n", err=True)
 
     # Sort by confidence descending
     sorted_edges = sorted(
@@ -348,17 +372,18 @@ def _print_edges(graph: GeneratedGraph) -> None:
         )
         click.echo(
             f"  {i:2d}. {edge.source} → {edge.target}  "
-            f"[{conf_bar}] {conf_pct:5.1f}%"
+            f"[{conf_bar}] {conf_pct:5.1f}%",
+            err=True,
         )
         if edge.reasoning:
             # Wrap reasoning text
             reasoning = edge.reasoning[:100]
             if len(edge.reasoning) > 100:
                 reasoning += "..."
-            click.echo(f"      {reasoning}")
+            click.echo(f"      {reasoning}", err=True)
 
 
-def _print_summary(graph: GeneratedGraph, err: bool = False) -> None:
+def _print_summary(graph: "GeneratedGraph", err: bool = False) -> None:
     """Print a brief summary of the generated graph.
 
     Args:
@@ -376,7 +401,9 @@ def _print_summary(graph: GeneratedGraph, err: bool = False) -> None:
     click.echo(f"  Low confidence (<0.4): {low_conf}", err=err)
 
 
-def _print_adjacency_matrix(graph: GeneratedGraph, spec: ModelSpec) -> None:
+def _print_adjacency_matrix(
+    graph: "GeneratedGraph", spec: "ModelSpec"
+) -> None:
     """Print adjacency matrix representation of the graph.
 
     Args:

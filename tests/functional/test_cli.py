@@ -836,7 +836,7 @@ def test_cli_generate_graph_json_output(tmp_path, mocker):
     spec_file = tmp_path / "model.json"
     spec_file.write_text(json.dumps(spec_data))
 
-    output_file = tmp_path / "output.json"
+    output_dir = tmp_path / "output"
 
     # Mock the GraphGenerator
     from causaliq_knowledge.graph.response import GeneratedGraph, ProposedEdge
@@ -866,21 +866,27 @@ def test_cli_generate_graph_json_output(tmp_path, mocker):
             "-c",
             "none",
             "-o",
-            str(output_file),
+            str(output_dir),
         ],
     )
 
     assert result.exit_code == 0
-    assert output_file.exists()
+    assert output_dir.exists()
 
-    content = json.loads(output_file.read_text())
-    assert content["dataset_id"] == "json-test"
-    assert content["edge_count"] == 1
-    assert content["edges"][0]["source"] == "X"
-    assert content["edges"][0]["target"] == "Y"
+    # Verify directory output files
+    assert (output_dir / "graph.graphml").exists()
+    assert (output_dir / "metadata.json").exists()
+    assert (output_dir / "confidences.json").exists()
+
+    metadata = json.loads((output_dir / "metadata.json").read_text())
+    assert metadata["dataset_id"] == "json-test"
+
+    confidences = json.loads((output_dir / "confidences.json").read_text())
+    assert "X->Y" in confidences
+    assert confidences["X->Y"] == 0.9
 
 
-# Test generate graph with --output flag writes to file.
+# Test generate graph with --output flag writes to directory.
 def test_cli_generate_graph_output_file(tmp_path, mocker):
     import json
 
@@ -896,7 +902,7 @@ def test_cli_generate_graph_output_file(tmp_path, mocker):
     spec_file = tmp_path / "model.json"
     spec_file.write_text(json.dumps(spec_data))
 
-    output_file = tmp_path / "graph_output.json"
+    output_dir = tmp_path / "graph_output"
 
     # Mock the GraphGenerator
     from causaliq_knowledge.graph.response import GeneratedGraph, ProposedEdge
@@ -926,17 +932,19 @@ def test_cli_generate_graph_output_file(tmp_path, mocker):
             "-c",
             "none",
             "-o",
-            str(output_file),
+            str(output_dir),
         ],
     )
 
     assert result.exit_code == 0
-    assert output_file.exists()
+    assert output_dir.exists()
 
-    content = json.loads(output_file.read_text())
-    assert content["dataset_id"] == "file-output-test"
-    assert len(content["edges"]) == 1
-    # Also check edges are printed to stdout
+    # Verify directory output files
+    metadata = json.loads((output_dir / "metadata.json").read_text())
+    assert metadata["dataset_id"] == "file-output-test"
+    confidences = json.loads((output_dir / "confidences.json").read_text())
+    assert "P->Q" in confidences
+    # Also check edges are printed to stderr
     assert "P → Q" in result.output or "P" in result.output
 
 
@@ -1383,12 +1391,67 @@ def test_cli_generate_graph_invalid_prompt_detail_level(tmp_path):
     assert "is not one of" in result.output
 
 
-# Test generate graph with invalid output suffix.
-def test_cli_generate_graph_invalid_output(tmp_path):
+# Test generate graph accepts any path as directory output.
+def test_cli_generate_graph_any_path_is_directory_output(tmp_path, mocker):
     import json
 
     spec_data = {
-        "dataset_id": "invalid-output-test",
+        "dataset_id": "any-path-test",
+        "domain": "testing",
+        "variables": [
+            {"name": "A", "type": "binary", "short_description": "Variable A"},
+            {"name": "B", "type": "binary", "short_description": "Variable B"},
+        ],
+    }
+    spec_file = tmp_path / "model.json"
+    spec_file.write_text(json.dumps(spec_data))
+
+    # Any path (even with .txt) is treated as directory output
+    output_dir = tmp_path / "output.txt"
+
+    from causaliq_knowledge.graph.response import GeneratedGraph, ProposedEdge
+
+    mock_graph = GeneratedGraph(
+        edges=[ProposedEdge(source="A", target="B", confidence=0.8)],
+        variables=["A", "B"],
+    )
+    mock_generator = mocker.MagicMock()
+    mock_generator.generate_from_spec.return_value = mock_graph
+    mock_generator.get_stats.return_value = {
+        "call_count": 1,
+        "client_call_count": 1,
+    }
+    mocker.patch(
+        "causaliq_knowledge.graph.generator.GraphGenerator",
+        return_value=mock_generator,
+    )
+
+    runner = CliRunner()
+    result = runner.invoke(
+        cli,
+        [
+            "generate_graph",
+            "-s",
+            str(spec_file),
+            "-c",
+            "none",
+            "-o",
+            str(output_dir),
+        ],
+    )
+
+    # Should succeed - path is treated as directory
+    assert result.exit_code == 0
+    assert output_dir.exists()
+    assert (output_dir / "graph.graphml").exists()
+
+
+# Test generate graph with invalid llm_model triggers validation error.
+def test_cli_generate_graph_invalid_llm_model(tmp_path):
+    import json
+
+    spec_data = {
+        "dataset_id": "validation-test",
         "domain": "testing",
         "variables": [
             {"name": "A", "type": "binary", "short_description": "Variable A"},
@@ -1407,12 +1470,15 @@ def test_cli_generate_graph_invalid_output(tmp_path):
             "-c",
             "none",
             "-o",
-            "output.txt",
+            "none",
+            "-m",
+            "invalid-model-no-prefix",
         ],
     )
 
     assert result.exit_code == 1
-    assert ".json" in result.output or ".db" in result.output
+    assert "Error:" in result.output
+    assert "llm_model" in result.output or "prefix" in result.output
 
 
 # Test generate graph with cache open error.
@@ -1546,7 +1612,7 @@ def test_cli_generate_graph_edge_with_reasoning(tmp_path, mocker):
     spec_file = tmp_path / "model.json"
     spec_file.write_text(json.dumps(spec_data))
 
-    output_file = tmp_path / "output.json"
+    output_dir = tmp_path / "output"
 
     from causaliq_knowledge.graph.response import GeneratedGraph, ProposedEdge
 
@@ -1582,14 +1648,14 @@ def test_cli_generate_graph_edge_with_reasoning(tmp_path, mocker):
             "-c",
             "none",
             "-o",
-            str(output_file),
+            str(output_dir),
         ],
     )
 
     assert result.exit_code == 0
-    output = json.loads(output_file.read_text())
+    metadata = json.loads((output_dir / "metadata.json").read_text())
     assert (
-        output["edges"][0]["reasoning"]
+        metadata["edge_reasoning"]["X->Y"]
         == "X causes Y because of domain knowledge"
     )
 
@@ -1609,7 +1675,7 @@ def test_cli_generate_graph_with_metadata(tmp_path, mocker):
     spec_file = tmp_path / "model.json"
     spec_file.write_text(json.dumps(spec_data))
 
-    output_file = tmp_path / "output.json"
+    output_dir = tmp_path / "output"
 
     from causaliq_knowledge.graph.response import (
         GeneratedGraph,
@@ -1649,17 +1715,15 @@ def test_cli_generate_graph_with_metadata(tmp_path, mocker):
             "-c",
             "none",
             "-o",
-            str(output_file),
+            str(output_dir),
         ],
     )
 
     assert result.exit_code == 0
-    output = json.loads(output_file.read_text())
-    assert "metadata" in output
-    assert output["metadata"]["model"] == "test-model"
-    assert output["metadata"]["provider"] == "test-provider"
-    assert output["metadata"]["input_tokens"] == 100
-    assert output["metadata"]["output_tokens"] == 50
+    metadata = json.loads((output_dir / "metadata.json").read_text())
+    # Metadata is stored in generation section
+    assert metadata["generation"]["input_tokens"] == 100
+    assert metadata["generation"]["output_tokens"] == 50
 
 
 # Test generate graph human-readable output with reasoning.
