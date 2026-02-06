@@ -4,6 +4,12 @@ This module provides functionality for LLM-based causal graph generation
 from variable specifications.
 """
 
+from causaliq_knowledge.graph.cache import (
+    BLOB_TYPE_CONFIDENCES,
+    BLOB_TYPE_GRAPH,
+    BLOB_TYPE_TRACE,
+    GraphEntryEncoder,
+)
 from causaliq_knowledge.graph.generator import (
     GraphGenerator,
     GraphGeneratorConfig,
@@ -75,4 +81,9 @@ __all__ = [
     # Generator
     "GraphGenerator",
     "GraphGeneratorConfig",
+    # Cache encoder
+    "GraphEntryEncoder",
+    "BLOB_TYPE_GRAPH",
+    "BLOB_TYPE_CONFIDENCES",
+    "BLOB_TYPE_TRACE",
 ]

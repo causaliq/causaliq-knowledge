@@ -312,7 +312,7 @@ class LLMEntryEncoder(JsonEncoder):
     achieving 50-70% compression through the shared token dictionary.
 
     Example:
-        >>> from causaliq_knowledge.cache import TokenCache
+        >>> from causaliq_core.cache import TokenCache
         >>> from causaliq_knowledge.llm.cache import (
         ...     LLMEntryEncoder, LLMCacheEntry,
         ... )
