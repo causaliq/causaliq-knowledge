@@ -1412,7 +1412,7 @@ def test_cli_generate_graph_invalid_output(tmp_path):
     )
 
     assert result.exit_code == 1
-    assert ".json" in result.output
+    assert ".json" in result.output or ".db" in result.output
 
 
 # Test generate graph with cache open error.

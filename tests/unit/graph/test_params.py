@@ -40,7 +40,7 @@ def test_params_all_fields() -> None:
         prompt_detail=PromptDetail.RICH,
         use_benchmark_names=False,
         llm_model="gemini/gemini-2.5-flash",
-        output="output/graph.json",
+        output="output/workflow_cache.db",
         llm_cache="cache/test.db",
         llm_temperature=0.5,
     )
@@ -48,7 +48,7 @@ def test_params_all_fields() -> None:
     assert params.model_spec == Path("test/model.json")
     assert params.prompt_detail == PromptDetail.RICH
     assert params.llm_model == "gemini/gemini-2.5-flash"
-    assert params.output == "output/graph.json"
+    assert params.output == "output/workflow_cache.db"
     assert params.llm_cache == "cache/test.db"
     assert params.llm_temperature == 0.5
 
@@ -176,7 +176,7 @@ def test_params_from_dict_strings() -> None:
     data: Dict[str, Any] = {
         "model_spec": "test/model.json",
         "prompt_detail": "rich",
-        "output": "output/graph.json",
+        "output": "output/workflow_cache.db",
         "llm_cache": "cache/test.db",
         "llm_model": "groq/llama-3.1-8b-instant",
     }
@@ -185,7 +185,7 @@ def test_params_from_dict_strings() -> None:
 
     assert params.model_spec == Path("test/model.json")
     assert params.prompt_detail == PromptDetail.RICH
-    assert params.output == "output/graph.json"
+    assert params.output == "output/workflow_cache.db"
     assert params.llm_cache == "cache/test.db"
 
 
@@ -316,9 +316,24 @@ def test_params_output_none_case_insensitive() -> None:
     assert params.get_effective_output_path() is None
 
 
-# Test output accepts .json file path.
+# Test output accepts .db file path for Workflow Cache.
+def test_params_output_workflow_cache() -> None:
+    """Test output accepts .db file path for Workflow Cache."""
+    params = GenerateGraphParams(
+        model_spec=Path("test/model.json"),
+        output="output/workflow_cache.db",
+        llm_cache="cache.db",
+    )
+
+    assert params.output == "output/workflow_cache.db"
+    assert params.get_effective_output_path() == Path(
+        "output/workflow_cache.db"
+    )
+
+
+# Test output accepts .json file path for CLI usage.
 def test_params_output_json_file() -> None:
-    """Test output accepts .json file path."""
+    """Test output accepts .json file path for CLI usage."""
     params = GenerateGraphParams(
         model_spec=Path("test/model.json"),
         output="output/graph.json",
@@ -331,7 +346,7 @@ def test_params_output_json_file() -> None:
 
 # Test output rejects invalid suffix.
 def test_params_output_invalid_suffix() -> None:
-    """Test output rejects paths not ending with .json."""
+    """Test output rejects paths not ending with .json or .db."""
     with pytest.raises(ValidationError) as exc_info:
         GenerateGraphParams(
             model_spec=Path("test/model.json"),
@@ -341,4 +356,4 @@ def test_params_output_invalid_suffix() -> None:
 
     errors = exc_info.value.errors()
     assert len(errors) == 1
-    assert ".json" in errors[0]["msg"]
+    assert ".json" in errors[0]["msg"] or ".db" in errors[0]["msg"]

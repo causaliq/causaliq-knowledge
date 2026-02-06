@@ -9,7 +9,6 @@ imported, using the convention of exporting a class named 'CausalIQAction'.
 
 from __future__ import annotations
 
-import json
 import logging
 from pathlib import Path
 from typing import TYPE_CHECKING, Any, Dict, Optional
@@ -91,13 +90,13 @@ def _create_action_inputs() -> Dict[str, Any]:
         ),
         "output": ActionInput(
             name="output",
-            description="Output: .json file path or 'none' for stdout",
+            description="Workflow Cache .db path or 'none' for no persistence",
             required=True,
             type_hint="str",
         ),
         "llm_cache": ActionInput(
             name="llm_cache",
-            description="Path to cache database (.db) or 'none' to disable",
+            description="Path to LLM cache database (.db) or 'none'",
             required=True,
             type_hint="str",
         ),
@@ -137,7 +136,8 @@ class GenerateGraphAction(BaseCausalIQAction):
             with:
               action: generate_graph
               model_spec: "{{data_dir}}/cancer.json"
-              llm_cache: "{{data_dir}}/cancer_llm.db"
+              output: "{{data_dir}}/results.db"
+              llm_cache: "{{data_dir}}/llm_cache.db"
               prompt_detail: standard
               llm_model: groq/llama-3.1-8b-instant
         ```
@@ -279,7 +279,7 @@ class GenerateGraphAction(BaseCausalIQAction):
             return self._dry_run_result(params)
 
         # Run mode: execute graph generation
-        return self._execute_generate_graph(params)
+        return self._execute_generate_graph(params, context)
 
     def _dry_run_result(self, params: GenerateGraphParams) -> Dict[str, Any]:
         """Return dry-run result without executing.
@@ -300,20 +300,24 @@ class GenerateGraphAction(BaseCausalIQAction):
         }
 
     def _execute_generate_graph(
-        self, params: GenerateGraphParams
+        self,
+        params: GenerateGraphParams,
+        context: Optional[Any] = None,
     ) -> Dict[str, Any]:
         """Execute graph generation.
 
         Args:
             params: Validated parameters.
+            context: Workflow context for cache key generation.
 
         Returns:
             Result dictionary with generated graph.
         """
         # Import here to avoid slow startup and circular imports
         from causaliq_core.cache import TokenCache
+        from causaliq_workflow.cache import WorkflowCache
 
-        from causaliq_knowledge.graph import ModelLoader
+        from causaliq_knowledge.graph import GraphEntryEncoder, ModelLoader
         from causaliq_knowledge.graph.generator import (
             GraphGenerator,
             GraphGeneratorConfig,
@@ -400,15 +404,29 @@ class GenerateGraphAction(BaseCausalIQAction):
                 },
             }
 
-            # Write output file if specified
+            # Write output if specified
             output_path = params.get_effective_output_path()
             if output_path:
                 output_path.parent.mkdir(parents=True, exist_ok=True)
-                output_path.write_text(
-                    json.dumps(result["graph"], indent=2),
-                    encoding="utf-8",
-                )
-                result["output_file"] = str(output_path)
+                if str(output_path).endswith(".db"):
+                    # Write to Workflow Cache
+                    self._write_to_workflow_cache(
+                        output_path,
+                        graph,
+                        context,
+                        WorkflowCache,
+                        GraphEntryEncoder,
+                    )
+                    result["output_cache"] = str(output_path)
+                else:
+                    # Write JSON file (for CLI compatibility)
+                    import json
+
+                    json_output = self._graph_to_dict(graph)
+                    output_path.write_text(
+                        json.dumps(json_output, indent=2), encoding="utf-8"
+                    )
+                    result["output_file"] = str(output_path)
 
             return result
 
@@ -417,6 +435,35 @@ class GenerateGraphAction(BaseCausalIQAction):
         finally:
             if cache:
                 cache.close()
+
+    def _write_to_workflow_cache(
+        self,
+        output_path: Path,
+        graph: "GeneratedGraph",
+        context: Optional[Any],
+        workflow_cache_cls: type,
+        encoder_cls: type,
+    ) -> None:
+        """Write generated graph to Workflow Cache.
+
+        Args:
+            output_path: Path to Workflow Cache .db file.
+            graph: Generated graph to store.
+            context: Workflow context for cache key generation.
+            workflow_cache_cls: WorkflowCache class (passed to avoid import).
+            encoder_cls: GraphEntryEncoder class (passed to avoid import).
+        """
+        # Build cache key from context matrix values (if available)
+        if context is not None and hasattr(context, "matrix"):
+            key_data = dict(context.matrix)
+        else:
+            # Fallback: use model spec filename as key
+            key_data = {"source": "generate_graph"}
+
+        with workflow_cache_cls(str(output_path)) as wf_cache:
+            encoder = encoder_cls()
+            wf_cache.register_encoder("graph", encoder)
+            wf_cache.put(key_data, "graph", graph)
 
     def _graph_to_dict(self, graph: "GeneratedGraph") -> Dict[str, Any]:
         """Convert GeneratedGraph to dictionary.

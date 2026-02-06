@@ -26,8 +26,8 @@ class GenerateGraphParams(BaseModel):
         prompt_detail: Detail level for variable information in prompts.
         use_benchmark_names: Use benchmark names instead of LLM names.
         llm_model: LLM model identifier with provider prefix.
-        output: Output destination - .json file path or "none" for stdout.
-        llm_cache: Path to cache database file (.db) or "none" to disable.
+        output: Workflow Cache .db path or "none" for no persistence.
+        llm_cache: Path to LLM cache database (.db) or "none" to disable.
         llm_temperature: LLM sampling temperature.
 
     Example:
@@ -35,8 +35,8 @@ class GenerateGraphParams(BaseModel):
         ...     model_spec=Path("model.json"),
         ...     prompt_detail=PromptDetail.STANDARD,
         ...     llm_model="groq/llama-3.1-8b-instant",
-        ...     output="none",
-        ...     llm_cache="cache.db",
+        ...     output="results.db",
+        ...     llm_cache="llm_cache.db",
         ... )
     """
 
@@ -58,7 +58,7 @@ class GenerateGraphParams(BaseModel):
     )
     output: str = Field(
         ...,
-        description="Output destination: .json file path or 'none' for stdout",
+        description="Output Workflow Cache .db path or 'none' for no persist",
     )
     llm_cache: str = Field(
         ...,
@@ -109,13 +109,13 @@ class GenerateGraphParams(BaseModel):
     @field_validator("output")
     @classmethod
     def validate_output_format(cls, v: str) -> str:
-        """Validate output is 'none' or a path ending with .json."""
+        """Validate output is 'none', .json, or Workflow Cache .db path."""
         if v.lower() == "none":
             return "none"
-        if not v.endswith(".json"):
+        if not v.endswith((".json", ".db")):
             raise ValueError(
-                f"output must be 'none' or a path ending with .json. "
-                f"Got: {v}"
+                f"output must be 'none', a .json file, or a Workflow Cache "
+                f"path (.db). Got: {v}"
             )
         return v
 

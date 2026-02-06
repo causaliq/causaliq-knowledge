@@ -265,6 +265,59 @@ def test_run_with_output_file(tmp_path: Path) -> None:
         '{"name": "y", "type": "binary"}]}'
     )
 
+    output_file = tmp_path / "output" / "workflow_cache.db"
+
+    # Mock the graph generator
+    mock_graph = GeneratedGraph(
+        edges=[ProposedEdge(source="x", target="y", confidence=0.8)],
+        variables=["x", "y"],
+        reasoning="Test reasoning",
+    )
+
+    with patch(
+        "causaliq_knowledge.graph.generator.GraphGenerator"
+    ) as mock_generator_class:
+        mock_generator = MagicMock()
+        mock_generator.generate_from_spec.return_value = mock_graph
+        mock_generator.get_stats.return_value = {"cache_hits": 0}
+        mock_generator_class.return_value = mock_generator
+
+        action = GenerateGraphAction()
+
+        result = action.run(
+            inputs={
+                "action": "generate_graph",
+                "model_spec": str(model_spec),
+                "output": str(output_file),
+                "llm_cache": "none",
+            },
+            mode="run",
+        )
+
+    assert result["status"] == "success"
+    assert "output_cache" in result
+    assert output_file.exists()
+
+
+# Test run writes to JSON file when .json output specified.
+def test_run_with_json_output_file(tmp_path: Path) -> None:
+    """Test run writes JSON output to file when .json path specified."""
+    import json
+
+    from causaliq_knowledge.graph.response import (
+        GeneratedGraph,
+        ProposedEdge,
+    )
+
+    # Create a minimal model spec file
+    model_spec = tmp_path / "model.json"
+    model_spec.write_text(
+        '{"schema_version": "2.0", "dataset_id": "test", '
+        '"domain": "test", "variables": ['
+        '{"name": "x", "type": "binary"}, '
+        '{"name": "y", "type": "binary"}]}'
+    )
+
     output_file = tmp_path / "output" / "graph.json"
 
     # Mock the graph generator
@@ -297,6 +350,11 @@ def test_run_with_output_file(tmp_path: Path) -> None:
     assert result["status"] == "success"
     assert "output_file" in result
     assert output_file.exists()
+
+    # Verify JSON content
+    content = json.loads(output_file.read_text())
+    assert "edges" in content
+    assert len(content["edges"]) == 1
 
 
 # Test graph_to_dict conversion.
@@ -380,6 +438,78 @@ def test_map_graph_names_partial() -> None:
     assert result.edges[0].target == "keep_b"
 
 
+# Test _write_to_workflow_cache with no context uses fallback key.
+def test_write_to_workflow_cache_no_context(tmp_path: Path) -> None:
+    """Test _write_to_workflow_cache uses fallback key when context is None."""
+    from causaliq_knowledge.graph.response import GeneratedGraph
+
+    graph = GeneratedGraph(
+        edges=[],
+        variables=["x"],
+        reasoning="Test",
+    )
+
+    mock_cache_instance = MagicMock()
+    mock_cache_instance.__enter__ = MagicMock(return_value=mock_cache_instance)
+    mock_cache_instance.__exit__ = MagicMock(return_value=False)
+    mock_cache_cls = MagicMock(return_value=mock_cache_instance)
+    mock_encoder_cls = MagicMock()
+
+    output_path = tmp_path / "workflow_cache.db"
+
+    action = GenerateGraphAction()
+    action._write_to_workflow_cache(
+        output_path=output_path,
+        graph=graph,
+        context=None,  # No context - should hit fallback
+        workflow_cache_cls=mock_cache_cls,
+        encoder_cls=mock_encoder_cls,
+    )
+
+    # Verify put was called with fallback key
+    mock_cache_instance.put.assert_called_once()
+    call_args = mock_cache_instance.put.call_args
+    assert call_args[0][0] == {"source": "generate_graph"}
+
+
+# Test _write_to_workflow_cache with context uses matrix key.
+def test_write_to_workflow_cache_with_context(tmp_path: Path) -> None:
+    """Test _write_to_workflow_cache uses matrix key when context provided."""
+    from causaliq_knowledge.graph.response import GeneratedGraph
+
+    graph = GeneratedGraph(
+        edges=[],
+        variables=["x"],
+        reasoning="Test",
+    )
+
+    mock_cache_instance = MagicMock()
+    mock_cache_instance.__enter__ = MagicMock(return_value=mock_cache_instance)
+    mock_cache_instance.__exit__ = MagicMock(return_value=False)
+    mock_cache_cls = MagicMock(return_value=mock_cache_instance)
+    mock_encoder_cls = MagicMock()
+
+    # Create mock context with matrix attribute
+    mock_context = MagicMock()
+    mock_context.matrix = {"model": "test.json", "seed": 42}
+
+    output_path = tmp_path / "workflow_cache.db"
+
+    action = GenerateGraphAction()
+    action._write_to_workflow_cache(
+        output_path=output_path,
+        graph=graph,
+        context=mock_context,  # Context with matrix
+        workflow_cache_cls=mock_cache_cls,
+        encoder_cls=mock_encoder_cls,
+    )
+
+    # Verify put was called with matrix key
+    mock_cache_instance.put.assert_called_once()
+    call_args = mock_cache_instance.put.call_args
+    assert call_args[0][0] == {"model": "test.json", "seed": 42}
+
+
 # Test request_id is derived from output filename.
 def test_run_request_id_from_output(tmp_path: Path) -> None:
     """Test request_id is derived from output filename stem."""
@@ -407,7 +537,7 @@ def test_run_request_id_from_output(tmp_path: Path) -> None:
         mock.get_stats.return_value = {"cache_hits": 0}
         return mock
 
-    output_file = tmp_path / "results" / "expt01.json"
+    output_file = tmp_path / "results" / "expt01.db"
 
     with patch(
         "causaliq_knowledge.graph.generator.GraphGenerator",
