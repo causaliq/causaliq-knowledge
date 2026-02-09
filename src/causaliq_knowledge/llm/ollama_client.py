@@ -118,6 +118,8 @@ class OllamaClient(BaseLLMClient):
                 # Extract token counts (Ollama provides these)
                 input_tokens = data.get("prompt_eval_count", 0)
                 output_tokens = data.get("eval_count", 0)
+                # Ollama uses done_reason
+                finish_reason = data.get("done_reason", "stop") or "stop"
 
                 self._total_calls += 1
 
@@ -131,6 +133,7 @@ class OllamaClient(BaseLLMClient):
                     input_tokens=input_tokens,
                     output_tokens=output_tokens,
                     cost=0.0,  # Local inference is free
+                    finish_reason=finish_reason,
                     raw_response=data,
                 )
 

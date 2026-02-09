@@ -17,7 +17,7 @@ def test_cli_no_args_shows_usage():
     # Click shows usage info when no command provided
     assert "Usage:" in result.output
     assert "query" in result.output
-    assert "models" in result.output
+    assert "list_models" in result.output
 
 
 # Test query command requires node arguments.
@@ -26,12 +26,12 @@ def test_cli_query_requires_nodes():
     result = runner.invoke(cli, ["query"])
 
     assert result.exit_code != 0
-    assert "Missing argument" in result.output
+    assert "Missing option" in result.output
 
 
-# Test models command lists supported LLMs.
+# Test list_models command lists supported LLMs.
 # Note: This test uses mocking to avoid slow network calls to providers.
-def test_cli_models_lists_providers(monkeypatch):
+def test_cli_list_models_lists_providers(monkeypatch):
     # Mock all the provider clients to avoid network calls
     # Patch environment to ensure no API keys are set
     monkeypatch.delenv("GROQ_API_KEY", raising=False)
@@ -49,7 +49,7 @@ def test_cli_models_lists_providers(monkeypatch):
     monkeypatch.setattr("causaliq_knowledge.llm.OllamaClient", mock_ollama)
 
     runner = CliRunner()
-    result = runner.invoke(cli, ["models"])
+    result = runner.invoke(cli, ["list_models"])
 
     assert result.exit_code == 0
     # Check that all provider names are listed (even without API keys)
@@ -72,31 +72,23 @@ def test_cli_version():
 # ============================================================================
 
 
-# Test cache command group shows help.
-def test_cli_cache_shows_help():
-    runner = CliRunner()
-    result = runner.invoke(cli, ["cache", "--help"])
-
-    assert result.exit_code == 0
-    assert "cache" in result.output
-    assert "stats" in result.output
-
-
-# Test cache command appears in main help.
-def test_cli_main_help_shows_cache():
+# Test cache_stats command appears in main help.
+def test_cli_main_help_shows_cache_commands():
     runner = CliRunner()
     result = runner.invoke(cli, [])
 
-    assert "cache" in result.output
+    assert "cache_stats" in result.output
+    assert "export_cache" in result.output
+    assert "import_cache" in result.output
 
 
-# Test cache stats requires path argument.
-def test_cli_cache_stats_requires_path():
+# Test cache_stats requires cache argument.
+def test_cli_cache_stats_requires_cache():
     runner = CliRunner()
-    result = runner.invoke(cli, ["cache", "stats"])
+    result = runner.invoke(cli, ["cache_stats"])
 
     assert result.exit_code != 0
-    assert "Missing argument" in result.output
+    assert "Missing option" in result.output
 
 
 # Test cache stats shows entry and token counts.
@@ -112,7 +104,7 @@ def test_cli_cache_stats_shows_counts(tmp_path):
         cache.put_data("hash2", "json", {"key": "value2"})
 
     runner = CliRunner()
-    result = runner.invoke(cli, ["cache", "stats", str(cache_path)])
+    result = runner.invoke(cli, ["cache_stats", "-c", str(cache_path)])
 
     assert result.exit_code == 0
     assert "Entries:" in result.output
@@ -133,7 +125,9 @@ def test_cli_cache_stats_json_output(tmp_path):
         cache.put_data("hash1", "json", {"test": "data"})
 
     runner = CliRunner()
-    result = runner.invoke(cli, ["cache", "stats", str(cache_path), "--json"])
+    result = runner.invoke(
+        cli, ["cache_stats", "-c", str(cache_path), "--json"]
+    )
 
     assert result.exit_code == 0
     output = json.loads(result.output)
@@ -142,22 +136,22 @@ def test_cli_cache_stats_json_output(tmp_path):
     assert "cache_path" in output
 
 
-# Test cache stats with non-existent file.
+# Test cache_stats with non-existent file.
 def test_cli_cache_stats_missing_file():
     runner = CliRunner()
-    result = runner.invoke(cli, ["cache", "stats", "nonexistent.db"])
+    result = runner.invoke(cli, ["cache_stats", "-c", "nonexistent.db"])
 
     assert result.exit_code != 0
 
 
-# Test cache stats with corrupted/invalid database file.
+# Test cache_stats with corrupted/invalid database file.
 def test_cli_cache_stats_invalid_db(tmp_path):
     # Create a file that exists but is not a valid SQLite database
     invalid_db = tmp_path / "invalid.db"
     invalid_db.write_text("this is not a valid sqlite database")
 
     runner = CliRunner()
-    result = runner.invoke(cli, ["cache", "stats", str(invalid_db)])
+    result = runner.invoke(cli, ["cache_stats", "-c", str(invalid_db)])
 
     assert result.exit_code == 1
     assert "Error opening cache" in result.output
@@ -168,13 +162,13 @@ def test_cli_cache_stats_invalid_db(tmp_path):
 # ============================================================================
 
 
-# Test cache export command appears in help.
-def test_cli_cache_export_in_help():
+# Test export_cache command help.
+def test_cli_export_cache_help():
     runner = CliRunner()
-    result = runner.invoke(cli, ["cache", "--help"])
+    result = runner.invoke(cli, ["export_cache", "--help"])
 
     assert result.exit_code == 0
-    assert "export" in result.output
+    assert "export" in result.output.lower()
 
 
 # Test cache export creates files with human-readable names.
@@ -201,7 +195,7 @@ def test_cli_cache_export_creates_files(tmp_path):
     export_dir = tmp_path / "export"
     runner = CliRunner()
     result = runner.invoke(
-        cli, ["cache", "export", str(cache_path), str(export_dir)]
+        cli, ["export_cache", "-c", str(cache_path), "-o", str(export_dir)]
     )
 
     assert result.exit_code == 0
@@ -238,7 +232,15 @@ def test_cli_cache_export_json_output(tmp_path):
     export_dir = tmp_path / "export"
     runner = CliRunner()
     result = runner.invoke(
-        cli, ["cache", "export", str(cache_path), str(export_dir), "--json"]
+        cli,
+        [
+            "export_cache",
+            "-c",
+            str(cache_path),
+            "-o",
+            str(export_dir),
+            "--json",
+        ],
     )
 
     assert result.exit_code == 0
@@ -258,7 +260,7 @@ def test_cli_cache_export_empty_cache(tmp_path):
     export_dir = tmp_path / "export"
     runner = CliRunner()
     result = runner.invoke(
-        cli, ["cache", "export", str(cache_path), str(export_dir)]
+        cli, ["export_cache", "-c", str(cache_path), "-o", str(export_dir)]
     )
 
     assert result.exit_code == 0
@@ -278,7 +280,15 @@ def test_cli_cache_export_empty_cache_json(tmp_path):
     export_dir = tmp_path / "export"
     runner = CliRunner()
     result = runner.invoke(
-        cli, ["cache", "export", str(cache_path), str(export_dir), "--json"]
+        cli,
+        [
+            "export_cache",
+            "-c",
+            str(cache_path),
+            "-o",
+            str(export_dir),
+            "--json",
+        ],
     )
 
     assert result.exit_code == 0
@@ -300,7 +310,7 @@ def test_cli_cache_export_non_llm_type(tmp_path):
     export_dir = tmp_path / "export"
     runner = CliRunner()
     result = runner.invoke(
-        cli, ["cache", "export", str(cache_path), str(export_dir)]
+        cli, ["export_cache", "-c", str(cache_path), "-o", str(export_dir)]
     )
 
     assert result.exit_code == 0
@@ -310,15 +320,15 @@ def test_cli_cache_export_non_llm_type(tmp_path):
     assert len(files) == 1
 
 
-# Test cache export with invalid cache file.
-def test_cli_cache_export_invalid_db(tmp_path):
+# Test export_cache with invalid cache file.
+def test_cli_export_cache_invalid_db(tmp_path):
     invalid_db = tmp_path / "invalid.db"
     invalid_db.write_text("not a database")
 
     export_dir = tmp_path / "export"
     runner = CliRunner()
     result = runner.invoke(
-        cli, ["cache", "export", str(invalid_db), str(export_dir)]
+        cli, ["export_cache", "-c", str(invalid_db), "-o", str(export_dir)]
     )
 
     assert result.exit_code == 1
@@ -356,7 +366,7 @@ def test_cli_cache_export_to_zip(tmp_path):
     zip_path = tmp_path / "export.zip"
     runner = CliRunner()
     result = runner.invoke(
-        cli, ["cache", "export", str(cache_path), str(zip_path)]
+        cli, ["export_cache", "-c", str(cache_path), "-o", str(zip_path)]
     )
 
     assert result.exit_code == 0
@@ -395,7 +405,8 @@ def test_cli_cache_export_to_zip_json_output(tmp_path):
     zip_path = tmp_path / "export.zip"
     runner = CliRunner()
     result = runner.invoke(
-        cli, ["cache", "export", str(cache_path), str(zip_path), "--json"]
+        cli,
+        ["export_cache", "-c", str(cache_path), "-o", str(zip_path), "--json"],
     )
 
     assert result.exit_code == 0
@@ -426,7 +437,7 @@ def test_cli_cache_export_to_zip_creates_parent_dirs(tmp_path):
     zip_path = tmp_path / "nested" / "dir" / "export.zip"
     runner = CliRunner()
     result = runner.invoke(
-        cli, ["cache", "export", str(cache_path), str(zip_path)]
+        cli, ["export_cache", "-c", str(cache_path), "-o", str(zip_path)]
     )
 
     assert result.exit_code == 0
@@ -438,13 +449,13 @@ def test_cli_cache_export_to_zip_creates_parent_dirs(tmp_path):
 # ============================================================================
 
 
-# Test cache import command appears in help.
-def test_cli_cache_import_in_help():
+# Test import_cache command help.
+def test_cli_import_cache_help():
     runner = CliRunner()
-    result = runner.invoke(cli, ["cache", "--help"])
+    result = runner.invoke(cli, ["import_cache", "--help"])
 
     assert result.exit_code == 0
-    assert "import" in result.output
+    assert "import" in result.output.lower()
 
 
 # Test cache import from directory with LLM entries.
@@ -475,7 +486,7 @@ def test_cli_cache_import_from_directory(tmp_path):
     cache_path = tmp_path / "new_cache.db"
     runner = CliRunner()
     result = runner.invoke(
-        cli, ["cache", "import", str(cache_path), str(import_dir)]
+        cli, ["import_cache", "-c", str(cache_path), "-i", str(import_dir)]
     )
 
     assert result.exit_code == 0
@@ -516,7 +527,7 @@ def test_cli_cache_import_from_zip(tmp_path):
     cache_path = tmp_path / "cache.db"
     runner = CliRunner()
     result = runner.invoke(
-        cli, ["cache", "import", str(cache_path), str(zip_path)]
+        cli, ["import_cache", "-c", str(cache_path), "-i", str(zip_path)]
     )
 
     assert result.exit_code == 0
@@ -545,7 +556,7 @@ def test_cli_cache_import_generic_json(tmp_path):
     cache_path = tmp_path / "cache.db"
     runner = CliRunner()
     result = runner.invoke(
-        cli, ["cache", "import", str(cache_path), str(import_dir)]
+        cli, ["import_cache", "-c", str(cache_path), "-i", str(import_dir)]
     )
 
     assert result.exit_code == 0
@@ -575,7 +586,15 @@ def test_cli_cache_import_json_output(tmp_path):
     cache_path = tmp_path / "cache.db"
     runner = CliRunner()
     result = runner.invoke(
-        cli, ["cache", "import", str(cache_path), str(import_dir), "--json"]
+        cli,
+        [
+            "import_cache",
+            "-c",
+            str(cache_path),
+            "-i",
+            str(import_dir),
+            "--json",
+        ],
     )
 
     assert result.exit_code == 0
@@ -602,7 +621,7 @@ def test_cli_cache_import_skips_invalid_files(tmp_path):
     cache_path = tmp_path / "cache.db"
     runner = CliRunner()
     result = runner.invoke(
-        cli, ["cache", "import", str(cache_path), str(import_dir)]
+        cli, ["import_cache", "-c", str(cache_path), "-i", str(import_dir)]
     )
 
     assert result.exit_code == 0
@@ -610,15 +629,15 @@ def test_cli_cache_import_skips_invalid_files(tmp_path):
     assert "Skipped: 1" in result.output
 
 
-# Test cache import with empty directory.
-def test_cli_cache_import_empty_directory(tmp_path):
+# Test import_cache with empty directory.
+def test_cli_import_cache_empty_directory(tmp_path):
     import_dir = tmp_path / "empty"
     import_dir.mkdir()
 
     cache_path = tmp_path / "cache.db"
     runner = CliRunner()
     result = runner.invoke(
-        cli, ["cache", "import", str(cache_path), str(import_dir)]
+        cli, ["import_cache", "-c", str(cache_path), "-i", str(import_dir)]
     )
 
     assert result.exit_code == 0
@@ -648,14 +667,14 @@ def test_cli_cache_import_export_roundtrip(tmp_path):
     zip_path = tmp_path / "export.zip"
     runner = CliRunner()
     result = runner.invoke(
-        cli, ["cache", "export", str(original_cache), str(zip_path)]
+        cli, ["export_cache", "-c", str(original_cache), "-o", str(zip_path)]
     )
     assert result.exit_code == 0
 
     # Import into new cache
     new_cache = tmp_path / "new.db"
     result = runner.invoke(
-        cli, ["cache", "import", str(new_cache), str(zip_path)]
+        cli, ["import_cache", "-c", str(new_cache), "-i", str(zip_path)]
     )
     assert result.exit_code == 0
     assert "Imported 1 entries" in result.output
@@ -681,7 +700,7 @@ def test_cli_cache_import_handles_json_array(tmp_path):
     cache_path = tmp_path / "cache.db"
     runner = CliRunner()
     result = runner.invoke(
-        cli, ["cache", "import", str(cache_path), str(import_dir)]
+        cli, ["import_cache", "-c", str(cache_path), "-i", str(import_dir)]
     )
 
     assert result.exit_code == 0
@@ -689,8 +708,8 @@ def test_cli_cache_import_handles_json_array(tmp_path):
     assert "JSON entries: 1" in result.output
 
 
-# Test cache import error handling with invalid cache path.
-def test_cli_cache_import_error_invalid_cache(tmp_path):
+# Test import_cache error handling with invalid cache path.
+def test_cli_import_cache_error_invalid_cache(tmp_path):
     import json
 
     # Create valid import directory
@@ -707,7 +726,13 @@ def test_cli_cache_import_error_invalid_cache(tmp_path):
     runner = CliRunner()
     result = runner.invoke(
         cli,
-        ["cache", "import", str(invalid_cache / "subdir"), str(import_dir)],
+        [
+            "import_cache",
+            "-c",
+            str(invalid_cache / "subdir"),
+            "-i",
+            str(import_dir),
+        ],
     )
 
     assert result.exit_code == 1

@@ -130,6 +130,7 @@ class OpenAICompatClient(BaseLLMClient):
 
                 # Extract response data
                 content = data["choices"][0]["message"]["content"] or ""
+                finish_reason = data["choices"][0].get("finish_reason", "stop")
                 usage = data.get("usage", {})
                 input_tokens = usage.get("prompt_tokens", 0)
                 output_tokens = usage.get("completion_tokens", 0)
@@ -152,6 +153,7 @@ class OpenAICompatClient(BaseLLMClient):
                     input_tokens=input_tokens,
                     output_tokens=output_tokens,
                     cost=cost,
+                    finish_reason=finish_reason,
                     raw_response=data,
                 )
 

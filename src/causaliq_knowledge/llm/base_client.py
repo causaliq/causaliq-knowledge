@@ -57,6 +57,7 @@ class LLMResponse:
         input_tokens: Number of input/prompt tokens used.
         output_tokens: Number of output/completion tokens generated.
         cost: Estimated cost of the request (if available).
+        finish_reason: Why generation stopped (stop, length, etc.).
         raw_response: The original provider-specific response (for debugging).
     """
 
@@ -65,6 +66,7 @@ class LLMResponse:
     input_tokens: int = 0
     output_tokens: int = 0
     cost: float = 0.0
+    finish_reason: str = "stop"
     raw_response: Optional[Dict[str, Any]] = field(default=None, repr=False)
 
     def parse_json(self) -> Optional[Dict[str, Any]]:

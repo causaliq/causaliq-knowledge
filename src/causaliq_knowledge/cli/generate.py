@@ -89,7 +89,7 @@ def _map_graph_names(
     "--output",
     "-o",
     required=True,
-    help="Output: directory path for files, or 'none' for stdout.",
+    help="Output: directory path, Workflow Cache .db file, or 'none'.",
 )
 @click.option(
     "--llm-cache",
@@ -125,11 +125,14 @@ def generate_graph(
     Output behaviour:
 
     \b
+    - If output ends with .db: writes to Workflow Cache database
     - If output is a directory: writes graph.graphml, metadata.json,
       and confidences.json to that directory
     - If output is 'none': prints adjacency matrix to stdout
 
     Examples:
+
+        cqknow generate_graph -s model.json -c cache.db -o workflow.db
 
         cqknow generate_graph -s model.json -c cache.db -o results/
 
@@ -254,6 +257,11 @@ def generate_graph(
             output_path, graph, spec, params.llm_model, params.prompt_detail
         )
         click.echo(f"\nOutput written to: {output_path}/", err=True)
+    elif params.is_workflow_cache_output():
+        # Write to Workflow Cache database
+        assert output_path is not None
+        _write_to_workflow_cache(output_path, graph, spec)
+        click.echo(f"\nOutput written to: {output_path}", err=True)
     else:
         # Print adjacency matrix to stdout
         click.echo()
@@ -271,6 +279,37 @@ def generate_graph(
     # Close cache if opened
     if cache:
         cache.close()
+
+
+def _write_to_workflow_cache(
+    output_path: Path,
+    graph: "GeneratedGraph",
+    spec: "ModelSpec",
+) -> None:
+    """Write generated graph to Workflow Cache database.
+
+    Creates a Workflow Cache database at the specified path and stores
+    the generated graph using the dataset_id as the cache key.
+
+    Args:
+        output_path: Path to the Workflow Cache .db file.
+        graph: The GeneratedGraph result.
+        spec: The ModelSpec used (for cache key generation).
+    """
+    from causaliq_workflow import WorkflowCache
+
+    from causaliq_knowledge.graph.cache import GraphEntryEncoder
+
+    # Create parent directories if needed
+    output_path.parent.mkdir(parents=True, exist_ok=True)
+
+    # Build cache key from model spec
+    key_data = {"dataset_id": spec.dataset_id}
+
+    with WorkflowCache(str(output_path)) as wf_cache:
+        encoder = GraphEntryEncoder()
+        wf_cache.register_encoder("graph", encoder)
+        wf_cache.put(key_data, "graph", graph)
 
 
 def _write_to_directory(

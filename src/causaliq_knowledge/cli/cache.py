@@ -1,9 +1,9 @@
 """Cache management CLI commands.
 
 This module provides commands for managing the LLM response cache:
-- stats: Show cache statistics
-- export: Export cache entries to files
-- import: Import cache entries from files
+- cache_stats: Show cache statistics
+- export_cache: Export cache entries to files
+- import_cache: Import cache entries from files
 """
 
 from __future__ import annotations
@@ -15,25 +15,15 @@ from typing import Any
 import click
 
 
-@click.group("cache")
-def cache_group() -> None:
-    """Manage the LLM response cache.
-
-    Commands for inspecting, exporting, and importing cached LLM responses.
-
-    Examples:
-
-        cqknow cache stats ./llm_cache.db
-
-        cqknow cache export ./llm_cache.db ./export_dir
-
-        cqknow cache import ./llm_cache.db ./import_dir
-    """
-    pass
-
-
-@cache_group.command("stats")
-@click.argument("cache_path", type=click.Path(exists=True))
+@click.command("cache_stats")
+@click.option(
+    "--cache",
+    "-c",
+    "cache_path",
+    required=True,
+    type=click.Path(exists=True),
+    help="Path to the SQLite cache database.",
+)
 @click.option(
     "--json",
     "output_json",
@@ -43,16 +33,14 @@ def cache_group() -> None:
 def cache_stats(cache_path: str, output_json: bool) -> None:
     """Show cache statistics.
 
-    CACHE_PATH is the path to the SQLite cache database.
-
     Shows entry counts, token dictionary size, cache hit statistics,
     and for LLM caches: breakdown by model with token usage and costs.
 
     Examples:
 
-        cqknow cache stats ./llm_cache.db
+        cqknow cache_stats -c ./llm_cache.db
 
-        cqknow cache stats ./llm_cache.db --json
+        cqknow cache_stats -c ./llm_cache.db --json
     """
     from causaliq_core.cache import TokenCache
 
@@ -202,22 +190,33 @@ def cache_stats(cache_path: str, output_json: bool) -> None:
         sys.exit(1)
 
 
-@cache_group.command("export")
-@click.argument("cache_path", type=click.Path(exists=True))
-@click.argument("output_dir", type=click.Path())
+@click.command("export_cache")
+@click.option(
+    "--cache",
+    "-c",
+    "cache_path",
+    required=True,
+    type=click.Path(exists=True),
+    help="Path to the SQLite cache database to export from.",
+)
+@click.option(
+    "--output",
+    "-o",
+    "output_dir",
+    required=True,
+    type=click.Path(),
+    help="Output directory or .zip file path for exported entries.",
+)
 @click.option(
     "--json",
     "output_json",
     is_flag=True,
     help="Output result as JSON.",
 )
-def cache_export(cache_path: str, output_dir: str, output_json: bool) -> None:
+def export_cache(cache_path: str, output_dir: str, output_json: bool) -> None:
     """Export cache entries to human-readable files.
 
-    CACHE_PATH is the path to the SQLite cache database.
-    OUTPUT_DIR is the directory or zip file where files will be written.
-
-    If OUTPUT_DIR ends with .zip, entries are exported to a zip archive.
+    If output path ends with .zip, entries are exported to a zip archive.
     Otherwise, entries are exported to a directory.
 
     Files are named using a human-readable format:
@@ -225,11 +224,11 @@ def cache_export(cache_path: str, output_dir: str, output_json: bool) -> None:
 
     Examples:
 
-        cqknow cache export ./llm_cache.db ./export_dir
+        cqknow export_cache -c ./llm_cache.db -o ./export_dir
 
-        cqknow cache export ./llm_cache.db ./export.zip
+        cqknow export_cache -c ./llm_cache.db -o ./export.zip
 
-        cqknow cache export ./llm_cache.db ./export_dir --json
+        cqknow export_cache -c ./llm_cache.db -o ./export_dir --json
     """
     import tempfile
     import zipfile
@@ -350,20 +349,31 @@ def _is_llm_entry(data: Any) -> bool:
     )
 
 
-@cache_group.command("import")
-@click.argument("cache_path", type=click.Path())
-@click.argument("input_path", type=click.Path(exists=True))
+@click.command("import_cache")
+@click.option(
+    "--cache",
+    "-c",
+    "cache_path",
+    required=True,
+    type=click.Path(),
+    help="Path to SQLite cache database (created if needed).",
+)
+@click.option(
+    "--input",
+    "-i",
+    "input_path",
+    required=True,
+    type=click.Path(exists=True),
+    help="Directory or .zip file containing JSON files to import.",
+)
 @click.option(
     "--json",
     "output_json",
     is_flag=True,
     help="Output result as JSON.",
 )
-def cache_import(cache_path: str, input_path: str, output_json: bool) -> None:
+def import_cache(cache_path: str, input_path: str, output_json: bool) -> None:
     """Import cache entries from files.
-
-    CACHE_PATH is the path to the SQLite cache database (created if needed).
-    INPUT_PATH is a directory or zip file containing JSON files to import.
 
     Entry types are auto-detected from JSON structure:
     - LLM entries: contain cache_key.model, cache_key.messages, response
@@ -371,11 +381,11 @@ def cache_import(cache_path: str, input_path: str, output_json: bool) -> None:
 
     Examples:
 
-        cqknow cache import ./llm_cache.db ./import_dir
+        cqknow import_cache -c ./llm_cache.db -i ./import_dir
 
-        cqknow cache import ./llm_cache.db ./export.zip
+        cqknow import_cache -c ./llm_cache.db -i ./export.zip
 
-        cqknow cache import ./llm_cache.db ./import_dir --json
+        cqknow import_cache -c ./llm_cache.db -i ./import_dir --json
     """
     import hashlib
     import tempfile

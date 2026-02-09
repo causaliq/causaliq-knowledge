@@ -6,7 +6,6 @@ from each provider.
 
 from __future__ import annotations
 
-import sys
 from typing import Callable, List, Optional, Tuple, TypedDict
 
 import click
@@ -219,8 +218,16 @@ VALID_PROVIDER_NAMES = [
 ]
 
 
-@click.command("models")
-@click.argument("provider", required=False, default=None)
+@click.command("list_models")
+@click.option(
+    "--provider",
+    "-p",
+    "provider",
+    required=False,
+    default=None,
+    type=click.Choice(VALID_PROVIDER_NAMES, case_sensitive=False),
+    help="Filter to a specific provider.",
+)
 def list_models(provider: Optional[str]) -> None:
     """List available LLM models from each provider.
 
@@ -228,29 +235,19 @@ def list_models(provider: Optional[str]) -> None:
     current configuration. Results are filtered by your API key's
     access level or locally installed models.
 
-    Optionally specify PROVIDER to list models from a single provider:
-    groq, anthropic, gemini, ollama, openai, deepseek, or mistral.
-
     Examples:
 
-        cqknow models              # List all providers
+        cqknow list_models
 
-        cqknow models groq         # List only Groq models
+        cqknow list_models -p groq
 
-        cqknow models mistral      # List only Mistral models
+        cqknow list_models --provider mistral
     """
     providers = get_all_providers()
 
     # Filter providers if a specific one is requested
     if provider:
         provider_lower = provider.lower()
-        if provider_lower not in VALID_PROVIDER_NAMES:
-            click.echo(
-                f"Unknown provider: {provider}. "
-                f"Valid options: {', '.join(VALID_PROVIDER_NAMES)}",
-                err=True,
-            )
-            sys.exit(1)
         providers = [
             p for p in providers if p["prefix"].rstrip("/") == provider_lower
         ]

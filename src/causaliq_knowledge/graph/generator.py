@@ -400,6 +400,9 @@ class GraphGenerator:
             messages.append({"role": "system", "content": system_prompt})
         messages.append({"role": "user", "content": user_prompt})
 
+        # Record request timestamp before making the call
+        request_timestamp = datetime.now(timezone.utc)
+
         # Make the request (using cached_completion if cache is set)
         start_time = time.perf_counter()
         from_cache = False
@@ -416,6 +419,10 @@ class GraphGenerator:
             response = self._client.completion(messages)
 
         latency_ms = int((time.perf_counter() - start_time) * 1000)
+
+        # Record completion timestamp after receiving response
+        completion_timestamp = datetime.now(timezone.utc)
+
         self._call_count += 1
 
         # Parse the response
@@ -432,15 +439,27 @@ class GraphGenerator:
             self._model.split("/", 1)[1] if "/" in self._model else self._model
         )
 
+        # Calculate initial cost (cost if request was not from cache)
+        # If from_cache is True, initial_cost_usd represents what the request
+        # would have cost if it had been made fresh
+        initial_cost = response.cost if not from_cache else response.cost
+
         graph.metadata = GenerationMetadata(
             model=model_name,
             provider=provider,
-            timestamp=datetime.now(timezone.utc),
+            timestamp=completion_timestamp,
             latency_ms=latency_ms,
             input_tokens=response.input_tokens,
             output_tokens=response.output_tokens,
-            cost_usd=response.cost,
+            cost_usd=response.cost if not from_cache else 0.0,
             from_cache=from_cache,
+            messages=messages,
+            temperature=self._config.temperature,
+            max_tokens=self._config.max_tokens,
+            finish_reason=response.finish_reason,
+            request_timestamp=request_timestamp,
+            completion_timestamp=completion_timestamp,
+            initial_cost_usd=initial_cost,
         )
 
         return graph

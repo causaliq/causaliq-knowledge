@@ -73,12 +73,19 @@ class GenerationMetadata:
     Attributes:
         model: The LLM model used for generation.
         provider: The LLM provider (e.g., "groq", "gemini").
-        timestamp: When the graph was generated.
+        timestamp: When the graph was generated (completion time).
         latency_ms: Request latency in milliseconds.
         input_tokens: Number of input tokens used.
         output_tokens: Number of output tokens generated.
         cost_usd: Estimated cost in USD (if available).
         from_cache: Whether the response was from cache.
+        messages: The messages sent to the LLM.
+        temperature: Sampling temperature used.
+        max_tokens: Maximum tokens requested.
+        finish_reason: Why generation stopped (stop, length, etc.).
+        request_timestamp: When the request was made to the LLM.
+        completion_timestamp: When the request completed.
+        initial_cost_usd: Cost when the request was made (ignoring cache).
     """
 
     model: str
@@ -91,6 +98,13 @@ class GenerationMetadata:
     output_tokens: int = 0
     cost_usd: float = 0.0
     from_cache: bool = False
+    messages: List[Dict[str, Any]] = field(default_factory=list)
+    temperature: float = 0.1
+    max_tokens: int = 2000
+    finish_reason: str = "stop"
+    request_timestamp: Optional[datetime] = None
+    completion_timestamp: Optional[datetime] = None
+    initial_cost_usd: float = 0.0
 
 
 @dataclass

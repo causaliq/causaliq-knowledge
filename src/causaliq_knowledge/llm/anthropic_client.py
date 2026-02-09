@@ -142,10 +142,12 @@ class AnthropicClient(BaseLLMClient):
                     if block.get("type") == "text":
                         content += block.get("text", "")
 
-                # Extract usage info
+                # Extract usage info and stop reason
                 usage = data.get("usage", {})
                 input_tokens = usage.get("input_tokens", 0)
                 output_tokens = usage.get("output_tokens", 0)
+                # Anthropic uses stop_reason instead of finish_reason
+                finish_reason = data.get("stop_reason", "end_turn") or "stop"
 
                 self._total_calls += 1
 
@@ -160,6 +162,7 @@ class AnthropicClient(BaseLLMClient):
                     input_tokens=input_tokens,
                     output_tokens=output_tokens,
                     cost=0.0,  # Cost calculation not implemented
+                    finish_reason=finish_reason,
                     raw_response=data,
                 )
 

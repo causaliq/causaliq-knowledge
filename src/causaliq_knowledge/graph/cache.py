@@ -298,7 +298,7 @@ class GraphEntryEncoder(JsonEncoder):
             meta["edge_reasoning"] = reasoning_map
 
         if graph.metadata:
-            meta["generation"] = {
+            gen_dict: Dict[str, Any] = {
                 "model": graph.metadata.model,
                 "provider": graph.metadata.provider,
                 "timestamp": graph.metadata.timestamp.isoformat(),
@@ -307,7 +307,22 @@ class GraphEntryEncoder(JsonEncoder):
                 "output_tokens": graph.metadata.output_tokens,
                 "cost_usd": graph.metadata.cost_usd,
                 "from_cache": graph.metadata.from_cache,
+                "messages": graph.metadata.messages,
+                "temperature": graph.metadata.temperature,
+                "max_tokens": graph.metadata.max_tokens,
+                "finish_reason": graph.metadata.finish_reason,
+                "initial_cost_usd": graph.metadata.initial_cost_usd,
             }
+            # Add optional timestamp fields
+            if graph.metadata.request_timestamp:
+                gen_dict["request_timestamp"] = (
+                    graph.metadata.request_timestamp.isoformat()
+                )
+            if graph.metadata.completion_timestamp:
+                gen_dict["completion_timestamp"] = (
+                    graph.metadata.completion_timestamp.isoformat()
+                )
+            meta["generation"] = gen_dict
 
         return meta
 
@@ -431,6 +446,16 @@ class GraphEntryEncoder(JsonEncoder):
         gen_meta = None
         if "generation" in meta_dict:
             gen = meta_dict["generation"]
+            # Parse optional timestamp fields
+            request_ts = None
+            if gen.get("request_timestamp"):
+                request_ts = datetime.fromisoformat(gen["request_timestamp"])
+            completion_ts = None
+            if gen.get("completion_timestamp"):
+                completion_ts = datetime.fromisoformat(
+                    gen["completion_timestamp"]
+                )
+
             gen_meta = GenerationMetadata(
                 model=gen.get("model", ""),
                 provider=gen.get("provider", ""),
@@ -444,6 +469,13 @@ class GraphEntryEncoder(JsonEncoder):
                 output_tokens=gen.get("output_tokens", 0),
                 cost_usd=gen.get("cost_usd", 0.0),
                 from_cache=gen.get("from_cache", False),
+                messages=gen.get("messages", []),
+                temperature=gen.get("temperature", 0.1),
+                max_tokens=gen.get("max_tokens", 2000),
+                finish_reason=gen.get("finish_reason", "stop"),
+                request_timestamp=request_ts,
+                completion_timestamp=completion_ts,
+                initial_cost_usd=gen.get("initial_cost_usd", 0.0),
             )
 
         graph = GeneratedGraph(

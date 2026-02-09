@@ -166,10 +166,14 @@ class GeminiClient(BaseLLMClient):
                     if "text" in part:
                         content += part["text"]
 
-                # Extract usage info
+                # Extract usage info and finish reason
                 usage = data.get("usageMetadata", {})
                 input_tokens = usage.get("promptTokenCount", 0)
                 output_tokens = usage.get("candidatesTokenCount", 0)
+                # Gemini uses finishReason
+                finish_reason = candidate.get("finishReason", "STOP") or "stop"
+                # Normalise to lowercase for consistency
+                finish_reason = finish_reason.lower()
 
                 self._total_calls += 1
 
@@ -183,6 +187,7 @@ class GeminiClient(BaseLLMClient):
                     input_tokens=input_tokens,
                     output_tokens=output_tokens,
                     cost=0.0,  # Free tier
+                    finish_reason=finish_reason,
                     raw_response=data,
                 )
 

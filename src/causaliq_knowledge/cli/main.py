@@ -21,13 +21,32 @@ def cli() -> None:
     """CausalIQ Knowledge - LLM knowledge for causal discovery.
 
     Query LLMs about causal relationships between variables.
+
+    Use 'cqknow query' to query causal relationships.
+    Use 'cqknow list_models' to list available LLM models.
+    Use 'cqknow cache_stats' to view cache statistics.
+    Use 'cqknow export_cache' to export cache entries.
+    Use 'cqknow import_cache' to import cache entries.
+    Use 'cqknow generate_graph' to generate causal graphs.
     """
     pass
 
 
 @cli.command("query")
-@click.argument("node_a")
-@click.argument("node_b")
+@click.option(
+    "--node-a",
+    "-a",
+    "node_a",
+    required=True,
+    help="First variable name (potential cause).",
+)
+@click.option(
+    "--node-b",
+    "-b",
+    "node_b",
+    required=True,
+    help="Second variable name (potential effect).",
+)
 @click.option(
     "--model",
     "-m",
@@ -72,16 +91,14 @@ def query_edge(
 ) -> None:
     """Query LLMs about a causal relationship between two variables.
 
-    NODE_A and NODE_B are the variable names to query about.
-
     Examples:
 
-        cqknow query smoking lung_cancer
+        cqknow query -a smoking -b lung_cancer
 
-        cqknow query smoking lung_cancer --domain medicine
+        cqknow query -a smoking -b lung_cancer --domain medicine
 
-        cqknow query X Y --model groq/llama-3.1-8b-instant \
-                         --model gemini/gemini-2.5-flash
+        cqknow query -a X -b Y -m groq/llama-3.1-8b-instant \\
+                     -m gemini/gemini-2.5-flash
     """
     # Import here to avoid slow startup for --help
     from causaliq_knowledge.llm import LLMKnowledge
@@ -153,12 +170,18 @@ def query_edge(
         )
 
 
-# Import and register command groups
-from causaliq_knowledge.cli.cache import cache_group  # noqa: E402
+# Import and register commands
+from causaliq_knowledge.cli.cache import (  # noqa: E402
+    cache_stats,
+    export_cache,
+    import_cache,
+)
 from causaliq_knowledge.cli.generate import generate_graph  # noqa: E402
 from causaliq_knowledge.cli.models import list_models  # noqa: E402
 
-cli.add_command(cache_group)
+cli.add_command(cache_stats)
+cli.add_command(export_cache)
+cli.add_command(import_cache)
 cli.add_command(generate_graph)
 cli.add_command(list_models)
 
