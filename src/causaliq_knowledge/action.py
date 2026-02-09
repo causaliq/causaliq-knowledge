@@ -158,6 +158,10 @@ class GenerateGraphAction(BaseCausalIQAction):
         "cached": "Whether the result was retrieved from cache",
     }
 
+    def __init__(self) -> None:
+        """Initialise action with empty execution metadata."""
+        super().__init__()
+
     def validate_inputs(self, inputs: Dict[str, Any]) -> bool:
         """Validate input values against specifications.
 
@@ -300,6 +304,65 @@ class GenerateGraphAction(BaseCausalIQAction):
             "output": params.output,
         }
 
+    def _populate_execution_metadata(
+        self,
+        graph: "GeneratedGraph",
+        params: GenerateGraphParams,
+        stats: Dict[str, Any],
+    ) -> None:
+        """Populate execution metadata from graph generation results.
+
+        Extracts relevant metadata from the GeneratedGraph and stores it
+        in _execution_metadata for later retrieval via get_action_metadata().
+
+        Args:
+            graph: The generated graph with metadata.
+            params: Generation parameters used.
+            stats: Generator statistics.
+        """
+        # Start with generation parameters
+        self._execution_metadata = {
+            "model_spec": str(params.model_spec),
+            "llm_model": params.llm_model,
+            "prompt_detail": params.prompt_detail.value,
+            "use_benchmark_names": params.use_benchmark_names,
+            "edge_count": len(graph.edges),
+            "variable_count": len(graph.variables),
+            "cache_hits": stats.get("cache_hits", 0),
+            "cache_misses": stats.get("cache_misses", 0),
+        }
+
+        # Add generation metadata if present
+        if graph.metadata:
+            meta = graph.metadata
+            self._execution_metadata.update(
+                {
+                    "provider": meta.provider,
+                    "timestamp": meta.timestamp.isoformat(),
+                    "latency_ms": meta.latency_ms,
+                    "input_tokens": meta.input_tokens,
+                    "output_tokens": meta.output_tokens,
+                    "cost_usd": meta.cost_usd,
+                    "from_cache": meta.from_cache,
+                    "temperature": meta.temperature,
+                    "max_tokens": meta.max_tokens,
+                    "finish_reason": meta.finish_reason,
+                    "initial_cost_usd": meta.initial_cost_usd,
+                }
+            )
+            # Add timestamps if present
+            if meta.request_timestamp:
+                self._execution_metadata["request_timestamp"] = (
+                    meta.request_timestamp.isoformat()
+                )
+            if meta.completion_timestamp:
+                self._execution_metadata["completion_timestamp"] = (
+                    meta.completion_timestamp.isoformat()
+                )
+            # Add messages (can be large, but important for reproducibility)
+            if meta.messages:
+                self._execution_metadata["messages"] = meta.messages
+
     def _execute_generate_graph(
         self,
         params: GenerateGraphParams,
@@ -387,6 +450,9 @@ class GenerateGraphAction(BaseCausalIQAction):
 
             # Get stats
             stats = generator.get_stats()
+
+            # Populate execution metadata for get_action_metadata()
+            self._populate_execution_metadata(graph, params, stats)
 
             # Build result
             result = {

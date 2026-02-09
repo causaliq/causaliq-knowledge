@@ -708,6 +708,36 @@ def test_cli_cache_import_handles_json_array(tmp_path):
     assert "JSON entries: 1" in result.output
 
 
+# Test import_cache with graph entry.
+def test_cli_cache_import_graph_entry(tmp_path):
+    """Import graph entry and verify graph_count output."""
+    import json
+
+    import_dir = tmp_path / "import"
+    import_dir.mkdir()
+
+    # Create a graph entry JSON file
+    graph_data = {
+        "edges": [
+            {"source": "A", "target": "B", "confidence": 0.9},
+            {"source": "B", "target": "C", "confidence": 0.8},
+        ],
+        "variables": ["A", "B", "C"],
+        "reasoning": "Test graph import",
+    }
+    (import_dir / "test_graph.json").write_text(json.dumps(graph_data))
+
+    cache_path = tmp_path / "cache.db"
+    runner = CliRunner()
+    result = runner.invoke(
+        cli, ["import_cache", "-c", str(cache_path), "-i", str(import_dir)]
+    )
+
+    assert result.exit_code == 0
+    assert "Imported 1 entries" in result.output
+    assert "Graph entries: 1" in result.output
+
+
 # Test import_cache error handling with invalid cache path.
 def test_cli_import_cache_error_invalid_cache(tmp_path):
     import json
@@ -1871,3 +1901,76 @@ def test_cli_generate_graph_long_reasoning_truncated(tmp_path, mocker):
     assert result.exit_code == 0
     # Should truncate at 100 chars and add ...
     assert "A" * 100 + "..." in result.output
+
+
+# Test generate graph with workflow cache output (.db file).
+def test_cli_generate_graph_workflow_cache_output(tmp_path, mocker):
+    """Test generate_graph writes to Workflow Cache when output is .db file."""
+    import json
+
+    spec_data = {
+        "dataset_id": "cache-test",
+        "domain": "testing",
+        "variables": [
+            {"name": "X", "type": "binary", "short_description": "Variable X"},
+            {"name": "Y", "type": "binary", "short_description": "Variable Y"},
+        ],
+    }
+    spec_file = tmp_path / "model.json"
+    spec_file.write_text(json.dumps(spec_data))
+
+    from causaliq_knowledge.graph.response import GeneratedGraph, ProposedEdge
+
+    mock_graph = GeneratedGraph(
+        edges=[ProposedEdge(source="X", target="Y", confidence=0.9)],
+        variables=["X", "Y"],
+    )
+    mock_generator = mocker.MagicMock()
+    mock_generator.generate_from_spec.return_value = mock_graph
+    mock_generator.get_stats.return_value = {
+        "call_count": 1,
+        "client_call_count": 1,
+    }
+    mocker.patch(
+        "causaliq_knowledge.graph.generator.GraphGenerator",
+        return_value=mock_generator,
+    )
+
+    output_db = tmp_path / "results.db"
+
+    runner = CliRunner()
+    result = runner.invoke(
+        cli,
+        [
+            "generate_graph",
+            "-s",
+            str(spec_file),
+            "-c",
+            "none",
+            "-o",
+            str(output_db),
+        ],
+    )
+
+    assert result.exit_code == 0
+    assert "Output written to:" in result.output
+    assert str(output_db) in result.output
+
+    # Verify the workflow cache was created and contains the graph
+    from causaliq_workflow import WorkflowCache
+
+    from causaliq_knowledge.graph.cache import GraphEntryEncoder
+
+    assert output_db.exists()
+
+    with WorkflowCache(str(output_db)) as wf_cache:
+        encoder = GraphEntryEncoder()
+        wf_cache.register_encoder("graph", encoder)
+        result_data = wf_cache.get({"dataset_id": "cache-test"}, "graph")
+
+    # GraphEntryEncoder.decode returns (GeneratedGraph, extra_blobs)
+    assert result_data is not None
+    retrieved, _extra_blobs = result_data
+    assert len(retrieved.edges) == 1
+    assert retrieved.edges[0].source == "X"
+    assert retrieved.edges[0].target == "Y"

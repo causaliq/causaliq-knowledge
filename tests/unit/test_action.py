@@ -974,3 +974,95 @@ def test_run_cache_closed_on_error(tmp_path: Path) -> None:
     # Verify cache was opened and closed
     mock_cache.open.assert_called_once()
     mock_cache.close.assert_called_once()
+
+
+# Test _populate_execution_metadata with timestamps and messages.
+def test_populate_execution_metadata_with_full_metadata(
+    tmp_path: Path,
+) -> None:
+    """Test metadata population includes timestamps and messages."""
+    from datetime import datetime, timezone
+
+    from causaliq_knowledge.graph.response import (
+        GeneratedGraph,
+        GenerationMetadata,
+        ProposedEdge,
+    )
+
+    # Create a minimal model spec file
+    model_spec = tmp_path / "model.json"
+    model_spec.write_text(
+        '{"schema_version": "2.0", "dataset_id": "test", '
+        '"domain": "test", "variables": ['
+        '{"name": "x", "type": "binary"}, '
+        '{"name": "y", "type": "binary"}]}'
+    )
+
+    # Create metadata with all optional fields populated
+    request_time = datetime(2026, 1, 1, 12, 0, 0, tzinfo=timezone.utc)
+    completion_time = datetime(2026, 1, 1, 12, 0, 1, tzinfo=timezone.utc)
+    messages = [
+        {"role": "system", "content": "You are a causal expert."},
+        {"role": "user", "content": "Identify causal relationships."},
+    ]
+
+    mock_graph = GeneratedGraph(
+        edges=[ProposedEdge(source="x", target="y", confidence=0.8)],
+        variables=["x", "y"],
+        metadata=GenerationMetadata(
+            model="test-model",
+            provider="test-provider",
+            timestamp=completion_time,
+            latency_ms=1000,
+            input_tokens=100,
+            output_tokens=50,
+            from_cache=False,
+            messages=messages,
+            temperature=0.5,
+            max_tokens=2000,
+            finish_reason="stop",
+            request_timestamp=request_time,
+            completion_timestamp=completion_time,
+            initial_cost_usd=0.001,
+        ),
+    )
+
+    with patch(
+        "causaliq_knowledge.graph.generator.GraphGenerator"
+    ) as mock_generator_class:
+        mock_generator = MagicMock()
+        mock_generator.generate_from_spec.return_value = mock_graph
+        mock_generator.get_stats.return_value = {"cache_hits": 0}
+        mock_generator_class.return_value = mock_generator
+
+        action = GenerateGraphAction()
+
+        action.run(
+            inputs={
+                "action": "generate_graph",
+                "model_spec": str(model_spec),
+                "output": "none",
+                "llm_cache": "none",
+            },
+            mode="run",
+        )
+
+    # Verify execution metadata includes timestamps and messages
+    metadata = action.get_action_metadata()
+
+    # Check timestamps are present and correctly formatted
+    assert "request_timestamp" in metadata
+    assert metadata["request_timestamp"] == "2026-01-01T12:00:00+00:00"
+    assert "completion_timestamp" in metadata
+    assert metadata["completion_timestamp"] == "2026-01-01T12:00:01+00:00"
+
+    # Check messages are present
+    assert "messages" in metadata
+    assert len(metadata["messages"]) == 2
+    assert metadata["messages"][0]["role"] == "system"
+    assert metadata["messages"][1]["role"] == "user"
+
+    # Check other metadata fields
+    assert metadata["temperature"] == 0.5
+    assert metadata["finish_reason"] == "stop"
+    assert metadata["initial_cost_usd"] == 0.001

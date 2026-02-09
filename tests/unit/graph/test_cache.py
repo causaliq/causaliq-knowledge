@@ -650,3 +650,140 @@ def test_export_with_dict_input(tmp_path) -> None:
     exported = json.loads(output_path.read_text())
     assert exported["edges"][0]["source"] == "X"
     assert exported["reasoning"] == "Dict export test"
+
+
+# Test metadata with request and completion timestamps.
+def test_encode_decode_with_timestamps() -> None:
+    """Request and completion timestamps are preserved through round-trip."""
+    with TokenCache(":memory:") as cache:
+        encoder = GraphEntryEncoder()
+
+        request_time = datetime(2026, 2, 9, 10, 0, 0, tzinfo=timezone.utc)
+        completion_time = datetime(2026, 2, 9, 10, 0, 1, tzinfo=timezone.utc)
+
+        metadata = GenerationMetadata(
+            model="test-model",
+            provider="test-provider",
+            timestamp=completion_time,
+            latency_ms=1000,
+            input_tokens=100,
+            output_tokens=50,
+            request_timestamp=request_time,
+            completion_timestamp=completion_time,
+        )
+
+        graph = GeneratedGraph(
+            edges=[ProposedEdge(source="A", target="B", confidence=0.9)],
+            variables=["A", "B"],
+            metadata=metadata,
+        )
+
+        blob = encoder.encode_entry(graph, cache)
+        restored, _ = encoder.decode_entry(blob, cache)
+
+        assert restored.metadata is not None
+        assert restored.metadata.request_timestamp == request_time
+        assert restored.metadata.completion_timestamp == completion_time
+
+
+# Test export includes request and completion timestamps in JSON.
+def test_export_includes_optional_timestamps(tmp_path) -> None:
+    """Export dict includes request_timestamp and completion_timestamp."""
+    encoder = GraphEntryEncoder()
+
+    request_time = datetime(2026, 2, 9, 10, 0, 0, tzinfo=timezone.utc)
+    completion_time = datetime(2026, 2, 9, 10, 0, 2, tzinfo=timezone.utc)
+
+    metadata = GenerationMetadata(
+        model="test-model",
+        provider="test",
+        latency_ms=2000,
+        request_timestamp=request_time,
+        completion_timestamp=completion_time,
+    )
+
+    graph = GeneratedGraph(
+        edges=[ProposedEdge(source="X", target="Y", confidence=0.85)],
+        variables=["X", "Y"],
+        metadata=metadata,
+    )
+
+    path = tmp_path / "timestamps_test.json"
+    encoder.export(graph, path)
+
+    import json
+
+    exported = json.loads(path.read_text())
+
+    assert "metadata" in exported
+    assert (
+        exported["metadata"]["request_timestamp"]
+        == "2026-02-09T10:00:00+00:00"
+    )
+    assert (
+        exported["metadata"]["completion_timestamp"]
+        == "2026-02-09T10:00:02+00:00"
+    )
+
+
+# Test export with dict input creates GraphML file.
+def test_export_dict_creates_graphml(tmp_path) -> None:
+    """Export with dict input creates both JSON and GraphML files."""
+    encoder = GraphEntryEncoder()
+
+    data = {
+        "edges": [
+            {"source": "A", "target": "B", "confidence": 0.9},
+            {"source": "B", "target": "C", "confidence": 0.8},
+        ],
+        "variables": ["A", "B", "C"],
+        "reasoning": "Dict export GraphML test",
+    }
+
+    path = tmp_path / "dict_graphml_test"
+    encoder.export(data, path)
+
+    # Both files should exist
+    json_path = path.with_suffix(".json")
+    graphml_path = path.with_suffix(".graphml")
+
+    assert json_path.exists()
+    assert graphml_path.exists()
+
+    # GraphML file should contain graph structure
+    graphml_content = graphml_path.read_text()
+    assert "<graphml" in graphml_content
+    assert "A" in graphml_content
+    assert "B" in graphml_content
+
+
+# Test export with tuple input (from decode()).
+def test_export_tuple_from_decode(tmp_path) -> None:
+    """Export handles tuple from decode() which returns
+    (graph, extra_blobs)."""
+    encoder = GraphEntryEncoder()
+
+    graph = GeneratedGraph(
+        edges=[ProposedEdge(source="P", target="Q", confidence=0.75)],
+        variables=["P", "Q"],
+        reasoning="Tuple export test",
+    )
+
+    # Simulate decode() return value: (graph, extra_blobs)
+    data_tuple = (graph, {"trace": b"some trace data"})
+
+    path = tmp_path / "tuple_export"
+    encoder.export(data_tuple, path)
+
+    # Both files should exist
+    json_path = path.with_suffix(".json")
+    graphml_path = path.with_suffix(".graphml")
+
+    assert json_path.exists()
+    assert graphml_path.exists()
+
+    import json
+
+    exported = json.loads(json_path.read_text())
+    assert exported["edges"][0]["source"] == "P"
+    assert exported["reasoning"] == "Tuple export test"

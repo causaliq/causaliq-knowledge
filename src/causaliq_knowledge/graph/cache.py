@@ -589,7 +589,7 @@ class GraphEntryEncoder(JsonEncoder):
         }
 
         if graph.metadata:
-            result["metadata"] = {
+            meta_dict: Dict[str, Any] = {
                 "model": graph.metadata.model,
                 "provider": graph.metadata.provider,
                 "timestamp": graph.metadata.timestamp.isoformat(),
@@ -598,23 +598,57 @@ class GraphEntryEncoder(JsonEncoder):
                 "output_tokens": graph.metadata.output_tokens,
                 "cost_usd": graph.metadata.cost_usd,
                 "from_cache": graph.metadata.from_cache,
+                "messages": graph.metadata.messages,
+                "temperature": graph.metadata.temperature,
+                "max_tokens": graph.metadata.max_tokens,
+                "finish_reason": graph.metadata.finish_reason,
+                "initial_cost_usd": graph.metadata.initial_cost_usd,
             }
+            # Add optional timestamp fields
+            if graph.metadata.request_timestamp:
+                meta_dict["request_timestamp"] = (
+                    graph.metadata.request_timestamp.isoformat()
+                )
+            if graph.metadata.completion_timestamp:
+                meta_dict["completion_timestamp"] = (
+                    graph.metadata.completion_timestamp.isoformat()
+                )
+            result["metadata"] = meta_dict
 
         return result
 
     def export(self, data: Any, path: Path) -> None:
-        """Export graph to JSON file.
+        """Export graph to JSON and GraphML files.
+
+        Creates two files:
+        - {path}.json: Full metadata and edge details
+        - {path}.graphml: Graph structure for visualisation
 
         Args:
-            data: GeneratedGraph or dict to export.
-            path: Destination file path.
+            data: GeneratedGraph, tuple (GeneratedGraph, extra_blobs), or dict.
+            path: Destination file path (extension will be replaced/added).
         """
+        from causaliq_core.graph.io import graphml
+
+        # Handle tuple from decode() which returns (graph, extra_blobs)
+        if isinstance(data, tuple) and len(data) == 2:
+            data = data[0]
+
         if isinstance(data, GeneratedGraph):
+            graph = data
             export_dict = self._graph_to_export_dict(data)
         else:
             export_dict = data
+            graph = self._dict_to_graph(data)
 
-        path.write_text(json.dumps(export_dict, indent=2))
+        # Write JSON with full metadata
+        json_path = path.with_suffix(".json")
+        json_path.write_text(json.dumps(export_dict, indent=2))
+
+        # Write GraphML for graph structure
+        sdg = self._graph_to_sdg(graph)
+        graphml_path = path.with_suffix(".graphml")
+        graphml.write(sdg, str(graphml_path))
 
     def import_(self, path: Path) -> GeneratedGraph:
         """Import graph from JSON file.

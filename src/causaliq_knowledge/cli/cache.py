@@ -237,6 +237,7 @@ def export_cache(cache_path: str, output_dir: str, output_json: bool) -> None:
     from causaliq_core.cache import TokenCache
     from causaliq_core.cache.encoders import JsonEncoder
 
+    from causaliq_knowledge.graph.cache import GraphEntryEncoder
     from causaliq_knowledge.llm.cache import LLMCacheEntry, LLMEntryEncoder
 
     output_path = Path(output_dir)
@@ -248,8 +249,11 @@ def export_cache(cache_path: str, output_dir: str, output_json: bool) -> None:
             encoder = LLMEntryEncoder()
             cache.register_encoder("llm", encoder)
 
-            # Register generic JsonEncoder for other types
+            # Register GraphEntryEncoder for graph types
+            graph_encoder = GraphEntryEncoder()
+            cache.register_encoder("graph", graph_encoder)
 
+            # Register generic JsonEncoder for other types
             json_encoder = JsonEncoder()
             cache.register_encoder("json", json_encoder)
 
@@ -349,6 +353,21 @@ def _is_llm_entry(data: Any) -> bool:
     )
 
 
+def _is_graph_entry(data: Any) -> bool:
+    """Check if JSON data represents a graph cache entry.
+
+    Graph entries have edges list, variables list, and optionally metadata.
+    """
+    if not isinstance(data, dict):
+        return False
+    return (
+        "edges" in data
+        and isinstance(data["edges"], list)
+        and "variables" in data
+        and isinstance(data["variables"], list)
+    )
+
+
 @click.command("import_cache")
 @click.option(
     "--cache",
@@ -377,6 +396,7 @@ def import_cache(cache_path: str, input_path: str, output_json: bool) -> None:
 
     Entry types are auto-detected from JSON structure:
     - LLM entries: contain cache_key.model, cache_key.messages, response
+    - Graph entries: contain edges list and variables list
     - Generic JSON: anything else
 
     Examples:
@@ -395,6 +415,7 @@ def import_cache(cache_path: str, input_path: str, output_json: bool) -> None:
     from causaliq_core.cache import TokenCache
     from causaliq_core.cache.encoders import JsonEncoder
 
+    from causaliq_knowledge.graph.cache import GraphEntryEncoder
     from causaliq_knowledge.llm.cache import LLMEntryEncoder
 
     input_file = Path(input_path)
@@ -404,8 +425,10 @@ def import_cache(cache_path: str, input_path: str, output_json: bool) -> None:
         with TokenCache(cache_path) as cache:
             # Register encoders
             llm_encoder = LLMEntryEncoder()
+            graph_encoder = GraphEntryEncoder()
             json_encoder = JsonEncoder()
             cache.register_encoder("llm", llm_encoder)
+            cache.register_encoder("graph", graph_encoder)
             cache.register_encoder("json", json_encoder)
 
             # Determine input directory
@@ -421,6 +444,7 @@ def import_cache(cache_path: str, input_path: str, output_json: bool) -> None:
             # Import entries
             imported = 0
             llm_count = 0
+            graph_count = 0
             json_count = 0
             skipped = 0
 
@@ -447,6 +471,11 @@ def import_cache(cache_path: str, input_path: str, output_json: bool) -> None:
                     ]
                     cache.put_data(cache_key, "llm", data)
                     llm_count += 1
+                elif _is_graph_entry(data):
+                    # Graph entry - use filename stem as key
+                    cache_key = file_path.stem
+                    cache.put_data(cache_key, "graph", data)
+                    graph_count += 1
                 else:
                     # Generic JSON - use filename stem as key
                     cache_key = file_path.stem
@@ -469,6 +498,7 @@ def import_cache(cache_path: str, input_path: str, output_json: bool) -> None:
                     "format": "zip" if is_zip else "directory",
                     "imported": imported,
                     "llm_entries": llm_count,
+                    "graph_entries": graph_count,
                     "json_entries": json_count,
                     "skipped": skipped,
                 }
@@ -480,6 +510,8 @@ def import_cache(cache_path: str, input_path: str, output_json: bool) -> None:
                 )
                 if llm_count:
                     click.echo(f"  LLM entries: {llm_count}")
+                if graph_count:
+                    click.echo(f"  Graph entries: {graph_count}")
                 if json_count:
                     click.echo(f"  JSON entries: {json_count}")
                 if skipped:
