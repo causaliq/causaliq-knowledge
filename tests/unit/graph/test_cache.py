@@ -652,24 +652,22 @@ def test_export_with_dict_input(tmp_path) -> None:
     assert exported["reasoning"] == "Dict export test"
 
 
-# Test metadata with request and completion timestamps.
-def test_encode_decode_with_timestamps() -> None:
-    """Request and completion timestamps are preserved through round-trip."""
+# Test metadata with llm_cost_usd field.
+def test_encode_decode_with_llm_cost() -> None:
+    """llm_cost_usd is preserved through round-trip."""
     with TokenCache(":memory:") as cache:
         encoder = GraphEntryEncoder()
 
-        request_time = datetime(2026, 2, 9, 10, 0, 0, tzinfo=timezone.utc)
-        completion_time = datetime(2026, 2, 9, 10, 0, 1, tzinfo=timezone.utc)
+        llm_time = datetime(2026, 2, 9, 10, 0, 0, tzinfo=timezone.utc)
 
         metadata = GenerationMetadata(
             model="test-model",
             provider="test-provider",
-            timestamp=completion_time,
+            timestamp=llm_time,
             latency_ms=1000,
             input_tokens=100,
             output_tokens=50,
-            request_timestamp=request_time,
-            completion_timestamp=completion_time,
+            llm_cost_usd=0.005,
         )
 
         graph = GeneratedGraph(
@@ -682,24 +680,23 @@ def test_encode_decode_with_timestamps() -> None:
         restored, _ = encoder.decode_entry(blob, cache)
 
         assert restored.metadata is not None
-        assert restored.metadata.request_timestamp == request_time
-        assert restored.metadata.completion_timestamp == completion_time
+        assert restored.metadata.timestamp == llm_time
+        assert restored.metadata.llm_cost_usd == 0.005
 
 
-# Test export includes request and completion timestamps in JSON.
-def test_export_includes_optional_timestamps(tmp_path) -> None:
-    """Export dict includes request_timestamp and completion_timestamp."""
+# Test export includes llm_timestamp and llm_cost_usd in JSON.
+def test_export_includes_llm_fields(tmp_path) -> None:
+    """Export dict includes llm_timestamp and llm_cost_usd."""
     encoder = GraphEntryEncoder()
 
-    request_time = datetime(2026, 2, 9, 10, 0, 0, tzinfo=timezone.utc)
-    completion_time = datetime(2026, 2, 9, 10, 0, 2, tzinfo=timezone.utc)
+    llm_time = datetime(2026, 2, 9, 10, 0, 0, tzinfo=timezone.utc)
 
     metadata = GenerationMetadata(
         model="test-model",
         provider="test",
+        timestamp=llm_time,
         latency_ms=2000,
-        request_timestamp=request_time,
-        completion_timestamp=completion_time,
+        llm_cost_usd=0.01,
     )
 
     graph = GeneratedGraph(
@@ -708,7 +705,7 @@ def test_export_includes_optional_timestamps(tmp_path) -> None:
         metadata=metadata,
     )
 
-    path = tmp_path / "timestamps_test.json"
+    path = tmp_path / "llm_fields_test.json"
     encoder.export(graph, path)
 
     import json
@@ -716,14 +713,8 @@ def test_export_includes_optional_timestamps(tmp_path) -> None:
     exported = json.loads(path.read_text())
 
     assert "metadata" in exported
-    assert (
-        exported["metadata"]["request_timestamp"]
-        == "2026-02-09T10:00:00+00:00"
-    )
-    assert (
-        exported["metadata"]["completion_timestamp"]
-        == "2026-02-09T10:00:02+00:00"
-    )
+    assert exported["metadata"]["llm_timestamp"] == "2026-02-09T10:00:00+00:00"
+    assert exported["metadata"]["llm_cost_usd"] == 0.01
 
 
 # Test export with dict input creates GraphML file.

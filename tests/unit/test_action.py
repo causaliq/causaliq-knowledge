@@ -999,8 +999,7 @@ def test_populate_execution_metadata_with_full_metadata(
     )
 
     # Create metadata with all optional fields populated
-    request_time = datetime(2026, 1, 1, 12, 0, 0, tzinfo=timezone.utc)
-    completion_time = datetime(2026, 1, 1, 12, 0, 1, tzinfo=timezone.utc)
+    llm_time = datetime(2026, 1, 1, 12, 0, 0, tzinfo=timezone.utc)
     messages = [
         {"role": "system", "content": "You are a causal expert."},
         {"role": "user", "content": "Identify causal relationships."},
@@ -1012,7 +1011,7 @@ def test_populate_execution_metadata_with_full_metadata(
         metadata=GenerationMetadata(
             model="test-model",
             provider="test-provider",
-            timestamp=completion_time,
+            timestamp=llm_time,
             latency_ms=1000,
             input_tokens=100,
             output_tokens=50,
@@ -1021,9 +1020,7 @@ def test_populate_execution_metadata_with_full_metadata(
             temperature=0.5,
             max_tokens=2000,
             finish_reason="stop",
-            request_timestamp=request_time,
-            completion_timestamp=completion_time,
-            initial_cost_usd=0.001,
+            llm_cost_usd=0.001,
         ),
     )
 
@@ -1047,14 +1044,8 @@ def test_populate_execution_metadata_with_full_metadata(
             mode="run",
         )
 
-    # Verify execution metadata includes timestamps and messages
+    # Verify execution metadata includes messages and costs
     metadata = action.get_action_metadata()
-
-    # Check timestamps are present and correctly formatted
-    assert "request_timestamp" in metadata
-    assert metadata["request_timestamp"] == "2026-01-01T12:00:00+00:00"
-    assert "completion_timestamp" in metadata
-    assert metadata["completion_timestamp"] == "2026-01-01T12:00:01+00:00"
 
     # Check messages are present
     assert "messages" in metadata
@@ -1065,4 +1056,4 @@ def test_populate_execution_metadata_with_full_metadata(
     # Check other metadata fields
     assert metadata["temperature"] == 0.5
     assert metadata["finish_reason"] == "stop"
-    assert metadata["initial_cost_usd"] == 0.001
+    assert metadata["llm_cost_usd"] == 0.001

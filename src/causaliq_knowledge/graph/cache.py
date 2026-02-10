@@ -301,7 +301,7 @@ class GraphEntryEncoder(JsonEncoder):
             gen_dict: Dict[str, Any] = {
                 "model": graph.metadata.model,
                 "provider": graph.metadata.provider,
-                "timestamp": graph.metadata.timestamp.isoformat(),
+                "llm_timestamp": graph.metadata.timestamp.isoformat(),
                 "latency_ms": graph.metadata.latency_ms,
                 "input_tokens": graph.metadata.input_tokens,
                 "output_tokens": graph.metadata.output_tokens,
@@ -311,17 +311,8 @@ class GraphEntryEncoder(JsonEncoder):
                 "temperature": graph.metadata.temperature,
                 "max_tokens": graph.metadata.max_tokens,
                 "finish_reason": graph.metadata.finish_reason,
-                "initial_cost_usd": graph.metadata.initial_cost_usd,
+                "llm_cost_usd": graph.metadata.initial_cost_usd,
             }
-            # Add optional timestamp fields
-            if graph.metadata.request_timestamp:
-                gen_dict["request_timestamp"] = (
-                    graph.metadata.request_timestamp.isoformat()
-                )
-            if graph.metadata.completion_timestamp:
-                gen_dict["completion_timestamp"] = (
-                    graph.metadata.completion_timestamp.isoformat()
-                )
             meta["generation"] = gen_dict
 
         return meta
@@ -446,24 +437,22 @@ class GraphEntryEncoder(JsonEncoder):
         gen_meta = None
         if "generation" in meta_dict:
             gen = meta_dict["generation"]
-            # Parse optional timestamp fields
-            request_ts = None
-            if gen.get("request_timestamp"):
-                request_ts = datetime.fromisoformat(gen["request_timestamp"])
-            completion_ts = None
-            if gen.get("completion_timestamp"):
-                completion_ts = datetime.fromisoformat(
-                    gen["completion_timestamp"]
-                )
+            # Parse timestamp - prefer llm_timestamp, fall back to timestamp
+            llm_ts_str = gen.get("llm_timestamp") or gen.get("timestamp")
+            llm_ts = (
+                datetime.fromisoformat(llm_ts_str)
+                if llm_ts_str
+                else datetime.now(timezone.utc)
+            )
+            # Parse cost - prefer llm_cost_usd, fall back to initial_cost_usd
+            llm_cost = gen.get(
+                "llm_cost_usd", gen.get("initial_cost_usd", 0.0)
+            )
 
             gen_meta = GenerationMetadata(
                 model=gen.get("model", ""),
                 provider=gen.get("provider", ""),
-                timestamp=(
-                    datetime.fromisoformat(gen["timestamp"])
-                    if gen.get("timestamp")
-                    else datetime.now(timezone.utc)
-                ),
+                timestamp=llm_ts,
                 latency_ms=gen.get("latency_ms", 0),
                 input_tokens=gen.get("input_tokens", 0),
                 output_tokens=gen.get("output_tokens", 0),
@@ -473,9 +462,7 @@ class GraphEntryEncoder(JsonEncoder):
                 temperature=gen.get("temperature", 0.1),
                 max_tokens=gen.get("max_tokens", 2000),
                 finish_reason=gen.get("finish_reason", "stop"),
-                request_timestamp=request_ts,
-                completion_timestamp=completion_ts,
-                initial_cost_usd=gen.get("initial_cost_usd", 0.0),
+                llm_cost_usd=llm_cost,
             )
 
         graph = GeneratedGraph(
@@ -548,14 +535,31 @@ class GraphEntryEncoder(JsonEncoder):
             if isinstance(meta, GenerationMetadata):
                 metadata = meta
             else:
+                # Parse timestamp (prefer llm_timestamp, fallback timestamp)
+                llm_ts_str = meta.get("llm_timestamp") or meta.get("timestamp")
+                llm_ts = (
+                    datetime.fromisoformat(llm_ts_str)
+                    if llm_ts_str
+                    else datetime.now(timezone.utc)
+                )
+                # Parse cost (prefer llm_cost_usd, fallback initial_cost_usd)
+                llm_cost = meta.get(
+                    "llm_cost_usd", meta.get("initial_cost_usd", 0.0)
+                )
                 metadata = GenerationMetadata(
                     model=meta.get("model", ""),
                     provider=meta.get("provider", ""),
+                    timestamp=llm_ts,
                     latency_ms=meta.get("latency_ms", 0),
                     input_tokens=meta.get("input_tokens", 0),
                     output_tokens=meta.get("output_tokens", 0),
                     cost_usd=meta.get("cost_usd", 0.0),
                     from_cache=meta.get("from_cache", False),
+                    messages=meta.get("messages", []),
+                    temperature=meta.get("temperature", 0.1),
+                    max_tokens=meta.get("max_tokens", 2000),
+                    finish_reason=meta.get("finish_reason", "stop"),
+                    llm_cost_usd=llm_cost,
                 )
 
         return GeneratedGraph(
@@ -592,7 +596,7 @@ class GraphEntryEncoder(JsonEncoder):
             meta_dict: Dict[str, Any] = {
                 "model": graph.metadata.model,
                 "provider": graph.metadata.provider,
-                "timestamp": graph.metadata.timestamp.isoformat(),
+                "llm_timestamp": graph.metadata.timestamp.isoformat(),
                 "latency_ms": graph.metadata.latency_ms,
                 "input_tokens": graph.metadata.input_tokens,
                 "output_tokens": graph.metadata.output_tokens,
@@ -602,17 +606,8 @@ class GraphEntryEncoder(JsonEncoder):
                 "temperature": graph.metadata.temperature,
                 "max_tokens": graph.metadata.max_tokens,
                 "finish_reason": graph.metadata.finish_reason,
-                "initial_cost_usd": graph.metadata.initial_cost_usd,
+                "llm_cost_usd": graph.metadata.initial_cost_usd,
             }
-            # Add optional timestamp fields
-            if graph.metadata.request_timestamp:
-                meta_dict["request_timestamp"] = (
-                    graph.metadata.request_timestamp.isoformat()
-                )
-            if graph.metadata.completion_timestamp:
-                meta_dict["completion_timestamp"] = (
-                    graph.metadata.completion_timestamp.isoformat()
-                )
             result["metadata"] = meta_dict
 
         return result

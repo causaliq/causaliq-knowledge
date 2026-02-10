@@ -347,18 +347,9 @@ class GenerateGraphAction(BaseCausalIQAction):
                     "temperature": meta.temperature,
                     "max_tokens": meta.max_tokens,
                     "finish_reason": meta.finish_reason,
-                    "initial_cost_usd": meta.initial_cost_usd,
+                    "llm_cost_usd": meta.llm_cost_usd,
                 }
             )
-            # Add timestamps if present
-            if meta.request_timestamp:
-                self._execution_metadata["request_timestamp"] = (
-                    meta.request_timestamp.isoformat()
-                )
-            if meta.completion_timestamp:
-                self._execution_metadata["completion_timestamp"] = (
-                    meta.completion_timestamp.isoformat()
-                )
             # Add messages (can be large, but important for reproducibility)
             if meta.messages:
                 self._execution_metadata["messages"] = meta.messages

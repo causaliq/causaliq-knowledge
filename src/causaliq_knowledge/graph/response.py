@@ -73,19 +73,17 @@ class GenerationMetadata:
     Attributes:
         model: The LLM model used for generation.
         provider: The LLM provider (e.g., "groq", "gemini").
-        timestamp: When the graph was generated (completion time).
+        timestamp: When the LLM request was made.
         latency_ms: Request latency in milliseconds.
         input_tokens: Number of input tokens used.
         output_tokens: Number of output tokens generated.
-        cost_usd: Estimated cost in USD (if available).
+        cost_usd: Cost of this request (0 if from cache).
         from_cache: Whether the response was from cache.
         messages: The messages sent to the LLM.
         temperature: Sampling temperature used.
         max_tokens: Maximum tokens requested.
         finish_reason: Why generation stopped (stop, length, etc.).
-        request_timestamp: When the request was made to the LLM.
-        completion_timestamp: When the request completed.
-        initial_cost_usd: Cost when the request was made (ignoring cache).
+        llm_cost_usd: Cost when the LLM request was originally made.
     """
 
     model: str
@@ -102,9 +100,13 @@ class GenerationMetadata:
     temperature: float = 0.1
     max_tokens: int = 2000
     finish_reason: str = "stop"
-    request_timestamp: Optional[datetime] = None
-    completion_timestamp: Optional[datetime] = None
-    initial_cost_usd: float = 0.0
+    llm_cost_usd: float = 0.0
+
+    # Backward compatibility alias
+    @property
+    def initial_cost_usd(self) -> float:
+        """Alias for llm_cost_usd (backward compatibility)."""
+        return self.llm_cost_usd
 
 
 @dataclass

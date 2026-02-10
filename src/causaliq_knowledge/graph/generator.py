@@ -420,9 +420,6 @@ class GraphGenerator:
 
         latency_ms = int((time.perf_counter() - start_time) * 1000)
 
-        # Record completion timestamp after receiving response
-        completion_timestamp = datetime.now(timezone.utc)
-
         self._call_count += 1
 
         # Parse the response
@@ -447,7 +444,7 @@ class GraphGenerator:
         graph.metadata = GenerationMetadata(
             model=model_name,
             provider=provider,
-            timestamp=completion_timestamp,
+            timestamp=request_timestamp,
             latency_ms=latency_ms,
             input_tokens=response.input_tokens,
             output_tokens=response.output_tokens,
@@ -457,9 +454,7 @@ class GraphGenerator:
             temperature=self._config.temperature,
             max_tokens=self._config.max_tokens,
             finish_reason=response.finish_reason,
-            request_timestamp=request_timestamp,
-            completion_timestamp=completion_timestamp,
-            initial_cost_usd=initial_cost,
+            llm_cost_usd=initial_cost,
         )
 
         return graph
