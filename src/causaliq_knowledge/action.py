@@ -4,21 +4,21 @@ This module provides the workflow action integration for causaliq-knowledge,
 allowing graph generation to be used as a step in CausalIQ workflows.
 
 The action is auto-discovered by causaliq-workflow when this package is
-imported, using the convention of exporting a class named 'CausalIQAction'.
+imported, using the convention of exporting a class named 'ActionProvider'.
 """
 
 from __future__ import annotations
 
 import logging
 from pathlib import Path
-from typing import TYPE_CHECKING, Any, Dict, Optional
+from typing import TYPE_CHECKING, Any, Dict, Optional, Set
 
 from causaliq_workflow.action import (
     ActionExecutionError,
     ActionInput,
     ActionValidationError,
+    BaseActionProvider,
 )
-from causaliq_workflow.action import CausalIQAction as BaseCausalIQAction
 from causaliq_workflow.logger import WorkflowLogger
 from causaliq_workflow.registry import WorkflowContext
 from pydantic import ValidationError
@@ -36,11 +36,11 @@ __all__ = [
     "ActionExecutionError",
     "ActionInput",
     "ActionValidationError",
-    "BaseCausalIQAction",
+    "BaseActionProvider",
     "WorkflowContext",
     "WorkflowLogger",
     "GenerateGraphAction",
-    "CausalIQAction",
+    "ActionProvider",
     "SUPPORTED_ACTIONS",
 ]
 
@@ -111,22 +111,23 @@ def _create_action_inputs() -> Dict[str, Any]:
     }
 
 
-class GenerateGraphAction(BaseCausalIQAction):
-    """Workflow action for generating causal graphs from model specifications.
+class GenerateGraphAction(BaseActionProvider):
+    """Workflow action provider for generating causal graphs from model specs.
 
     This action integrates causaliq-knowledge graph generation into
     CausalIQ workflows, allowing LLM-based graph generation to be used
     as workflow steps.
 
-    The action supports the 'generate_graph' operation, which:
+    The provider supports the 'generate_graph' action, which:
     - Loads a model specification from a JSON file
     - Queries an LLM to propose causal relationships
     - Returns the generated graph structure
 
     Attributes:
-        name: Action identifier for workflow 'uses' field.
-        version: Action version.
+        name: Provider identifier for workflow 'uses' field.
+        version: Provider version.
         description: Human-readable description.
+        supported_actions: Set of actions this provider supports.
         inputs: Input parameter specifications.
 
     Example workflow step:
@@ -149,6 +150,8 @@ class GenerateGraphAction(BaseCausalIQAction):
     description: str = "Generate causal graphs using LLM knowledge"
     author: str = "CausalIQ"
 
+    supported_actions: Set[str] = SUPPORTED_ACTIONS
+
     inputs: Dict[str, Any] = _create_action_inputs()
     outputs: Dict[str, str] = {
         "graph": "Generated graph structure as JSON",
@@ -162,26 +165,22 @@ class GenerateGraphAction(BaseCausalIQAction):
         """Initialise action with empty execution metadata."""
         super().__init__()
 
-    def validate_inputs(self, inputs: Dict[str, Any]) -> bool:
-        """Validate input values against specifications.
+    def validate_parameters(
+        self, action: str, parameters: Dict[str, Any]
+    ) -> bool:
+        """Validate action and parameters against specifications.
 
         Args:
-            inputs: Dictionary of input values to validate.
+            action: Action to perform (e.g., 'generate_graph').
+            parameters: Dictionary of parameter values.
 
         Returns:
-            True if all inputs are valid.
+            True if action and parameters are valid.
 
         Raises:
             ActionValidationError: If validation fails.
         """
-        # Check required 'action' parameter
-        if "action" not in inputs:
-            raise ActionValidationError(
-                "Missing required input: 'action'. "
-                f"Supported actions: {SUPPORTED_ACTIONS}"
-            )
-
-        action = inputs["action"]
+        # Check action is supported
         if action not in SUPPORTED_ACTIONS:
             raise ActionValidationError(
                 f"Unknown action: '{action}'. "
@@ -191,17 +190,14 @@ class GenerateGraphAction(BaseCausalIQAction):
         # For generate_graph, validate using GenerateGraphParams
         if action == "generate_graph":
             # Check required model_spec
-            if "model_spec" not in inputs:
+            if "model_spec" not in parameters:
                 raise ActionValidationError(
                     "Missing required input: 'model_spec' for generate_graph"
                 )
 
-            # Build params dict (excluding 'action' which isn't a param)
-            params_dict = {k: v for k, v in inputs.items() if k != "action"}
-
             try:
                 # Validate using Pydantic model
-                GenerateGraphParams.from_dict(params_dict)
+                GenerateGraphParams.from_dict(parameters)
             except (ValidationError, ValueError) as e:
                 raise ActionValidationError(
                     f"Invalid parameters for generate_graph: {e}"
@@ -211,15 +207,17 @@ class GenerateGraphAction(BaseCausalIQAction):
 
     def run(
         self,
-        inputs: Dict[str, Any],
+        action: str,
+        parameters: Dict[str, Any],
         mode: str = "dry-run",
         context: Optional[Any] = None,
         logger: Optional[Any] = None,
     ) -> Dict[str, Any]:
-        """Execute the action with validated inputs.
+        """Execute the action with validated parameters.
 
         Args:
-            inputs: Dictionary of input values keyed by input name.
+            action: Action to perform (e.g., 'generate_graph').
+            parameters: Dictionary of parameter values.
             mode: Execution mode ('dry-run', 'run', 'compare').
             context: Workflow context for optimisation.
             logger: Optional logger for task execution reporting.
@@ -236,20 +234,18 @@ class GenerateGraphAction(BaseCausalIQAction):
         Raises:
             ActionExecutionError: If action execution fails.
         """
-        # Validate inputs first
-        self.validate_inputs(inputs)
-
-        action = inputs["action"]
+        # Validate parameters first
+        self.validate_parameters(action, parameters)
 
         if action == "generate_graph":
-            return self._run_generate_graph(inputs, mode, context, logger)
+            return self._run_generate_graph(parameters, mode, context, logger)
         else:  # pragma: no cover
-            # This shouldn't happen after validate_inputs
+            # This shouldn't happen after validate_parameters
             raise ActionExecutionError(f"Unknown action: {action}")
 
     def _run_generate_graph(
         self,
-        inputs: Dict[str, Any],
+        parameters: Dict[str, Any],
         mode: str,
         context: Optional[Any],
         logger: Optional[Any],
@@ -257,7 +253,7 @@ class GenerateGraphAction(BaseCausalIQAction):
         """Execute the generate_graph action.
 
         Args:
-            inputs: Validated input parameters.
+            parameters: Validated parameter values.
             mode: Execution mode.
             context: Workflow context.
             logger: Optional workflow logger.
@@ -265,11 +261,8 @@ class GenerateGraphAction(BaseCausalIQAction):
         Returns:
             Action result dictionary.
         """
-        # Build params (excluding 'action')
-        params_dict = {k: v for k, v in inputs.items() if k != "action"}
-
         try:
-            params = GenerateGraphParams.from_dict(params_dict)
+            params = GenerateGraphParams.from_dict(parameters)
         except (ValidationError, ValueError) as e:
             raise ActionExecutionError(f"Parameter validation failed: {e}")
 
@@ -668,6 +661,6 @@ class GenerateGraphAction(BaseCausalIQAction):
         )
 
 
-# Export as CausalIQAction for auto-discovery by causaliq-workflow
+# Export as ActionProvider for auto-discovery by causaliq-workflow
 # This name is required by the auto-discovery convention
-CausalIQAction = GenerateGraphAction
+ActionProvider = GenerateGraphAction

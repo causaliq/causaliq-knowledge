@@ -2,7 +2,7 @@
 causaliq-knowledge: LLM and human knowledge for causal discovery.
 """
 
-from causaliq_knowledge.action import CausalIQAction
+from causaliq_knowledge.action import ActionProvider
 from causaliq_knowledge.base import KnowledgeProvider
 from causaliq_knowledge.models import EdgeDirection, EdgeKnowledge
 
@@ -30,7 +30,7 @@ __all__ = [
     "EdgeDirection",
     # Abstract interface
     "KnowledgeProvider",
-    # Workflow action (auto-discovered by causaliq-workflow)
-    "CausalIQAction",
+    # Workflow action provider (auto-discovered by causaliq-workflow)
+    "ActionProvider",
     # Note: Import LLMKnowledge from causaliq_knowledge.llm
 ]

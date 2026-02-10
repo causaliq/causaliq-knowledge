@@ -30,7 +30,7 @@ classifiers = [
 keywords = ["causaliq"]
 requires-python = ">=3.9"
 dependencies = [
-    "causaliq-workflow>=0.1.1.dev6",
+    "causaliq-workflow>=0.1.1.dev7",
     "click>=8.0.0",
     "httpx>=0.24.0",
     "pydantic>=2.0.0",
@@ -53,7 +53,7 @@ dev = [
 ]
 test = [
     "causaliq-core>=0.4.0.dev2",
-    "causaliq-workflow>=0.1.1.dev6",
+    "causaliq-workflow>=0.1.1.dev7",
     "pytest>=7.0.0",
     "pytest-cov>=4.0.0",
     "pytest-mock>=3.10.0",
@@ -76,7 +76,7 @@ causaliq-knowledge = "causaliq_knowledge.cli:main"
 cqknow = "causaliq_knowledge.cli:main"
 
 [project.entry-points."causaliq.actions"]
-causaliq-knowledge = "causaliq_knowledge:CausalIQAction"
+causaliq-knowledge = "causaliq_knowledge:ActionProvider"
 
 [tool.setuptools.dynamic]
 version = {attr = "causaliq_knowledge.__version__"}

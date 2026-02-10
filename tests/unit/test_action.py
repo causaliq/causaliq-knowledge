@@ -1,4 +1,4 @@
-"""Unit tests for the CausalIQ workflow action.
+"""Unit tests for the CausalIQ workflow action provider.
 
 Tests for GenerateGraphAction which integrates causaliq-knowledge
 graph generation into CausalIQ workflows.
@@ -13,15 +13,15 @@ import pytest
 from causaliq_knowledge.action import (
     SUPPORTED_ACTIONS,
     ActionExecutionError,
-    CausalIQAction,
+    ActionProvider,
     GenerateGraphAction,
 )
 
 
-# Test CausalIQAction is aliased to GenerateGraphAction.
-def test_causaliq_action_alias() -> None:
-    """Test CausalIQAction is exported as alias to GenerateGraphAction."""
-    assert CausalIQAction is GenerateGraphAction
+# Test ActionProvider is aliased to GenerateGraphAction.
+def test_action_provider_alias() -> None:
+    """Test ActionProvider is alias to GenerateGraphAction."""
+    assert ActionProvider is GenerateGraphAction
 
 
 # Test supported actions constant.
@@ -65,84 +65,69 @@ def test_action_outputs_specification() -> None:
     assert "cached" in action.outputs
 
 
-# Test validate_inputs rejects missing action parameter.
-def test_validate_inputs_missing_action() -> None:
-    """Test validation fails when action parameter is missing."""
-    from causaliq_workflow.action import ActionValidationError
-
-    action = GenerateGraphAction()
-
-    with pytest.raises(ActionValidationError) as exc_info:
-        action.validate_inputs({"model_spec": "model.json"})
-
-    assert "action" in str(exc_info.value).lower()
-
-
-# Test validate_inputs rejects unknown action.
-def test_validate_inputs_unknown_action() -> None:
+# Test validate_parameters rejects unknown action.
+def test_validate_parameters_unknown_action() -> None:
     """Test validation fails for unknown action type."""
     from causaliq_workflow.action import ActionValidationError
 
     action = GenerateGraphAction()
 
     with pytest.raises(ActionValidationError) as exc_info:
-        action.validate_inputs(
-            {
-                "action": "unknown_action",
-                "model_spec": "model.json",
-            }
+        action.validate_parameters(
+            "unknown_action",
+            {"model_spec": "model.json"},
         )
 
     assert "unknown action" in str(exc_info.value).lower()
 
 
-# Test validate_inputs rejects missing model_spec for generate_graph.
-def test_validate_inputs_missing_model_spec() -> None:
+# Test validate_parameters rejects missing model_spec for generate_graph.
+def test_validate_parameters_missing_model_spec() -> None:
     """Test validation fails when model_spec missing for generate_graph."""
     from causaliq_workflow.action import ActionValidationError
 
     action = GenerateGraphAction()
 
     with pytest.raises(ActionValidationError) as exc_info:
-        action.validate_inputs({"action": "generate_graph"})
+        action.validate_parameters("generate_graph", {})
 
     assert "model_spec" in str(exc_info.value).lower()
 
 
-# Test validate_inputs accepts valid generate_graph inputs.
-def test_validate_inputs_valid_generate_graph() -> None:
-    """Test validation passes for valid generate_graph inputs."""
+# Test validate_parameters accepts valid generate_graph parameters.
+def test_validate_parameters_valid_generate_graph() -> None:
+    """Test validation passes for valid generate_graph parameters."""
     action = GenerateGraphAction()
 
     # Should not raise
-    result = action.validate_inputs(
+    result = action.validate_parameters(
+        "generate_graph",
         {
-            "action": "generate_graph",
             "model_spec": "model.json",
             "output": "none",
             "llm_cache": "cache.db",
-        }
+        },
     )
 
     assert result is True
 
 
-# Test validate_inputs validates LLM provider.
-def test_validate_inputs_invalid_llm() -> None:
+# Test validate_parameters validates LLM provider.
+def test_validate_parameters_invalid_llm() -> None:
     """Test validation fails for invalid LLM provider."""
     from causaliq_workflow.action import ActionValidationError
 
     action = GenerateGraphAction()
 
     with pytest.raises(ActionValidationError) as exc_info:
-        action.validate_inputs(
+        action.validate_parameters(
+            "generate_graph",
             {
-                "action": "generate_graph",
                 "model_spec": "model.json",
                 "llm_model": "invalid/model",
                 "output": "none",
                 "llm_cache": "cache.db",
-            }
+            },
         )
 
     assert "provider" in str(exc_info.value).lower()
@@ -161,8 +146,8 @@ def test_run_dry_run_mode(tmp_path: Path) -> None:
     action = GenerateGraphAction()
 
     result = action.run(
-        inputs={
-            "action": "generate_graph",
+        "generate_graph",
+        {
             "model_spec": str(model_spec),
             "output": "none",
             "llm_cache": "cache.db",
@@ -185,8 +170,8 @@ def test_run_model_spec_not_found() -> None:
 
     with pytest.raises(ActionExecutionError) as exc_info:
         action.run(
-            inputs={
-                "action": "generate_graph",
+            "generate_graph",
+            {
                 "model_spec": "/nonexistent/model.json",
                 "output": "none",
                 "llm_cache": "cache.db",
@@ -232,8 +217,8 @@ def test_run_execute_mode(tmp_path: Path) -> None:
         action = GenerateGraphAction()
 
         result = action.run(
-            inputs={
-                "action": "generate_graph",
+            "generate_graph",
+            {
                 "model_spec": str(model_spec),
                 "output": "none",
                 "llm_cache": "none",  # Disable cache for simpler test
@@ -286,8 +271,8 @@ def test_run_with_output_file(tmp_path: Path) -> None:
         action = GenerateGraphAction()
 
         result = action.run(
-            inputs={
-                "action": "generate_graph",
+            "generate_graph",
+            {
                 "model_spec": str(model_spec),
                 "output": str(output_file),
                 "llm_cache": "none",
@@ -339,8 +324,8 @@ def test_run_with_directory_output(tmp_path: Path) -> None:
         action = GenerateGraphAction()
 
         result = action.run(
-            inputs={
-                "action": "generate_graph",
+            "generate_graph",
+            {
                 "model_spec": str(model_spec),
                 "output": str(output_dir),
                 "llm_cache": "none",
@@ -404,8 +389,8 @@ def test_run_directory_output_rejects_matrix_context(tmp_path: Path) -> None:
 
         with pytest.raises(ActionExecutionError) as exc_info:
             action.run(
-                inputs={
-                    "action": "generate_graph",
+                "generate_graph",
+                {
                     "model_spec": str(model_spec),
                     "output": str(output_dir),
                     "llm_cache": "none",
@@ -462,8 +447,8 @@ def test_run_directory_output_with_edge_reasoning(tmp_path: Path) -> None:
         action = GenerateGraphAction()
 
         result = action.run(
-            inputs={
-                "action": "generate_graph",
+            "generate_graph",
+            {
                 "model_spec": str(model_spec),
                 "output": str(output_dir),
                 "llm_cache": "none",
@@ -528,8 +513,8 @@ def test_run_directory_output_with_generation_metadata(tmp_path: Path) -> None:
         action = GenerateGraphAction()
 
         result = action.run(
-            inputs={
-                "action": "generate_graph",
+            "generate_graph",
+            {
                 "model_spec": str(model_spec),
                 "output": str(output_dir),
                 "llm_cache": "none",
@@ -736,8 +721,8 @@ def test_run_request_id_from_output(tmp_path: Path) -> None:
     ):
         action = GenerateGraphAction()
         action.run(
-            inputs={
-                "action": "generate_graph",
+            "generate_graph",
+            {
                 "model_spec": str(model_spec),
                 "output": str(output_file),
                 "llm_cache": "none",
@@ -760,10 +745,10 @@ def test_run_generate_graph_validation_error(tmp_path: Path) -> None:
     action = GenerateGraphAction()
 
     # Call _run_generate_graph directly with invalid temperature
-    # This bypasses validate_inputs and hits lines 268-269
+    # This bypasses validate_parameters and hits lines 268-269
     with pytest.raises(ActionExecutionError) as exc_info:
         action._run_generate_graph(
-            inputs={
+            parameters={
                 "model_spec": str(tmp_path / "model.json"),
                 "output": "none",
                 "llm_cache": "none",
@@ -790,8 +775,8 @@ def test_run_model_spec_load_error(tmp_path: Path) -> None:
 
     with pytest.raises(ActionExecutionError) as exc_info:
         action.run(
-            inputs={
-                "action": "generate_graph",
+            "generate_graph",
+            {
                 "model_spec": str(model_spec),
                 "output": "none",
                 "llm_cache": "none",
@@ -841,8 +826,8 @@ def test_run_with_llm_name_mapping(tmp_path: Path) -> None:
         action = GenerateGraphAction()
 
         result = action.run(
-            inputs={
-                "action": "generate_graph",
+            "generate_graph",
+            {
                 "model_spec": str(model_spec),
                 "output": "none",
                 "llm_cache": "none",
@@ -879,8 +864,8 @@ def test_run_cache_open_error(tmp_path: Path) -> None:
 
         with pytest.raises(ActionExecutionError) as exc_info:
             action.run(
-                inputs={
-                    "action": "generate_graph",
+                "generate_graph",
+                {
                     "model_spec": str(model_spec),
                     "output": "none",
                     "llm_cache": str(tmp_path / "cache.db"),  # Use actual path
@@ -918,8 +903,8 @@ def test_run_graph_generation_error(tmp_path: Path) -> None:
 
         with pytest.raises(ActionExecutionError) as exc_info:
             action.run(
-                inputs={
-                    "action": "generate_graph",
+                "generate_graph",
+                {
                     "model_spec": str(model_spec),
                     "output": "none",
                     "llm_cache": "none",
@@ -962,8 +947,8 @@ def test_run_cache_closed_on_error(tmp_path: Path) -> None:
 
         with pytest.raises(Exception):
             action.run(
-                inputs={
-                    "action": "generate_graph",
+                "generate_graph",
+                {
                     "model_spec": str(model_spec),
                     "output": "none",
                     "llm_cache": str(tmp_path / "cache.db"),
@@ -1035,8 +1020,8 @@ def test_populate_execution_metadata_with_full_metadata(
         action = GenerateGraphAction()
 
         action.run(
-            inputs={
-                "action": "generate_graph",
+            "generate_graph",
+            {
                 "model_spec": str(model_spec),
                 "output": "none",
                 "llm_cache": "none",
