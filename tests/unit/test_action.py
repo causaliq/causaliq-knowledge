@@ -1,6 +1,6 @@
 """Unit tests for the CausalIQ workflow action provider.
 
-Tests for GenerateGraphAction which integrates causaliq-knowledge
+Tests for KnowledgeActionProvider which integrates causaliq-knowledge
 graph generation into CausalIQ workflows.
 """
 
@@ -14,35 +14,36 @@ from causaliq_knowledge.action import (
     SUPPORTED_ACTIONS,
     ActionExecutionError,
     ActionProvider,
-    GenerateGraphAction,
+    KnowledgeActionProvider,
 )
 
 
-# Test ActionProvider is aliased to GenerateGraphAction.
+# Test ActionProvider is aliased to KnowledgeActionProvider.
 def test_action_provider_alias() -> None:
-    """Test ActionProvider is alias to GenerateGraphAction."""
-    assert ActionProvider is GenerateGraphAction
+    """Test ActionProvider is alias to KnowledgeActionProvider."""
+    assert ActionProvider is KnowledgeActionProvider
 
 
 # Test supported actions constant.
 def test_supported_actions() -> None:
     """Test SUPPORTED_ACTIONS contains expected actions."""
     assert "generate_graph" in SUPPORTED_ACTIONS
+    assert len(SUPPORTED_ACTIONS) == 1
 
 
 # Test action class attributes.
 def test_action_class_attributes() -> None:
     """Test action class has required metadata attributes."""
-    assert GenerateGraphAction.name == "causaliq-knowledge"
-    assert GenerateGraphAction.version == "0.4.0"
-    assert GenerateGraphAction.description != ""
-    assert GenerateGraphAction.author == "CausalIQ"
+    assert KnowledgeActionProvider.name == "causaliq-knowledge"
+    assert KnowledgeActionProvider.version == "0.4.0"
+    assert KnowledgeActionProvider.description != ""
+    assert KnowledgeActionProvider.author == "CausalIQ"
 
 
 # Test action has inputs specification.
 def test_action_inputs_specification() -> None:
     """Test action has input specifications defined."""
-    action = GenerateGraphAction()
+    action = KnowledgeActionProvider()
 
     assert "action" in action.inputs
     assert "model_spec" in action.inputs
@@ -56,7 +57,7 @@ def test_action_inputs_specification() -> None:
 # Test action has outputs specification.
 def test_action_outputs_specification() -> None:
     """Test action has output specifications defined."""
-    action = GenerateGraphAction()
+    action = KnowledgeActionProvider()
 
     assert "graph" in action.outputs
     assert "edge_count" in action.outputs
@@ -70,7 +71,7 @@ def test_validate_parameters_unknown_action() -> None:
     """Test validation fails for unknown action type."""
     from causaliq_workflow.action import ActionValidationError
 
-    action = GenerateGraphAction()
+    action = KnowledgeActionProvider()
 
     with pytest.raises(ActionValidationError) as exc_info:
         action.validate_parameters(
@@ -86,7 +87,7 @@ def test_validate_parameters_missing_model_spec() -> None:
     """Test validation fails when model_spec missing for generate_graph."""
     from causaliq_workflow.action import ActionValidationError
 
-    action = GenerateGraphAction()
+    action = KnowledgeActionProvider()
 
     with pytest.raises(ActionValidationError) as exc_info:
         action.validate_parameters("generate_graph", {})
@@ -97,7 +98,7 @@ def test_validate_parameters_missing_model_spec() -> None:
 # Test validate_parameters accepts valid generate_graph parameters.
 def test_validate_parameters_valid_generate_graph() -> None:
     """Test validation passes for valid generate_graph parameters."""
-    action = GenerateGraphAction()
+    action = KnowledgeActionProvider()
 
     # Should not raise
     result = action.validate_parameters(
@@ -117,7 +118,7 @@ def test_validate_parameters_invalid_llm() -> None:
     """Test validation fails for invalid LLM provider."""
     from causaliq_workflow.action import ActionValidationError
 
-    action = GenerateGraphAction()
+    action = KnowledgeActionProvider()
 
     with pytest.raises(ActionValidationError) as exc_info:
         action.validate_parameters(
@@ -143,7 +144,7 @@ def test_run_dry_run_mode(tmp_path: Path) -> None:
         '"domain": "test", "variables": [{"name": "x", "type": "binary"}]}'
     )
 
-    action = GenerateGraphAction()
+    action = KnowledgeActionProvider()
 
     result = action.run(
         "generate_graph",
@@ -166,7 +167,7 @@ def test_run_model_spec_not_found() -> None:
     """Test run fails when model_spec file doesn't exist."""
     from causaliq_workflow.action import ActionExecutionError
 
-    action = GenerateGraphAction()
+    action = KnowledgeActionProvider()
 
     with pytest.raises(ActionExecutionError) as exc_info:
         action.run(
@@ -214,7 +215,7 @@ def test_run_execute_mode(tmp_path: Path) -> None:
         mock_generator.get_stats.return_value = {"cache_hits": 0}
         mock_generator_class.return_value = mock_generator
 
-        action = GenerateGraphAction()
+        action = KnowledgeActionProvider()
 
         result = action.run(
             "generate_graph",
@@ -268,7 +269,7 @@ def test_run_with_output_file(tmp_path: Path) -> None:
         mock_generator.get_stats.return_value = {"cache_hits": 0}
         mock_generator_class.return_value = mock_generator
 
-        action = GenerateGraphAction()
+        action = KnowledgeActionProvider()
 
         result = action.run(
             "generate_graph",
@@ -321,7 +322,7 @@ def test_run_with_directory_output(tmp_path: Path) -> None:
         mock_generator.get_stats.return_value = {"cache_hits": 0}
         mock_generator_class.return_value = mock_generator
 
-        action = GenerateGraphAction()
+        action = KnowledgeActionProvider()
 
         result = action.run(
             "generate_graph",
@@ -385,7 +386,7 @@ def test_run_directory_output_rejects_matrix_context(tmp_path: Path) -> None:
         mock_generator.get_stats.return_value = {"cache_hits": 0}
         mock_generator_class.return_value = mock_generator
 
-        action = GenerateGraphAction()
+        action = KnowledgeActionProvider()
 
         with pytest.raises(ActionExecutionError) as exc_info:
             action.run(
@@ -444,7 +445,7 @@ def test_run_directory_output_with_edge_reasoning(tmp_path: Path) -> None:
         mock_generator.get_stats.return_value = {"cache_hits": 0}
         mock_generator_class.return_value = mock_generator
 
-        action = GenerateGraphAction()
+        action = KnowledgeActionProvider()
 
         result = action.run(
             "generate_graph",
@@ -510,7 +511,7 @@ def test_run_directory_output_with_generation_metadata(tmp_path: Path) -> None:
         mock_generator.get_stats.return_value = {"cache_hits": 0}
         mock_generator_class.return_value = mock_generator
 
-        action = GenerateGraphAction()
+        action = KnowledgeActionProvider()
 
         result = action.run(
             "generate_graph",
@@ -550,7 +551,7 @@ def test_graph_to_dict() -> None:
         reasoning="Test reasoning",
     )
 
-    action = GenerateGraphAction()
+    action = KnowledgeActionProvider()
     result = action._graph_to_dict(graph)
 
     assert result["variables"] == ["a", "b", "c"]
@@ -579,7 +580,7 @@ def test_map_graph_names() -> None:
 
     mapping = {"old_a": "new_a", "old_b": "new_b"}
 
-    action = GenerateGraphAction()
+    action = KnowledgeActionProvider()
     result = action._map_graph_names(graph, mapping)
 
     assert result.variables == ["new_a", "new_b"]
@@ -606,7 +607,7 @@ def test_map_graph_names_partial() -> None:
     # Only map old_a
     mapping = {"old_a": "new_a"}
 
-    action = GenerateGraphAction()
+    action = KnowledgeActionProvider()
     result = action._map_graph_names(graph, mapping)
 
     assert result.variables == ["new_a", "keep_b"]
@@ -633,7 +634,7 @@ def test_write_to_workflow_cache_no_context(tmp_path: Path) -> None:
 
     output_path = tmp_path / "workflow_cache.db"
 
-    action = GenerateGraphAction()
+    action = KnowledgeActionProvider()
     action._write_to_workflow_cache(
         output_path=output_path,
         graph=graph,
@@ -671,7 +672,7 @@ def test_write_to_workflow_cache_with_context(tmp_path: Path) -> None:
 
     output_path = tmp_path / "workflow_cache.db"
 
-    action = GenerateGraphAction()
+    action = KnowledgeActionProvider()
     action._write_to_workflow_cache(
         output_path=output_path,
         graph=graph,
@@ -719,7 +720,7 @@ def test_run_request_id_from_output(tmp_path: Path) -> None:
         "causaliq_knowledge.graph.generator.GraphGenerator",
         side_effect=capture_config,
     ):
-        action = GenerateGraphAction()
+        action = KnowledgeActionProvider()
         action.run(
             "generate_graph",
             {
@@ -742,7 +743,7 @@ def test_run_generate_graph_validation_error(tmp_path: Path) -> None:
     """Test _run_generate_graph fails when param validation fails."""
     from causaliq_workflow.action import ActionExecutionError
 
-    action = GenerateGraphAction()
+    action = KnowledgeActionProvider()
 
     # Call _run_generate_graph directly with invalid temperature
     # This bypasses validate_parameters and hits lines 268-269
@@ -771,7 +772,7 @@ def test_run_model_spec_load_error(tmp_path: Path) -> None:
     model_spec = tmp_path / "model.json"
     model_spec.write_text('{"invalid": "not a valid model spec"}')
 
-    action = GenerateGraphAction()
+    action = KnowledgeActionProvider()
 
     with pytest.raises(ActionExecutionError) as exc_info:
         action.run(
@@ -823,7 +824,7 @@ def test_run_with_llm_name_mapping(tmp_path: Path) -> None:
         mock_generator.get_stats.return_value = {"cache_hits": 0}
         mock_generator_class.return_value = mock_generator
 
-        action = GenerateGraphAction()
+        action = KnowledgeActionProvider()
 
         result = action.run(
             "generate_graph",
@@ -855,7 +856,7 @@ def test_run_cache_open_error(tmp_path: Path) -> None:
         '"domain": "test", "variables": [{"name": "x", "type": "binary"}]}'
     )
 
-    action = GenerateGraphAction()
+    action = KnowledgeActionProvider()
 
     with patch("causaliq_core.cache.TokenCache") as mock_cache_class:
         mock_cache = MagicMock()
@@ -899,7 +900,7 @@ def test_run_graph_generation_error(tmp_path: Path) -> None:
         )
         mock_generator_class.return_value = mock_generator
 
-        action = GenerateGraphAction()
+        action = KnowledgeActionProvider()
 
         with pytest.raises(ActionExecutionError) as exc_info:
             action.run(
@@ -943,7 +944,7 @@ def test_run_cache_closed_on_error(tmp_path: Path) -> None:
         )
         mock_generator_class.return_value = mock_generator
 
-        action = GenerateGraphAction()
+        action = KnowledgeActionProvider()
 
         with pytest.raises(Exception):
             action.run(
@@ -1017,7 +1018,7 @@ def test_populate_execution_metadata_with_full_metadata(
         mock_generator.get_stats.return_value = {"cache_hits": 0}
         mock_generator_class.return_value = mock_generator
 
-        action = GenerateGraphAction()
+        action = KnowledgeActionProvider()
 
         action.run(
             "generate_graph",
@@ -1042,3 +1043,122 @@ def test_populate_execution_metadata_with_full_metadata(
     assert metadata["temperature"] == 0.5
     assert metadata["finish_reason"] == "stop"
     assert metadata["llm_cost_usd"] == 0.001
+
+
+# =============================================================================
+# serialise method tests
+# =============================================================================
+
+
+# Test serialise returns graphml string for graph data.
+def test_serialise_returns_graphml() -> None:
+    """Test serialise returns GraphML string."""
+    from causaliq_knowledge.graph.response import GeneratedGraph, ProposedEdge
+
+    graph = GeneratedGraph(
+        edges=[ProposedEdge(source="A", target="B", confidence=0.8)],
+        variables=["A", "B"],
+        reasoning="Test",
+    )
+
+    action = KnowledgeActionProvider()
+
+    result = action.serialise("graph", graph)
+
+    assert isinstance(result, str)
+    assert "<graphml" in result
+    assert 'id="A"' in result
+    assert 'id="B"' in result
+
+
+# Test serialise raises NotImplementedError for unsupported data_type.
+def test_serialise_unsupported_type() -> None:
+    """Test serialise raises NotImplementedError for unknown type."""
+    action = KnowledgeActionProvider()
+
+    with pytest.raises(NotImplementedError) as exc_info:
+        action.serialise("unknown", "data")
+
+    assert "does not support serialising" in str(exc_info.value)
+
+
+# Test serialise raises ValueError for wrong data type.
+def test_serialise_wrong_data_type() -> None:
+    """Test serialise raises ValueError when data is not GeneratedGraph."""
+    action = KnowledgeActionProvider()
+
+    with pytest.raises(ValueError) as exc_info:
+        action.serialise("graph", "not a graph")
+
+    assert "expected generatedgraph" in str(exc_info.value).lower()
+
+
+# =============================================================================
+# deserialise method tests
+# =============================================================================
+
+
+# Test deserialise returns GeneratedGraph from graphml string.
+def test_deserialise_returns_graph() -> None:
+    """Test deserialise returns GeneratedGraph from GraphML."""
+    from causaliq_knowledge.graph.response import GeneratedGraph
+
+    graphml_content = """<?xml version="1.0" encoding="utf-8"?>
+    <graphml xmlns="http://graphml.graphdrawing.org/xmlns">
+        <graph id="G" edgedefault="directed">
+            <node id="A"/>
+            <node id="B"/>
+            <edge source="A" target="B"/>
+        </graph>
+    </graphml>"""
+
+    action = KnowledgeActionProvider()
+
+    result = action.deserialise("graph", graphml_content)
+
+    assert isinstance(result, GeneratedGraph)
+    assert set(result.variables) == {"A", "B"}
+    assert len(result.edges) == 1
+
+
+# Test deserialise raises NotImplementedError for unsupported data_type.
+def test_deserialise_unsupported_type() -> None:
+    """Test deserialise raises NotImplementedError for unknown type."""
+    action = KnowledgeActionProvider()
+
+    with pytest.raises(NotImplementedError) as exc_info:
+        action.deserialise("unknown", "content")
+
+    assert "does not support deserialising" in str(exc_info.value)
+
+
+# Test serialise then deserialise roundtrip preserves graph structure.
+def test_serialise_deserialise_roundtrip() -> None:
+    """Test serialise then deserialise preserves graph structure."""
+    from causaliq_knowledge.graph.response import GeneratedGraph, ProposedEdge
+
+    # Create original graph
+    original_graph = GeneratedGraph(
+        edges=[
+            ProposedEdge(source="A", target="B", confidence=0.9),
+            ProposedEdge(source="B", target="C", confidence=0.8),
+        ],
+        variables=["A", "B", "C"],
+        reasoning="Original graph",
+    )
+
+    action = KnowledgeActionProvider()
+
+    # Serialise to string
+    exported = action.serialise("graph", original_graph)
+
+    # Deserialise from string
+    restored_graph = action.deserialise("graph", exported)
+
+    # Verify structure preserved
+    assert set(restored_graph.variables) == set(original_graph.variables)
+    assert len(restored_graph.edges) == len(original_graph.edges)
+
+    original_edge_pairs = {(e.source, e.target) for e in original_graph.edges}
+    restored_edge_pairs = {(e.source, e.target) for e in restored_graph.edges}
+    assert restored_edge_pairs == original_edge_pairs

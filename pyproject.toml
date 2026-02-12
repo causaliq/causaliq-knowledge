@@ -38,7 +38,7 @@ dependencies = [
 
 [project.optional-dependencies]
 dev = [
-    "causaliq-core>=0.4.0.dev2",
+    "causaliq-core>=0.4.0.dev3",
     "pytest>=7.0.0",
     "pytest-cov>=4.0.0",
     "pytest-mock>=3.10.0",
@@ -52,7 +52,7 @@ dev = [
     "twine>=4.0.0",
 ]
 test = [
-    "causaliq-core>=0.4.0.dev2",
+    "causaliq-core>=0.4.0.dev3",
     "causaliq-workflow>=0.1.1.dev7",
     "pytest>=7.0.0",
     "pytest-cov>=4.0.0",

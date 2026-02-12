@@ -30,15 +30,15 @@ def test_workflow_discovers_causaliq_knowledge_action() -> None:
 
 # Test entry point loads correct action class.
 def test_workflow_loads_correct_action_class() -> None:
-    """Test that loaded action class is GenerateGraphAction."""
+    """Test that loaded action class is KnowledgeActionProvider."""
     from causaliq_workflow.registry import ActionRegistry
 
-    from causaliq_knowledge.action import GenerateGraphAction
+    from causaliq_knowledge.action import KnowledgeActionProvider
 
     registry = ActionRegistry()
     action_class = registry.get_action_class("causaliq-knowledge")
 
-    assert action_class is GenerateGraphAction
+    assert action_class is KnowledgeActionProvider
 
 
 # Test workflow validates causaliq-knowledge step.

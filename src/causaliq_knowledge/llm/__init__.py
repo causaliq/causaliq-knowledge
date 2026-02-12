@@ -18,13 +18,6 @@ from causaliq_knowledge.llm.groq_client import GroqClient, GroqConfig
 from causaliq_knowledge.llm.mistral_client import MistralClient, MistralConfig
 from causaliq_knowledge.llm.ollama_client import OllamaClient, OllamaConfig
 from causaliq_knowledge.llm.openai_client import OpenAIClient, OpenAIConfig
-from causaliq_knowledge.llm.prompts import EdgeQueryPrompt, parse_edge_response
-from causaliq_knowledge.llm.provider import (
-    CONSENSUS_STRATEGIES,
-    LLMKnowledge,
-    highest_confidence,
-    weighted_vote,
-)
 
 __all__ = [
     # Abstract base
@@ -34,12 +27,9 @@ __all__ = [
     # Anthropic
     "AnthropicClient",
     "AnthropicConfig",
-    # Consensus
-    "CONSENSUS_STRATEGIES",
     # DeepSeek
     "DeepSeekClient",
     "DeepSeekConfig",
-    "EdgeQueryPrompt",
     # Gemini
     "GeminiClient",
     "GeminiConfig",
@@ -55,9 +45,4 @@ __all__ = [
     # OpenAI
     "OpenAIClient",
     "OpenAIConfig",
-    # Provider
-    "LLMKnowledge",
-    "highest_confidence",
-    "parse_edge_response",
-    "weighted_vote",
 ]

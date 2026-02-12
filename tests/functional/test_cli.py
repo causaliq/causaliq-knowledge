@@ -16,17 +16,8 @@ def test_cli_no_args_shows_usage():
 
     # Click shows usage info when no command provided
     assert "Usage:" in result.output
-    assert "query" in result.output
     assert "list_models" in result.output
-
-
-# Test query command requires node arguments.
-def test_cli_query_requires_nodes():
-    runner = CliRunner()
-    result = runner.invoke(cli, ["query"])
-
-    assert result.exit_code != 0
-    assert "Missing option" in result.output
+    assert "generate_graph" in result.output
 
 
 # Test list_models command lists supported LLMs.

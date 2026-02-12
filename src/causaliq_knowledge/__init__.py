@@ -3,8 +3,6 @@ causaliq-knowledge: LLM and human knowledge for causal discovery.
 """
 
 from causaliq_knowledge.action import ActionProvider
-from causaliq_knowledge.base import KnowledgeProvider
-from causaliq_knowledge.models import EdgeDirection, EdgeKnowledge
 
 __version__ = "0.4.0"
 __author__ = "CausalIQ"
@@ -25,12 +23,6 @@ __all__ = [
     "__author__",
     "__email__",
     "VERSION",
-    # Core models
-    "EdgeKnowledge",
-    "EdgeDirection",
-    # Abstract interface
-    "KnowledgeProvider",
     # Workflow action provider (auto-discovered by causaliq-workflow)
     "ActionProvider",
-    # Note: Import LLMKnowledge from causaliq_knowledge.llm
 ]

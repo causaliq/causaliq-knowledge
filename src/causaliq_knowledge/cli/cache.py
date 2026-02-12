@@ -31,10 +31,13 @@ import click
     help="Output result as JSON.",
 )
 def cache_stats(cache_path: str, output_json: bool) -> None:
-    """Show cache statistics.
+    """Show LLM cache statistics.
 
     Shows entry counts, token dictionary size, cache hit statistics,
-    and for LLM caches: breakdown by model with token usage and costs.
+    and breakdown by model with token usage and costs.
+
+    The LLM cache stores responses from LLM API calls to avoid
+    redundant queries and reduce costs.
 
     Examples:
 
@@ -214,13 +217,14 @@ def cache_stats(cache_path: str, output_json: bool) -> None:
     help="Output result as JSON.",
 )
 def export_cache(cache_path: str, output_dir: str, output_json: bool) -> None:
-    """Export cache entries to human-readable files.
+    """Export LLM cache entries to human-readable files.
+
+    Exports cached LLM API responses to JSON files for backup,
+    sharing, or inspection. The LLM cache stores responses to
+    avoid redundant API calls.
 
     If output path ends with .zip, entries are exported to a zip archive.
     Otherwise, entries are exported to a directory.
-
-    Files are named using a human-readable format:
-        {model}_{node_a}_{node_b}_edge_{hash}.json
 
     Examples:
 
@@ -392,7 +396,10 @@ def _is_graph_entry(data: Any) -> bool:
     help="Output result as JSON.",
 )
 def import_cache(cache_path: str, input_path: str, output_json: bool) -> None:
-    """Import cache entries from files.
+    """Import LLM cache entries from files.
+
+    Imports previously exported LLM API responses back into a cache.
+    Useful for restoring backups or sharing cached responses.
 
     Entry types are auto-detected from JSON structure:
     - LLM entries: contain cache_key.model, cache_key.messages, response

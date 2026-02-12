@@ -39,7 +39,7 @@ __all__ = [
     "BaseActionProvider",
     "WorkflowContext",
     "WorkflowLogger",
-    "GenerateGraphAction",
+    "KnowledgeActionProvider",
     "ActionProvider",
     "SUPPORTED_ACTIONS",
 ]
@@ -111,8 +111,8 @@ def _create_action_inputs() -> Dict[str, Any]:
     }
 
 
-class GenerateGraphAction(BaseActionProvider):
-    """Workflow action provider for generating causal graphs from model specs.
+class KnowledgeActionProvider(BaseActionProvider):
+    """Workflow action provider for causaliq-knowledge integration.
 
     This action integrates causaliq-knowledge graph generation into
     CausalIQ workflows, allowing LLM-based graph generation to be used
@@ -660,7 +660,109 @@ class GenerateGraphAction(BaseActionProvider):
             metadata=graph.metadata,
         )
 
+    def serialise(
+        self,
+        data_type: str,
+        data: Any,
+    ) -> str:
+        """Serialise data to GraphML format string.
+
+        Converts a GeneratedGraph to GraphML format.
+
+        Args:
+            data_type: Type of data (must be 'graph').
+            data: The GeneratedGraph object to serialise.
+
+        Returns:
+            GraphML string representation of the graph.
+
+        Raises:
+            NotImplementedError: If the data type is not supported.
+            ValueError: If data is not a GeneratedGraph.
+        """
+        from io import StringIO
+
+        from causaliq_core.graph.io import graphml
+
+        from causaliq_knowledge.graph.response import GeneratedGraph
+
+        # Validate data type
+        if data_type != "graph":
+            raise NotImplementedError(
+                f"Provider '{self.name}' does not support serialising "
+                f"data_type '{data_type}'. Supported: 'graph'"
+            )
+
+        # Validate data is a GeneratedGraph
+        if not isinstance(data, GeneratedGraph):
+            raise ValueError(
+                f"Expected GeneratedGraph, got {type(data).__name__}"
+            )
+
+        # Convert to SDG for graphml export
+        from causaliq_core.graph import SDG
+
+        edges = [(e.source, "->", e.target) for e in data.edges]
+        sdg = SDG(list(data.variables), edges)
+
+        # Write to StringIO
+        buffer = StringIO()
+        graphml.write(sdg, buffer)
+        buffer.seek(0)
+        return buffer.getvalue()
+
+    def deserialise(
+        self,
+        data_type: str,
+        content: str,
+    ) -> "GeneratedGraph":
+        """Deserialise data from GraphML format string.
+
+        Converts GraphML format to a GeneratedGraph.
+
+        Args:
+            data_type: Type of data (must be 'graph').
+            content: GraphML string representation of the data.
+
+        Returns:
+            The deserialised GeneratedGraph object.
+
+        Raises:
+            NotImplementedError: If the data type is not supported.
+        """
+        from io import StringIO
+
+        from causaliq_core.graph.io import graphml
+
+        from causaliq_knowledge.graph.response import (
+            GeneratedGraph,
+            ProposedEdge,
+        )
+
+        # Validate data type
+        if data_type != "graph":
+            raise NotImplementedError(
+                f"Provider '{self.name}' does not support deserialising "
+                f"data_type '{data_type}'. Supported: 'graph'"
+            )
+
+        # Read graph from StringIO
+        sdg = graphml.read(StringIO(content))
+
+        # Convert SDG to GeneratedGraph
+        edges = [
+            ProposedEdge(source=src, target=tgt, confidence=0.5)
+            for (src, tgt) in sdg.edges.keys()
+        ]
+        graph = GeneratedGraph(
+            edges=edges,
+            variables=list(sdg.nodes),
+            reasoning="Deserialised from GraphML",
+        )
+
+        return graph
+
 
 # Export as ActionProvider for auto-discovery by causaliq-workflow
 # This name is required by the auto-discovery convention
-ActionProvider = GenerateGraphAction
+ActionProvider = KnowledgeActionProvider

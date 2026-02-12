@@ -2,7 +2,7 @@
 
 This package provides the CLI implementation split into logical modules:
 
-- main: Core CLI entry point and query command
+- main: Core CLI entry point
 - cache: Cache management commands (stats, export, import)
 - generate: Graph generation commands
 - models: Model listing command
