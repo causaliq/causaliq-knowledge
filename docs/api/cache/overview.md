@@ -3,10 +3,11 @@
 SQLite-backed caching infrastructure with shared token dictionary for
 efficient storage.
 
-!!! note "Future Migration"
-    This module provides core caching capability that will migrate to 
-    `causaliq-core`. LLM-specific code ([LLMEntryEncoder](../llm/cache.md)) 
-    stays in `causaliq-knowledge`.
+!!! info "Migrated to causaliq-core"
+    The core cache classes (`TokenCache`, `EntryEncoder`, `JsonEncoder`) have 
+    been migrated to `causaliq-core`. Import them from `causaliq_core.cache`.
+    LLM-specific code ([LLMEntryEncoder](../llm/cache.md)) remains in 
+    `causaliq-knowledge`.
 
 ## Overview
 
@@ -41,7 +42,7 @@ See [Caching Architecture](../../architecture/caching.md) for full design detail
 ### Basic In-Memory Cache
 
 ```python
-from causaliq_knowledge.cache import TokenCache
+from causaliq_core.cache import TokenCache
 
 # In-memory cache (fast, non-persistent)
 with TokenCache(":memory:") as cache:
@@ -52,7 +53,7 @@ with TokenCache(":memory:") as cache:
 ### File-Based Persistent Cache
 
 ```python
-from causaliq_knowledge.cache import TokenCache
+from causaliq_core.cache import TokenCache
 
 # File-based cache (persistent)
 with TokenCache("my_cache.db") as cache:
@@ -64,7 +65,7 @@ with TokenCache("my_cache.db") as cache:
 ### Transaction Support
 
 ```python
-from causaliq_knowledge.cache import TokenCache
+from causaliq_core.cache import TokenCache
 
 with TokenCache(":memory:") as cache:
     # Transactions auto-commit on success, rollback on exception
@@ -78,7 +79,7 @@ The cache maintains a shared token dictionary for cross-entry compression.
 Encoders use this to convert strings to compact integer IDs:
 
 ```python
-from causaliq_knowledge.cache import TokenCache
+from causaliq_core.cache import TokenCache
 
 with TokenCache(":memory:") as cache:
     # Get or create token IDs (used by encoders)
@@ -95,7 +96,7 @@ with TokenCache(":memory:") as cache:
 Cache entries are stored as binary blobs with a hash key and entry type:
 
 ```python
-from causaliq_knowledge.cache import TokenCache
+from causaliq_core.cache import TokenCache
 
 with TokenCache(":memory:") as cache:
     # Store an entry
@@ -120,8 +121,8 @@ with TokenCache(":memory:") as cache:
 Register an encoder to automatically encode/decode entries:
 
 ```python
-from causaliq_knowledge.cache import TokenCache
-from causaliq_knowledge.cache.encoders import JsonEncoder
+from causaliq_core.cache import TokenCache
+from causaliq_core.cache.encoders import JsonEncoder
 
 with TokenCache(":memory:") as cache:
     # Register encoder for "json" entry type
@@ -149,8 +150,8 @@ Import entries from files into a cache:
 
 ```python
 from pathlib import Path
-from causaliq_knowledge.cache import TokenCache
-from causaliq_knowledge.cache.encoders import JsonEncoder
+from causaliq_core.cache import TokenCache
+from causaliq_core.cache.encoders import JsonEncoder
 
 # Export entries to directory
 with TokenCache("my_cache.db") as cache:
@@ -187,7 +188,7 @@ with TokenCache("new_cache.db") as cache:
 
 ## API Reference
 
-::: causaliq_knowledge.cache.TokenCache
+::: causaliq_core.cache.TokenCache
     options:
       show_root_heading: true
       show_source: false
@@ -227,8 +228,8 @@ requests, embeddings, documents).
 ### Creating a Custom Encoder
 
 ```python
-from causaliq_knowledge.cache import TokenCache
-from causaliq_knowledge.cache.encoders import EntryEncoder
+from causaliq_core.cache import TokenCache
+from causaliq_core.cache.encoders import EntryEncoder
 
 
 class MyEncoder(EntryEncoder):
@@ -255,7 +256,7 @@ class MyEncoder(EntryEncoder):
 
 ### Encoder Interface
 
-::: causaliq_knowledge.cache.encoders.EntryEncoder
+::: causaliq_core.cache.encoders.EntryEncoder
     options:
       show_root_heading: true
       show_source: false

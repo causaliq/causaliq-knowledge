@@ -14,7 +14,7 @@ from causaliq_knowledge.graph import (
     PromptDetail,
     OutputFormat,
 )
-from causaliq_knowledge.cache import TokenCache
+from causaliq_core.cache import TokenCache
 ```
 
 ## Overview
@@ -104,7 +104,7 @@ config = GraphGeneratorConfig(
 
 ```python
 from causaliq_knowledge.graph import GraphGenerator, GraphGeneratorConfig
-from causaliq_knowledge.cache import TokenCache
+from causaliq_core.cache import TokenCache
 
 # Basic creation with just a model
 generator = GraphGenerator(model="groq/llama-3.1-8b-instant")
@@ -225,7 +225,7 @@ GraphGenerator integrates with `TokenCache` for response caching:
 
 ```python
 from causaliq_knowledge.graph import GraphGenerator
-from causaliq_knowledge.cache import TokenCache
+from causaliq_core.cache import TokenCache
 
 # Create cache and generator
 cache = TokenCache(db_path="graph_cache.db")
@@ -349,7 +349,7 @@ from causaliq_knowledge.graph import (
     PromptDetail,
     OutputFormat,
 )
-from causaliq_knowledge.cache import TokenCache
+from causaliq_core.cache import TokenCache
 
 
 def main():

@@ -3,10 +3,10 @@
 LLM-specific cache encoder and data structures for storing and retrieving
 LLM requests and responses with rich metadata.
 
-!!! note "Package Separation"
+!!! info "Package Separation"
     This module stays in `causaliq-knowledge` as it contains LLM-specific logic.
-    The core cache infrastructure ([TokenCache](../cache/overview.md), 
-    [JsonEncoder](../cache/encoders/json_encoder.md)) will migrate to `causaliq-core`.
+    The core cache infrastructure (`TokenCache`, `EntryEncoder`, `JsonEncoder`) 
+    is in `causaliq-core`. Import from `causaliq_core.cache`.
 
 ## Overview
 
@@ -22,13 +22,13 @@ The LLM cache module provides:
 
 The LLM cache separates concerns:
 
-| Component | Package | Migration |
-|-----------|---------|-----------|
-| `TokenCache` | `causaliq_knowledge.cache` | → `causaliq-core` |
-| `EntryEncoder` | `causaliq_knowledge.cache.encoders` | → `causaliq-core` |
-| `JsonEncoder` | `causaliq_knowledge.cache.encoders` | → `causaliq-core` |
-| `LLMEntryEncoder` | `causaliq_knowledge.llm.cache` | Stays here |
-| `LLMCacheEntry` | `causaliq_knowledge.llm.cache` | Stays here |
+| Component | Package |
+|-----------|---------|  
+| `TokenCache` | `causaliq_core.cache` |
+| `EntryEncoder` | `causaliq_core.cache.encoders` |
+| `JsonEncoder` | `causaliq_core.cache.encoders` |
+| `LLMEntryEncoder` | `causaliq_knowledge.llm.cache` |
+| `LLMCacheEntry` | `causaliq_knowledge.llm.cache` |
 
 This allows the base cache to be reused across projects while keeping
 LLM-specific logic in the appropriate package.
@@ -62,7 +62,7 @@ entry = LLMCacheEntry.create(
 ### Encoding and Storing Entries
 
 ```python
-from causaliq_knowledge.cache import TokenCache
+from causaliq_core.cache import TokenCache
 from causaliq_knowledge.llm.cache import LLMCacheEntry, LLMEntryEncoder
 
 with TokenCache(":memory:") as cache:
@@ -86,7 +86,7 @@ with TokenCache(":memory:") as cache:
 ### Retrieving and Decoding Entries
 
 ```python
-from causaliq_knowledge.cache import TokenCache
+from causaliq_core.cache import TokenCache
 from causaliq_knowledge.llm.cache import LLMEntryEncoder
 
 with TokenCache("cache.db") as cache:
@@ -131,7 +131,7 @@ restored = encoder.import_entry(Path("entry.json"))
 Register the encoder for automatic encoding/decoding:
 
 ```python
-from causaliq_knowledge.cache import TokenCache
+from causaliq_core.cache import TokenCache
 from causaliq_knowledge.llm.cache import LLMCacheEntry, LLMEntryEncoder
 
 with TokenCache(":memory:") as cache:
@@ -157,7 +157,7 @@ with TokenCache(":memory:") as cache:
 The recommended way to use caching is via `BaseLLMClient.cached_completion()`:
 
 ```python
-from causaliq_knowledge.cache import TokenCache
+from causaliq_core.cache import TokenCache
 from causaliq_knowledge.llm import GroqClient, LLMConfig
 
 with TokenCache("llm_cache.db") as cache:
@@ -188,7 +188,7 @@ Load cached responses from JSON files for testing or migration:
 
 ```python
 from pathlib import Path
-from causaliq_knowledge.cache import TokenCache
+from causaliq_core.cache import TokenCache
 from causaliq_knowledge.llm.cache import LLMEntryEncoder
 
 with TokenCache("llm_cache.db") as cache:

@@ -124,6 +124,7 @@ Models must include a provider prefix:
 ```yaml
 description: "Compare graph generation across LLM providers"
 id: "model-comparison"
+workflow_cache: "results/{{id}}_cache.db"
 
 matrix:
   model:
@@ -137,18 +138,19 @@ steps:
     with:
       action: "generate_graph"
       model_spec: "models/cancer.json"
-      output: "results/{{model}}/graph.json"
-      llm_cache: "cache/{{model}}.db"
+      llm_cache: "cache/llm_cache.db"
       llm_model: "{{model}}"
+      # Results written to workflow_cache with key: {model}
 ```
 
-This generates 3 graphs, one for each model, in separate directories.
+This generates 3 graphs, one for each model, stored in the Workflow Cache.
 
 ### Comparing Prompt Detail Levels
 
 ```yaml
 description: "Compare prompt detail levels"
 id: "detail-comparison"
+workflow_cache: "results/{{id}}_cache.db"
 
 matrix:
   detail:
@@ -162,8 +164,7 @@ steps:
     with:
       action: "generate_graph"
       model_spec: "models/asia.json"
-      output: "results/{{detail}}/graph.json"
-      llm_cache: "cache/asia.db"
+      llm_cache: "cache/asia_llm.db"
       llm_model: "groq/llama-3.1-8b-instant"
       prompt_detail: "{{detail}}"
 ```
@@ -173,6 +174,7 @@ steps:
 ```yaml
 description: "Generate graphs for benchmark networks"
 id: "benchmark-analysis"
+workflow_cache: "results/{{id}}_cache.db"
 
 matrix:
   network:
@@ -187,8 +189,7 @@ steps:
     with:
       action: "generate_graph"
       model_spec: "models/{{network}}/{{network}}.json"
-      output: "results/{{network}}/graph.json"
-      llm_cache: "cache/{{network}}.db"
+      llm_cache: "cache/{{network}}_llm.db"
 ```
 
 ### Full Comparison Matrix
@@ -196,6 +197,7 @@ steps:
 ```yaml
 description: "Full model × detail × network comparison"
 id: "full-comparison"
+workflow_cache: "results/{{id}}_cache.db"
 
 matrix:
   network:
@@ -214,13 +216,13 @@ steps:
     with:
       action: "generate_graph"
       model_spec: "models/{{network}}.json"
-      output: "results/{{network}}/{{model}}/{{detail}}/graph.json"
-      llm_cache: "cache/{{network}}_{{model}}.db"
+      llm_cache: "cache/llm_cache.db"
       llm_model: "{{model}}"
       prompt_detail: "{{detail}}"
 ```
 
-This generates 8 graphs (2 networks × 2 models × 2 detail levels).
+This generates 8 graphs (2 networks × 2 models × 2 detail levels),
+all stored in a single Workflow Cache with matrix values as keys.
 
 ## Action Output
 

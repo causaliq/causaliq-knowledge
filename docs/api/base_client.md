@@ -65,7 +65,7 @@ result2 = query_llm(gemini, "What is 2+2?")
 Enable caching to avoid redundant API calls:
 
 ```python
-from causaliq_knowledge.cache import TokenCache
+from causaliq_core.cache import TokenCache
 from causaliq_knowledge.llm import GroqClient, LLMConfig
 
 # Create a persistent cache
