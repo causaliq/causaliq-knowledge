@@ -21,7 +21,7 @@ MODELS_DIR = Path(__file__).parent.parent / "data" / "functional" / "models"
 def test_load_simple_chain() -> None:
     spec = NetworkContext.load(MODELS_DIR / "simple_chain.json")
 
-    assert spec.dataset_id == "simple_chain"
+    assert spec.network == "simple_chain"
     assert spec.domain == "test_domain"
     assert len(spec.variables) == 3
 
@@ -63,7 +63,7 @@ def test_simple_chain_ground_truth() -> None:
 def test_load_collider() -> None:
     spec = NetworkContext.load(MODELS_DIR / "collider.json")
 
-    assert spec.dataset_id == "collider"
+    assert spec.network == "collider"
     assert spec.domain == "epidemiology"
     assert len(spec.variables) == 3
 
@@ -137,7 +137,7 @@ def test_collider_v_structures() -> None:
 def test_load_minimal() -> None:
     spec = NetworkContext.load(MODELS_DIR / "minimal.json")
 
-    assert spec.dataset_id == "minimal"
+    assert spec.network == "minimal"
     assert spec.domain == "testing"
     assert len(spec.variables) == 2
 
@@ -181,4 +181,127 @@ def test_validate_minimal_warns_no_states() -> None:
 
     assert spec is not None
     # Continuous variables don't need states, so no warnings
+    assert warnings == []
+
+
+# --- Comprehensive model tests ---
+
+
+# Test loading comprehensive.json returns valid NetworkContext.
+def test_load_comprehensive() -> None:
+    spec = NetworkContext.load(MODELS_DIR / "comprehensive.json")
+
+    assert spec.network == "comprehensive_test"
+    assert spec.domain == "epidemiology_screening"
+    assert len(spec.variables) == 5
+
+
+# Test comprehensive model has all optional fields populated.
+def test_comprehensive_all_fields_present() -> None:
+    spec = NetworkContext.load(MODELS_DIR / "comprehensive.json")
+
+    assert spec.provenance is not None
+    assert spec.llm_guidance is not None
+    assert spec.prompt_details is not None
+    assert spec.constraints is not None
+    assert spec.causal_principles is not None
+    assert spec.ground_truth is not None
+    assert spec.purpose is not None
+
+
+# Test comprehensive provenance has all fields.
+def test_comprehensive_provenance() -> None:
+    spec = NetworkContext.load(MODELS_DIR / "comprehensive.json")
+
+    assert spec.provenance.source_network == "synthetic"
+    assert spec.provenance.source_reference == "TestFixture2024"
+    assert spec.provenance.source_url == "https://example.com/test"
+
+
+# Test comprehensive LLM guidance is loaded.
+def test_comprehensive_llm_guidance() -> None:
+    spec = NetworkContext.load(MODELS_DIR / "comprehensive.json")
+
+    assert len(spec.llm_guidance.usage_notes) == 3
+    assert len(spec.llm_guidance.do_not_provide) == 2
+
+
+# Test comprehensive prompt_details for all levels.
+def test_comprehensive_prompt_details() -> None:
+    spec = NetworkContext.load(MODELS_DIR / "comprehensive.json")
+
+    assert "name" in spec.prompt_details.minimal.include_fields
+    assert "short_description" in spec.prompt_details.standard.include_fields
+    assert "extended_description" in spec.prompt_details.rich.include_fields
+    assert "conditional_rates" in spec.prompt_details.rich.include_fields
+
+
+# Test comprehensive variable roles are correctly parsed.
+def test_comprehensive_variable_roles() -> None:
+    spec = NetworkContext.load(MODELS_DIR / "comprehensive.json")
+
+    exposure = spec.get_variable("Exposure")
+    assert exposure is not None
+    assert exposure.role == VariableRole.EXOGENOUS
+
+    disease = spec.get_variable("Disease")
+    assert disease is not None
+    assert disease.role == VariableRole.ENDOGENOUS
+
+
+# Test comprehensive constraints are loaded.
+def test_comprehensive_constraints() -> None:
+    spec = NetworkContext.load(MODELS_DIR / "comprehensive.json")
+
+    assert len(spec.constraints.forbidden_edges) == 10
+    assert len(spec.constraints.partial_order) == 4
+    assert "exposure" in spec.constraints.tiers
+    assert "disease" in spec.constraints.tiers
+
+
+# Test comprehensive causal principles are loaded.
+def test_comprehensive_causal_principles() -> None:
+    spec = NetworkContext.load(MODELS_DIR / "comprehensive.json")
+
+    assert len(spec.causal_principles) == 3
+    principles_ids = [p.id for p in spec.causal_principles]
+    assert "collider_at_disease" in principles_ids
+
+
+# Test comprehensive ground truth is loaded.
+def test_comprehensive_ground_truth() -> None:
+    spec = NetworkContext.load(MODELS_DIR / "comprehensive.json")
+
+    assert len(spec.ground_truth.edges) == 4
+    assert ["Exposure", "Disease"] in spec.ground_truth.edges
+    assert ["Disease", "Symptom"] in spec.ground_truth.edges
+
+
+# Test comprehensive v-structures are loaded.
+def test_comprehensive_v_structures() -> None:
+    spec = NetworkContext.load(MODELS_DIR / "comprehensive.json")
+
+    assert len(spec.ground_truth.v_structures) == 1
+    v = spec.ground_truth.v_structures[0]
+    assert "Exposure" in v["canonical"]
+    assert "Disease" in v["canonical"]
+
+
+# Test comprehensive llm_name mapping.
+def test_comprehensive_llm_to_name_mapping() -> None:
+    spec = NetworkContext.load(MODELS_DIR / "comprehensive.json")
+
+    mapping = spec.get_llm_to_name_mapping()
+    assert mapping["environmental_level"] == "Exposure"
+    assert mapping["disease_status"] == "Disease"
+    assert mapping["symptom_presence"] == "Symptom"
+
+
+# Test comprehensive load_and_validate returns no warnings.
+def test_validate_comprehensive_no_warnings() -> None:
+    spec, warnings = NetworkContext.load_and_validate(
+        MODELS_DIR / "comprehensive.json"
+    )
+
+    assert spec is not None
     assert warnings == []

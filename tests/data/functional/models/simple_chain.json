@@ -1,6 +1,6 @@
 {
     "schema_version": "2.0",
-    "dataset_id": "simple_chain",
+    "network": "simple_chain",
     "domain": "test_domain",
     "purpose": "Simple A -> B -> C chain for testing",
     "variables": [

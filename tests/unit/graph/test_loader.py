@@ -21,7 +21,7 @@ from causaliq_knowledge.graph.models import (
 def test_load_valid_json(tmp_path: Path) -> None:
     data = {
         "schema_version": "2.0",
-        "dataset_id": "test",
+        "network": "test",
         "domain": "test_domain",
         "variables": [
             {"name": "a", "type": "binary", "states": ["no", "yes"]},
@@ -34,31 +34,9 @@ def test_load_valid_json(tmp_path: Path) -> None:
     spec = NetworkContext.load(json_file)
 
     assert isinstance(spec, NetworkContext)
-    assert spec.dataset_id == "test"
+    assert spec.network == "test"
     assert spec.domain == "test_domain"
     assert len(spec.variables) == 2
-
-
-# Test loading the actual cancer model specification.
-def test_load_cancer_model() -> None:
-    cancer_path = (
-        Path(__file__).parent.parent.parent.parent
-        / "research"
-        / "models"
-        / "cancer"
-        / "cancer.json"
-    )
-
-    if not cancer_path.exists():
-        pytest.skip("Cancer model file not found")
-
-    spec = NetworkContext.load(cancer_path)
-
-    assert spec.dataset_id == "cancer"
-    assert spec.domain == "pulmonary_oncology_screening"
-    assert len(spec.variables) >= 5
-    assert spec.prompt_details is not None
-    assert spec.provenance is not None
 
 
 # Test loading non-existent file raises error.
@@ -96,7 +74,7 @@ def test_load_os_error(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:
     json_file = tmp_path / "test.json"
-    json_file.write_text('{"dataset_id": "test", "domain": "test"}')
+    json_file.write_text('{"network": "test", "domain": "test"}')
 
     def mock_open(*args, **kwargs):
         raise OSError("Permission denied")
@@ -111,7 +89,7 @@ def test_load_os_error(
 
 # Test loading JSON missing required fields raises error.
 def test_load_missing_required_fields(tmp_path: Path) -> None:
-    data = {"schema_version": "2.0"}  # Missing dataset_id and domain
+    data = {"schema_version": "2.0"}  # Missing network and domain
     json_file = tmp_path / "incomplete.json"
     json_file.write_text(json.dumps(data))
 
@@ -127,19 +105,19 @@ def test_load_missing_required_fields(tmp_path: Path) -> None:
 # Test creating spec from minimal dict.
 def test_from_dict_minimal() -> None:
     data = {
-        "dataset_id": "test",
+        "network": "test",
         "domain": "test_domain",
     }
     spec = NetworkContext.from_dict(data)
 
-    assert spec.dataset_id == "test"
+    assert spec.network == "test"
     assert spec.domain == "test_domain"
 
 
 # Test creating spec with variables from dict.
 def test_from_dict_with_variables() -> None:
     data = {
-        "dataset_id": "test",
+        "network": "test",
         "domain": "test_domain",
         "variables": [
             {
@@ -170,7 +148,7 @@ def test_from_dict_missing_required() -> None:
 # Test from_dict raises error for invalid variable.
 def test_from_dict_invalid_variable() -> None:
     data = {
-        "dataset_id": "test",
+        "network": "test",
         "domain": "test_domain",
         "variables": [{"name": "a"}],  # Missing type
     }
@@ -184,7 +162,7 @@ def test_from_dict_invalid_variable() -> None:
 
 # Test validation fails for empty variables.
 def test_validate_empty_variables() -> None:
-    spec = NetworkContext(dataset_id="test", domain="test")
+    spec = NetworkContext(network="test", domain="test")
 
     with pytest.raises(NetworkLoadError) as exc_info:
         spec.validate_variables()
@@ -195,7 +173,7 @@ def test_validate_empty_variables() -> None:
 # Test validation fails for duplicate variable names.
 def test_validate_duplicate_names() -> None:
     spec = NetworkContext(
-        dataset_id="test",
+        network="test",
         domain="test",
         variables=[
             VariableSpec(name="a", type="binary"),
@@ -212,7 +190,7 @@ def test_validate_duplicate_names() -> None:
 # Test validation warns about missing states for discrete variables.
 def test_validate_warns_missing_states() -> None:
     spec = NetworkContext(
-        dataset_id="test",
+        network="test",
         domain="test",
         variables=[
             VariableSpec(name="a", type="binary"),  # No states
@@ -228,7 +206,7 @@ def test_validate_warns_missing_states() -> None:
 # Test validation warns about binary with wrong number of states.
 def test_validate_warns_binary_wrong_state_count() -> None:
     spec = NetworkContext(
-        dataset_id="test",
+        network="test",
         domain="test",
         variables=[
             VariableSpec(name="a", type="binary", states=["a", "b", "c"]),
@@ -243,7 +221,7 @@ def test_validate_warns_binary_wrong_state_count() -> None:
 # Test validation returns no warnings for valid spec.
 def test_validate_no_warnings_for_valid_spec() -> None:
     spec = NetworkContext(
-        dataset_id="test",
+        network="test",
         domain="test",
         variables=[
             VariableSpec(name="a", type="binary", states=["no", "yes"]),
@@ -262,7 +240,7 @@ def test_validate_no_warnings_for_valid_spec() -> None:
 # Test load_and_validate with valid file.
 def test_load_and_validate_valid(tmp_path: Path) -> None:
     data = {
-        "dataset_id": "test",
+        "network": "test",
         "domain": "test_domain",
         "variables": [
             {"name": "a", "type": "binary", "states": ["no", "yes"]},
@@ -274,14 +252,14 @@ def test_load_and_validate_valid(tmp_path: Path) -> None:
 
     spec, warnings = NetworkContext.load_and_validate(json_file)
 
-    assert spec.dataset_id == "test"
+    assert spec.network == "test"
     assert warnings == []
 
 
 # Test load_and_validate returns warnings.
 def test_load_and_validate_with_warnings(tmp_path: Path) -> None:
     data = {
-        "dataset_id": "test",
+        "network": "test",
         "domain": "test_domain",
         "variables": [
             {"name": "a", "type": "binary"},  # Missing states

@@ -293,7 +293,7 @@ class KnowledgeActionProvider(BaseActionProvider):
             "message": "Dry-run mode: would generate graph",
             "context": str(params.context),
             "llm_model": params.llm_model,
-            "prompt_detail": params.prompt_detail.value,
+            "llm_prompt_detail": params.prompt_detail.value,
             "output": params.output,
         }
 
@@ -317,7 +317,7 @@ class KnowledgeActionProvider(BaseActionProvider):
         self._execution_metadata = {
             "context": str(params.context),
             "llm_model": params.llm_model,
-            "prompt_detail": params.prompt_detail.value,
+            "llm_prompt_detail": params.prompt_detail.value,
             "use_benchmark_names": params.use_benchmark_names,
             "edge_count": len(graph.edges),
             "variable_count": len(graph.variables),
@@ -330,22 +330,22 @@ class KnowledgeActionProvider(BaseActionProvider):
             meta = graph.metadata
             self._execution_metadata.update(
                 {
-                    "provider": meta.provider,
+                    "llm_provider": meta.provider,
                     "timestamp": meta.timestamp.isoformat(),
-                    "latency_ms": meta.latency_ms,
-                    "input_tokens": meta.input_tokens,
-                    "output_tokens": meta.output_tokens,
-                    "cost_usd": meta.cost_usd,
+                    "llm_timestamp": meta.llm_timestamp.isoformat(),
+                    "llm_latency_ms": meta.llm_latency_ms,
+                    "llm_input_tokens": meta.input_tokens,
+                    "llm_output_tokens": meta.output_tokens,
                     "from_cache": meta.from_cache,
-                    "temperature": meta.temperature,
-                    "max_tokens": meta.max_tokens,
-                    "finish_reason": meta.finish_reason,
+                    "llm_temperature": meta.temperature,
+                    "llm_max_tokens": meta.max_tokens,
+                    "llm_finish_reason": meta.finish_reason,
                     "llm_cost_usd": meta.llm_cost_usd,
                 }
             )
             # Add messages (can be large, but important for reproducibility)
             if meta.messages:
-                self._execution_metadata["messages"] = meta.messages
+                self._execution_metadata["llm_messages"] = meta.messages
 
     def _execute_generate_graph(
         self,
@@ -375,7 +375,7 @@ class KnowledgeActionProvider(BaseActionProvider):
             # Load network context
             network_ctx = NetworkContext.load(params.context)
             logger.info(
-                f"Loaded network context: {network_ctx.dataset_id} "
+                f"Loaded network context: {network_ctx.network} "
                 f"({len(network_ctx.variables)} variables)"
             )
         except Exception as e:
@@ -541,7 +541,7 @@ class KnowledgeActionProvider(BaseActionProvider):
                 for edge in graph.edges
             ],
             "variables": graph.variables,
-            "reasoning": graph.reasoning,
+            "llm_reasoning": graph.reasoning,
         }
 
     def _write_to_directory(
@@ -580,32 +580,39 @@ class KnowledgeActionProvider(BaseActionProvider):
 
         # Build and write metadata
         metadata: Dict[str, Any] = {
-            "dataset_id": network_ctx.dataset_id,
+            "network": network_ctx.network,
             "domain": network_ctx.domain,
-            "variables": graph.variables,
             "edge_count": len(graph.edges),
-            "reasoning": graph.reasoning,
+            "llm_reasoning": graph.reasoning,
         }
 
-        # Add edge-level reasoning if present
-        edge_reasoning = {}
-        for edge in graph.edges:
-            if edge.reasoning:
-                key = f"{edge.source}->{edge.target}"
-                edge_reasoning[key] = edge.reasoning
-        if edge_reasoning:
-            metadata["edge_reasoning"] = edge_reasoning
-
-        # Add generation metadata if present
+        # Add generation metadata if present (flattened at top level)
         if graph.metadata:
-            metadata["generation"] = {
-                "model": graph.metadata.model,
-                "provider": graph.metadata.provider,
-                "timestamp": graph.metadata.timestamp.isoformat(),
-                "latency_ms": graph.metadata.latency_ms,
-                "input_tokens": graph.metadata.input_tokens,
-                "output_tokens": graph.metadata.output_tokens,
-            }
+            metadata["llm_model"] = graph.metadata.model
+            metadata["llm_provider"] = graph.metadata.provider
+            metadata["timestamp"] = graph.metadata.timestamp.isoformat()
+            metadata["llm_timestamp"] = (
+                graph.metadata.llm_timestamp.isoformat()
+            )
+            metadata["llm_latency_ms"] = graph.metadata.llm_latency_ms
+            metadata["llm_input_tokens"] = graph.metadata.input_tokens
+            metadata["llm_output_tokens"] = graph.metadata.output_tokens
+            metadata["from_cache"] = graph.metadata.from_cache
+            metadata["llm_cost_usd"] = graph.metadata.llm_cost_usd
+
+        # Add objects manifest for causaliq-workflow serialisation
+        metadata["objects"] = [
+            {
+                "provider": "causaliq-knowledge",
+                "type": "graph",
+                "name": "graph",
+            },
+            {
+                "provider": "causaliq-knowledge",
+                "type": "json",
+                "name": "confidences",
+            },
+        ]
 
         metadata_path = output_dir / "metadata.json"
         metadata_path.write_text(

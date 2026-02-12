@@ -1,0 +1,434 @@
+{
+    "schema_version": "2.0",
+    "network": "comprehensive_test",
+    "domain": "epidemiology_screening",
+    "purpose": "Comprehensive test fixture with all metadata fields.",
+    "provenance": {
+        "source_network": "synthetic",
+        "source_reference": "TestFixture2024",
+        "source_url": "https://example.com/test",
+        "disguise_strategy": "semantic_rename",
+        "memorization_risk": "none",
+        "notes": "Test data fixture with complete field coverage."
+    },
+    "llm_guidance": {
+        "usage_notes": [
+            "This is a screening model for test purposes.",
+            "Consider causal ordering: exposures → disease → observations.",
+            "Risk factors are independent."
+        ],
+        "do_not_provide": [
+            "Ground truth edges.",
+            "The original network name."
+        ]
+    },
+    "prompt_details": {
+        "minimal": {
+            "description": "Variable names only.",
+            "include_fields": [
+                "name"
+            ]
+        },
+        "standard": {
+            "description": "Names + type + description + states.",
+            "include_fields": [
+                "name",
+                "type",
+                "short_description",
+                "states"
+            ]
+        },
+        "rich": {
+            "description": "All available metadata.",
+            "include_fields": [
+                "name",
+                "display_name",
+                "type",
+                "role",
+                "category",
+                "short_description",
+                "extended_description",
+                "states",
+                "base_rate",
+                "conditional_rates",
+                "sensitivity_hints",
+                "related_domain_knowledge",
+                "references"
+            ]
+        }
+    },
+    "variables": [
+        {
+            "name": "Exposure",
+            "display_name": "Environmental Exposure",
+            "aliases": [
+                "Exposure",
+                "env_exposure"
+            ],
+            "type": "binary",
+            "states": [
+                "low",
+                "high"
+            ],
+            "role": "exogenous",
+            "category": "environmental",
+            "short_description": "Level of environmental exposure.",
+            "extended_description": "Environmental exposure captures chronic contact with risk factors. High exposure indicates elevated levels of harmful agents in the environment.",
+            "base_rate": {
+                "low": 0.9,
+                "high": 0.1
+            },
+            "sensitivity_hints": "Environmental exposure is an independent risk factor.",
+            "related_domain_knowledge": [
+                "Chronic exposure increases risk.",
+                "Environmental and lifestyle factors act independently."
+            ],
+            "references": [
+                "Smith2020Environment"
+            ],
+            "llm_name": "environmental_level"
+        },
+        {
+            "name": "Lifestyle",
+            "display_name": "Lifestyle Factor",
+            "aliases": [
+                "Lifestyle",
+                "lifestyle_choice"
+            ],
+            "type": "binary",
+            "states": [
+                "healthy",
+                "unhealthy"
+            ],
+            "role": "exogenous",
+            "category": "lifestyle",
+            "short_description": "Patient lifestyle classification.",
+            "extended_description": "Lifestyle factor indicates behavioural choices affecting health. Unhealthy lifestyle increases disease risk through multiple mechanisms.",
+            "base_rate": {
+                "healthy": 0.7,
+                "unhealthy": 0.3
+            },
+            "sensitivity_hints": "Lifestyle is independent of environmental factors.",
+            "related_domain_knowledge": [
+                "Lifestyle choices significantly impact health outcomes.",
+                "Effect is independent of environmental exposures."
+            ],
+            "references": [
+                "Jones2021Lifestyle"
+            ],
+            "llm_name": "lifestyle_factor"
+        },
+        {
+            "name": "Disease",
+            "display_name": "Disease Status",
+            "aliases": [
+                "Disease",
+                "condition"
+            ],
+            "type": "binary",
+            "states": [
+                "absent",
+                "present"
+            ],
+            "role": "endogenous",
+            "category": "outcome",
+            "short_description": "Whether disease is present.",
+            "extended_description": "Disease status indicates presence of pathological condition. Risk is elevated by both environmental exposures and lifestyle factors acting independently.",
+            "conditional_rates": {
+                "high_exposure_unhealthy": 0.05,
+                "high_exposure_healthy": 0.02,
+                "low_exposure_unhealthy": 0.03,
+                "low_exposure_healthy": 0.001
+            },
+            "sensitivity_hints": "Disease is CAUSED by exposures. It CAUSES downstream findings.",
+            "related_domain_knowledge": [
+                "Multiple independent risk factors contribute.",
+                "Disease presence causes detectable changes."
+            ],
+            "references": [
+                "Brown2022Disease"
+            ],
+            "llm_name": "disease_status"
+        },
+        {
+            "name": "TestResult",
+            "display_name": "Diagnostic Test Result",
+            "aliases": [
+                "TestResult",
+                "test"
+            ],
+            "type": "binary",
+            "states": [
+                "negative",
+                "positive"
+            ],
+            "role": "endogenous",
+            "category": "diagnostic",
+            "short_description": "Result of diagnostic test.",
+            "extended_description": "Diagnostic test detects disease presence. When disease is present, the test typically shows positive. However, false positives and negatives can occur.",
+            "conditional_rates": {
+                "no_disease": {
+                    "negative": 0.85,
+                    "positive": 0.15
+                },
+                "disease_present": {
+                    "negative": 0.1,
+                    "positive": 0.9
+                }
+            },
+            "sensitivity_hints": "Test results are CAUSED by disease. Tests detect disease but do not cause it.",
+            "related_domain_knowledge": [
+                "Diagnostic sensitivity approximately 90%.",
+                "Specificity approximately 85%."
+            ],
+            "references": [
+                "White2023Diagnostics"
+            ],
+            "llm_name": "test_result"
+        },
+        {
+            "name": "Symptom",
+            "display_name": "Clinical Symptom",
+            "aliases": [
+                "Symptom",
+                "clinical_sign"
+            ],
+            "type": "binary",
+            "states": [
+                "absent",
+                "present"
+            ],
+            "role": "endogenous",
+            "category": "clinical",
+            "short_description": "Whether symptom is present.",
+            "extended_description": "Clinical symptom is a manifestation of underlying disease. When disease is present, symptoms are more likely but non-specific symptoms can occur without disease.",
+            "conditional_rates": {
+                "no_disease": {
+                    "absent": 0.75,
+                    "present": 0.25
+                },
+                "disease_present": {
+                    "absent": 0.3,
+                    "present": 0.7
+                }
+            },
+            "sensitivity_hints": "Symptoms are CAUSED by disease. They are not causes of disease.",
+            "related_domain_knowledge": [
+                "Symptoms are non-specific indicators.",
+                "Baseline rate reflects other causes not modelled."
+            ],
+            "references": [
+                "Green2024Clinical"
+            ],
+            "llm_name": "symptom_presence"
+        }
+    ],
+    "constraints": {
+        "forbidden_edges": [
+            [
+                "test_result",
+                "disease_status"
+            ],
+            [
+                "test_result",
+                "environmental_level"
+            ],
+            [
+                "test_result",
+                "lifestyle_factor"
+            ],
+            [
+                "symptom_presence",
+                "disease_status"
+            ],
+            [
+                "symptom_presence",
+                "environmental_level"
+            ],
+            [
+                "symptom_presence",
+                "lifestyle_factor"
+            ],
+            [
+                "disease_status",
+                "environmental_level"
+            ],
+            [
+                "disease_status",
+                "lifestyle_factor"
+            ],
+            [
+                "environmental_level",
+                "lifestyle_factor"
+            ],
+            [
+                "lifestyle_factor",
+                "environmental_level"
+            ]
+        ],
+        "partial_order": [
+            [
+                "environmental_level",
+                "disease_status"
+            ],
+            [
+                "lifestyle_factor",
+                "disease_status"
+            ],
+            [
+                "disease_status",
+                "test_result"
+            ],
+            [
+                "disease_status",
+                "symptom_presence"
+            ]
+        ],
+        "tiers": {
+            "exposure": [
+                "environmental_level",
+                "lifestyle_factor"
+            ],
+            "disease": [
+                "disease_status"
+            ],
+            "observable": [
+                "test_result",
+                "symptom_presence"
+            ]
+        },
+        "notes": "Exposures are independent root causes. Disease is caused by exposures. Observables are caused by disease."
+    },
+    "causal_principles": [
+        {
+            "id": "exposure_disease_observation",
+            "statement": "Causal flow is unidirectional: Exposures → Disease → Observations.",
+            "references": [
+                "EpidemiologyTextbook"
+            ]
+        },
+        {
+            "id": "independent_risk_factors",
+            "statement": "Environmental and lifestyle exposures are independent causes.",
+            "references": [
+                "CausalInference101"
+            ]
+        },
+        {
+            "id": "collider_at_disease",
+            "statement": "Disease is a collider with two independent causes converging.",
+            "references": [
+                "Pearl2009"
+            ]
+        }
+    ],
+    "ground_truth": {
+        "v_structures": [
+            {
+                "canonical": [
+                    "Exposure",
+                    "Disease",
+                    "Lifestyle"
+                ],
+                "experiment": [
+                    "environmental_level",
+                    "disease_status",
+                    "lifestyle_factor"
+                ],
+                "description": "Independent causes converge on disease (collider)"
+            }
+        ],
+        "conditional_independencies": [
+            {
+                "statement": "TestResult ⊥ Symptom | Disease",
+                "experiment_names": "test_result ⊥ symptom_presence | disease_status",
+                "description": "Test and symptom are conditionally independent given disease"
+            },
+            {
+                "statement": "Exposure ⊥ Lifestyle",
+                "experiment_names": "environmental_level ⊥ lifestyle_factor",
+                "description": "Exposures are marginally independent"
+            }
+        ],
+        "markov_blanket": {
+            "canonical": {
+                "Exposure": [
+                    "Disease",
+                    "Lifestyle"
+                ],
+                "Lifestyle": [
+                    "Disease",
+                    "Exposure"
+                ],
+                "Disease": [
+                    "Exposure",
+                    "Lifestyle",
+                    "TestResult",
+                    "Symptom"
+                ],
+                "TestResult": [
+                    "Disease"
+                ],
+                "Symptom": [
+                    "Disease"
+                ]
+            },
+            "experiment": {
+                "environmental_level": [
+                    "disease_status",
+                    "lifestyle_factor"
+                ],
+                "lifestyle_factor": [
+                    "disease_status",
+                    "environmental_level"
+                ],
+                "disease_status": [
+                    "environmental_level",
+                    "lifestyle_factor",
+                    "test_result",
+                    "symptom_presence"
+                ],
+                "test_result": [
+                    "disease_status"
+                ],
+                "symptom_presence": [
+                    "disease_status"
+                ]
+            }
+        },
+        "num_nodes": 5,
+        "num_edges": 4,
+        "max_parents": 2,
+        "max_children": 2,
+        "edges": [
+            [
+                "Exposure",
+                "Disease"
+            ],
+            [
+                "Lifestyle",
+                "Disease"
+            ],
+            [
+                "Disease",
+                "TestResult"
+            ],
+            [
+                "Disease",
+                "Symptom"
+            ]
+        ]
+    },
+    "references": [
+        {
+            "id": "Pearl2009",
+            "citation": "Pearl, J. (2009). Causality (2nd ed.). Cambridge University Press.",
+            "why_relevant": "Theoretical foundation for causal graphs."
+        },
+        {
+            "id": "EpidemiologyTextbook",
+            "citation": "Rothman, K. J. (2012). Epidemiology: An Introduction.",
+            "why_relevant": "Epidemiological methods and study design."
+        }
+    ]
+}

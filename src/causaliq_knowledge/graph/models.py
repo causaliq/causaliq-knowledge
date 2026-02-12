@@ -346,7 +346,7 @@ class NetworkContext(BaseModel):
 
     Attributes:
         schema_version: Version of the context schema.
-        dataset_id: Identifier for the benchmark network (e.g., "asia").
+        network: Identifier for the benchmark network (e.g., "asia").
         domain: Domain of the causal model (e.g., "pulmonary_oncology").
         purpose: Purpose of this context specification.
         provenance: Source and provenance information.
@@ -359,7 +359,7 @@ class NetworkContext(BaseModel):
 
     Example:
         >>> context = NetworkContext(
-        ...     dataset_id="cancer",
+        ...     network="cancer",
         ...     domain="pulmonary_oncology",
         ...     variables=[
         ...         VariableSpec(
@@ -376,7 +376,7 @@ class NetworkContext(BaseModel):
     """
 
     schema_version: str = Field(default="2.0", description="Schema version")
-    dataset_id: str = Field(..., description="Dataset identifier")
+    network: str = Field(..., description="Network identifier")
     domain: str = Field(..., description="Domain of the causal model")
     purpose: Optional[str] = Field(
         default=None, description="Purpose of this specification"
@@ -420,7 +420,7 @@ class NetworkContext(BaseModel):
 
         Example:
             >>> context = NetworkContext.load("asia.json")
-            >>> print(context.dataset_id)
+            >>> print(context.network)
             'asia'
         """
         path = Path(path)
@@ -473,12 +473,12 @@ class NetworkContext(BaseModel):
 
         Example:
             >>> context = NetworkContext.from_dict({
-            ...     "dataset_id": "test",
+            ...     "network": "test",
             ...     "domain": "testing",
             ...     "variables": [{"name": "X", "type": "binary"}]
             ... })
         """
-        required_fields = ["dataset_id", "domain"]
+        required_fields = ["network", "domain"]
         missing = [f for f in required_fields if f not in data]
         if missing:
             raise NetworkLoadError(

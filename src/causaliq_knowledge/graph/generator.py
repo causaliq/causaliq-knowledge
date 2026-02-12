@@ -436,25 +436,26 @@ class GraphGenerator:
             self._model.split("/", 1)[1] if "/" in self._model else self._model
         )
 
-        # Calculate initial cost (cost if request was not from cache)
-        # If from_cache is True, initial_cost_usd represents what the request
-        # would have cost if it had been made fresh
-        initial_cost = response.cost if not from_cache else response.cost
+        # Get original LLM timestamp and latency (from cache or current)
+        # response.llm_timestamp and llm_latency_ms are set by cached
+        # completion
+        llm_timestamp = response.llm_timestamp or request_timestamp
+        llm_latency = response.llm_latency_ms or latency_ms
 
         graph.metadata = GenerationMetadata(
             model=model_name,
             provider=provider,
             timestamp=request_timestamp,
-            latency_ms=latency_ms,
+            llm_timestamp=llm_timestamp,
+            llm_latency_ms=llm_latency,
             input_tokens=response.input_tokens,
             output_tokens=response.output_tokens,
-            cost_usd=response.cost if not from_cache else 0.0,
             from_cache=from_cache,
             messages=messages,
             temperature=self._config.temperature,
             max_tokens=self._config.max_tokens,
             finish_reason=response.finish_reason,
-            llm_cost_usd=initial_cost,
+            llm_cost_usd=response.cost,
         )
 
         return graph

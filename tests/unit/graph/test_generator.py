@@ -459,7 +459,7 @@ def test_generate_from_context_returns_graph(mocker) -> None:
     mock_groq.return_value = mock_client
 
     spec = NetworkContext(
-        dataset_id="test-dataset",
+        network="test-dataset",
         domain="test",
         variables=[
             VariableSpec(
@@ -500,7 +500,7 @@ def test_generate_from_context_with_prompt_detail(mocker) -> None:
     mock_groq.return_value = mock_client
 
     spec = NetworkContext(
-        dataset_id="epi-dataset",
+        network="epi-dataset",
         domain="epidemiology",
         variables=[
             VariableSpec(
@@ -543,7 +543,7 @@ def test_generate_from_context_with_output_format(mocker) -> None:
     mock_groq.return_value = mock_client
 
     spec = NetworkContext(
-        dataset_id="test-adj",
+        network="test-adj",
         domain="test",
         variables=[
             VariableSpec(

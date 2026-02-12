@@ -294,10 +294,10 @@ def test_ground_truth_full() -> None:
 # Test creating NetworkContext with minimal required fields.
 def test_network_context_minimal() -> None:
     spec = NetworkContext(
-        dataset_id="test",
+        network="test",
         domain="test_domain",
     )
-    assert spec.dataset_id == "test"
+    assert spec.network == "test"
     assert spec.domain == "test_domain"
     assert spec.schema_version == "2.0"
     assert spec.variables == []
@@ -307,7 +307,7 @@ def test_network_context_minimal() -> None:
 def test_network_context_full() -> None:
     spec = NetworkContext(
         schema_version="2.0",
-        dataset_id="cancer",
+        network="cancer",
         domain="oncology",
         purpose="Testing",
         provenance=Provenance(source_network="cancer"),
@@ -323,7 +323,7 @@ def test_network_context_full() -> None:
         ],
         ground_truth=GroundTruth(edges_experiment=[["smoking", "cancer"]]),
     )
-    assert spec.dataset_id == "cancer"
+    assert spec.network == "cancer"
     assert len(spec.variables) == 2
     assert len(spec.causal_principles) == 1
 
@@ -331,7 +331,7 @@ def test_network_context_full() -> None:
 # Test get_variable returns variable when found.
 def test_network_context_get_variable_found() -> None:
     spec = NetworkContext(
-        dataset_id="test",
+        network="test",
         domain="test",
         variables=[
             VariableSpec(name="a", type="binary"),
@@ -346,7 +346,7 @@ def test_network_context_get_variable_found() -> None:
 # Test get_variable returns None when not found.
 def test_network_context_get_variable_not_found() -> None:
     spec = NetworkContext(
-        dataset_id="test",
+        network="test",
         domain="test",
         variables=[VariableSpec(name="a", type="binary")],
     )
@@ -357,7 +357,7 @@ def test_network_context_get_variable_not_found() -> None:
 # Test get_variable_names returns all names.
 def test_network_context_get_variable_names() -> None:
     spec = NetworkContext(
-        dataset_id="test",
+        network="test",
         domain="test",
         variables=[
             VariableSpec(name="a", type="binary"),
@@ -372,7 +372,7 @@ def test_network_context_get_variable_names() -> None:
 # Test get_llm_names returns list of llm_name values.
 def test_network_context_get_llm_names() -> None:
     spec = NetworkContext(
-        dataset_id="test",
+        network="test",
         domain="test",
         variables=[
             VariableSpec(name="smoke", llm_name="tobacco_use", type="binary"),
@@ -387,7 +387,7 @@ def test_network_context_get_llm_names() -> None:
 # Test get_llm_to_name_mapping returns correct mapping.
 def test_network_context_get_llm_to_name_mapping() -> None:
     spec = NetworkContext(
-        dataset_id="test",
+        network="test",
         domain="test",
         variables=[
             VariableSpec(name="smoke", llm_name="tobacco_use", type="binary"),
@@ -401,7 +401,7 @@ def test_network_context_get_llm_to_name_mapping() -> None:
 # Test get_name_to_llm_mapping returns correct mapping.
 def test_network_context_get_name_to_llm_mapping() -> None:
     spec = NetworkContext(
-        dataset_id="test",
+        network="test",
         domain="test",
         variables=[
             VariableSpec(name="smoke", llm_name="tobacco_use", type="binary"),
@@ -415,7 +415,7 @@ def test_network_context_get_name_to_llm_mapping() -> None:
 # Test uses_distinct_llm_names returns True when names differ.
 def test_network_context_uses_distinct_llm_names_true() -> None:
     spec = NetworkContext(
-        dataset_id="test",
+        network="test",
         domain="test",
         variables=[
             VariableSpec(name="smoke", llm_name="tobacco_use", type="binary"),
@@ -428,7 +428,7 @@ def test_network_context_uses_distinct_llm_names_true() -> None:
 # Test uses_distinct_llm_names returns False when all names same.
 def test_network_context_uses_distinct_llm_names_false() -> None:
     spec = NetworkContext(
-        dataset_id="test",
+        network="test",
         domain="test",
         variables=[
             VariableSpec(name="a", type="binary"),  # llm_name defaults to "a"

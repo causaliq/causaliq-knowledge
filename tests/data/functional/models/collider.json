@@ -1,6 +1,6 @@
 {
     "schema_version": "2.0",
-    "dataset_id": "collider",
+    "network": "collider",
     "domain": "epidemiology",
     "purpose": "Classic collider structure for testing v-structures",
     "provenance": {

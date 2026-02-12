@@ -603,3 +603,52 @@ def test_cached_completion_captures_timestamp():
         # Timestamp should be set
         assert entry.metadata.timestamp is not None
         assert len(entry.metadata.timestamp) > 0
+
+
+# Test that cached_completion handles invalid timestamp in cache gracefully.
+def test_cached_completion_handles_invalid_timestamp():
+    from causaliq_core.cache import TokenCache
+
+    from causaliq_knowledge.llm.cache import (
+        LLMCacheEntry,
+        LLMEntryEncoder,
+        LLMMetadata,
+    )
+    from causaliq_knowledge.llm.cache import LLMResponse as CachedLLMResponse
+    from causaliq_knowledge.llm.cache import (
+        LLMTokenUsage,
+    )
+
+    MockClient = _create_mock_client_class()
+    client = MockClient(LLMConfig(model="test-model"))
+
+    with TokenCache(":memory:") as cache:
+        client.set_cache(cache)
+
+        # Manually insert a cache entry with an invalid timestamp
+        cache_key = client._build_cache_key(
+            [{"role": "user", "content": "Hello"}]
+        )
+
+        entry = LLMCacheEntry(
+            model="test-model",
+            response=CachedLLMResponse(content="Cached response"),
+            metadata=LLMMetadata(
+                timestamp="invalid-timestamp-format",  # Invalid format
+                tokens=LLMTokenUsage(input=10, output=20, total=30),
+            ),
+        )
+
+        encoder = LLMEntryEncoder()
+        cache.register_encoder("llm", encoder)
+        cache.put_data(cache_key, "llm", entry.to_dict())
+
+        # Call cached_completion - should retrieve from cache without error
+        response = client.cached_completion(
+            [{"role": "user", "content": "Hello"}]
+        )
+
+        # Should return cached content despite invalid timestamp
+        assert response.content == "Cached response"
+        # llm_timestamp should be None due to parse failure
+        assert response.llm_timestamp is None

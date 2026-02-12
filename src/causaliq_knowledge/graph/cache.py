@@ -291,7 +291,7 @@ class GraphEntryEncoder(JsonEncoder):
         # Build metadata dict (no confidences - they go in separate blob)
         meta: Dict[str, Any] = {
             "variables": graph.variables,
-            "reasoning": graph.reasoning,
+            "llm_reasoning": graph.reasoning,
         }
 
         if reasoning_map:
@@ -422,38 +422,59 @@ class GraphEntryEncoder(JsonEncoder):
         gen_meta = None
         if "generation" in meta_dict:
             gen = meta_dict["generation"]
-            # Parse timestamp - prefer llm_timestamp, fall back to timestamp
+            # Parse llm_timestamp - fall back to timestamp for compatibility
             llm_ts_str = gen.get("llm_timestamp") or gen.get("timestamp")
             llm_ts = (
                 datetime.fromisoformat(llm_ts_str)
                 if llm_ts_str
                 else datetime.now(timezone.utc)
             )
+            # Parse current request timestamp
+            ts_str = gen.get("timestamp")
+            ts = (
+                datetime.fromisoformat(ts_str)
+                if ts_str
+                else llm_ts  # Fall back to llm_timestamp
+            )
             # Parse cost - prefer llm_cost_usd, fall back to initial_cost_usd
             llm_cost = gen.get(
                 "llm_cost_usd", gen.get("initial_cost_usd", 0.0)
             )
+            # Parse latency - prefer llm_latency_ms, fall back to latency_ms
+            llm_latency = gen.get("llm_latency_ms", gen.get("latency_ms", 0))
 
             gen_meta = GenerationMetadata(
-                model=gen.get("model", ""),
-                provider=gen.get("provider", ""),
-                timestamp=llm_ts,
-                latency_ms=gen.get("latency_ms", 0),
-                input_tokens=gen.get("input_tokens", 0),
-                output_tokens=gen.get("output_tokens", 0),
-                cost_usd=gen.get("cost_usd", 0.0),
+                model=gen.get("llm_model", gen.get("model", "")),
+                provider=gen.get("llm_provider", gen.get("provider", "")),
+                timestamp=ts,
+                llm_timestamp=llm_ts,
+                llm_latency_ms=llm_latency,
+                input_tokens=gen.get(
+                    "llm_input_tokens", gen.get("input_tokens", 0)
+                ),
+                output_tokens=gen.get(
+                    "llm_output_tokens", gen.get("output_tokens", 0)
+                ),
                 from_cache=gen.get("from_cache", False),
-                messages=gen.get("messages", []),
-                temperature=gen.get("temperature", 0.1),
-                max_tokens=gen.get("max_tokens", 2000),
-                finish_reason=gen.get("finish_reason", "stop"),
+                messages=gen.get("llm_messages", gen.get("messages", [])),
+                temperature=gen.get(
+                    "llm_temperature", gen.get("temperature", 0.1)
+                ),
+                max_tokens=gen.get(
+                    "llm_max_tokens", gen.get("max_tokens", 2000)
+                ),
+                finish_reason=gen.get(
+                    "llm_finish_reason", gen.get("finish_reason", "stop")
+                ),
                 llm_cost_usd=llm_cost,
             )
 
         graph = GeneratedGraph(
             edges=edges,
             variables=meta_dict.get("variables", list(sdg.nodes)),
-            reasoning=meta_dict.get("reasoning", ""),
+            reasoning=meta_dict.get(
+                "llm_reasoning", meta_dict.get("reasoning", "")
+            ),
             metadata=gen_meta,
         )
 
@@ -510,7 +531,9 @@ class GraphEntryEncoder(JsonEncoder):
                         source=edge_data.get("source", ""),
                         target=edge_data.get("target", ""),
                         confidence=edge_data.get("confidence", 0.5),
-                        reasoning=edge_data.get("reasoning"),
+                        reasoning=edge_data.get(
+                            "llm_reasoning", edge_data.get("reasoning")
+                        ),
                     )
                 )
 
@@ -520,37 +543,62 @@ class GraphEntryEncoder(JsonEncoder):
             if isinstance(meta, GenerationMetadata):
                 metadata = meta
             else:
-                # Parse timestamp (prefer llm_timestamp, fallback timestamp)
+                # Parse llm_timestamp (fallback to timestamp for compatibility)
                 llm_ts_str = meta.get("llm_timestamp") or meta.get("timestamp")
                 llm_ts = (
                     datetime.fromisoformat(llm_ts_str)
                     if llm_ts_str
                     else datetime.now(timezone.utc)
                 )
+                # Parse current request timestamp
+                ts_str = meta.get("timestamp")
+                ts = (
+                    datetime.fromisoformat(ts_str)
+                    if ts_str
+                    else llm_ts  # Fall back to llm_timestamp
+                )
                 # Parse cost (prefer llm_cost_usd, fallback initial_cost_usd)
                 llm_cost = meta.get(
                     "llm_cost_usd", meta.get("initial_cost_usd", 0.0)
                 )
+                # Parse latency (prefer llm_latency_ms, fallback latency_ms)
+                llm_latency = meta.get(
+                    "llm_latency_ms", meta.get("latency_ms", 0)
+                )
                 metadata = GenerationMetadata(
-                    model=meta.get("model", ""),
-                    provider=meta.get("provider", ""),
-                    timestamp=llm_ts,
-                    latency_ms=meta.get("latency_ms", 0),
-                    input_tokens=meta.get("input_tokens", 0),
-                    output_tokens=meta.get("output_tokens", 0),
-                    cost_usd=meta.get("cost_usd", 0.0),
+                    model=meta.get("llm_model", meta.get("model", "")),
+                    provider=meta.get(
+                        "llm_provider", meta.get("provider", "")
+                    ),
+                    timestamp=ts,
+                    llm_timestamp=llm_ts,
+                    llm_latency_ms=llm_latency,
+                    input_tokens=meta.get(
+                        "llm_input_tokens", meta.get("input_tokens", 0)
+                    ),
+                    output_tokens=meta.get(
+                        "llm_output_tokens", meta.get("output_tokens", 0)
+                    ),
                     from_cache=meta.get("from_cache", False),
-                    messages=meta.get("messages", []),
-                    temperature=meta.get("temperature", 0.1),
-                    max_tokens=meta.get("max_tokens", 2000),
-                    finish_reason=meta.get("finish_reason", "stop"),
+                    messages=meta.get(
+                        "llm_messages", meta.get("messages", [])
+                    ),
+                    temperature=meta.get(
+                        "llm_temperature", meta.get("temperature", 0.1)
+                    ),
+                    max_tokens=meta.get(
+                        "llm_max_tokens", meta.get("max_tokens", 2000)
+                    ),
+                    finish_reason=meta.get(
+                        "llm_finish_reason", meta.get("finish_reason", "stop")
+                    ),
                     llm_cost_usd=llm_cost,
                 )
 
         return GeneratedGraph(
             edges=edges,
             variables=data.get("variables", []),
-            reasoning=data.get("reasoning", ""),
+            reasoning=data.get("llm_reasoning", data.get("reasoning", "")),
             metadata=metadata,
         )
 
@@ -569,29 +617,29 @@ class GraphEntryEncoder(JsonEncoder):
                     "source": e.source,
                     "target": e.target,
                     "confidence": e.confidence,
-                    **({"reasoning": e.reasoning} if e.reasoning else {}),
+                    **({"llm_reasoning": e.reasoning} if e.reasoning else {}),
                 }
                 for e in graph.edges
             ],
             "variables": graph.variables,
-            "reasoning": graph.reasoning,
+            "llm_reasoning": graph.reasoning,
         }
 
         if graph.metadata:
             meta_dict: Dict[str, Any] = {
-                "model": graph.metadata.model,
-                "provider": graph.metadata.provider,
-                "llm_timestamp": graph.metadata.timestamp.isoformat(),
-                "latency_ms": graph.metadata.latency_ms,
-                "input_tokens": graph.metadata.input_tokens,
-                "output_tokens": graph.metadata.output_tokens,
-                "cost_usd": graph.metadata.cost_usd,
+                "llm_model": graph.metadata.model,
+                "llm_provider": graph.metadata.provider,
+                "timestamp": graph.metadata.timestamp.isoformat(),
+                "llm_timestamp": graph.metadata.llm_timestamp.isoformat(),
+                "llm_latency_ms": graph.metadata.llm_latency_ms,
+                "llm_input_tokens": graph.metadata.input_tokens,
+                "llm_output_tokens": graph.metadata.output_tokens,
                 "from_cache": graph.metadata.from_cache,
-                "messages": graph.metadata.messages,
-                "temperature": graph.metadata.temperature,
-                "max_tokens": graph.metadata.max_tokens,
-                "finish_reason": graph.metadata.finish_reason,
-                "llm_cost_usd": graph.metadata.initial_cost_usd,
+                "llm_messages": graph.metadata.messages,
+                "llm_temperature": graph.metadata.temperature,
+                "llm_max_tokens": graph.metadata.max_tokens,
+                "llm_finish_reason": graph.metadata.finish_reason,
+                "llm_cost_usd": graph.metadata.llm_cost_usd,
             }
             result["metadata"] = meta_dict
 

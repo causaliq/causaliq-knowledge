@@ -177,7 +177,7 @@ def generate_graph(
     try:
         ctx = NetworkContext.load(params.context)
         click.echo(
-            f"Loaded network context: {ctx.dataset_id} "
+            f"Loaded network context: {ctx.network} "
             f"({len(ctx.variables)} variables)",
             err=True,
         )
@@ -292,7 +292,7 @@ def _write_to_workflow_cache(
     """Write generated graph to Workflow Cache database.
 
     Creates a Workflow Cache database at the specified path and stores
-    the generated graph using the dataset_id as the cache key.
+    the generated graph using the network identifier as the cache key.
 
     Args:
         output_path: Path to the Workflow Cache .db file.
@@ -307,7 +307,7 @@ def _write_to_workflow_cache(
     output_path.parent.mkdir(parents=True, exist_ok=True)
 
     # Build cache key from network context
-    key_data = {"dataset_id": context.dataset_id}
+    key_data = {"network": context.network}
 
     with WorkflowCache(str(output_path)) as wf_cache:
         encoder = GraphEntryEncoder()
@@ -351,26 +351,32 @@ def _write_to_directory(
     graphml_path = output_dir / "graph.graphml"
     graphml.write(sdg, str(graphml_path))
 
-    # Build generation info using shared method
-    if graph.metadata:
-        generation_info = graph.metadata.to_dict()
-    else:
-        generation_info = {"model": llm_model}
-    # Add CLI-specific field not in GenerationMetadata
-    generation_info["prompt_detail"] = prompt_detail.value
-
+    # Build metadata dict with all fields at top level
     metadata: dict[str, Any] = {
-        "dataset_id": context.dataset_id,
+        "network": context.network,
         "domain": context.domain,
-        "variables": [v.name for v in context.variables],
-        "reasoning": graph.reasoning,
-        "edge_reasoning": {
-            f"{e.source}->{e.target}": e.reasoning
-            for e in graph.edges
-            if e.reasoning
-        },
-        "generation": generation_info,
+        "llm_reasoning": graph.reasoning,
+        "objects": [
+            {
+                "provider": "causaliq-knowledge",
+                "type": "graph",
+                "name": "graph",
+            },
+            {
+                "provider": "causaliq-knowledge",
+                "type": "json",
+                "name": "confidences",
+            },
+        ],
     }
+
+    # Add generation metadata (flattened at top level)
+    if graph.metadata:
+        metadata.update(graph.metadata.to_dict())
+    else:
+        metadata["llm_model"] = llm_model
+    # Add CLI-specific field not in GenerationMetadata
+    metadata["llm_prompt_detail"] = prompt_detail.value
 
     # Write metadata.json
     metadata_path = output_dir / "metadata.json"

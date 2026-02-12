@@ -330,7 +330,7 @@ def sample_context():
     )
 
     return NetworkContext(
-        dataset_id="test_model",
+        network="test_model",
         domain="test_domain",
         prompt_details=PromptDetails(
             minimal=ViewDefinition(

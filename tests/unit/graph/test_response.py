@@ -88,45 +88,47 @@ def test_generation_metadata_creation() -> None:
     metadata = GenerationMetadata(model="llama-3.1-8b-instant")
     assert metadata.model == "llama-3.1-8b-instant"
     assert metadata.provider == ""
-    assert metadata.latency_ms == 0
+    assert metadata.llm_latency_ms == 0
     assert metadata.from_cache is False
 
 
 # Test GenerationMetadata with all fields.
 def test_generation_metadata_all_fields() -> None:
     ts = datetime(2026, 1, 27, 12, 0, 0, tzinfo=timezone.utc)
+    llm_ts = datetime(2026, 1, 27, 11, 0, 0, tzinfo=timezone.utc)
     metadata = GenerationMetadata(
         model="gpt-4o",
         provider="openai",
         timestamp=ts,
-        latency_ms=1500,
+        llm_timestamp=llm_ts,
+        llm_latency_ms=1500,
         input_tokens=500,
         output_tokens=200,
-        cost_usd=0.01,
         from_cache=True,
     )
     assert metadata.model == "gpt-4o"
     assert metadata.provider == "openai"
     assert metadata.timestamp == ts
-    assert metadata.latency_ms == 1500
+    assert metadata.llm_timestamp == llm_ts
+    assert metadata.llm_latency_ms == 1500
     assert metadata.input_tokens == 500
     assert metadata.output_tokens == 200
-    assert metadata.cost_usd == 0.01
     assert metadata.from_cache is True
 
 
 # Test GenerationMetadata to_dict returns all fields correctly.
 def test_generation_metadata_to_dict() -> None:
     ts = datetime(2026, 1, 27, 12, 0, 0, tzinfo=timezone.utc)
+    llm_ts = datetime(2026, 1, 27, 11, 0, 0, tzinfo=timezone.utc)
     messages = [{"role": "user", "content": "test prompt"}]
     metadata = GenerationMetadata(
         model="gpt-4o",
         provider="openai",
         timestamp=ts,
-        latency_ms=1500,
+        llm_timestamp=llm_ts,
+        llm_latency_ms=1500,
         input_tokens=500,
         output_tokens=200,
-        cost_usd=0.01,
         from_cache=True,
         messages=messages,
         temperature=0.2,
@@ -135,19 +137,50 @@ def test_generation_metadata_to_dict() -> None:
         llm_cost_usd=0.015,
     )
     result = metadata.to_dict()
-    assert result["model"] == "gpt-4o"
-    assert result["provider"] == "openai"
-    assert result["llm_timestamp"] == "2026-01-27T12:00:00+00:00"
-    assert result["latency_ms"] == 1500
-    assert result["input_tokens"] == 500
-    assert result["output_tokens"] == 200
-    assert result["cost_usd"] == 0.01
+    assert result["llm_model"] == "gpt-4o"
+    assert result["llm_provider"] == "openai"
+    assert result["timestamp"] == "2026-01-27T12:00:00+00:00"
+    assert result["llm_timestamp"] == "2026-01-27T11:00:00+00:00"
+    assert result["llm_latency_ms"] == 1500
+    assert result["llm_input_tokens"] == 500
+    assert result["llm_output_tokens"] == 200
     assert result["from_cache"] is True
-    assert result["messages"] == messages
-    assert result["temperature"] == 0.2
-    assert result["max_tokens"] == 4000
-    assert result["finish_reason"] == "stop"
+    assert result["llm_messages"] == messages
+    assert result["llm_temperature"] == 0.2
+    assert result["llm_max_tokens"] == 4000
+    assert result["llm_finish_reason"] == "stop"
     assert result["llm_cost_usd"] == 0.015
+
+
+# Test to_dict splits message content with newlines into arrays.
+def test_generation_metadata_to_dict_splits_newlines() -> None:
+    messages = [
+        {"role": "system", "content": "Line 1\nLine 2\nLine 3"},
+        {"role": "user", "content": "Simple content"},
+    ]
+    metadata = GenerationMetadata(model="test", messages=messages)
+    result = metadata.to_dict()
+
+    # Content with newlines should be split into array
+    assert result["llm_messages"][0]["content"] == [
+        "Line 1",
+        "Line 2",
+        "Line 3",
+    ]
+    # Content without newlines should remain as string
+    assert result["llm_messages"][1]["content"] == "Simple content"
+
+
+# Test backward compatibility alias initial_cost_usd.
+def test_generation_metadata_initial_cost_usd_alias() -> None:
+    metadata = GenerationMetadata(model="test", llm_cost_usd=0.025)
+    assert metadata.initial_cost_usd == 0.025
+
+
+# Test backward compatibility alias latency_ms.
+def test_generation_metadata_latency_ms_alias() -> None:
+    metadata = GenerationMetadata(model="test", llm_latency_ms=1500)
+    assert metadata.latency_ms == 1500
 
 
 # --- GeneratedGraph tests ---

@@ -73,11 +73,11 @@ class GenerationMetadata:
     Attributes:
         model: The LLM model used for generation.
         provider: The LLM provider (e.g., "groq", "gemini").
-        timestamp: When the LLM request was made.
-        latency_ms: Request latency in milliseconds.
+        timestamp: When this request was made (current request time).
+        llm_timestamp: When the LLM originally responded (from cache if maybe).
+        llm_latency_ms: Original LLM response latency in milliseconds.
         input_tokens: Number of input tokens used.
         output_tokens: Number of output tokens generated.
-        cost_usd: Cost of this request (0 if from cache).
         from_cache: Whether the response was from cache.
         messages: The messages sent to the LLM.
         temperature: Sampling temperature used.
@@ -91,10 +91,12 @@ class GenerationMetadata:
     timestamp: datetime = field(
         default_factory=lambda: datetime.now(timezone.utc)
     )
-    latency_ms: int = 0
+    llm_timestamp: datetime = field(
+        default_factory=lambda: datetime.now(timezone.utc)
+    )
+    llm_latency_ms: int = 0
     input_tokens: int = 0
     output_tokens: int = 0
-    cost_usd: float = 0.0
     from_cache: bool = False
     messages: List[Dict[str, Any]] = field(default_factory=list)
     temperature: float = 0.1
@@ -102,11 +104,40 @@ class GenerationMetadata:
     finish_reason: str = "stop"
     llm_cost_usd: float = 0.0
 
-    # Backward compatibility alias
+    # Backward compatibility aliases
     @property
     def initial_cost_usd(self) -> float:
         """Alias for llm_cost_usd (backward compatibility)."""
         return self.llm_cost_usd
+
+    @property
+    def latency_ms(self) -> int:
+        """Alias for llm_latency_ms (backward compatibility)."""
+        return self.llm_latency_ms
+
+    @staticmethod
+    def _split_message_content(
+        messages: List[Dict[str, Any]],
+    ) -> List[Dict[str, Any]]:
+        """Split message content strings at newlines for readability.
+
+        Converts content strings containing newlines into lists of strings,
+        making the JSON output more human-readable.
+
+        Args:
+            messages: List of message dicts with "role" and "content" keys.
+
+        Returns:
+            Messages with content split into string arrays where applicable.
+        """
+        result = []
+        for msg in messages:
+            new_msg = dict(msg)
+            content = new_msg.get("content", "")
+            if isinstance(content, str) and "\n" in content:
+                new_msg["content"] = content.split("\n")
+            result.append(new_msg)
+        return result
 
     def to_dict(self) -> Dict[str, Any]:
         """Convert generation metadata to a dictionary.
@@ -118,18 +149,18 @@ class GenerationMetadata:
             Dictionary with all metadata fields.
         """
         return {
-            "model": self.model,
-            "provider": self.provider,
-            "llm_timestamp": self.timestamp.isoformat(),
-            "latency_ms": self.latency_ms,
-            "input_tokens": self.input_tokens,
-            "output_tokens": self.output_tokens,
-            "cost_usd": self.cost_usd,
+            "llm_model": self.model,
+            "llm_provider": self.provider,
+            "timestamp": self.timestamp.isoformat(),
+            "llm_timestamp": self.llm_timestamp.isoformat(),
+            "llm_latency_ms": self.llm_latency_ms,
+            "llm_input_tokens": self.input_tokens,
+            "llm_output_tokens": self.output_tokens,
             "from_cache": self.from_cache,
-            "messages": self.messages,
-            "temperature": self.temperature,
-            "max_tokens": self.max_tokens,
-            "finish_reason": self.finish_reason,
+            "llm_messages": self._split_message_content(self.messages),
+            "llm_temperature": self.temperature,
+            "llm_max_tokens": self.max_tokens,
+            "llm_finish_reason": self.finish_reason,
             "llm_cost_usd": self.llm_cost_usd,
         }
 

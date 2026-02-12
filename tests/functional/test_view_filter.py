@@ -69,7 +69,7 @@ def test_view_filter_context_summary_structure() -> None:
     view_filter = ViewFilter(spec)
     summary = view_filter.get_context_summary(PromptDetail.STANDARD)
     assert summary["domain"] == "epidemiology"
-    assert summary["dataset_id"] == "collider"
+    assert summary["network"] == "collider"
     assert len(summary["variables"]) == 3
 
 

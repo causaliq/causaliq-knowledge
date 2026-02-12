@@ -151,6 +151,6 @@ class ViewFilter:
         """
         return {
             "domain": self._context.domain,
-            "dataset_id": self._context.dataset_id,
+            "network": self._context.network,
             "variables": self.filter_variables(level),
         }

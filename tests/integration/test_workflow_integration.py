@@ -49,7 +49,7 @@ def test_workflow_validates_causaliq_knowledge_step(tmp_path: Path) -> None:
     # Create a minimal model spec
     context_file = tmp_path / "model.json"
     context_file.write_text(
-        '{"schema_version": "2.0", "dataset_id": "test", '
+        '{"schema_version": "2.0", "network": "test", '
         '"domain": "test", "variables": [{"name": "x", "type": "binary"}]}'
     )
 
@@ -87,7 +87,7 @@ def test_workflow_dry_run_execution(tmp_path: Path) -> None:
     # Create a minimal model spec
     context_file = tmp_path / "model.json"
     context_file.write_text(
-        '{"schema_version": "2.0", "dataset_id": "test", '
+        '{"schema_version": "2.0", "network": "test", '
         '"domain": "test", "variables": [{"name": "x", "type": "binary"}]}'
     )
 
@@ -132,7 +132,7 @@ def test_workflow_run_execution_with_mocked_llm(tmp_path: Path) -> None:
     # Create a minimal model spec
     context_file = tmp_path / "model.json"
     context_file.write_text(
-        '{"schema_version": "2.0", "dataset_id": "test", '
+        '{"schema_version": "2.0", "network": "test", '
         '"domain": "test", "variables": ['
         '{"name": "smoking", "type": "binary"}, '
         '{"name": "cancer", "type": "binary"}]}'
@@ -197,7 +197,7 @@ def test_workflow_writes_output_file(tmp_path: Path) -> None:
     # Create a minimal model spec
     context_file = tmp_path / "model.json"
     context_file.write_text(
-        '{"schema_version": "2.0", "dataset_id": "test", '
+        '{"schema_version": "2.0", "network": "test", '
         '"domain": "test", "variables": ['
         '{"name": "x", "type": "binary"}, '
         '{"name": "y", "type": "binary"}]}'
@@ -266,7 +266,7 @@ def test_workflow_rejects_invalid_parameters(tmp_path: Path) -> None:
     # Create a minimal model spec
     context_file = tmp_path / "model.json"
     context_file.write_text(
-        '{"schema_version": "2.0", "dataset_id": "test", '
+        '{"schema_version": "2.0", "network": "test", '
         '"domain": "test", "variables": [{"name": "x", "type": "binary"}]}'
     )
 
@@ -307,12 +307,12 @@ def test_workflow_matrix_expansion(tmp_path: Path) -> None:
     # Create model specs
     model1 = tmp_path / "model1.json"
     model1.write_text(
-        '{"schema_version": "2.0", "dataset_id": "m1", '
+        '{"schema_version": "2.0", "network": "m1", '
         '"domain": "test", "variables": [{"name": "a", "type": "binary"}]}'
     )
     model2 = tmp_path / "model2.json"
     model2.write_text(
-        '{"schema_version": "2.0", "dataset_id": "m2", '
+        '{"schema_version": "2.0", "network": "m2", '
         '"domain": "test", "variables": [{"name": "b", "type": "binary"}]}'
     )
 

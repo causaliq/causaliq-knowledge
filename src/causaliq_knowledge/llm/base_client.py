@@ -13,6 +13,7 @@ import logging
 import time
 from abc import ABC, abstractmethod
 from dataclasses import dataclass, field
+from datetime import datetime, timezone
 from typing import TYPE_CHECKING, Any, Dict, List, Optional
 
 if TYPE_CHECKING:  # pragma: no cover
@@ -59,6 +60,8 @@ class LLMResponse:
         cost: Estimated cost of the request (if available).
         finish_reason: Why generation stopped (stop, length, etc.).
         raw_response: The original provider-specific response (for debugging).
+        llm_timestamp: Original LLM response timestamp (from cache or current).
+        llm_latency_ms: Original LLM response latency (from cache or current).
     """
 
     content: str
@@ -68,6 +71,8 @@ class LLMResponse:
     cost: float = 0.0
     finish_reason: str = "stop"
     raw_response: Optional[Dict[str, Any]] = field(default=None, repr=False)
+    llm_timestamp: Optional[datetime] = field(default=None, repr=False)
+    llm_latency_ms: Optional[int] = field(default=None, repr=False)
 
     def parse_json(self) -> Optional[Dict[str, Any]]:
         """Parse content as JSON, handling common formatting issues.
@@ -328,18 +333,34 @@ class BaseLLMClient(ABC):
                 cached_data = cache.get_data(cache_key, "llm")
                 if cached_data is not None:
                     entry = LLMCacheEntry.from_dict(cached_data)
+                    # Parse original timestamp from cache
+                    llm_ts: Optional[datetime] = None
+                    if entry.metadata.timestamp:
+                        try:
+                            llm_ts = datetime.fromisoformat(
+                                entry.metadata.timestamp.replace("Z", "+00:00")
+                            )
+                        except ValueError:
+                            pass
                     return LLMResponse(
                         content=entry.response.content,
                         model=entry.model,
                         input_tokens=entry.metadata.tokens.input,
                         output_tokens=entry.metadata.tokens.output,
                         cost=entry.metadata.cost_usd or 0.0,
+                        llm_timestamp=llm_ts,
+                        llm_latency_ms=entry.metadata.latency_ms,
                     )
 
         # Make API call with timing
+        request_time = datetime.now(timezone.utc)
         start_time = time.perf_counter()
         response = self.completion(messages, **kwargs)
         latency_ms = int((time.perf_counter() - start_time) * 1000)
+
+        # Set original LLM metadata on response
+        response.llm_timestamp = request_time
+        response.llm_latency_ms = latency_ms
 
         # Store in cache
         if use_cache and cache is not None:

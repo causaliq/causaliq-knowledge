@@ -16,7 +16,7 @@ from causaliq_knowledge.graph.view_filter import PromptDetail, ViewFilter
 def _create_test_context() -> NetworkContext:
     """Create a test network context."""
     return NetworkContext(
-        dataset_id="test",
+        network="test",
         domain="epidemiology",
         variables=[
             VariableSpec(
@@ -183,7 +183,7 @@ def test_get_context_summary_minimal() -> None:
     view_filter = ViewFilter(context)
     summary = view_filter.get_context_summary(PromptDetail.MINIMAL)
     assert summary["domain"] == "epidemiology"
-    assert summary["dataset_id"] == "test"
+    assert summary["network"] == "test"
     assert len(summary["variables"]) == 2
 
 
@@ -206,7 +206,7 @@ def test_view_level_is_string_enum() -> None:
 # Test get_variable_names returns benchmark names when use_llm_names=False.
 def test_get_variable_names_with_use_llm_names_false() -> None:
     context = NetworkContext(
-        dataset_id="test",
+        network="test",
         domain="test",
         variables=[
             VariableSpec(name="smoke", llm_name="tobacco_use", type="binary"),

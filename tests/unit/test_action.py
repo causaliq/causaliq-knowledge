@@ -140,7 +140,7 @@ def test_run_dry_run_mode(tmp_path: Path) -> None:
     # Create a minimal context file
     context_file = tmp_path / "model.json"
     context_file.write_text(
-        '{"schema_version": "2.0", "dataset_id": "test", '
+        '{"schema_version": "2.0", "network": "test", '
         '"domain": "test", "variables": [{"name": "x", "type": "binary"}]}'
     )
 
@@ -159,7 +159,7 @@ def test_run_dry_run_mode(tmp_path: Path) -> None:
     assert result["status"] == "skipped"
     assert "dry-run" in result.get("message", "").lower()
     assert result["llm_model"] == "groq/llama-3.1-8b-instant"
-    assert result["prompt_detail"] == "standard"
+    assert result["llm_prompt_detail"] == "standard"
 
 
 # Test run fails for non-existent context.
@@ -194,7 +194,7 @@ def test_run_execute_mode(tmp_path: Path) -> None:
     # Create a minimal context file
     context_file = tmp_path / "model.json"
     context_file.write_text(
-        '{"schema_version": "2.0", "dataset_id": "test", '
+        '{"schema_version": "2.0", "network": "test", '
         '"domain": "test", "variables": ['
         '{"name": "x", "type": "binary"}, '
         '{"name": "y", "type": "binary"}]}'
@@ -246,7 +246,7 @@ def test_run_with_output_file(tmp_path: Path) -> None:
     # Create a minimal context file
     context_file = tmp_path / "model.json"
     context_file.write_text(
-        '{"schema_version": "2.0", "dataset_id": "test", '
+        '{"schema_version": "2.0", "network": "test", '
         '"domain": "test", "variables": ['
         '{"name": "x", "type": "binary"}, '
         '{"name": "y", "type": "binary"}]}'
@@ -299,7 +299,7 @@ def test_run_with_directory_output(tmp_path: Path) -> None:
     # Create a minimal context file
     context_file = tmp_path / "model.json"
     context_file.write_text(
-        '{"schema_version": "2.0", "dataset_id": "test", '
+        '{"schema_version": "2.0", "network": "test", '
         '"domain": "test", "variables": ['
         '{"name": "x", "type": "binary"}, '
         '{"name": "y", "type": "binary"}]}'
@@ -360,7 +360,7 @@ def test_run_directory_output_rejects_matrix_context(tmp_path: Path) -> None:
     # Create a minimal context file
     context_file = tmp_path / "model.json"
     context_file.write_text(
-        '{"schema_version": "2.0", "dataset_id": "test", '
+        '{"schema_version": "2.0", "network": "test", '
         '"domain": "test", "variables": ['
         '{"name": "x", "type": "binary"}, '
         '{"name": "y", "type": "binary"}]}'
@@ -403,68 +403,6 @@ def test_run_directory_output_rejects_matrix_context(tmp_path: Path) -> None:
         assert "matrix variables requires .db output" in str(exc_info.value)
 
 
-# Test directory output includes edge reasoning.
-def test_run_directory_output_with_edge_reasoning(tmp_path: Path) -> None:
-    """Test directory output includes edge-level reasoning in metadata."""
-    import json
-
-    from causaliq_knowledge.graph.response import (
-        GeneratedGraph,
-        ProposedEdge,
-    )
-
-    # Create a minimal context file
-    context_file = tmp_path / "model.json"
-    context_file.write_text(
-        '{"schema_version": "2.0", "dataset_id": "test", '
-        '"domain": "test", "variables": ['
-        '{"name": "x", "type": "binary"}, '
-        '{"name": "y", "type": "binary"}]}'
-    )
-
-    output_dir = tmp_path / "output"
-
-    # Mock the graph generator with edge reasoning
-    mock_graph = GeneratedGraph(
-        edges=[
-            ProposedEdge(
-                source="x",
-                target="y",
-                confidence=0.8,
-                reasoning="X causes Y due to mechanism",
-            )
-        ],
-        variables=["x", "y"],
-    )
-
-    with patch(
-        "causaliq_knowledge.graph.generator.GraphGenerator"
-    ) as mock_generator_class:
-        mock_generator = MagicMock()
-        mock_generator.generate_from_context.return_value = mock_graph
-        mock_generator.get_stats.return_value = {"cache_hits": 0}
-        mock_generator_class.return_value = mock_generator
-
-        action = KnowledgeActionProvider()
-
-        result = action.run(
-            "generate_graph",
-            {
-                "context": str(context_file),
-                "output": str(output_dir),
-                "llm_cache": "none",
-            },
-            mode="run",
-        )
-
-    assert result["status"] == "success"
-
-    # Verify edge reasoning in metadata
-    metadata = json.loads((output_dir / "metadata.json").read_text())
-    assert "edge_reasoning" in metadata
-    assert metadata["edge_reasoning"]["x->y"] == "X causes Y due to mechanism"
-
-
 # Test directory output includes generation metadata.
 def test_run_directory_output_with_generation_metadata(tmp_path: Path) -> None:
     """Test directory output includes generation metadata."""
@@ -480,7 +418,7 @@ def test_run_directory_output_with_generation_metadata(tmp_path: Path) -> None:
     # Create a minimal context file
     context_file = tmp_path / "model.json"
     context_file.write_text(
-        '{"schema_version": "2.0", "dataset_id": "test", '
+        '{"schema_version": "2.0", "network": "test", '
         '"domain": "test", "variables": ['
         '{"name": "x", "type": "binary"}, '
         '{"name": "y", "type": "binary"}]}'
@@ -496,7 +434,7 @@ def test_run_directory_output_with_generation_metadata(tmp_path: Path) -> None:
             model="test-model",
             provider="test-provider",
             timestamp=datetime(2026, 1, 1, 12, 0, 0, tzinfo=timezone.utc),
-            latency_ms=150.5,
+            llm_latency_ms=150,
             input_tokens=100,
             output_tokens=50,
             from_cache=False,
@@ -525,13 +463,12 @@ def test_run_directory_output_with_generation_metadata(tmp_path: Path) -> None:
 
     assert result["status"] == "success"
 
-    # Verify generation metadata
+    # Verify generation metadata (flattened at top level)
     metadata = json.loads((output_dir / "metadata.json").read_text())
-    assert "generation" in metadata
-    assert metadata["generation"]["model"] == "test-model"
-    assert metadata["generation"]["provider"] == "test-provider"
-    assert metadata["generation"]["input_tokens"] == 100
-    assert metadata["generation"]["output_tokens"] == 50
+    assert metadata["llm_model"] == "test-model"
+    assert metadata["llm_provider"] == "test-provider"
+    assert metadata["llm_input_tokens"] == 100
+    assert metadata["llm_output_tokens"] == 50
 
 
 # Test graph_to_dict conversion.
@@ -555,7 +492,7 @@ def test_graph_to_dict() -> None:
     result = action._graph_to_dict(graph)
 
     assert result["variables"] == ["a", "b", "c"]
-    assert result["reasoning"] == "Test reasoning"
+    assert result["llm_reasoning"] == "Test reasoning"
     assert len(result["edges"]) == 2
     assert result["edges"][0]["source"] == "a"
     assert result["edges"][0]["target"] == "b"
@@ -695,7 +632,7 @@ def test_run_request_id_from_output(tmp_path: Path) -> None:
     # Create a minimal context file
     context_file = tmp_path / "model.json"
     context_file.write_text(
-        '{"schema_version": "2.0", "dataset_id": "test", '
+        '{"schema_version": "2.0", "network": "test", '
         '"domain": "test", "variables": [{"name": "x", "type": "binary"}]}'
     )
 
@@ -799,7 +736,7 @@ def test_run_with_llm_name_mapping(tmp_path: Path) -> None:
     # Create context with distinct llm_names
     context_file = tmp_path / "model.json"
     context_file.write_text(
-        '{"schema_version": "2.0", "dataset_id": "test", '
+        '{"schema_version": "2.0", "network": "test", '
         '"domain": "test", "variables": ['
         '{"name": "X1", "llm_name": "Variable One", "type": "binary"}, '
         '{"name": "X2", "llm_name": "Variable Two", "type": "binary"}]}'
@@ -852,7 +789,7 @@ def test_run_cache_open_error(tmp_path: Path) -> None:
     # Create a minimal context file
     context_file = tmp_path / "model.json"
     context_file.write_text(
-        '{"schema_version": "2.0", "dataset_id": "test", '
+        '{"schema_version": "2.0", "network": "test", '
         '"domain": "test", "variables": [{"name": "x", "type": "binary"}]}'
     )
 
@@ -885,7 +822,7 @@ def test_run_graph_generation_error(tmp_path: Path) -> None:
     # Create a minimal context file
     context_file = tmp_path / "model.json"
     context_file.write_text(
-        '{"schema_version": "2.0", "dataset_id": "test", '
+        '{"schema_version": "2.0", "network": "test", '
         '"domain": "test", "variables": ['
         '{"name": "x", "type": "binary"}, '
         '{"name": "y", "type": "binary"}]}'
@@ -922,7 +859,7 @@ def test_run_cache_closed_on_error(tmp_path: Path) -> None:
     # Create a minimal context file
     context_file = tmp_path / "model.json"
     context_file.write_text(
-        '{"schema_version": "2.0", "dataset_id": "test", '
+        '{"schema_version": "2.0", "network": "test", '
         '"domain": "test", "variables": ['
         '{"name": "x", "type": "binary"}, '
         '{"name": "y", "type": "binary"}]}'
@@ -978,7 +915,7 @@ def test_populate_execution_metadata_with_full_metadata(
     # Create a minimal context file
     context_file = tmp_path / "model.json"
     context_file.write_text(
-        '{"schema_version": "2.0", "dataset_id": "test", '
+        '{"schema_version": "2.0", "network": "test", '
         '"domain": "test", "variables": ['
         '{"name": "x", "type": "binary"}, '
         '{"name": "y", "type": "binary"}]}'
@@ -998,7 +935,7 @@ def test_populate_execution_metadata_with_full_metadata(
             model="test-model",
             provider="test-provider",
             timestamp=llm_time,
-            latency_ms=1000,
+            llm_latency_ms=1000,
             input_tokens=100,
             output_tokens=50,
             from_cache=False,
@@ -1034,14 +971,14 @@ def test_populate_execution_metadata_with_full_metadata(
     metadata = action.get_action_metadata()
 
     # Check messages are present
-    assert "messages" in metadata
-    assert len(metadata["messages"]) == 2
-    assert metadata["messages"][0]["role"] == "system"
-    assert metadata["messages"][1]["role"] == "user"
+    assert "llm_messages" in metadata
+    assert len(metadata["llm_messages"]) == 2
+    assert metadata["llm_messages"][0]["role"] == "system"
+    assert metadata["llm_messages"][1]["role"] == "user"
 
     # Check other metadata fields
-    assert metadata["temperature"] == 0.5
-    assert metadata["finish_reason"] == "stop"
+    assert metadata["llm_temperature"] == 0.5
+    assert metadata["llm_finish_reason"] == "stop"
     assert metadata["llm_cost_usd"] == 0.001
 
 

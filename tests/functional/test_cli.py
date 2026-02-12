@@ -819,7 +819,7 @@ def test_cli_generate_graph_loads_spec(tmp_path, mocker):
 
     # Create a valid network context
     spec_data = {
-        "dataset_id": "test-model",
+        "network": "test-model",
         "domain": "testing",
         "variables": [
             {"name": "A", "type": "binary", "short_description": "Variable A"},
@@ -872,7 +872,7 @@ def test_cli_generate_graph_json_output(tmp_path, mocker):
 
     # Create a valid network context
     spec_data = {
-        "dataset_id": "json-test",
+        "network": "json-test",
         "domain": "testing",
         "variables": [
             {"name": "X", "type": "binary", "short_description": "Variable X"},
@@ -925,7 +925,7 @@ def test_cli_generate_graph_json_output(tmp_path, mocker):
     assert (output_dir / "confidences.json").exists()
 
     metadata = json.loads((output_dir / "metadata.json").read_text())
-    assert metadata["dataset_id"] == "json-test"
+    assert metadata["network"] == "json-test"
 
     confidences = json.loads((output_dir / "confidences.json").read_text())
     assert "X->Y" in confidences
@@ -938,7 +938,7 @@ def test_cli_generate_graph_output_file(tmp_path, mocker):
 
     # Create a valid network context
     spec_data = {
-        "dataset_id": "file-output-test",
+        "network": "file-output-test",
         "domain": "testing",
         "variables": [
             {"name": "P", "type": "binary", "short_description": "Variable P"},
@@ -987,7 +987,7 @@ def test_cli_generate_graph_output_file(tmp_path, mocker):
 
     # Verify directory output files
     metadata = json.loads((output_dir / "metadata.json").read_text())
-    assert metadata["dataset_id"] == "file-output-test"
+    assert metadata["network"] == "file-output-test"
     confidences = json.loads((output_dir / "confidences.json").read_text())
     assert "P->Q" in confidences
     # Also check edges are printed to stderr
@@ -1000,7 +1000,7 @@ def test_cli_generate_graph_use_benchmark_names(tmp_path, mocker):
 
     # Create a spec with distinct llm_name vs name
     spec_data = {
-        "dataset_id": "benchmark-test",
+        "network": "benchmark-test",
         "domain": "testing",
         "variables": [
             {
@@ -1061,7 +1061,7 @@ def test_cli_generate_graph_prompt_detail_minimal(tmp_path, mocker):
     import json
 
     spec_data = {
-        "dataset_id": "prompt-detail-test",
+        "network": "prompt-detail-test",
         "domain": "testing",
         "variables": [
             {"name": "A", "type": "binary", "short_description": "Variable A"},
@@ -1110,7 +1110,7 @@ def test_cli_generate_graph_output_none_adjacency(tmp_path, mocker):
     import json
 
     spec_data = {
-        "dataset_id": "adjacency-test",
+        "network": "adjacency-test",
         "domain": "testing",
         "variables": [
             {"name": "A", "type": "binary", "short_description": "Variable A"},
@@ -1187,7 +1187,7 @@ def test_cli_generate_graph_incomplete_spec(tmp_path):
     import json
 
     # Create a spec missing required fields
-    spec_data = {"dataset_id": "incomplete"}  # Missing variables
+    spec_data = {"network": "incomplete"}  # Missing variables
     spec_file = tmp_path / "incomplete.json"
     spec_file.write_text(json.dumps(spec_data))
 
@@ -1209,61 +1209,12 @@ def test_cli_generate_graph_incomplete_spec(tmp_path):
     assert "Error loading" in result.output
 
 
-# Test generate graph with real model file from research/models.
-def test_cli_generate_graph_real_model_file(mocker):
-    from pathlib import Path
-
-    # Use the cancer model from research/models
-    model_path = Path("research/models/cancer/cancer.json")
-    if not model_path.exists():
-        import pytest
-
-        pytest.skip("Cancer model file not found")
-
-    from causaliq_knowledge.graph.response import GeneratedGraph, ProposedEdge
-
-    mock_graph = GeneratedGraph(
-        edges=[
-            ProposedEdge(source="Smoking", target="Cancer", confidence=0.95),
-            ProposedEdge(source="Pollution", target="Cancer", confidence=0.6),
-        ],
-        variables=["Smoking", "Pollution", "Cancer"],
-    )
-    mock_generator = mocker.MagicMock()
-    mock_generator.generate_from_context.return_value = mock_graph
-    mock_generator.get_stats.return_value = {
-        "call_count": 1,
-        "client_call_count": 1,
-    }
-    mocker.patch(
-        "causaliq_knowledge.graph.generator.GraphGenerator",
-        return_value=mock_generator,
-    )
-
-    runner = CliRunner()
-    result = runner.invoke(
-        cli,
-        [
-            "generate_graph",
-            "-n",
-            str(model_path),
-            "-c",
-            "none",
-            "-o",
-            "none",
-        ],
-    )
-
-    assert result.exit_code == 0
-    assert "cancer" in result.output.lower()
-
-
 # Test generate graph with cache option.
 def test_cli_generate_graph_with_cache(tmp_path, mocker):
     import json
 
     spec_data = {
-        "dataset_id": "cache-test",
+        "network": "cache-test",
         "domain": "testing",
         "variables": [
             {"name": "A", "type": "binary", "short_description": "Variable A"},
@@ -1312,7 +1263,7 @@ def test_cli_generate_graph_empty_edges(tmp_path, mocker):
     import json
 
     spec_data = {
-        "dataset_id": "empty-test",
+        "network": "empty-test",
         "domain": "testing",
         "variables": [
             {"name": "A", "type": "binary", "short_description": "Variable A"},
@@ -1359,7 +1310,7 @@ def test_cli_generate_graph_llm_option(tmp_path, mocker):
     import json
 
     spec_data = {
-        "dataset_id": "llm-option-test",
+        "network": "llm-option-test",
         "domain": "testing",
         "variables": [
             {"name": "A", "type": "binary", "short_description": "Variable A"},
@@ -1411,7 +1362,7 @@ def test_cli_generate_graph_invalid_prompt_detail_level(tmp_path):
     import json
 
     spec_data = {
-        "dataset_id": "invalid-prompt-detail-test",
+        "network": "invalid-prompt-detail-test",
         "domain": "testing",
         "variables": [
             {"name": "A", "type": "binary", "short_description": "Variable A"},
@@ -1442,7 +1393,7 @@ def test_cli_generate_graph_any_path_is_directory_output(tmp_path, mocker):
     import json
 
     spec_data = {
-        "dataset_id": "any-path-test",
+        "network": "any-path-test",
         "domain": "testing",
         "variables": [
             {"name": "A", "type": "binary", "short_description": "Variable A"},
@@ -1497,7 +1448,7 @@ def test_cli_generate_graph_invalid_llm_model(tmp_path):
     import json
 
     spec_data = {
-        "dataset_id": "validation-test",
+        "network": "validation-test",
         "domain": "testing",
         "variables": [
             {"name": "A", "type": "binary", "short_description": "Variable A"},
@@ -1532,7 +1483,7 @@ def test_cli_generate_graph_cache_error(tmp_path, mocker):
     import json
 
     spec_data = {
-        "dataset_id": "cache-error-test",
+        "network": "cache-error-test",
         "domain": "testing",
         "variables": [
             {"name": "A", "type": "binary", "short_description": "Variable A"},
@@ -1570,7 +1521,7 @@ def test_cli_generate_graph_generator_error(tmp_path, mocker):
     import json
 
     spec_data = {
-        "dataset_id": "generator-error-test",
+        "network": "generator-error-test",
         "domain": "testing",
         "variables": [
             {"name": "A", "type": "binary", "short_description": "Variable A"},
@@ -1608,7 +1559,7 @@ def test_cli_generate_graph_generation_error(tmp_path, mocker):
     import json
 
     spec_data = {
-        "dataset_id": "generation-error-test",
+        "network": "generation-error-test",
         "domain": "testing",
         "variables": [
             {"name": "A", "type": "binary", "short_description": "Variable A"},
@@ -1643,75 +1594,12 @@ def test_cli_generate_graph_generation_error(tmp_path, mocker):
     assert "Error generating graph" in result.output
 
 
-# Test generate graph with edge reasoning in output.
-def test_cli_generate_graph_edge_with_reasoning(tmp_path, mocker):
-    import json
-
-    spec_data = {
-        "dataset_id": "reasoning-test",
-        "domain": "testing",
-        "variables": [
-            {"name": "X", "type": "binary", "short_description": "Variable X"},
-            {"name": "Y", "type": "binary", "short_description": "Variable Y"},
-        ],
-    }
-    spec_file = tmp_path / "model.json"
-    spec_file.write_text(json.dumps(spec_data))
-
-    output_dir = tmp_path / "output"
-
-    from causaliq_knowledge.graph.response import GeneratedGraph, ProposedEdge
-
-    mock_graph = GeneratedGraph(
-        edges=[
-            ProposedEdge(
-                source="X",
-                target="Y",
-                confidence=0.9,
-                reasoning="X causes Y because of domain knowledge",
-            )
-        ],
-        variables=["X", "Y"],
-    )
-    mock_generator = mocker.MagicMock()
-    mock_generator.generate_from_context.return_value = mock_graph
-    mock_generator.get_stats.return_value = {
-        "call_count": 1,
-        "client_call_count": 1,
-    }
-    mocker.patch(
-        "causaliq_knowledge.graph.generator.GraphGenerator",
-        return_value=mock_generator,
-    )
-
-    runner = CliRunner()
-    result = runner.invoke(
-        cli,
-        [
-            "generate_graph",
-            "-n",
-            str(spec_file),
-            "-c",
-            "none",
-            "-o",
-            str(output_dir),
-        ],
-    )
-
-    assert result.exit_code == 0
-    metadata = json.loads((output_dir / "metadata.json").read_text())
-    assert (
-        metadata["edge_reasoning"]["X->Y"]
-        == "X causes Y because of domain knowledge"
-    )
-
-
 # Test generate graph with metadata in output.
 def test_cli_generate_graph_with_metadata(tmp_path, mocker):
     import json
 
     spec_data = {
-        "dataset_id": "metadata-test",
+        "network": "metadata-test",
         "domain": "testing",
         "variables": [
             {"name": "X", "type": "binary", "short_description": "Variable X"},
@@ -1773,16 +1661,17 @@ def test_cli_generate_graph_with_metadata(tmp_path, mocker):
     assert result.exit_code == 0
     metadata = json.loads((output_dir / "metadata.json").read_text())
     # Verify all generation metadata fields are present
-    gen = metadata["generation"]
-    assert gen["input_tokens"] == 100
-    assert gen["output_tokens"] == 50
-    assert gen["provider"] == "test-provider"
-    assert gen["messages"] == [{"role": "user", "content": "test prompt"}]
-    assert gen["temperature"] == 0.1
-    assert gen["max_tokens"] == 2000
-    assert gen["finish_reason"] == "stop"
-    assert gen["llm_cost_usd"] == 0.001
-    assert "llm_timestamp" in gen
+    assert metadata["llm_input_tokens"] == 100
+    assert metadata["llm_output_tokens"] == 50
+    assert metadata["llm_provider"] == "test-provider"
+    assert metadata["llm_messages"] == [
+        {"role": "user", "content": "test prompt"}
+    ]
+    assert metadata["llm_temperature"] == 0.1
+    assert metadata["llm_max_tokens"] == 2000
+    assert metadata["llm_finish_reason"] == "stop"
+    assert metadata["llm_cost_usd"] == 0.001
+    assert "llm_timestamp" in metadata
 
 
 # Test generate graph human-readable output with reasoning.
@@ -1790,7 +1679,7 @@ def test_cli_generate_graph_human_readable_with_reasoning(tmp_path, mocker):
     import json
 
     spec_data = {
-        "dataset_id": "human-reasoning-test",
+        "network": "human-reasoning-test",
         "domain": "testing",
         "variables": [
             {"name": "X", "type": "binary", "short_description": "Variable X"},
@@ -1851,7 +1740,7 @@ def test_cli_generate_graph_long_reasoning_truncated(tmp_path, mocker):
     import json
 
     spec_data = {
-        "dataset_id": "long-reasoning-test",
+        "network": "long-reasoning-test",
         "domain": "testing",
         "variables": [
             {"name": "X", "type": "binary", "short_description": "Variable X"},
@@ -1913,7 +1802,7 @@ def test_cli_generate_graph_workflow_cache_output(tmp_path, mocker):
     import json
 
     spec_data = {
-        "dataset_id": "cache-test",
+        "network": "cache-test",
         "domain": "testing",
         "variables": [
             {"name": "X", "type": "binary", "short_description": "Variable X"},
@@ -1970,7 +1859,7 @@ def test_cli_generate_graph_workflow_cache_output(tmp_path, mocker):
     with WorkflowCache(str(output_db)) as wf_cache:
         encoder = GraphEntryEncoder()
         wf_cache.register_encoder("graph", encoder)
-        result_data = wf_cache.get({"dataset_id": "cache-test"}, "graph")
+        result_data = wf_cache.get({"network": "cache-test"}, "graph")
 
     # GraphEntryEncoder.decode returns (GeneratedGraph, extra_blobs)
     assert result_data is not None
@@ -1978,3 +1867,64 @@ def test_cli_generate_graph_workflow_cache_output(tmp_path, mocker):
     assert len(retrieved.edges) == 1
     assert retrieved.edges[0].source == "X"
     assert retrieved.edges[0].target == "Y"
+
+
+# Test generate graph loads comprehensive model file from test data.
+def test_cli_generate_graph_comprehensive_model_file(mocker):
+    """Test generate_graph with comprehensive model from tests/data."""
+    from pathlib import Path
+
+    from causaliq_knowledge.graph.response import GeneratedGraph, ProposedEdge
+
+    # Use the comprehensive test model file
+    models_dir = (
+        Path(__file__).parent.parent / "data" / "functional" / "models"
+    )
+    spec_file = models_dir / "comprehensive.json"
+
+    mock_graph = GeneratedGraph(
+        edges=[
+            ProposedEdge(source="Exposure", target="Disease", confidence=0.9),
+            ProposedEdge(source="Lifestyle", target="Disease", confidence=0.9),
+            ProposedEdge(
+                source="Disease", target="TestResult", confidence=0.8
+            ),
+            ProposedEdge(source="Disease", target="Symptom", confidence=0.8),
+        ],
+        variables=[
+            "Exposure",
+            "Lifestyle",
+            "Disease",
+            "TestResult",
+            "Symptom",
+        ],
+    )
+    mock_generator = mocker.MagicMock()
+    mock_generator.generate_from_context.return_value = mock_graph
+    mock_generator.get_stats.return_value = {
+        "call_count": 1,
+        "client_call_count": 1,
+    }
+    mocker.patch(
+        "causaliq_knowledge.graph.generator.GraphGenerator",
+        return_value=mock_generator,
+    )
+
+    runner = CliRunner()
+    result = runner.invoke(
+        cli,
+        [
+            "generate_graph",
+            "-n",
+            str(spec_file),
+            "-c",
+            "none",
+            "-o",
+            "none",
+        ],
+    )
+
+    assert result.exit_code == 0
+    # Verify context was loaded and used
+    assert "comprehensive_test" in result.output or "Exposure" in result.output
+    assert "Disease" in result.output

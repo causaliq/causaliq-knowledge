@@ -87,10 +87,10 @@ def test_encode_decode_with_metadata() -> None:
             model="groq/llama-3.1-8b-instant",
             provider="groq",
             timestamp=timestamp,
-            latency_ms=1500,
+            llm_timestamp=timestamp,
+            llm_latency_ms=1500,
             input_tokens=100,
             output_tokens=50,
-            cost_usd=0.001,
             from_cache=False,
         )
 
@@ -107,10 +107,9 @@ def test_encode_decode_with_metadata() -> None:
         assert restored.metadata.model == "groq/llama-3.1-8b-instant"
         assert restored.metadata.provider == "groq"
         assert restored.metadata.timestamp == timestamp
-        assert restored.metadata.latency_ms == 1500
+        assert restored.metadata.llm_latency_ms == 1500
         assert restored.metadata.input_tokens == 100
         assert restored.metadata.output_tokens == 50
-        assert restored.metadata.cost_usd == 0.001
         assert restored.metadata.from_cache is False
 
 
@@ -304,7 +303,7 @@ def test_export_import_round_trip(tmp_path) -> None:
         metadata=GenerationMetadata(
             model="test/model",
             provider="test",
-            latency_ms=500,
+            llm_latency_ms=500,
         ),
     )
 
@@ -613,7 +612,7 @@ def test_dict_to_graph_with_metadata_object() -> None:
         meta = GenerationMetadata(
             model="test-model",
             provider="test",
-            latency_ms=100,
+            llm_latency_ms=100,
         )
 
         data = {
@@ -638,7 +637,7 @@ def test_export_with_dict_input(tmp_path) -> None:
     data = {
         "edges": [{"source": "X", "target": "Y", "confidence": 0.7}],
         "variables": ["X", "Y"],
-        "reasoning": "Dict export test",
+        "llm_reasoning": "Dict export test",
     }
 
     output_path = tmp_path / "dict_export.json"
@@ -649,7 +648,7 @@ def test_export_with_dict_input(tmp_path) -> None:
 
     exported = json.loads(output_path.read_text())
     assert exported["edges"][0]["source"] == "X"
-    assert exported["reasoning"] == "Dict export test"
+    assert exported["llm_reasoning"] == "Dict export test"
 
 
 # Test metadata with llm_cost_usd field.
@@ -664,7 +663,8 @@ def test_encode_decode_with_llm_cost() -> None:
             model="test-model",
             provider="test-provider",
             timestamp=llm_time,
-            latency_ms=1000,
+            llm_timestamp=llm_time,
+            llm_latency_ms=1000,
             input_tokens=100,
             output_tokens=50,
             llm_cost_usd=0.005,
@@ -695,7 +695,8 @@ def test_export_includes_llm_fields(tmp_path) -> None:
         model="test-model",
         provider="test",
         timestamp=llm_time,
-        latency_ms=2000,
+        llm_timestamp=llm_time,
+        llm_latency_ms=2000,
         llm_cost_usd=0.01,
     )
 
@@ -777,4 +778,4 @@ def test_export_tuple_from_decode(tmp_path) -> None:
 
     exported = json.loads(json_path.read_text())
     assert exported["edges"][0]["source"] == "P"
-    assert exported["reasoning"] == "Tuple export test"
+    assert exported["llm_reasoning"] == "Tuple export test"
