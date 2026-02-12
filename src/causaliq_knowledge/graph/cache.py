@@ -298,22 +298,7 @@ class GraphEntryEncoder(JsonEncoder):
             meta["edge_reasoning"] = reasoning_map
 
         if graph.metadata:
-            gen_dict: Dict[str, Any] = {
-                "model": graph.metadata.model,
-                "provider": graph.metadata.provider,
-                "llm_timestamp": graph.metadata.timestamp.isoformat(),
-                "latency_ms": graph.metadata.latency_ms,
-                "input_tokens": graph.metadata.input_tokens,
-                "output_tokens": graph.metadata.output_tokens,
-                "cost_usd": graph.metadata.cost_usd,
-                "from_cache": graph.metadata.from_cache,
-                "messages": graph.metadata.messages,
-                "temperature": graph.metadata.temperature,
-                "max_tokens": graph.metadata.max_tokens,
-                "finish_reason": graph.metadata.finish_reason,
-                "llm_cost_usd": graph.metadata.initial_cost_usd,
-            }
-            meta["generation"] = gen_dict
+            meta["generation"] = graph.metadata.to_dict()
 
         return meta
 

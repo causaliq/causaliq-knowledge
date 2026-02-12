@@ -38,7 +38,7 @@ from causaliq_knowledge.llm.openai_client import OpenAIClient, OpenAIConfig
 if TYPE_CHECKING:  # pragma: no cover
     from causaliq_core.cache import TokenCache
 
-    from causaliq_knowledge.graph.models import ModelSpec
+    from causaliq_knowledge.graph.models import NetworkContext
 
 logger = logging.getLogger(__name__)
 
@@ -79,10 +79,10 @@ class GraphGeneratorConfig:
 
 
 class GraphGenerator:
-    """Generate causal graphs from variable specifications using LLMs.
+    """Generate causal graphs from network context using LLMs.
 
     This class provides methods for generating complete causal graphs
-    from ModelSpec objects or variable dictionaries. It supports all
+    from NetworkContext objects or variable dictionaries. It supports all
     LLM providers available in causaliq-knowledge and integrates with
     the TokenCache for efficient caching of requests.
 
@@ -91,17 +91,17 @@ class GraphGenerator:
         config: Configuration for generation parameters.
 
     Example:
-        >>> from causaliq_knowledge.graph import ModelLoader
+        >>> from causaliq_knowledge.graph import NetworkContext
         >>> from causaliq_knowledge.graph.generator import GraphGenerator
         >>>
-        >>> # Load model specification
-        >>> spec = ModelLoader.load("model.json")
+        >>> # Load network context
+        >>> context = NetworkContext.load("asia.json")
         >>>
         >>> # Create generator
         >>> generator = GraphGenerator(model="groq/llama-3.1-8b-instant")
         >>>
         >>> # Generate graph
-        >>> graph = generator.generate_from_spec(spec)
+        >>> graph = generator.generate_from_context(context)
         >>> print(f"Generated {len(graph.edges)} edges")
     """
 
@@ -333,21 +333,21 @@ class GraphGenerator:
 
         return self._execute_query(prompt)
 
-    def generate_from_spec(
+    def generate_from_context(
         self,
-        spec: "ModelSpec",
+        context: "NetworkContext",
         level: Optional[PromptDetail] = None,
         output_format: Optional[OutputFormat] = None,
         system_prompt: Optional[str] = None,
         use_llm_names: Optional[bool] = None,
     ) -> GeneratedGraph:
-        """Generate a causal graph from a ModelSpec.
+        """Generate a causal graph from a NetworkContext.
 
         Convenience method that extracts variables and domain from the
-        specification automatically.
+        context automatically.
 
         Args:
-            spec: The model specification.
+            context: The network context.
             level: View level for context. Uses config default if None.
             output_format: Output format. Uses config default if None.
             system_prompt: Custom system prompt (optional).
@@ -368,9 +368,9 @@ class GraphGenerator:
             else self._config.use_llm_names
         )
 
-        # Use the class method to create prompt from spec
-        prompt = GraphQueryPrompt.from_model_spec(
-            spec=spec,
+        # Use the class method to create prompt from context
+        prompt = GraphQueryPrompt.from_context(
+            context=context,
             level=level,
             output_format=output_format,
             system_prompt=system_prompt,

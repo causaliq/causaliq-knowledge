@@ -5,7 +5,7 @@ from __future__ import annotations
 from pathlib import Path
 
 from causaliq_knowledge.graph import (
-    ModelLoader,
+    NetworkContext,
     PromptDetail,
     ViewFilter,
 )
@@ -18,7 +18,7 @@ TEST_MODELS_DIR = (
 
 # Test ViewFilter with simple_chain model minimal view.
 def test_view_filter_simple_chain_minimal() -> None:
-    spec = ModelLoader.load(TEST_MODELS_DIR / "simple_chain.json")
+    spec = NetworkContext.load(TEST_MODELS_DIR / "simple_chain.json")
     view_filter = ViewFilter(spec)
     results = view_filter.filter_variables(PromptDetail.MINIMAL)
     assert len(results) == 3
@@ -30,7 +30,7 @@ def test_view_filter_simple_chain_minimal() -> None:
 
 # Test ViewFilter with simple_chain model standard view.
 def test_view_filter_simple_chain_standard() -> None:
-    spec = ModelLoader.load(TEST_MODELS_DIR / "simple_chain.json")
+    spec = NetworkContext.load(TEST_MODELS_DIR / "simple_chain.json")
     view_filter = ViewFilter(spec)
     results = view_filter.filter_variables(PromptDetail.STANDARD)
     assert len(results) == 3
@@ -43,7 +43,7 @@ def test_view_filter_simple_chain_standard() -> None:
 
 # Test ViewFilter with collider model has custom views defined.
 def test_view_filter_collider_custom_views() -> None:
-    spec = ModelLoader.load(TEST_MODELS_DIR / "collider.json")
+    spec = NetworkContext.load(TEST_MODELS_DIR / "collider.json")
     view_filter = ViewFilter(spec)
     # Collider has explicit view definitions
     minimal_fields = view_filter.get_include_fields(PromptDetail.MINIMAL)
@@ -54,7 +54,7 @@ def test_view_filter_collider_custom_views() -> None:
 
 # Test ViewFilter collider model rich view includes extended description.
 def test_view_filter_collider_rich_view() -> None:
-    spec = ModelLoader.load(TEST_MODELS_DIR / "collider.json")
+    spec = NetworkContext.load(TEST_MODELS_DIR / "collider.json")
     view_filter = ViewFilter(spec)
     results = view_filter.filter_variables(PromptDetail.RICH)
     # genetic_factor has extended_description
@@ -65,7 +65,7 @@ def test_view_filter_collider_rich_view() -> None:
 
 # Test ViewFilter get_context_summary returns complete structure.
 def test_view_filter_context_summary_structure() -> None:
-    spec = ModelLoader.load(TEST_MODELS_DIR / "collider.json")
+    spec = NetworkContext.load(TEST_MODELS_DIR / "collider.json")
     view_filter = ViewFilter(spec)
     summary = view_filter.get_context_summary(PromptDetail.STANDARD)
     assert summary["domain"] == "epidemiology"
@@ -75,7 +75,7 @@ def test_view_filter_context_summary_structure() -> None:
 
 # Test ViewFilter get_variable_names from loaded file.
 def test_view_filter_get_variable_names() -> None:
-    spec = ModelLoader.load(TEST_MODELS_DIR / "simple_chain.json")
+    spec = NetworkContext.load(TEST_MODELS_DIR / "simple_chain.json")
     view_filter = ViewFilter(spec)
     names = view_filter.get_variable_names()
     assert names == ["cause", "mediator", "effect"]
@@ -83,14 +83,14 @@ def test_view_filter_get_variable_names() -> None:
 
 # Test ViewFilter get_domain from loaded file.
 def test_view_filter_get_domain() -> None:
-    spec = ModelLoader.load(TEST_MODELS_DIR / "collider.json")
+    spec = NetworkContext.load(TEST_MODELS_DIR / "collider.json")
     view_filter = ViewFilter(spec)
     assert view_filter.get_domain() == "epidemiology"
 
 
 # Test ViewFilter minimal view excludes None fields.
 def test_view_filter_minimal_excludes_none_fields() -> None:
-    spec = ModelLoader.load(TEST_MODELS_DIR / "minimal.json")
+    spec = NetworkContext.load(TEST_MODELS_DIR / "minimal.json")
     view_filter = ViewFilter(spec)
     results = view_filter.filter_variables(PromptDetail.RICH)
     # Minimal model has variables without extended descriptions

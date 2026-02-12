@@ -115,6 +115,41 @@ def test_generation_metadata_all_fields() -> None:
     assert metadata.from_cache is True
 
 
+# Test GenerationMetadata to_dict returns all fields correctly.
+def test_generation_metadata_to_dict() -> None:
+    ts = datetime(2026, 1, 27, 12, 0, 0, tzinfo=timezone.utc)
+    messages = [{"role": "user", "content": "test prompt"}]
+    metadata = GenerationMetadata(
+        model="gpt-4o",
+        provider="openai",
+        timestamp=ts,
+        latency_ms=1500,
+        input_tokens=500,
+        output_tokens=200,
+        cost_usd=0.01,
+        from_cache=True,
+        messages=messages,
+        temperature=0.2,
+        max_tokens=4000,
+        finish_reason="stop",
+        llm_cost_usd=0.015,
+    )
+    result = metadata.to_dict()
+    assert result["model"] == "gpt-4o"
+    assert result["provider"] == "openai"
+    assert result["llm_timestamp"] == "2026-01-27T12:00:00+00:00"
+    assert result["latency_ms"] == 1500
+    assert result["input_tokens"] == 500
+    assert result["output_tokens"] == 200
+    assert result["cost_usd"] == 0.01
+    assert result["from_cache"] is True
+    assert result["messages"] == messages
+    assert result["temperature"] == 0.2
+    assert result["max_tokens"] == 4000
+    assert result["finish_reason"] == "stop"
+    assert result["llm_cost_usd"] == 0.015
+
+
 # --- GeneratedGraph tests ---
 
 

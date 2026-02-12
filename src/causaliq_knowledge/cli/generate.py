@@ -1,7 +1,7 @@
 """Graph generation CLI commands.
 
 This module provides commands for generating causal graphs from
-model specifications using LLMs.
+network context using LLMs.
 """
 
 from __future__ import annotations
@@ -18,7 +18,7 @@ from causaliq_knowledge.graph.params import GenerateGraphParams
 from causaliq_knowledge.graph.view_filter import PromptDetail
 
 if TYPE_CHECKING:  # pragma: no cover
-    from causaliq_knowledge.graph.models import ModelSpec
+    from causaliq_knowledge.graph.models import NetworkContext
     from causaliq_knowledge.graph.response import GeneratedGraph
 
 
@@ -58,11 +58,12 @@ def _map_graph_names(
 
 @click.command("generate_graph")
 @click.option(
-    "--model-spec",
-    "-s",
+    "--network-context",
+    "-n",
+    "context",
     required=True,
     type=click.Path(exists=True, dir_okay=False, path_type=Path),
-    help="Path to model specification JSON file.",
+    help="Path to network context JSON file.",
 )
 @click.option(
     "--prompt-detail",
@@ -106,7 +107,7 @@ def _map_graph_names(
     help="LLM temperature (0.0-1.0). Lower = more deterministic.",
 )
 def generate_graph(
-    model_spec: Path,
+    context: Path,
     prompt_detail: str,
     use_benchmark_names: bool,
     llm_model: str,
@@ -114,9 +115,9 @@ def generate_graph(
     llm_cache: str,
     llm_temperature: float,
 ) -> None:
-    """Generate a causal graph from a model specification.
+    """Generate a causal graph from a network context.
 
-    Reads variable definitions from a JSON model specification file and
+    Reads variable definitions from a JSON network context file and
     uses an LLM to propose causal relationships between variables.
 
     By default, LLM names are used in prompts to prevent memorisation.
@@ -132,18 +133,18 @@ def generate_graph(
 
     Examples:
 
-        cqknow generate_graph -s model.json -c cache.db -o workflow.db
+        cqknow generate_graph -s asia.json -c cache.db -o workflow.db
 
-        cqknow generate_graph -s model.json -c cache.db -o results/
+        cqknow generate_graph -s asia.json -c cache.db -o results/
 
-        cqknow generate_graph -s model.json -c cache.db -o none
+        cqknow generate_graph -s asia.json -c cache.db -o none
 
-        cqknow generate_graph -s model.json -c none -o none --use-benchmark
+        cqknow generate_graph -s asia.json -c none -o none --use-benchmark
     """
     # Import here to avoid slow startup for --help
     from causaliq_core.cache import TokenCache
 
-    from causaliq_knowledge.graph import ModelLoader
+    from causaliq_knowledge.graph import NetworkContext
     from causaliq_knowledge.graph.generator import (
         GraphGenerator,
         GraphGeneratorConfig,
@@ -153,7 +154,7 @@ def generate_graph(
     # Validate all parameters using shared model
     try:
         params = GenerateGraphParams(
-            model_spec=model_spec,
+            context=context,
             prompt_detail=PromptDetail(prompt_detail.lower()),
             use_benchmark_names=use_benchmark_names,
             llm_model=llm_model,
@@ -172,16 +173,16 @@ def generate_graph(
     # Get effective paths from validated params
     output_path = params.get_effective_output_path()
 
-    # Load model specification
+    # Load network context
     try:
-        spec = ModelLoader.load(params.model_spec)
+        ctx = NetworkContext.load(params.context)
         click.echo(
-            f"Loaded model specification: {spec.dataset_id} "
-            f"({len(spec.variables)} variables)",
+            f"Loaded network context: {ctx.dataset_id} "
+            f"({len(ctx.variables)} variables)",
             err=True,
         )
     except Exception as e:
-        click.echo(f"Error loading model specification: {e}", err=True)
+        click.echo(f"Error loading network context: {e}", err=True)
         sys.exit(1)
 
     # Track mapping for converting LLM output back to benchmark names
@@ -189,8 +190,8 @@ def generate_graph(
 
     # Determine naming mode
     use_llm_names = not params.use_benchmark_names
-    if use_llm_names and spec.uses_distinct_llm_names():
-        llm_to_benchmark_mapping = spec.get_llm_to_name_mapping()
+    if use_llm_names and ctx.uses_distinct_llm_names():
+        llm_to_benchmark_mapping = ctx.get_llm_to_name_mapping()
         click.echo("Using LLM names (prevents memorisation)", err=True)
     elif params.use_benchmark_names:
         click.echo("Using benchmark names (memorisation test)", err=True)
@@ -236,7 +237,9 @@ def generate_graph(
     click.echo(f"View level: {params.prompt_detail.value}", err=True)
 
     try:
-        graph = generator.generate_from_spec(spec, level=params.prompt_detail)
+        graph = generator.generate_from_context(
+            ctx, level=params.prompt_detail
+        )
     except Exception as e:
         click.echo(f"Error generating graph: {e}", err=True)
         sys.exit(1)
@@ -254,18 +257,18 @@ def generate_graph(
         # Write to directory: graph.graphml, metadata.json, confidences.json
         assert output_path is not None  # Guaranteed by is_directory_output()
         _write_to_directory(
-            output_path, graph, spec, params.llm_model, params.prompt_detail
+            output_path, graph, ctx, params.llm_model, params.prompt_detail
         )
         click.echo(f"\nOutput written to: {output_path}/", err=True)
     elif params.is_workflow_cache_output():
         # Write to Workflow Cache database
         assert output_path is not None
-        _write_to_workflow_cache(output_path, graph, spec)
+        _write_to_workflow_cache(output_path, graph, ctx)
         click.echo(f"\nOutput written to: {output_path}", err=True)
     else:
         # Print adjacency matrix to stdout
         click.echo()
-        _print_adjacency_matrix(graph, spec)
+        _print_adjacency_matrix(graph, ctx)
 
     # Show stats
     stats = generator.get_stats()
@@ -284,7 +287,7 @@ def generate_graph(
 def _write_to_workflow_cache(
     output_path: Path,
     graph: "GeneratedGraph",
-    spec: "ModelSpec",
+    context: "NetworkContext",
 ) -> None:
     """Write generated graph to Workflow Cache database.
 
@@ -294,7 +297,7 @@ def _write_to_workflow_cache(
     Args:
         output_path: Path to the Workflow Cache .db file.
         graph: The GeneratedGraph result.
-        spec: The ModelSpec used (for cache key generation).
+        context: The NetworkContext used (for cache key generation).
     """
     from causaliq_workflow import WorkflowCache
 
@@ -303,8 +306,8 @@ def _write_to_workflow_cache(
     # Create parent directories if needed
     output_path.parent.mkdir(parents=True, exist_ok=True)
 
-    # Build cache key from model spec
-    key_data = {"dataset_id": spec.dataset_id}
+    # Build cache key from network context
+    key_data = {"dataset_id": context.dataset_id}
 
     with WorkflowCache(str(output_path)) as wf_cache:
         encoder = GraphEntryEncoder()
@@ -315,7 +318,7 @@ def _write_to_workflow_cache(
 def _write_to_directory(
     output_dir: Path,
     graph: "GeneratedGraph",
-    spec: "ModelSpec",
+    context: "NetworkContext",
     llm_model: str,
     prompt_detail: PromptDetail,
 ) -> None:
@@ -329,7 +332,7 @@ def _write_to_directory(
     Args:
         output_dir: Directory to write files to.
         graph: The GeneratedGraph result.
-        spec: The ModelSpec used.
+        context: The NetworkContext used.
         llm_model: LLM model identifier.
         prompt_detail: Prompt detail level used.
     """
@@ -340,7 +343,7 @@ def _write_to_directory(
     output_dir.mkdir(parents=True, exist_ok=True)
 
     # Build SDG from edges - SDG requires nodes list and edges as tuples
-    nodes = [v.name for v in spec.variables]
+    nodes = [v.name for v in context.variables]
     edges = [(e.source, "->", e.target) for e in graph.edges]
     sdg = SDG(nodes, edges)
 
@@ -348,20 +351,18 @@ def _write_to_directory(
     graphml_path = output_dir / "graph.graphml"
     graphml.write(sdg, str(graphml_path))
 
-    # Build metadata
-    generation_info: dict[str, Any] = {
-        "model": llm_model,
-        "prompt_detail": prompt_detail.value,
-    }
+    # Build generation info using shared method
     if graph.metadata:
-        generation_info["input_tokens"] = graph.metadata.input_tokens
-        generation_info["output_tokens"] = graph.metadata.output_tokens
-        generation_info["from_cache"] = graph.metadata.from_cache
+        generation_info = graph.metadata.to_dict()
+    else:
+        generation_info = {"model": llm_model}
+    # Add CLI-specific field not in GenerationMetadata
+    generation_info["prompt_detail"] = prompt_detail.value
 
     metadata: dict[str, Any] = {
-        "dataset_id": spec.dataset_id,
-        "domain": spec.domain,
-        "variables": [v.name for v in spec.variables],
+        "dataset_id": context.dataset_id,
+        "domain": context.domain,
+        "variables": [v.name for v in context.variables],
         "reasoning": graph.reasoning,
         "edge_reasoning": {
             f"{e.source}->{e.target}": e.reasoning
@@ -441,16 +442,16 @@ def _print_summary(graph: "GeneratedGraph", err: bool = False) -> None:
 
 
 def _print_adjacency_matrix(
-    graph: "GeneratedGraph", spec: "ModelSpec"
+    graph: "GeneratedGraph", context: "NetworkContext"
 ) -> None:
     """Print adjacency matrix representation of the graph.
 
     Args:
         graph: The GeneratedGraph result.
-        spec: The ModelSpec used for variable names.
+        context: The NetworkContext used for variable names.
     """
     # Get variable names in order
-    var_names = [v.name for v in spec.variables]
+    var_names = [v.name for v in context.variables]
 
     # Build edge lookup (source, target) -> confidence
     edge_lookup = {(e.source, e.target): e.confidence for e in graph.edges}

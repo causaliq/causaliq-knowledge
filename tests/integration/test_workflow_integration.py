@@ -1,4 +1,4 @@
-﻿"""Integration tests for causaliq-knowledge workflow integration.
+"""Integration tests for causaliq-knowledge workflow integration.
 
 These tests verify that causaliq-knowledge works correctly when executed
 through causaliq-workflow. This tests the entry point discovery mechanism
@@ -47,8 +47,8 @@ def test_workflow_validates_causaliq_knowledge_step(tmp_path: Path) -> None:
     from causaliq_workflow.workflow import WorkflowExecutor
 
     # Create a minimal model spec
-    model_spec = tmp_path / "model.json"
-    model_spec.write_text(
+    context_file = tmp_path / "model.json"
+    context_file.write_text(
         '{"schema_version": "2.0", "dataset_id": "test", '
         '"domain": "test", "variables": [{"name": "x", "type": "binary"}]}'
     )
@@ -65,7 +65,7 @@ steps:
     uses: "causaliq-knowledge"
     with:
       action: "generate_graph"
-      model_spec: "{model_spec.as_posix()}"
+      context: "{context_file.as_posix()}"
       output: "none"
       llm_cache: "none"
 """
@@ -85,8 +85,8 @@ def test_workflow_dry_run_execution(tmp_path: Path) -> None:
     from causaliq_workflow.workflow import WorkflowExecutor
 
     # Create a minimal model spec
-    model_spec = tmp_path / "model.json"
-    model_spec.write_text(
+    context_file = tmp_path / "model.json"
+    context_file.write_text(
         '{"schema_version": "2.0", "dataset_id": "test", '
         '"domain": "test", "variables": [{"name": "x", "type": "binary"}]}'
     )
@@ -103,7 +103,7 @@ steps:
     uses: "causaliq-knowledge"
     with:
       action: "generate_graph"
-      model_spec: "{model_spec.as_posix()}"
+      context: "{context_file.as_posix()}"
       output: "none"
       llm_cache: "none"
       llm_model: "groq/llama-3.1-8b-instant"
@@ -130,8 +130,8 @@ def test_workflow_run_execution_with_mocked_llm(tmp_path: Path) -> None:
     from causaliq_knowledge.graph.response import GeneratedGraph, ProposedEdge
 
     # Create a minimal model spec
-    model_spec = tmp_path / "model.json"
-    model_spec.write_text(
+    context_file = tmp_path / "model.json"
+    context_file.write_text(
         '{"schema_version": "2.0", "dataset_id": "test", '
         '"domain": "test", "variables": ['
         '{"name": "smoking", "type": "binary"}, '
@@ -150,7 +150,7 @@ steps:
     uses: "causaliq-knowledge"
     with:
       action: "generate_graph"
-      model_spec: "{model_spec.as_posix()}"
+      context: "{context_file.as_posix()}"
       output: "none"
       llm_cache: "none"
       llm_model: "groq/llama-3.1-8b-instant"
@@ -170,7 +170,7 @@ steps:
         "causaliq_knowledge.graph.generator.GraphGenerator"
     ) as mock_generator_class:
         mock_generator = MagicMock()
-        mock_generator.generate_from_spec.return_value = mock_graph
+        mock_generator.generate_from_context.return_value = mock_graph
         mock_generator.get_stats.return_value = {"cache_hits": 0}
         mock_generator_class.return_value = mock_generator
 
@@ -195,8 +195,8 @@ def test_workflow_writes_output_file(tmp_path: Path) -> None:
     from causaliq_knowledge.graph.response import GeneratedGraph, ProposedEdge
 
     # Create a minimal model spec
-    model_spec = tmp_path / "model.json"
-    model_spec.write_text(
+    context_file = tmp_path / "model.json"
+    context_file.write_text(
         '{"schema_version": "2.0", "dataset_id": "test", '
         '"domain": "test", "variables": ['
         '{"name": "x", "type": "binary"}, '
@@ -217,7 +217,7 @@ steps:
     uses: "causaliq-knowledge"
     with:
       action: "generate_graph"
-      model_spec: "{model_spec.as_posix()}"
+      context: "{context_file.as_posix()}"
       output: "{output_dir.as_posix()}"
       llm_cache: "none"
 """
@@ -234,7 +234,7 @@ steps:
         "causaliq_knowledge.graph.generator.GraphGenerator"
     ) as mock_generator_class:
         mock_generator = MagicMock()
-        mock_generator.generate_from_spec.return_value = mock_graph
+        mock_generator.generate_from_context.return_value = mock_graph
         mock_generator.get_stats.return_value = {"cache_hits": 0}
         mock_generator_class.return_value = mock_generator
 
@@ -264,8 +264,8 @@ def test_workflow_rejects_invalid_parameters(tmp_path: Path) -> None:
     )
 
     # Create a minimal model spec
-    model_spec = tmp_path / "model.json"
-    model_spec.write_text(
+    context_file = tmp_path / "model.json"
+    context_file.write_text(
         '{"schema_version": "2.0", "dataset_id": "test", '
         '"domain": "test", "variables": [{"name": "x", "type": "binary"}]}'
     )
@@ -282,7 +282,7 @@ steps:
     uses: "causaliq-knowledge"
     with:
       action: "generate_graph"
-      model_spec: "{model_spec.as_posix()}"
+      context: "{context_file.as_posix()}"
       output: "none"
       llm_cache: "none"
       llm_model: "invalid-model-no-provider"
@@ -333,7 +333,7 @@ steps:
     uses: "causaliq-knowledge"
     with:
       action: "generate_graph"
-      model_spec: "{{{{model}}}}"
+      context: "{{{{model}}}}"
       output: "none"
       llm_cache: "none"
 """

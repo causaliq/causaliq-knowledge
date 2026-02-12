@@ -1,15 +1,20 @@
-"""Pydantic models for model specification schemas.
+"""Pydantic models for network context schemas.
 
 This module defines the data models for loading and validating
-causal model specifications from JSON files.
+network context JSON files used for LLM graph generation.
 """
 
 from __future__ import annotations
 
+import json
 from enum import Enum
-from typing import Any, Optional
+from pathlib import Path
+from typing import TYPE_CHECKING, Any, Optional, Union
 
 from pydantic import BaseModel, Field, field_validator, model_validator
+
+if TYPE_CHECKING:  # pragma: no cover
+    pass
 
 
 class VariableType(str, Enum):
@@ -306,28 +311,54 @@ class GroundTruth(BaseModel):
     )
 
 
-class ModelSpec(BaseModel):
-    """Complete specification for a causal model.
-
-    This is the top-level model that represents an entire model
-    specification JSON file.
+class NetworkLoadError(Exception):
+    """Error raised when network context loading fails.
 
     Attributes:
-        schema_version: Version of the specification schema.
-        dataset_id: Unique identifier for the dataset.
+        message: Error description.
+        path: Path to the file that failed to load.
+        details: Additional error details.
+    """
+
+    def __init__(
+        self,
+        message: str,
+        path: Path | str | None = None,
+        details: str | None = None,
+    ) -> None:
+        self.message = message
+        self.path = path
+        self.details = details
+        full_message = message
+        if path:
+            full_message = f"{message}: {path}"
+        if details:
+            full_message = f"{full_message}\n  Details: {details}"
+        super().__init__(full_message)
+
+
+class NetworkContext(BaseModel):
+    """Network context for LLM-based causal graph generation.
+
+    Provides domain and variable information needed to generate causal
+    graphs using LLMs. This is not the network itself, but the context
+    required to generate one.
+
+    Attributes:
+        schema_version: Version of the context schema.
+        dataset_id: Identifier for the benchmark network (e.g., "asia").
         domain: Domain of the causal model (e.g., "pulmonary_oncology").
-        purpose: Purpose of the model specification.
+        purpose: Purpose of this context specification.
         provenance: Source and provenance information.
         llm_guidance: Guidance for LLM usage.
-    views: View definitions (minimal, standard, rich).
+        prompt_details: Prompt detail definitions.
         variables: List of variable specifications.
         constraints: Structural constraints.
         causal_principles: Domain causal principles.
         ground_truth: Ground truth for evaluation (not for LLMs).
 
     Example:
-        >>> spec = ModelSpec(
-        ...     schema_version="2.0",
+        >>> context = NetworkContext(
         ...     dataset_id="cancer",
         ...     domain="pulmonary_oncology",
         ...     variables=[
@@ -339,6 +370,9 @@ class ModelSpec(BaseModel):
         ...         ),
         ...     ]
         ... )
+
+        >>> # Load from file
+        >>> context = NetworkContext.load("asia.json")
     """
 
     schema_version: str = Field(default="2.0", description="Schema version")
@@ -370,6 +404,167 @@ class ModelSpec(BaseModel):
     ground_truth: Optional[GroundTruth] = Field(
         default=None, description="Ground truth for evaluation"
     )
+
+    @classmethod
+    def load(cls, path: Union[str, Path]) -> "NetworkContext":
+        """Load a network context from a JSON file.
+
+        Args:
+            path: Path to the JSON file.
+
+        Returns:
+            Validated NetworkContext instance.
+
+        Raises:
+            NetworkLoadError: If the file cannot be loaded or validated.
+
+        Example:
+            >>> context = NetworkContext.load("asia.json")
+            >>> print(context.dataset_id)
+            'asia'
+        """
+        path = Path(path)
+
+        if not path.exists():
+            raise NetworkLoadError("Network context file not found", path)
+
+        if path.suffix.lower() != ".json":
+            raise NetworkLoadError(
+                "Network context must be a JSON file",
+                path,
+                f"Got extension: {path.suffix}",
+            )
+
+        try:
+            with open(path, "r", encoding="utf-8") as f:
+                data = json.load(f)
+        except json.JSONDecodeError as e:
+            raise NetworkLoadError(
+                "Invalid JSON in network context",
+                path,
+                str(e),
+            ) from e
+        except OSError as e:
+            raise NetworkLoadError(
+                "Failed to read network context file",
+                path,
+                str(e),
+            ) from e
+
+        return cls.from_dict(data, source_path=path)
+
+    @classmethod
+    def from_dict(
+        cls,
+        data: dict,
+        source_path: Path | str | None = None,
+    ) -> "NetworkContext":
+        """Create a NetworkContext from a dictionary.
+
+        Args:
+            data: Dictionary containing network context.
+            source_path: Optional source path for error messages.
+
+        Returns:
+            Validated NetworkContext instance.
+
+        Raises:
+            NetworkLoadError: If validation fails.
+
+        Example:
+            >>> context = NetworkContext.from_dict({
+            ...     "dataset_id": "test",
+            ...     "domain": "testing",
+            ...     "variables": [{"name": "X", "type": "binary"}]
+            ... })
+        """
+        required_fields = ["dataset_id", "domain"]
+        missing = [f for f in required_fields if f not in data]
+        if missing:
+            raise NetworkLoadError(
+                f"Missing required fields: {', '.join(missing)}",
+                source_path,
+            )
+
+        try:
+            return cls.model_validate(data)
+        except Exception as e:
+            raise NetworkLoadError(
+                "Network context validation failed",
+                source_path,
+                str(e),
+            ) from e
+
+    def validate_variables(self) -> list[str]:
+        """Validate variable specifications and return warnings.
+
+        Performs additional validation beyond Pydantic schema:
+        - Checks for duplicate variable names
+        - Checks that states are defined for discrete variables
+        - Checks for empty variable list
+
+        Returns:
+            List of warning messages (empty if no issues).
+
+        Raises:
+            NetworkLoadError: If critical validation errors found.
+        """
+        warnings: list[str] = []
+
+        if not self.variables:
+            raise NetworkLoadError("Network context has no variables defined")
+
+        names = [v.name for v in self.variables]
+        duplicates = [n for n in names if names.count(n) > 1]
+        if duplicates:
+            raise NetworkLoadError(
+                f"Duplicate variable names: {', '.join(set(duplicates))}"
+            )
+
+        for var in self.variables:
+            if (
+                var.type
+                in (
+                    "binary",
+                    "categorical",
+                    "ordinal",
+                )
+                and not var.states
+            ):
+                warnings.append(
+                    f"Variable '{var.name}' is {var.type} "
+                    "but has no states defined"
+                )
+
+        for var in self.variables:
+            if var.type == "binary" and var.states and len(var.states) != 2:
+                warnings.append(
+                    f"Variable '{var.name}' is binary "
+                    f"but has {len(var.states)} states"
+                )
+
+        return warnings
+
+    @classmethod
+    def load_and_validate(
+        cls, path: Union[str, Path]
+    ) -> tuple["NetworkContext", list[str]]:
+        """Load and fully validate a network context.
+
+        Combines loading with additional validation checks.
+
+        Args:
+            path: Path to the JSON file.
+
+        Returns:
+            Tuple of (NetworkContext, list of warnings).
+
+        Raises:
+            NetworkLoadError: If loading or validation fails.
+        """
+        context = cls.load(path)
+        warnings = context.validate_variables()
+        return context, warnings
 
     def get_variable(self, name: str) -> VariableSpec | None:
         """Get a variable by name.

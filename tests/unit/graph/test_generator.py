@@ -438,13 +438,13 @@ def test_cache_key_differs_for_different_prompts(mocker) -> None:
     assert key1 != key2
 
 
-# --- GraphGenerator generate_from_spec tests ---
+# --- GraphGenerator generate_from_context tests ---
 
 
-# Test generate_from_spec returns GeneratedGraph.
-def test_generate_from_spec_returns_graph(mocker) -> None:
+# Test generate_from_context returns GeneratedGraph.
+def test_generate_from_context_returns_graph(mocker) -> None:
     from causaliq_knowledge.graph.models import (
-        ModelSpec,
+        NetworkContext,
         VariableSpec,
         VariableType,
     )
@@ -458,7 +458,7 @@ def test_generate_from_spec_returns_graph(mocker) -> None:
     mock_client.use_cache = False
     mock_groq.return_value = mock_client
 
-    spec = ModelSpec(
+    spec = NetworkContext(
         dataset_id="test-dataset",
         domain="test",
         variables=[
@@ -476,16 +476,16 @@ def test_generate_from_spec_returns_graph(mocker) -> None:
     )
 
     generator = GraphGenerator(model="groq/test-model")
-    graph = generator.generate_from_spec(spec)
+    graph = generator.generate_from_context(spec)
 
     assert isinstance(graph, GeneratedGraph)
     assert generator.call_count == 1
 
 
-# Test generate_from_spec with custom prompt_detail level.
-def test_generate_from_spec_with_prompt_detail(mocker) -> None:
+# Test generate_from_context with custom prompt_detail level.
+def test_generate_from_context_with_prompt_detail(mocker) -> None:
     from causaliq_knowledge.graph.models import (
-        ModelSpec,
+        NetworkContext,
         VariableSpec,
         VariableType,
     )
@@ -499,7 +499,7 @@ def test_generate_from_spec_with_prompt_detail(mocker) -> None:
     mock_client.use_cache = False
     mock_groq.return_value = mock_client
 
-    spec = ModelSpec(
+    spec = NetworkContext(
         dataset_id="epi-dataset",
         domain="epidemiology",
         variables=[
@@ -517,15 +517,15 @@ def test_generate_from_spec_with_prompt_detail(mocker) -> None:
     )
 
     generator = GraphGenerator(model="groq/test-model")
-    graph = generator.generate_from_spec(spec, level=PromptDetail.RICH)
+    graph = generator.generate_from_context(spec, level=PromptDetail.RICH)
 
     assert isinstance(graph, GeneratedGraph)
 
 
-# Test generate_from_spec with custom output format.
-def test_generate_from_spec_with_output_format(mocker) -> None:
+# Test generate_from_context with custom output format.
+def test_generate_from_context_with_output_format(mocker) -> None:
     from causaliq_knowledge.graph.models import (
-        ModelSpec,
+        NetworkContext,
         VariableSpec,
         VariableType,
     )
@@ -542,7 +542,7 @@ def test_generate_from_spec_with_output_format(mocker) -> None:
     mock_client.use_cache = False
     mock_groq.return_value = mock_client
 
-    spec = ModelSpec(
+    spec = NetworkContext(
         dataset_id="test-adj",
         domain="test",
         variables=[
@@ -560,7 +560,7 @@ def test_generate_from_spec_with_output_format(mocker) -> None:
     )
 
     generator = GraphGenerator(model="groq/test-model")
-    graph = generator.generate_from_spec(
+    graph = generator.generate_from_context(
         spec, output_format=OutputFormat.ADJACENCY_MATRIX
     )
 

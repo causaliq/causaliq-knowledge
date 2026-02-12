@@ -18,12 +18,12 @@ from causaliq_knowledge.graph.view_filter import PromptDetail
 def test_params_minimal_required() -> None:
     """Test creating params with only required fields."""
     params = GenerateGraphParams(
-        model_spec=Path("model.json"),
+        context=Path("model.json"),
         output="none",
         llm_cache="cache.db",
     )
 
-    assert params.model_spec == Path("model.json")
+    assert params.context == Path("model.json")
     assert params.prompt_detail == PromptDetail.STANDARD
     assert params.use_benchmark_names is False
     assert params.llm_model == "groq/llama-3.1-8b-instant"
@@ -36,7 +36,7 @@ def test_params_minimal_required() -> None:
 def test_params_all_fields() -> None:
     """Test creating params with all fields explicitly set."""
     params = GenerateGraphParams(
-        model_spec=Path("test/model.json"),
+        context=Path("test/model.json"),
         prompt_detail=PromptDetail.RICH,
         use_benchmark_names=False,
         llm_model="gemini/gemini-2.5-flash",
@@ -45,7 +45,7 @@ def test_params_all_fields() -> None:
         llm_temperature=0.5,
     )
 
-    assert params.model_spec == Path("test/model.json")
+    assert params.context == Path("test/model.json")
     assert params.prompt_detail == PromptDetail.RICH
     assert params.llm_model == "gemini/gemini-2.5-flash"
     assert params.output == "output/workflow_cache.db"
@@ -69,7 +69,7 @@ def test_params_all_fields() -> None:
 def test_params_valid_llm_providers(llm_model: str) -> None:
     """Test that all valid LLM provider prefixes are accepted."""
     params = GenerateGraphParams(
-        model_spec=Path("model.json"),
+        context=Path("model.json"),
         llm_model=llm_model,
         output="none",
         llm_cache="cache.db",
@@ -82,7 +82,7 @@ def test_params_invalid_llm_provider() -> None:
     """Test that invalid LLM provider prefixes are rejected."""
     with pytest.raises(ValidationError) as exc_info:
         GenerateGraphParams(
-            model_spec=Path("model.json"),
+            context=Path("model.json"),
             llm_model="invalid/model-name",
             output="none",
             llm_cache="cache.db",
@@ -98,7 +98,7 @@ def test_params_llm_missing_provider() -> None:
     """Test that LLM model without provider prefix is rejected."""
     with pytest.raises(ValidationError) as exc_info:
         GenerateGraphParams(
-            model_spec=Path("model.json"),
+            context=Path("model.json"),
             llm_model="llama-3.1-8b-instant",
             output="none",
             llm_cache="cache.db",
@@ -114,7 +114,7 @@ def test_params_llm_temperature_bounds() -> None:
     """Test llm_temperature validation accepts valid range."""
     # Valid minimum
     params_min = GenerateGraphParams(
-        model_spec=Path("model.json"),
+        context=Path("model.json"),
         output="none",
         llm_cache="cache.db",
         llm_temperature=0.0,
@@ -123,7 +123,7 @@ def test_params_llm_temperature_bounds() -> None:
 
     # Valid maximum
     params_max = GenerateGraphParams(
-        model_spec=Path("model.json"),
+        context=Path("model.json"),
         output="none",
         llm_cache="cache.db",
         llm_temperature=2.0,
@@ -132,7 +132,7 @@ def test_params_llm_temperature_bounds() -> None:
 
     # Valid middle
     params_mid = GenerateGraphParams(
-        model_spec=Path("model.json"),
+        context=Path("model.json"),
         output="none",
         llm_cache="cache.db",
         llm_temperature=1.0,
@@ -145,7 +145,7 @@ def test_params_llm_temperature_below_minimum() -> None:
     """Test llm_temperature below 0.0 is rejected."""
     with pytest.raises(ValidationError) as exc_info:
         GenerateGraphParams(
-            model_spec=Path("model.json"),
+            context=Path("model.json"),
             output="none",
             llm_cache="cache.db",
             llm_temperature=-0.1,
@@ -160,7 +160,7 @@ def test_params_llm_temperature_above_maximum() -> None:
     """Test llm_temperature above 2.0 is rejected."""
     with pytest.raises(ValidationError) as exc_info:
         GenerateGraphParams(
-            model_spec=Path("model.json"),
+            context=Path("model.json"),
             output="none",
             llm_cache="cache.db",
             llm_temperature=2.1,
@@ -174,7 +174,7 @@ def test_params_llm_temperature_above_maximum() -> None:
 def test_params_from_dict_strings() -> None:
     """Test from_dict converts string values to correct types."""
     data: Dict[str, Any] = {
-        "model_spec": "test/model.json",
+        "context": "test/model.json",
         "prompt_detail": "rich",
         "output": "output/workflow_cache.db",
         "llm_cache": "cache/test.db",
@@ -183,7 +183,7 @@ def test_params_from_dict_strings() -> None:
 
     params = GenerateGraphParams.from_dict(data)
 
-    assert params.model_spec == Path("test/model.json")
+    assert params.context == Path("test/model.json")
     assert params.prompt_detail == PromptDetail.RICH
     assert params.output == "output/workflow_cache.db"
     assert params.llm_cache == "cache/test.db"
@@ -193,7 +193,7 @@ def test_params_from_dict_strings() -> None:
 def test_params_from_dict_typed() -> None:
     """Test from_dict accepts already-typed values."""
     data: Dict[str, Any] = {
-        "model_spec": Path("test/model.json"),
+        "context": Path("test/model.json"),
         "prompt_detail": PromptDetail.MINIMAL,
         "output": "none",
         "llm_cache": "cache.db",
@@ -201,7 +201,7 @@ def test_params_from_dict_typed() -> None:
 
     params = GenerateGraphParams.from_dict(data)
 
-    assert params.model_spec == Path("test/model.json")
+    assert params.context == Path("test/model.json")
     assert params.prompt_detail == PromptDetail.MINIMAL
     assert params.output == "none"
 
@@ -210,7 +210,7 @@ def test_params_from_dict_typed() -> None:
 def test_params_from_dict_case_insensitive() -> None:
     """Test from_dict handles case-insensitive enum values."""
     data: Dict[str, Any] = {
-        "model_spec": "model.json",
+        "context": "model.json",
         "prompt_detail": "STANDARD",
         "output": "none",
         "llm_cache": "cache.db",
@@ -225,7 +225,7 @@ def test_params_from_dict_case_insensitive() -> None:
 def test_params_from_dict_validation_error() -> None:
     """Test from_dict propagates validation errors."""
     data: Dict[str, Any] = {
-        "model_spec": "model.json",
+        "context": "model.json",
         "llm_model": "invalid/provider",
         "output": "none",
         "llm_cache": "cache.db",
@@ -239,7 +239,7 @@ def test_params_from_dict_validation_error() -> None:
 def test_params_cache_path_disabled() -> None:
     """Test get_effective_cache_path returns None when llm_cache is 'none'."""
     params = GenerateGraphParams(
-        model_spec=Path("test/model.json"),
+        context=Path("test/model.json"),
         output="none",
         llm_cache="none",
     )
@@ -251,7 +251,7 @@ def test_params_cache_path_disabled() -> None:
 def test_params_cache_path_explicit() -> None:
     """Test get_effective_cache_path returns explicit path."""
     params = GenerateGraphParams(
-        model_spec=Path("test/model.json"),
+        context=Path("test/model.json"),
         output="none",
         llm_cache="custom/cache.db",
     )
@@ -263,7 +263,7 @@ def test_params_cache_path_explicit() -> None:
 def test_params_llm_cache_none_case_insensitive() -> None:
     """Test llm_cache accepts 'NONE' and normalises to 'none'."""
     params = GenerateGraphParams(
-        model_spec=Path("test/model.json"),
+        context=Path("test/model.json"),
         output="none",
         llm_cache="NONE",
     )
@@ -277,7 +277,7 @@ def test_params_llm_cache_invalid_suffix() -> None:
     """Test llm_cache rejects paths not ending with .db."""
     with pytest.raises(ValidationError) as exc_info:
         GenerateGraphParams(
-            model_spec=Path("test/model.json"),
+            context=Path("test/model.json"),
             output="none",
             llm_cache="cache.txt",
         )
@@ -295,7 +295,7 @@ def test_params_llm_cache_invalid_suffix() -> None:
 def test_params_prompt_detail_levels(prompt_detail: PromptDetail) -> None:
     """Test all prompt_detail levels are accepted."""
     params = GenerateGraphParams(
-        model_spec=Path("model.json"),
+        context=Path("model.json"),
         prompt_detail=prompt_detail,
         output="none",
         llm_cache="cache.db",
@@ -307,7 +307,7 @@ def test_params_prompt_detail_levels(prompt_detail: PromptDetail) -> None:
 def test_params_output_none_case_insensitive() -> None:
     """Test output accepts 'NONE' and normalises to 'none'."""
     params = GenerateGraphParams(
-        model_spec=Path("test/model.json"),
+        context=Path("test/model.json"),
         output="NONE",
         llm_cache="cache.db",
     )
@@ -320,7 +320,7 @@ def test_params_output_none_case_insensitive() -> None:
 def test_params_output_workflow_cache() -> None:
     """Test output accepts .db file path for Workflow Cache."""
     params = GenerateGraphParams(
-        model_spec=Path("test/model.json"),
+        context=Path("test/model.json"),
         output="output/workflow_cache.db",
         llm_cache="cache.db",
     )
@@ -335,7 +335,7 @@ def test_params_output_workflow_cache() -> None:
 def test_params_output_json_file() -> None:
     """Test output accepts .json file path for CLI usage."""
     params = GenerateGraphParams(
-        model_spec=Path("test/model.json"),
+        context=Path("test/model.json"),
         output="output/graph.json",
         llm_cache="cache.db",
     )
@@ -348,7 +348,7 @@ def test_params_output_json_file() -> None:
 def test_params_output_accepts_any_path() -> None:
     """Test output accepts any path (interpreted as directory)."""
     params = GenerateGraphParams(
-        model_spec=Path("test/model.json"),
+        context=Path("test/model.json"),
         output="output/results",
         llm_cache="cache.db",
     )
@@ -362,7 +362,7 @@ def test_params_output_accepts_any_path() -> None:
 def test_params_is_workflow_cache_output_none() -> None:
     """Test is_workflow_cache_output returns False when output is 'none'."""
     params = GenerateGraphParams(
-        model_spec=Path("test/model.json"),
+        context=Path("test/model.json"),
         output="none",
         llm_cache="cache.db",
     )

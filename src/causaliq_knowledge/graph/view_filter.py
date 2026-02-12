@@ -1,7 +1,7 @@
-"""Prompt detail filtering for model specifications.
+"""Prompt detail filtering for network context.
 
 This module provides functionality to extract filtered views
-(minimal, standard, rich) from model specifications for LLM prompts.
+(minimal, standard, rich) from network context for LLM prompts.
 """
 
 from __future__ import annotations
@@ -9,7 +9,7 @@ from __future__ import annotations
 from enum import Enum
 from typing import Any
 
-from causaliq_knowledge.graph.models import ModelSpec, VariableSpec
+from causaliq_knowledge.graph.models import NetworkContext, VariableSpec
 
 
 class PromptDetail(str, Enum):
@@ -21,37 +21,39 @@ class PromptDetail(str, Enum):
 
 
 class ViewFilter:
-    """Filter model specifications to extract specific detail levels.
+    """Filter network context to extract specific detail levels.
 
     This class extracts variable information according to the view
-    definitions in the model specification (minimal, standard, rich).
+    definitions in the network context (minimal, standard, rich).
 
     By default, llm_name is substituted for name in the output to prevent
     LLM memorisation of benchmark networks. Use use_llm_names=False to
     output benchmark names directly (for memorisation testing).
 
     Example:
-        >>> spec = ModelLoader.load("model.json")
-        >>> view_filter = ViewFilter(spec)
+        >>> context = NetworkContext.load("asia.json")
+        >>> view_filter = ViewFilter(context)
         >>> minimal_vars = view_filter.filter_variables(PromptDetail.MINIMAL)
         >>> # Returns list of dicts with llm_name as 'name' field
     """
 
-    def __init__(self, spec: ModelSpec, *, use_llm_names: bool = True) -> None:
+    def __init__(
+        self, context: NetworkContext, *, use_llm_names: bool = True
+    ) -> None:
         """Initialise the view filter.
 
         Args:
-            spec: The model specification to filter.
+            context: The network context to filter.
             use_llm_names: If True (default), output llm_name as 'name'.
                 If False, output benchmark name as 'name'.
         """
-        self._spec = spec
+        self._context = context
         self._use_llm_names = use_llm_names
 
     @property
-    def spec(self) -> ModelSpec:
-        """Return the model specification."""
-        return self._spec
+    def context(self) -> NetworkContext:
+        """Return the network context."""
+        return self._context
 
     def get_include_fields(self, level: PromptDetail) -> list[str]:
         """Get the fields to include for a given detail level.
@@ -63,11 +65,11 @@ class ViewFilter:
             List of field names to include.
         """
         if level == PromptDetail.MINIMAL:
-            return self._spec.prompt_details.minimal.include_fields
+            return self._context.prompt_details.minimal.include_fields
         elif level == PromptDetail.STANDARD:
-            return self._spec.prompt_details.standard.include_fields
+            return self._context.prompt_details.standard.include_fields
         elif level == PromptDetail.RICH:
-            return self._spec.prompt_details.rich.include_fields
+            return self._context.prompt_details.rich.include_fields
         else:  # pragma: no cover
             raise ValueError(f"Unknown prompt detail level: {level}")
 
@@ -114,7 +116,7 @@ class ViewFilter:
             List of filtered variable dictionaries.
         """
         return [
-            self.filter_variable(var, level) for var in self._spec.variables
+            self.filter_variable(var, level) for var in self._context.variables
         ]
 
     def get_variable_names(self) -> list[str]:
@@ -127,16 +129,16 @@ class ViewFilter:
             List of variable names.
         """
         if self._use_llm_names:
-            return self._spec.get_llm_names()
-        return self._spec.get_variable_names()
+            return self._context.get_llm_names()
+        return self._context.get_variable_names()
 
     def get_domain(self) -> str:
-        """Get the domain from the specification.
+        """Get the domain from the context.
 
         Returns:
             The domain string.
         """
-        return self._spec.domain
+        return self._context.domain
 
     def get_context_summary(self, level: PromptDetail) -> dict[str, Any]:
         """Get a complete context summary for LLM prompts.
@@ -148,7 +150,7 @@ class ViewFilter:
             Dictionary with domain and filtered variables.
         """
         return {
-            "domain": self._spec.domain,
-            "dataset_id": self._spec.dataset_id,
+            "domain": self._context.domain,
+            "dataset_id": self._context.dataset_id,
             "variables": self.filter_variables(level),
         }

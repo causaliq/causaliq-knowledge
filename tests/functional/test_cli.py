@@ -789,15 +789,15 @@ def test_cli_generate_graph_shows_options():
     result = runner.invoke(cli, ["generate_graph", "--help"])
 
     assert result.exit_code == 0
-    assert "--model-spec" in result.output
+    assert "--network-context" in result.output
     assert "--prompt-detail" in result.output
     assert "--llm" in result.output
     assert "--output" in result.output
     assert "--llm-temperature" in result.output
 
 
-# Test generate graph requires model-spec.
-def test_cli_generate_graph_requires_model_spec():
+# Test generate graph requires context.
+def test_cli_generate_graph_requires_context():
     runner = CliRunner()
     result = runner.invoke(cli, ["generate_graph"])
 
@@ -808,16 +808,16 @@ def test_cli_generate_graph_requires_model_spec():
 # Test generate graph with non-existent file.
 def test_cli_generate_graph_missing_file():
     runner = CliRunner()
-    result = runner.invoke(cli, ["generate_graph", "-s", "nonexistent.json"])
+    result = runner.invoke(cli, ["generate_graph", "-n", "nonexistent.json"])
 
     assert result.exit_code != 0
 
 
-# Test generate graph loads model specification.
+# Test generate graph loads network context.
 def test_cli_generate_graph_loads_spec(tmp_path, mocker):
     import json
 
-    # Create a valid model specification
+    # Create a valid network context
     spec_data = {
         "dataset_id": "test-model",
         "domain": "testing",
@@ -837,7 +837,7 @@ def test_cli_generate_graph_loads_spec(tmp_path, mocker):
         variables=["A", "B"],
     )
     mock_generator = mocker.MagicMock()
-    mock_generator.generate_from_spec.return_value = mock_graph
+    mock_generator.generate_from_context.return_value = mock_graph
     mock_generator.get_stats.return_value = {
         "call_count": 1,
         "client_call_count": 1,
@@ -852,7 +852,7 @@ def test_cli_generate_graph_loads_spec(tmp_path, mocker):
         cli,
         [
             "generate_graph",
-            "-s",
+            "-n",
             str(spec_file),
             "-c",
             "none",
@@ -870,7 +870,7 @@ def test_cli_generate_graph_loads_spec(tmp_path, mocker):
 def test_cli_generate_graph_json_output(tmp_path, mocker):
     import json
 
-    # Create a valid model specification
+    # Create a valid network context
     spec_data = {
         "dataset_id": "json-test",
         "domain": "testing",
@@ -892,7 +892,7 @@ def test_cli_generate_graph_json_output(tmp_path, mocker):
         variables=["X", "Y"],
     )
     mock_generator = mocker.MagicMock()
-    mock_generator.generate_from_spec.return_value = mock_graph
+    mock_generator.generate_from_context.return_value = mock_graph
     mock_generator.get_stats.return_value = {
         "call_count": 1,
         "client_call_count": 1,
@@ -907,7 +907,7 @@ def test_cli_generate_graph_json_output(tmp_path, mocker):
         cli,
         [
             "generate_graph",
-            "-s",
+            "-n",
             str(spec_file),
             "-c",
             "none",
@@ -936,7 +936,7 @@ def test_cli_generate_graph_json_output(tmp_path, mocker):
 def test_cli_generate_graph_output_file(tmp_path, mocker):
     import json
 
-    # Create a valid model specification
+    # Create a valid network context
     spec_data = {
         "dataset_id": "file-output-test",
         "domain": "testing",
@@ -958,7 +958,7 @@ def test_cli_generate_graph_output_file(tmp_path, mocker):
         variables=["P", "Q"],
     )
     mock_generator = mocker.MagicMock()
-    mock_generator.generate_from_spec.return_value = mock_graph
+    mock_generator.generate_from_context.return_value = mock_graph
     mock_generator.get_stats.return_value = {
         "call_count": 1,
         "client_call_count": 1,
@@ -973,7 +973,7 @@ def test_cli_generate_graph_output_file(tmp_path, mocker):
         cli,
         [
             "generate_graph",
-            "-s",
+            "-n",
             str(spec_file),
             "-c",
             "none",
@@ -1027,7 +1027,7 @@ def test_cli_generate_graph_use_benchmark_names(tmp_path, mocker):
         variables=["smoke", "lung"],
     )
     mock_generator = mocker.MagicMock()
-    mock_generator.generate_from_spec.return_value = mock_graph
+    mock_generator.generate_from_context.return_value = mock_graph
     mock_generator.get_stats.return_value = {
         "call_count": 1,
         "client_call_count": 1,
@@ -1042,7 +1042,7 @@ def test_cli_generate_graph_use_benchmark_names(tmp_path, mocker):
         cli,
         [
             "generate_graph",
-            "-s",
+            "-n",
             str(spec_file),
             "-c",
             "none",
@@ -1075,7 +1075,7 @@ def test_cli_generate_graph_prompt_detail_minimal(tmp_path, mocker):
 
     mock_graph = GeneratedGraph(edges=[], variables=["A", "B"])
     mock_generator = mocker.MagicMock()
-    mock_generator.generate_from_spec.return_value = mock_graph
+    mock_generator.generate_from_context.return_value = mock_graph
     mock_generator.get_stats.return_value = {
         "call_count": 1,
         "client_call_count": 1,
@@ -1090,7 +1090,7 @@ def test_cli_generate_graph_prompt_detail_minimal(tmp_path, mocker):
         cli,
         [
             "generate_graph",
-            "-s",
+            "-n",
             str(spec_file),
             "-c",
             "none",
@@ -1127,7 +1127,7 @@ def test_cli_generate_graph_output_none_adjacency(tmp_path, mocker):
         variables=["A", "B"],
     )
     mock_generator = mocker.MagicMock()
-    mock_generator.generate_from_spec.return_value = mock_graph
+    mock_generator.generate_from_context.return_value = mock_graph
     mock_generator.get_stats.return_value = {
         "call_count": 1,
         "client_call_count": 1,
@@ -1142,7 +1142,7 @@ def test_cli_generate_graph_output_none_adjacency(tmp_path, mocker):
         cli,
         [
             "generate_graph",
-            "-s",
+            "-n",
             str(spec_file),
             "-c",
             "none",
@@ -1158,7 +1158,7 @@ def test_cli_generate_graph_output_none_adjacency(tmp_path, mocker):
     assert "A → B" in result.output or "Proposed Edges" in result.output
 
 
-# Test generate graph with invalid model spec.
+# Test generate graph with invalid context.
 def test_cli_generate_graph_invalid_spec(tmp_path):
     # Create an invalid JSON file
     spec_file = tmp_path / "invalid.json"
@@ -1169,7 +1169,7 @@ def test_cli_generate_graph_invalid_spec(tmp_path):
         cli,
         [
             "generate_graph",
-            "-s",
+            "-n",
             str(spec_file),
             "-c",
             "none",
@@ -1196,7 +1196,7 @@ def test_cli_generate_graph_incomplete_spec(tmp_path):
         cli,
         [
             "generate_graph",
-            "-s",
+            "-n",
             str(spec_file),
             "-c",
             "none",
@@ -1230,7 +1230,7 @@ def test_cli_generate_graph_real_model_file(mocker):
         variables=["Smoking", "Pollution", "Cancer"],
     )
     mock_generator = mocker.MagicMock()
-    mock_generator.generate_from_spec.return_value = mock_graph
+    mock_generator.generate_from_context.return_value = mock_graph
     mock_generator.get_stats.return_value = {
         "call_count": 1,
         "client_call_count": 1,
@@ -1245,7 +1245,7 @@ def test_cli_generate_graph_real_model_file(mocker):
         cli,
         [
             "generate_graph",
-            "-s",
+            "-n",
             str(model_path),
             "-c",
             "none",
@@ -1279,7 +1279,7 @@ def test_cli_generate_graph_with_cache(tmp_path, mocker):
 
     mock_graph = GeneratedGraph(edges=[], variables=["A", "B"])
     mock_generator = mocker.MagicMock()
-    mock_generator.generate_from_spec.return_value = mock_graph
+    mock_generator.generate_from_context.return_value = mock_graph
     mock_generator.get_stats.return_value = {
         "call_count": 1,
         "client_call_count": 1,
@@ -1294,7 +1294,7 @@ def test_cli_generate_graph_with_cache(tmp_path, mocker):
         cli,
         [
             "generate_graph",
-            "-s",
+            "-n",
             str(spec_file),
             "-c",
             str(cache_file),
@@ -1326,7 +1326,7 @@ def test_cli_generate_graph_empty_edges(tmp_path, mocker):
 
     mock_graph = GeneratedGraph(edges=[], variables=["A", "B"])
     mock_generator = mocker.MagicMock()
-    mock_generator.generate_from_spec.return_value = mock_graph
+    mock_generator.generate_from_context.return_value = mock_graph
     mock_generator.get_stats.return_value = {
         "call_count": 1,
         "client_call_count": 1,
@@ -1341,7 +1341,7 @@ def test_cli_generate_graph_empty_edges(tmp_path, mocker):
         cli,
         [
             "generate_graph",
-            "-s",
+            "-n",
             str(spec_file),
             "-c",
             "none",
@@ -1376,7 +1376,7 @@ def test_cli_generate_graph_llm_option(tmp_path, mocker):
         "causaliq_knowledge.graph.generator.GraphGenerator"
     )
     mock_generator = mocker.MagicMock()
-    mock_generator.generate_from_spec.return_value = mock_graph
+    mock_generator.generate_from_context.return_value = mock_graph
     mock_generator.get_stats.return_value = {
         "call_count": 1,
         "client_call_count": 1,
@@ -1388,7 +1388,7 @@ def test_cli_generate_graph_llm_option(tmp_path, mocker):
         cli,
         [
             "generate_graph",
-            "-s",
+            "-n",
             str(spec_file),
             "-c",
             "none",
@@ -1425,7 +1425,7 @@ def test_cli_generate_graph_invalid_prompt_detail_level(tmp_path):
         cli,
         [
             "generate_graph",
-            "-s",
+            "-n",
             str(spec_file),
             "--prompt-detail",
             "invalid",
@@ -1462,7 +1462,7 @@ def test_cli_generate_graph_any_path_is_directory_output(tmp_path, mocker):
         variables=["A", "B"],
     )
     mock_generator = mocker.MagicMock()
-    mock_generator.generate_from_spec.return_value = mock_graph
+    mock_generator.generate_from_context.return_value = mock_graph
     mock_generator.get_stats.return_value = {
         "call_count": 1,
         "client_call_count": 1,
@@ -1477,7 +1477,7 @@ def test_cli_generate_graph_any_path_is_directory_output(tmp_path, mocker):
         cli,
         [
             "generate_graph",
-            "-s",
+            "-n",
             str(spec_file),
             "-c",
             "none",
@@ -1511,7 +1511,7 @@ def test_cli_generate_graph_invalid_llm_model(tmp_path):
         cli,
         [
             "generate_graph",
-            "-s",
+            "-n",
             str(spec_file),
             "-c",
             "none",
@@ -1552,7 +1552,7 @@ def test_cli_generate_graph_cache_error(tmp_path, mocker):
         cli,
         [
             "generate_graph",
-            "-s",
+            "-n",
             str(spec_file),
             "-c",
             str(tmp_path / "cache.db"),
@@ -1590,7 +1590,7 @@ def test_cli_generate_graph_generator_error(tmp_path, mocker):
         cli,
         [
             "generate_graph",
-            "-s",
+            "-n",
             str(spec_file),
             "-c",
             "none",
@@ -1619,7 +1619,7 @@ def test_cli_generate_graph_generation_error(tmp_path, mocker):
 
     # Mock GraphGenerator to raise exception on generate
     mock_generator = mocker.MagicMock()
-    mock_generator.generate_from_spec.side_effect = Exception("LLM error")
+    mock_generator.generate_from_context.side_effect = Exception("LLM error")
     mocker.patch(
         "causaliq_knowledge.graph.generator.GraphGenerator",
         return_value=mock_generator,
@@ -1630,7 +1630,7 @@ def test_cli_generate_graph_generation_error(tmp_path, mocker):
         cli,
         [
             "generate_graph",
-            "-s",
+            "-n",
             str(spec_file),
             "-c",
             "none",
@@ -1674,7 +1674,7 @@ def test_cli_generate_graph_edge_with_reasoning(tmp_path, mocker):
         variables=["X", "Y"],
     )
     mock_generator = mocker.MagicMock()
-    mock_generator.generate_from_spec.return_value = mock_graph
+    mock_generator.generate_from_context.return_value = mock_graph
     mock_generator.get_stats.return_value = {
         "call_count": 1,
         "client_call_count": 1,
@@ -1689,7 +1689,7 @@ def test_cli_generate_graph_edge_with_reasoning(tmp_path, mocker):
         cli,
         [
             "generate_graph",
-            "-s",
+            "-n",
             str(spec_file),
             "-c",
             "none",
@@ -1738,10 +1738,15 @@ def test_cli_generate_graph_with_metadata(tmp_path, mocker):
             input_tokens=100,
             output_tokens=50,
             from_cache=False,
+            messages=[{"role": "user", "content": "test prompt"}],
+            temperature=0.1,
+            max_tokens=2000,
+            finish_reason="stop",
+            llm_cost_usd=0.001,
         ),
     )
     mock_generator = mocker.MagicMock()
-    mock_generator.generate_from_spec.return_value = mock_graph
+    mock_generator.generate_from_context.return_value = mock_graph
     mock_generator.get_stats.return_value = {
         "call_count": 1,
         "client_call_count": 1,
@@ -1756,7 +1761,7 @@ def test_cli_generate_graph_with_metadata(tmp_path, mocker):
         cli,
         [
             "generate_graph",
-            "-s",
+            "-n",
             str(spec_file),
             "-c",
             "none",
@@ -1767,9 +1772,17 @@ def test_cli_generate_graph_with_metadata(tmp_path, mocker):
 
     assert result.exit_code == 0
     metadata = json.loads((output_dir / "metadata.json").read_text())
-    # Metadata is stored in generation section
-    assert metadata["generation"]["input_tokens"] == 100
-    assert metadata["generation"]["output_tokens"] == 50
+    # Verify all generation metadata fields are present
+    gen = metadata["generation"]
+    assert gen["input_tokens"] == 100
+    assert gen["output_tokens"] == 50
+    assert gen["provider"] == "test-provider"
+    assert gen["messages"] == [{"role": "user", "content": "test prompt"}]
+    assert gen["temperature"] == 0.1
+    assert gen["max_tokens"] == 2000
+    assert gen["finish_reason"] == "stop"
+    assert gen["llm_cost_usd"] == 0.001
+    assert "llm_timestamp" in gen
 
 
 # Test generate graph human-readable output with reasoning.
@@ -1803,7 +1816,7 @@ def test_cli_generate_graph_human_readable_with_reasoning(tmp_path, mocker):
         variables=["X", "Y"],
     )
     mock_generator = mocker.MagicMock()
-    mock_generator.generate_from_spec.return_value = mock_graph
+    mock_generator.generate_from_context.return_value = mock_graph
     mock_generator.get_stats.return_value = {
         "call_count": 1,
         "client_call_count": 1,
@@ -1819,7 +1832,7 @@ def test_cli_generate_graph_human_readable_with_reasoning(tmp_path, mocker):
         cli,
         [
             "generate_graph",
-            "-s",
+            "-n",
             str(spec_file),
             "-c",
             "none",
@@ -1865,7 +1878,7 @@ def test_cli_generate_graph_long_reasoning_truncated(tmp_path, mocker):
         variables=["X", "Y"],
     )
     mock_generator = mocker.MagicMock()
-    mock_generator.generate_from_spec.return_value = mock_graph
+    mock_generator.generate_from_context.return_value = mock_graph
     mock_generator.get_stats.return_value = {
         "call_count": 1,
         "client_call_count": 1,
@@ -1880,7 +1893,7 @@ def test_cli_generate_graph_long_reasoning_truncated(tmp_path, mocker):
         cli,
         [
             "generate_graph",
-            "-s",
+            "-n",
             str(spec_file),
             "-c",
             "none",
@@ -1917,7 +1930,7 @@ def test_cli_generate_graph_workflow_cache_output(tmp_path, mocker):
         variables=["X", "Y"],
     )
     mock_generator = mocker.MagicMock()
-    mock_generator.generate_from_spec.return_value = mock_graph
+    mock_generator.generate_from_context.return_value = mock_graph
     mock_generator.get_stats.return_value = {
         "call_count": 1,
         "client_call_count": 1,
@@ -1934,7 +1947,7 @@ def test_cli_generate_graph_workflow_cache_output(tmp_path, mocker):
         cli,
         [
             "generate_graph",
-            "-s",
+            "-n",
             str(spec_file),
             "-c",
             "none",

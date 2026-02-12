@@ -26,7 +26,7 @@ from pydantic import ValidationError
 from causaliq_knowledge.graph.params import GenerateGraphParams
 
 if TYPE_CHECKING:  # pragma: no cover
-    from causaliq_knowledge.graph.models import ModelSpec
+    from causaliq_knowledge.graph.models import NetworkContext
     from causaliq_knowledge.graph.response import GeneratedGraph
 
 logger = logging.getLogger(__name__)
@@ -62,9 +62,9 @@ def _create_action_inputs() -> Dict[str, Any]:
             required=True,
             type_hint="str",
         ),
-        "model_spec": ActionInput(
-            name="model_spec",
-            description="Path to model specification JSON file",
+        "context": ActionInput(
+            name="context",
+            description="Path to network context JSON file",
             required=True,
             type_hint="str",
         ),
@@ -137,7 +137,7 @@ class KnowledgeActionProvider(BaseActionProvider):
             uses: causaliq-knowledge
             with:
               action: generate_graph
-              model_spec: "{{data_dir}}/cancer.json"
+              context: "{{data_dir}}/cancer.json"
               output: "{{data_dir}}/results.db"
               llm_cache: "{{data_dir}}/llm_cache.db"
               prompt_detail: standard
@@ -189,10 +189,10 @@ class KnowledgeActionProvider(BaseActionProvider):
 
         # For generate_graph, validate using GenerateGraphParams
         if action == "generate_graph":
-            # Check required model_spec
-            if "model_spec" not in parameters:
+            # Check required context
+            if "context" not in parameters:
                 raise ActionValidationError(
-                    "Missing required input: 'model_spec' for generate_graph"
+                    "Missing required input: 'context' for generate_graph"
                 )
 
             try:
@@ -266,10 +266,10 @@ class KnowledgeActionProvider(BaseActionProvider):
         except (ValidationError, ValueError) as e:
             raise ActionExecutionError(f"Parameter validation failed: {e}")
 
-        # Check model_spec exists
-        if not params.model_spec.exists():
+        # Check context exists
+        if not params.context.exists():
             raise ActionExecutionError(
-                f"Model specification not found: {params.model_spec}"
+                f"Network context not found: {params.context}"
             )
 
         # Dry-run mode: validate only, don't execute
@@ -291,7 +291,7 @@ class KnowledgeActionProvider(BaseActionProvider):
         return {
             "status": "skipped",
             "message": "Dry-run mode: would generate graph",
-            "model_spec": str(params.model_spec),
+            "context": str(params.context),
             "llm_model": params.llm_model,
             "prompt_detail": params.prompt_detail.value,
             "output": params.output,
@@ -315,7 +315,7 @@ class KnowledgeActionProvider(BaseActionProvider):
         """
         # Start with generation parameters
         self._execution_metadata = {
-            "model_spec": str(params.model_spec),
+            "context": str(params.context),
             "llm_model": params.llm_model,
             "prompt_detail": params.prompt_detail.value,
             "use_benchmark_names": params.use_benchmark_names,
@@ -365,31 +365,29 @@ class KnowledgeActionProvider(BaseActionProvider):
         from causaliq_core.cache import TokenCache
         from causaliq_workflow.cache import WorkflowCache
 
-        from causaliq_knowledge.graph import GraphEntryEncoder, ModelLoader
+        from causaliq_knowledge.graph import GraphEntryEncoder, NetworkContext
         from causaliq_knowledge.graph.generator import (
             GraphGenerator,
             GraphGeneratorConfig,
         )
 
         try:
-            # Load model specification
-            spec = ModelLoader.load(params.model_spec)
+            # Load network context
+            network_ctx = NetworkContext.load(params.context)
             logger.info(
-                f"Loaded model specification: {spec.dataset_id} "
-                f"({len(spec.variables)} variables)"
+                f"Loaded network context: {network_ctx.dataset_id} "
+                f"({len(network_ctx.variables)} variables)"
             )
         except Exception as e:
-            raise ActionExecutionError(
-                f"Failed to load model specification: {e}"
-            )
+            raise ActionExecutionError(f"Failed to load network context: {e}")
 
         # Track mapping for name conversion
         llm_to_benchmark_mapping: Dict[str, str] = {}
 
         # Determine naming mode
         use_llm_names = not params.use_benchmark_names
-        if use_llm_names and spec.uses_distinct_llm_names():
-            llm_to_benchmark_mapping = spec.get_llm_to_name_mapping()
+        if use_llm_names and network_ctx.uses_distinct_llm_names():
+            llm_to_benchmark_mapping = network_ctx.get_llm_to_name_mapping()
 
         # Set up cache
         cache: Optional[TokenCache] = None
@@ -424,8 +422,8 @@ class KnowledgeActionProvider(BaseActionProvider):
             )
 
             # Generate graph
-            graph = generator.generate_from_spec(
-                spec, level=params.prompt_detail
+            graph = generator.generate_from_context(
+                network_ctx, level=params.prompt_detail
             )
 
             # Map LLM names back to benchmark names
@@ -484,7 +482,7 @@ class KnowledgeActionProvider(BaseActionProvider):
                             "Each matrix combination would overwrite files."
                         )
                     # Write GraphML + JSON files to directory
-                    self._write_to_directory(output_path, graph, spec)
+                    self._write_to_directory(output_path, graph, network_ctx)
                     result["output_dir"] = str(output_path)
 
             return result
@@ -516,7 +514,7 @@ class KnowledgeActionProvider(BaseActionProvider):
         if context is not None and hasattr(context, "matrix"):
             key_data = dict(context.matrix)
         else:
-            # Fallback: use model spec filename as key
+            # Fallback: use network context filename as key
             key_data = {"source": "generate_graph"}
 
         with workflow_cache_cls(str(output_path)) as wf_cache:
@@ -550,7 +548,7 @@ class KnowledgeActionProvider(BaseActionProvider):
         self,
         output_dir: Path,
         graph: "GeneratedGraph",
-        spec: "ModelSpec",
+        network_ctx: "NetworkContext",
     ) -> None:
         """Write graph output to directory as GraphML + JSON files.
 
@@ -562,7 +560,7 @@ class KnowledgeActionProvider(BaseActionProvider):
         Args:
             output_dir: Directory path to write files to.
             graph: Generated graph to write.
-            spec: Model specification (for additional metadata).
+            network_ctx: Network context (for additional metadata).
         """
         import json
 
@@ -582,8 +580,8 @@ class KnowledgeActionProvider(BaseActionProvider):
 
         # Build and write metadata
         metadata: Dict[str, Any] = {
-            "dataset_id": spec.dataset_id,
-            "domain": spec.domain,
+            "dataset_id": network_ctx.dataset_id,
+            "domain": network_ctx.domain,
             "variables": graph.variables,
             "edge_count": len(graph.edges),
             "reasoning": graph.reasoning,

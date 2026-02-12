@@ -108,6 +108,31 @@ class GenerationMetadata:
         """Alias for llm_cost_usd (backward compatibility)."""
         return self.llm_cost_usd
 
+    def to_dict(self) -> Dict[str, Any]:
+        """Convert generation metadata to a dictionary.
+
+        Returns a dictionary suitable for JSON serialisation, containing
+        all generation provenance information.
+
+        Returns:
+            Dictionary with all metadata fields.
+        """
+        return {
+            "model": self.model,
+            "provider": self.provider,
+            "llm_timestamp": self.timestamp.isoformat(),
+            "latency_ms": self.latency_ms,
+            "input_tokens": self.input_tokens,
+            "output_tokens": self.output_tokens,
+            "cost_usd": self.cost_usd,
+            "from_cache": self.from_cache,
+            "messages": self.messages,
+            "temperature": self.temperature,
+            "max_tokens": self.max_tokens,
+            "finish_reason": self.finish_reason,
+            "llm_cost_usd": self.llm_cost_usd,
+        }
+
 
 @dataclass
 class GeneratedGraph:

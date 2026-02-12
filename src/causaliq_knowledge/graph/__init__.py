@@ -1,7 +1,7 @@
 """Graph generation module for causaliq-knowledge.
 
 This module provides functionality for LLM-based causal graph generation
-from variable specifications.
+from network context specifications.
 """
 
 from causaliq_knowledge.graph.cache import (
@@ -14,13 +14,13 @@ from causaliq_knowledge.graph.generator import (
     GraphGenerator,
     GraphGeneratorConfig,
 )
-from causaliq_knowledge.graph.loader import ModelLoader, ModelLoadError
 from causaliq_knowledge.graph.models import (
     CausalPrinciple,
     Constraints,
     GroundTruth,
     LLMGuidance,
-    ModelSpec,
+    NetworkContext,
+    NetworkLoadError,
     PromptDetails,
     Provenance,
     VariableRole,
@@ -46,8 +46,10 @@ from causaliq_knowledge.graph.response import (
 from causaliq_knowledge.graph.view_filter import PromptDetail, ViewFilter
 
 __all__ = [
-    # Models
-    "ModelSpec",
+    # Network context
+    "NetworkContext",
+    "NetworkLoadError",
+    # Supporting models
     "Provenance",
     "LLMGuidance",
     "ViewDefinition",
@@ -60,9 +62,6 @@ __all__ = [
     "GroundTruth",
     # Params (shared validation)
     "GenerateGraphParams",
-    # Loader
-    "ModelLoader",
-    "ModelLoadError",
     # Filtering
     "ViewFilter",
     "PromptDetail",

@@ -12,7 +12,7 @@ from enum import Enum
 from typing import TYPE_CHECKING, Any, Optional
 
 if TYPE_CHECKING:  # pragma: no cover
-    from causaliq_knowledge.graph.models import ModelSpec
+    from causaliq_knowledge.graph.models import NetworkContext
 
 from causaliq_knowledge.graph.view_filter import PromptDetail, ViewFilter
 
@@ -236,13 +236,13 @@ class GraphQueryPrompt:
         system_prompt: Custom system prompt (uses default if None).
 
     Example:
-        >>> spec = ModelLoader.load("model.json")
-        >>> view_filter = ViewFilter(spec)
+        >>> context = NetworkContext.load("model.json")
+        >>> view_filter = ViewFilter(context)
         >>> variables = view_filter.filter_variables(PromptDetail.STANDARD)
         >>> prompt = GraphQueryPrompt(
         ...     variables=variables,
         ...     level=PromptDetail.STANDARD,
-        ...     domain=spec.domain,
+        ...     domain=context.domain,
         ... )
         >>> system, user = prompt.build()
     """
@@ -350,23 +350,23 @@ class GraphQueryPrompt:
         return [v.get("name", "unknown") for v in self.variables]
 
     @classmethod
-    def from_model_spec(
+    def from_context(
         cls,
-        spec: "ModelSpec",
+        context: "NetworkContext",
         level: PromptDetail = PromptDetail.STANDARD,
         output_format: OutputFormat = OutputFormat.EDGE_LIST,
         system_prompt: Optional[str] = None,
         use_llm_names: bool = True,
     ) -> "GraphQueryPrompt":
-        """Create a GraphQueryPrompt from a ModelSpec.
+        """Create a GraphQueryPrompt from a NetworkContext.
 
         Convenience factory method that automatically applies view
         filtering to extract variables at the specified level. This is
-        the recommended way to create prompts when working with ModelSpec
-        objects.
+        the recommended way to create prompts when working with
+        NetworkContext objects.
 
         Args:
-            spec: The model specification containing variable definitions.
+            context: The network context containing variable definitions.
             level: The view level determining context depth. Defaults to
                 STANDARD which includes names, types, and descriptions.
             output_format: Desired output format for LLM response. Defaults
@@ -378,23 +378,23 @@ class GraphQueryPrompt:
 
         Returns:
             GraphQueryPrompt instance configured with filtered variables
-            and domain context from the specification.
+            and domain context from the context.
 
         Example:
-            >>> spec = ModelLoader.load("model.json")
-            >>> prompt = GraphQueryPrompt.from_model_spec(
-            ...     spec,
+            >>> context = NetworkContext.load("asia.json")
+            >>> prompt = GraphQueryPrompt.from_context(
+            ...     context,
             ...     level=PromptDetail.RICH,
             ... )
             >>> system, user = prompt.build()
         """
-        view_filter = ViewFilter(spec, use_llm_names=use_llm_names)
+        view_filter = ViewFilter(context, use_llm_names=use_llm_names)
         variables = view_filter.filter_variables(level)
 
         return cls(
             variables=variables,
             level=level,
-            domain=spec.domain,
+            domain=context.domain,
             output_format=output_format,
             system_prompt=system_prompt,
         )

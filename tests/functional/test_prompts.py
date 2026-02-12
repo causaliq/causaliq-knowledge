@@ -8,7 +8,7 @@ from pathlib import Path
 
 import pytest
 
-from causaliq_knowledge.graph.loader import ModelLoader
+from causaliq_knowledge.graph.models import NetworkContext
 from causaliq_knowledge.graph.prompts import (
     GraphQueryPrompt,
     OutputFormat,
@@ -22,18 +22,18 @@ MODELS_DIR = Path(__file__).parent.parent / "data" / "functional" / "models"
 @pytest.fixture
 def simple_chain_spec():
     """Load the simple_chain model specification."""
-    return ModelLoader.load(MODELS_DIR / "simple_chain.json")
+    return NetworkContext.load(MODELS_DIR / "simple_chain.json")
 
 
 @pytest.fixture
 def collider_spec():
     """Load the collider model specification."""
-    return ModelLoader.load(MODELS_DIR / "collider.json")
+    return NetworkContext.load(MODELS_DIR / "collider.json")
 
 
 # Test prompt generation from simple_chain model at minimal level.
 def test_simple_chain_minimal_prompt(simple_chain_spec) -> None:
-    prompt = GraphQueryPrompt.from_model_spec(
+    prompt = GraphQueryPrompt.from_context(
         simple_chain_spec,
         level=PromptDetail.MINIMAL,
     )
@@ -55,7 +55,7 @@ def test_simple_chain_minimal_prompt(simple_chain_spec) -> None:
 
 # Test prompt generation from simple_chain model at standard level.
 def test_simple_chain_standard_prompt(simple_chain_spec) -> None:
-    prompt = GraphQueryPrompt.from_model_spec(
+    prompt = GraphQueryPrompt.from_context(
         simple_chain_spec,
         level=PromptDetail.STANDARD,
     )
@@ -72,7 +72,7 @@ def test_simple_chain_standard_prompt(simple_chain_spec) -> None:
 
 # Test prompt generation from simple_chain model at rich level.
 def test_simple_chain_rich_prompt(simple_chain_spec) -> None:
-    prompt = GraphQueryPrompt.from_model_spec(
+    prompt = GraphQueryPrompt.from_context(
         simple_chain_spec,
         level=PromptDetail.RICH,
     )
@@ -88,7 +88,7 @@ def test_simple_chain_rich_prompt(simple_chain_spec) -> None:
 
 # Test prompt generation from collider model at minimal level.
 def test_collider_minimal_prompt(collider_spec) -> None:
-    prompt = GraphQueryPrompt.from_model_spec(
+    prompt = GraphQueryPrompt.from_context(
         collider_spec,
         level=PromptDetail.MINIMAL,
     )
@@ -105,7 +105,7 @@ def test_collider_minimal_prompt(collider_spec) -> None:
 
 # Test prompt generation from collider model at standard level.
 def test_collider_standard_prompt(collider_spec) -> None:
-    prompt = GraphQueryPrompt.from_model_spec(
+    prompt = GraphQueryPrompt.from_context(
         collider_spec,
         level=PromptDetail.STANDARD,
     )
@@ -123,7 +123,7 @@ def test_collider_standard_prompt(collider_spec) -> None:
 
 # Test prompt generation from collider model at rich level.
 def test_collider_rich_prompt(collider_spec) -> None:
-    prompt = GraphQueryPrompt.from_model_spec(
+    prompt = GraphQueryPrompt.from_context(
         collider_spec,
         level=PromptDetail.RICH,
     )
@@ -136,7 +136,7 @@ def test_collider_rich_prompt(collider_spec) -> None:
 
 # Test adjacency matrix format with simple_chain.
 def test_simple_chain_adjacency_format(simple_chain_spec) -> None:
-    prompt = GraphQueryPrompt.from_model_spec(
+    prompt = GraphQueryPrompt.from_context(
         simple_chain_spec,
         output_format=OutputFormat.ADJACENCY_MATRIX,
     )
@@ -149,7 +149,7 @@ def test_simple_chain_adjacency_format(simple_chain_spec) -> None:
 
 # Test adjacency matrix format with collider.
 def test_collider_adjacency_format(collider_spec) -> None:
-    prompt = GraphQueryPrompt.from_model_spec(
+    prompt = GraphQueryPrompt.from_context(
         collider_spec,
         output_format=OutputFormat.ADJACENCY_MATRIX,
     )
@@ -160,7 +160,7 @@ def test_collider_adjacency_format(collider_spec) -> None:
 
 # Test get_variable_names returns correct names from simple_chain.
 def test_simple_chain_variable_names(simple_chain_spec) -> None:
-    prompt = GraphQueryPrompt.from_model_spec(
+    prompt = GraphQueryPrompt.from_context(
         simple_chain_spec,
         level=PromptDetail.MINIMAL,
     )
@@ -174,7 +174,7 @@ def test_simple_chain_variable_names(simple_chain_spec) -> None:
 
 # Test get_variable_names returns llm_names from collider.
 def test_collider_variable_names(collider_spec) -> None:
-    prompt = GraphQueryPrompt.from_model_spec(
+    prompt = GraphQueryPrompt.from_context(
         collider_spec,
         level=PromptDetail.MINIMAL,
     )
@@ -194,7 +194,7 @@ def test_collider_variable_names(collider_spec) -> None:
 # Test custom system prompt overrides default for real model.
 def test_custom_system_prompt_with_model(simple_chain_spec) -> None:
     custom = "You are a causal discovery expert. Return graph as JSON."
-    prompt = GraphQueryPrompt.from_model_spec(
+    prompt = GraphQueryPrompt.from_context(
         simple_chain_spec,
         system_prompt=custom,
     )
@@ -206,7 +206,7 @@ def test_custom_system_prompt_with_model(simple_chain_spec) -> None:
 
 # Test prompt contains domain from model spec.
 def test_prompt_includes_model_domain(collider_spec) -> None:
-    prompt = GraphQueryPrompt.from_model_spec(
+    prompt = GraphQueryPrompt.from_context(
         collider_spec,
         level=PromptDetail.MINIMAL,
     )
@@ -222,7 +222,7 @@ def test_all_view_levels_produce_prompts(
     simple_chain_spec,
     level: PromptDetail,
 ) -> None:
-    prompt = GraphQueryPrompt.from_model_spec(simple_chain_spec, level=level)
+    prompt = GraphQueryPrompt.from_context(simple_chain_spec, level=level)
     system, user = prompt.build()
 
     assert len(system) > 100  # Non-trivial system prompt
@@ -233,7 +233,7 @@ def test_all_view_levels_produce_prompts(
 # Test all view levels with collider model.
 @pytest.mark.parametrize("level", list(PromptDetail))
 def test_all_view_levels_collider(collider_spec, level: PromptDetail) -> None:
-    prompt = GraphQueryPrompt.from_model_spec(collider_spec, level=level)
+    prompt = GraphQueryPrompt.from_context(collider_spec, level=level)
     system, user = prompt.build()
 
     assert len(system) > 100
@@ -247,7 +247,7 @@ def test_all_output_formats(
     simple_chain_spec,
     output_format: OutputFormat,
 ) -> None:
-    prompt = GraphQueryPrompt.from_model_spec(
+    prompt = GraphQueryPrompt.from_context(
         simple_chain_spec,
         output_format=output_format,
     )

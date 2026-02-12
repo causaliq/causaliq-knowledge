@@ -46,7 +46,7 @@ def test_action_inputs_specification() -> None:
     action = KnowledgeActionProvider()
 
     assert "action" in action.inputs
-    assert "model_spec" in action.inputs
+    assert "context" in action.inputs
     assert "prompt_detail" in action.inputs
     assert "llm_model" in action.inputs
     assert "output" in action.inputs
@@ -76,15 +76,15 @@ def test_validate_parameters_unknown_action() -> None:
     with pytest.raises(ActionValidationError) as exc_info:
         action.validate_parameters(
             "unknown_action",
-            {"model_spec": "model.json"},
+            {"context": "model.json"},
         )
 
     assert "unknown action" in str(exc_info.value).lower()
 
 
-# Test validate_parameters rejects missing model_spec for generate_graph.
-def test_validate_parameters_missing_model_spec() -> None:
-    """Test validation fails when model_spec missing for generate_graph."""
+# Test validate_parameters rejects missing context for generate_graph.
+def test_validate_parameters_missing_context() -> None:
+    """Test validation fails when context missing for generate_graph."""
     from causaliq_workflow.action import ActionValidationError
 
     action = KnowledgeActionProvider()
@@ -92,7 +92,7 @@ def test_validate_parameters_missing_model_spec() -> None:
     with pytest.raises(ActionValidationError) as exc_info:
         action.validate_parameters("generate_graph", {})
 
-    assert "model_spec" in str(exc_info.value).lower()
+    assert "context" in str(exc_info.value).lower()
 
 
 # Test validate_parameters accepts valid generate_graph parameters.
@@ -104,7 +104,7 @@ def test_validate_parameters_valid_generate_graph() -> None:
     result = action.validate_parameters(
         "generate_graph",
         {
-            "model_spec": "model.json",
+            "context": "model.json",
             "output": "none",
             "llm_cache": "cache.db",
         },
@@ -124,7 +124,7 @@ def test_validate_parameters_invalid_llm() -> None:
         action.validate_parameters(
             "generate_graph",
             {
-                "model_spec": "model.json",
+                "context": "model.json",
                 "llm_model": "invalid/model",
                 "output": "none",
                 "llm_cache": "cache.db",
@@ -137,9 +137,9 @@ def test_validate_parameters_invalid_llm() -> None:
 # Test dry-run mode returns skipped status.
 def test_run_dry_run_mode(tmp_path: Path) -> None:
     """Test dry-run mode returns skipped status without executing."""
-    # Create a minimal model spec file
-    model_spec = tmp_path / "model.json"
-    model_spec.write_text(
+    # Create a minimal context file
+    context_file = tmp_path / "model.json"
+    context_file.write_text(
         '{"schema_version": "2.0", "dataset_id": "test", '
         '"domain": "test", "variables": [{"name": "x", "type": "binary"}]}'
     )
@@ -149,7 +149,7 @@ def test_run_dry_run_mode(tmp_path: Path) -> None:
     result = action.run(
         "generate_graph",
         {
-            "model_spec": str(model_spec),
+            "context": str(context_file),
             "output": "none",
             "llm_cache": "cache.db",
         },
@@ -162,9 +162,9 @@ def test_run_dry_run_mode(tmp_path: Path) -> None:
     assert result["prompt_detail"] == "standard"
 
 
-# Test run fails for non-existent model_spec.
-def test_run_model_spec_not_found() -> None:
-    """Test run fails when model_spec file doesn't exist."""
+# Test run fails for non-existent context.
+def test_run_context_not_found() -> None:
+    """Test run fails when context file doesn't exist."""
     from causaliq_workflow.action import ActionExecutionError
 
     action = KnowledgeActionProvider()
@@ -173,7 +173,7 @@ def test_run_model_spec_not_found() -> None:
         action.run(
             "generate_graph",
             {
-                "model_spec": "/nonexistent/model.json",
+                "context": "/nonexistent/model.json",
                 "output": "none",
                 "llm_cache": "cache.db",
             },
@@ -191,9 +191,9 @@ def test_run_execute_mode(tmp_path: Path) -> None:
         ProposedEdge,
     )
 
-    # Create a minimal model spec file
-    model_spec = tmp_path / "model.json"
-    model_spec.write_text(
+    # Create a minimal context file
+    context_file = tmp_path / "model.json"
+    context_file.write_text(
         '{"schema_version": "2.0", "dataset_id": "test", '
         '"domain": "test", "variables": ['
         '{"name": "x", "type": "binary"}, '
@@ -211,7 +211,7 @@ def test_run_execute_mode(tmp_path: Path) -> None:
         "causaliq_knowledge.graph.generator.GraphGenerator"
     ) as mock_generator_class:
         mock_generator = MagicMock()
-        mock_generator.generate_from_spec.return_value = mock_graph
+        mock_generator.generate_from_context.return_value = mock_graph
         mock_generator.get_stats.return_value = {"cache_hits": 0}
         mock_generator_class.return_value = mock_generator
 
@@ -220,7 +220,7 @@ def test_run_execute_mode(tmp_path: Path) -> None:
         result = action.run(
             "generate_graph",
             {
-                "model_spec": str(model_spec),
+                "context": str(context_file),
                 "output": "none",
                 "llm_cache": "none",  # Disable cache for simpler test
             },
@@ -243,9 +243,9 @@ def test_run_with_output_file(tmp_path: Path) -> None:
         ProposedEdge,
     )
 
-    # Create a minimal model spec file
-    model_spec = tmp_path / "model.json"
-    model_spec.write_text(
+    # Create a minimal context file
+    context_file = tmp_path / "model.json"
+    context_file.write_text(
         '{"schema_version": "2.0", "dataset_id": "test", '
         '"domain": "test", "variables": ['
         '{"name": "x", "type": "binary"}, '
@@ -265,7 +265,7 @@ def test_run_with_output_file(tmp_path: Path) -> None:
         "causaliq_knowledge.graph.generator.GraphGenerator"
     ) as mock_generator_class:
         mock_generator = MagicMock()
-        mock_generator.generate_from_spec.return_value = mock_graph
+        mock_generator.generate_from_context.return_value = mock_graph
         mock_generator.get_stats.return_value = {"cache_hits": 0}
         mock_generator_class.return_value = mock_generator
 
@@ -274,7 +274,7 @@ def test_run_with_output_file(tmp_path: Path) -> None:
         result = action.run(
             "generate_graph",
             {
-                "model_spec": str(model_spec),
+                "context": str(context_file),
                 "output": str(output_file),
                 "llm_cache": "none",
             },
@@ -296,9 +296,9 @@ def test_run_with_directory_output(tmp_path: Path) -> None:
         ProposedEdge,
     )
 
-    # Create a minimal model spec file
-    model_spec = tmp_path / "model.json"
-    model_spec.write_text(
+    # Create a minimal context file
+    context_file = tmp_path / "model.json"
+    context_file.write_text(
         '{"schema_version": "2.0", "dataset_id": "test", '
         '"domain": "test", "variables": ['
         '{"name": "x", "type": "binary"}, '
@@ -318,7 +318,7 @@ def test_run_with_directory_output(tmp_path: Path) -> None:
         "causaliq_knowledge.graph.generator.GraphGenerator"
     ) as mock_generator_class:
         mock_generator = MagicMock()
-        mock_generator.generate_from_spec.return_value = mock_graph
+        mock_generator.generate_from_context.return_value = mock_graph
         mock_generator.get_stats.return_value = {"cache_hits": 0}
         mock_generator_class.return_value = mock_generator
 
@@ -327,7 +327,7 @@ def test_run_with_directory_output(tmp_path: Path) -> None:
         result = action.run(
             "generate_graph",
             {
-                "model_spec": str(model_spec),
+                "context": str(context_file),
                 "output": str(output_dir),
                 "llm_cache": "none",
             },
@@ -357,9 +357,9 @@ def test_run_directory_output_rejects_matrix_context(tmp_path: Path) -> None:
         ProposedEdge,
     )
 
-    # Create a minimal model spec file
-    model_spec = tmp_path / "model.json"
-    model_spec.write_text(
+    # Create a minimal context file
+    context_file = tmp_path / "model.json"
+    context_file.write_text(
         '{"schema_version": "2.0", "dataset_id": "test", '
         '"domain": "test", "variables": ['
         '{"name": "x", "type": "binary"}, '
@@ -382,7 +382,7 @@ def test_run_directory_output_rejects_matrix_context(tmp_path: Path) -> None:
         "causaliq_knowledge.graph.generator.GraphGenerator"
     ) as mock_generator_class:
         mock_generator = MagicMock()
-        mock_generator.generate_from_spec.return_value = mock_graph
+        mock_generator.generate_from_context.return_value = mock_graph
         mock_generator.get_stats.return_value = {"cache_hits": 0}
         mock_generator_class.return_value = mock_generator
 
@@ -392,7 +392,7 @@ def test_run_directory_output_rejects_matrix_context(tmp_path: Path) -> None:
             action.run(
                 "generate_graph",
                 {
-                    "model_spec": str(model_spec),
+                    "context": str(context_file),
                     "output": str(output_dir),
                     "llm_cache": "none",
                 },
@@ -413,9 +413,9 @@ def test_run_directory_output_with_edge_reasoning(tmp_path: Path) -> None:
         ProposedEdge,
     )
 
-    # Create a minimal model spec file
-    model_spec = tmp_path / "model.json"
-    model_spec.write_text(
+    # Create a minimal context file
+    context_file = tmp_path / "model.json"
+    context_file.write_text(
         '{"schema_version": "2.0", "dataset_id": "test", '
         '"domain": "test", "variables": ['
         '{"name": "x", "type": "binary"}, '
@@ -441,7 +441,7 @@ def test_run_directory_output_with_edge_reasoning(tmp_path: Path) -> None:
         "causaliq_knowledge.graph.generator.GraphGenerator"
     ) as mock_generator_class:
         mock_generator = MagicMock()
-        mock_generator.generate_from_spec.return_value = mock_graph
+        mock_generator.generate_from_context.return_value = mock_graph
         mock_generator.get_stats.return_value = {"cache_hits": 0}
         mock_generator_class.return_value = mock_generator
 
@@ -450,7 +450,7 @@ def test_run_directory_output_with_edge_reasoning(tmp_path: Path) -> None:
         result = action.run(
             "generate_graph",
             {
-                "model_spec": str(model_spec),
+                "context": str(context_file),
                 "output": str(output_dir),
                 "llm_cache": "none",
             },
@@ -477,9 +477,9 @@ def test_run_directory_output_with_generation_metadata(tmp_path: Path) -> None:
         ProposedEdge,
     )
 
-    # Create a minimal model spec file
-    model_spec = tmp_path / "model.json"
-    model_spec.write_text(
+    # Create a minimal context file
+    context_file = tmp_path / "model.json"
+    context_file.write_text(
         '{"schema_version": "2.0", "dataset_id": "test", '
         '"domain": "test", "variables": ['
         '{"name": "x", "type": "binary"}, '
@@ -507,7 +507,7 @@ def test_run_directory_output_with_generation_metadata(tmp_path: Path) -> None:
         "causaliq_knowledge.graph.generator.GraphGenerator"
     ) as mock_generator_class:
         mock_generator = MagicMock()
-        mock_generator.generate_from_spec.return_value = mock_graph
+        mock_generator.generate_from_context.return_value = mock_graph
         mock_generator.get_stats.return_value = {"cache_hits": 0}
         mock_generator_class.return_value = mock_generator
 
@@ -516,7 +516,7 @@ def test_run_directory_output_with_generation_metadata(tmp_path: Path) -> None:
         result = action.run(
             "generate_graph",
             {
-                "model_spec": str(model_spec),
+                "context": str(context_file),
                 "output": str(output_dir),
                 "llm_cache": "none",
             },
@@ -692,9 +692,9 @@ def test_run_request_id_from_output(tmp_path: Path) -> None:
     """Test request_id is derived from output filename stem."""
     from causaliq_knowledge.graph.response import GeneratedGraph
 
-    # Create a minimal model spec file
-    model_spec = tmp_path / "model.json"
-    model_spec.write_text(
+    # Create a minimal context file
+    context_file = tmp_path / "model.json"
+    context_file.write_text(
         '{"schema_version": "2.0", "dataset_id": "test", '
         '"domain": "test", "variables": [{"name": "x", "type": "binary"}]}'
     )
@@ -710,7 +710,7 @@ def test_run_request_id_from_output(tmp_path: Path) -> None:
     def capture_config(*args: Any, **kwargs: Any) -> MagicMock:
         captured_config.update(kwargs)
         mock = MagicMock()
-        mock.generate_from_spec.return_value = mock_graph
+        mock.generate_from_context.return_value = mock_graph
         mock.get_stats.return_value = {"cache_hits": 0}
         return mock
 
@@ -724,7 +724,7 @@ def test_run_request_id_from_output(tmp_path: Path) -> None:
         action.run(
             "generate_graph",
             {
-                "model_spec": str(model_spec),
+                "context": str(context_file),
                 "output": str(output_file),
                 "llm_cache": "none",
             },
@@ -750,7 +750,7 @@ def test_run_generate_graph_validation_error(tmp_path: Path) -> None:
     with pytest.raises(ActionExecutionError) as exc_info:
         action._run_generate_graph(
             parameters={
-                "model_spec": str(tmp_path / "model.json"),
+                "context": str(tmp_path / "model.json"),
                 "output": "none",
                 "llm_cache": "none",
                 "llm_temperature": 5.0,  # Invalid: must be 0.0-2.0
@@ -763,14 +763,14 @@ def test_run_generate_graph_validation_error(tmp_path: Path) -> None:
     assert "validation failed" in str(exc_info.value).lower()
 
 
-# Test run fails when model spec loading fails.
-def test_run_model_spec_load_error(tmp_path: Path) -> None:
-    """Test run fails when model specification fails to load."""
+# Test run fails when context loading fails.
+def test_run_context_load_error(tmp_path: Path) -> None:
+    """Test run fails when context fails to load."""
     from causaliq_workflow.action import ActionExecutionError
 
-    # Create a model spec file with invalid JSON structure
-    model_spec = tmp_path / "model.json"
-    model_spec.write_text('{"invalid": "not a valid model spec"}')
+    # Create a context file with invalid JSON structure
+    context_file = tmp_path / "model.json"
+    context_file.write_text('{"invalid": "not a valid model spec"}')
 
     action = KnowledgeActionProvider()
 
@@ -778,17 +778,17 @@ def test_run_model_spec_load_error(tmp_path: Path) -> None:
         action.run(
             "generate_graph",
             {
-                "model_spec": str(model_spec),
+                "context": str(context_file),
                 "output": "none",
                 "llm_cache": "none",
             },
             mode="run",
         )
 
-    assert "failed to load model specification" in str(exc_info.value).lower()
+    assert "failed to load network context" in str(exc_info.value).lower()
 
 
-# Test run uses LLM name mapping when spec has distinct names.
+# Test run uses LLM name mapping when context has distinct names.
 def test_run_with_llm_name_mapping(tmp_path: Path) -> None:
     """Test run maps LLM names back to benchmark names when distinct."""
     from causaliq_knowledge.graph.response import (
@@ -796,9 +796,9 @@ def test_run_with_llm_name_mapping(tmp_path: Path) -> None:
         ProposedEdge,
     )
 
-    # Create model spec with distinct llm_names
-    model_spec = tmp_path / "model.json"
-    model_spec.write_text(
+    # Create context with distinct llm_names
+    context_file = tmp_path / "model.json"
+    context_file.write_text(
         '{"schema_version": "2.0", "dataset_id": "test", '
         '"domain": "test", "variables": ['
         '{"name": "X1", "llm_name": "Variable One", "type": "binary"}, '
@@ -820,7 +820,7 @@ def test_run_with_llm_name_mapping(tmp_path: Path) -> None:
         "causaliq_knowledge.graph.generator.GraphGenerator"
     ) as mock_generator_class:
         mock_generator = MagicMock()
-        mock_generator.generate_from_spec.return_value = mock_graph
+        mock_generator.generate_from_context.return_value = mock_graph
         mock_generator.get_stats.return_value = {"cache_hits": 0}
         mock_generator_class.return_value = mock_generator
 
@@ -829,7 +829,7 @@ def test_run_with_llm_name_mapping(tmp_path: Path) -> None:
         result = action.run(
             "generate_graph",
             {
-                "model_spec": str(model_spec),
+                "context": str(context_file),
                 "output": "none",
                 "llm_cache": "none",
                 "use_benchmark_names": False,  # Explicitly use LLM names
@@ -849,9 +849,9 @@ def test_run_cache_open_error(tmp_path: Path) -> None:
     """Test run fails when cache database fails to open."""
     from causaliq_workflow.action import ActionExecutionError
 
-    # Create a minimal model spec file
-    model_spec = tmp_path / "model.json"
-    model_spec.write_text(
+    # Create a minimal context file
+    context_file = tmp_path / "model.json"
+    context_file.write_text(
         '{"schema_version": "2.0", "dataset_id": "test", '
         '"domain": "test", "variables": [{"name": "x", "type": "binary"}]}'
     )
@@ -867,7 +867,7 @@ def test_run_cache_open_error(tmp_path: Path) -> None:
             action.run(
                 "generate_graph",
                 {
-                    "model_spec": str(model_spec),
+                    "context": str(context_file),
                     "output": "none",
                     "llm_cache": str(tmp_path / "cache.db"),  # Use actual path
                 },
@@ -882,9 +882,9 @@ def test_run_graph_generation_error(tmp_path: Path) -> None:
     """Test run fails when graph generation raises an error."""
     from causaliq_workflow.action import ActionExecutionError
 
-    # Create a minimal model spec file
-    model_spec = tmp_path / "model.json"
-    model_spec.write_text(
+    # Create a minimal context file
+    context_file = tmp_path / "model.json"
+    context_file.write_text(
         '{"schema_version": "2.0", "dataset_id": "test", '
         '"domain": "test", "variables": ['
         '{"name": "x", "type": "binary"}, '
@@ -895,7 +895,7 @@ def test_run_graph_generation_error(tmp_path: Path) -> None:
         "causaliq_knowledge.graph.generator.GraphGenerator"
     ) as mock_generator_class:
         mock_generator = MagicMock()
-        mock_generator.generate_from_spec.side_effect = RuntimeError(
+        mock_generator.generate_from_context.side_effect = RuntimeError(
             "LLM API unavailable"
         )
         mock_generator_class.return_value = mock_generator
@@ -906,7 +906,7 @@ def test_run_graph_generation_error(tmp_path: Path) -> None:
             action.run(
                 "generate_graph",
                 {
-                    "model_spec": str(model_spec),
+                    "context": str(context_file),
                     "output": "none",
                     "llm_cache": "none",
                 },
@@ -919,9 +919,9 @@ def test_run_graph_generation_error(tmp_path: Path) -> None:
 # Test cache is closed even when generation fails.
 def test_run_cache_closed_on_error(tmp_path: Path) -> None:
     """Test cache is closed in finally block even when generation fails."""
-    # Create a minimal model spec file
-    model_spec = tmp_path / "model.json"
-    model_spec.write_text(
+    # Create a minimal context file
+    context_file = tmp_path / "model.json"
+    context_file.write_text(
         '{"schema_version": "2.0", "dataset_id": "test", '
         '"domain": "test", "variables": ['
         '{"name": "x", "type": "binary"}, '
@@ -939,7 +939,7 @@ def test_run_cache_closed_on_error(tmp_path: Path) -> None:
         mock_cache_class.return_value = mock_cache
 
         mock_generator = MagicMock()
-        mock_generator.generate_from_spec.side_effect = RuntimeError(
+        mock_generator.generate_from_context.side_effect = RuntimeError(
             "Generation error"
         )
         mock_generator_class.return_value = mock_generator
@@ -950,7 +950,7 @@ def test_run_cache_closed_on_error(tmp_path: Path) -> None:
             action.run(
                 "generate_graph",
                 {
-                    "model_spec": str(model_spec),
+                    "context": str(context_file),
                     "output": "none",
                     "llm_cache": str(tmp_path / "cache.db"),
                 },
@@ -975,9 +975,9 @@ def test_populate_execution_metadata_with_full_metadata(
         ProposedEdge,
     )
 
-    # Create a minimal model spec file
-    model_spec = tmp_path / "model.json"
-    model_spec.write_text(
+    # Create a minimal context file
+    context_file = tmp_path / "model.json"
+    context_file.write_text(
         '{"schema_version": "2.0", "dataset_id": "test", '
         '"domain": "test", "variables": ['
         '{"name": "x", "type": "binary"}, '
@@ -1014,7 +1014,7 @@ def test_populate_execution_metadata_with_full_metadata(
         "causaliq_knowledge.graph.generator.GraphGenerator"
     ) as mock_generator_class:
         mock_generator = MagicMock()
-        mock_generator.generate_from_spec.return_value = mock_graph
+        mock_generator.generate_from_context.return_value = mock_graph
         mock_generator.get_stats.return_value = {"cache_hits": 0}
         mock_generator_class.return_value = mock_generator
 
@@ -1023,7 +1023,7 @@ def test_populate_execution_metadata_with_full_metadata(
         action.run(
             "generate_graph",
             {
-                "model_spec": str(model_spec),
+                "context": str(context_file),
                 "output": "none",
                 "llm_cache": "none",
             },

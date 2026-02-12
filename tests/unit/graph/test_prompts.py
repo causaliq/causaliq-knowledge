@@ -266,19 +266,19 @@ def test_get_variable_names_missing() -> None:
     assert names == ["A", "unknown", "C"]
 
 
-# Test from_model_spec class method creates valid prompt.
-def test_from_model_spec(sample_model_spec) -> None:
-    prompt = GraphQueryPrompt.from_model_spec(sample_model_spec)
+# Test from_context class method creates valid prompt.
+def test_from_context(sample_context) -> None:
+    prompt = GraphQueryPrompt.from_context(sample_context)
     system, user = prompt.build()
     assert isinstance(system, str)
     assert isinstance(user, str)
-    assert prompt.domain == sample_model_spec.domain
+    assert prompt.domain == sample_context.domain
 
 
-# Test from_model_spec with minimal level.
-def test_from_model_spec_minimal(sample_model_spec) -> None:
-    prompt = GraphQueryPrompt.from_model_spec(
-        sample_model_spec,
+# Test from_context with minimal level.
+def test_from_context_minimal(sample_context) -> None:
+    prompt = GraphQueryPrompt.from_context(
+        sample_context,
         level=PromptDetail.MINIMAL,
     )
     _, user = prompt.build()
@@ -286,21 +286,21 @@ def test_from_model_spec_minimal(sample_model_spec) -> None:
     assert "Variables:" in user
 
 
-# Test from_model_spec with adjacency matrix format.
-def test_from_model_spec_adjacency(sample_model_spec) -> None:
-    prompt = GraphQueryPrompt.from_model_spec(
-        sample_model_spec,
+# Test from_context with adjacency matrix format.
+def test_from_context_adjacency(sample_context) -> None:
+    prompt = GraphQueryPrompt.from_context(
+        sample_context,
         output_format=OutputFormat.ADJACENCY_MATRIX,
     )
     system, _ = prompt.build()
     assert "adjacency_matrix" in system
 
 
-# Test from_model_spec with custom system prompt.
-def test_from_model_spec_custom_system(sample_model_spec) -> None:
+# Test from_context with custom system prompt.
+def test_from_context_custom_system(sample_context) -> None:
     custom = "Custom system prompt."
-    prompt = GraphQueryPrompt.from_model_spec(
-        sample_model_spec,
+    prompt = GraphQueryPrompt.from_context(
+        sample_context,
         system_prompt=custom,
     )
     system, _ = prompt.build()
@@ -317,19 +317,19 @@ def test_graph_query_prompt_defaults() -> None:
     assert prompt.system_prompt is None
 
 
-# Fixture for sample ModelSpec.
+# Fixture for sample NetworkContext.
 @pytest.fixture
-def sample_model_spec():
-    """Create a sample ModelSpec for testing."""
+def sample_context():
+    """Create a sample NetworkContext for testing."""
     from causaliq_knowledge.graph.models import (
-        ModelSpec,
+        NetworkContext,
         PromptDetails,
         VariableSpec,
         VariableType,
         ViewDefinition,
     )
 
-    return ModelSpec(
+    return NetworkContext(
         dataset_id="test_model",
         domain="test_domain",
         prompt_details=PromptDetails(

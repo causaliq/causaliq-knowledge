@@ -7,7 +7,7 @@ from causaliq_knowledge.graph.models import (
     Constraints,
     GroundTruth,
     LLMGuidance,
-    ModelSpec,
+    NetworkContext,
     PromptDetails,
     Provenance,
     VariableRole,
@@ -288,12 +288,12 @@ def test_ground_truth_full() -> None:
     assert len(gt.v_structures) == 1
 
 
-# --- ModelSpec model tests ---
+# --- NetworkContext model tests ---
 
 
-# Test creating ModelSpec with minimal required fields.
-def test_model_spec_minimal() -> None:
-    spec = ModelSpec(
+# Test creating NetworkContext with minimal required fields.
+def test_network_context_minimal() -> None:
+    spec = NetworkContext(
         dataset_id="test",
         domain="test_domain",
     )
@@ -303,9 +303,9 @@ def test_model_spec_minimal() -> None:
     assert spec.variables == []
 
 
-# Test creating ModelSpec with all fields populated.
-def test_model_spec_full() -> None:
-    spec = ModelSpec(
+# Test creating NetworkContext with all fields populated.
+def test_network_context_full() -> None:
+    spec = NetworkContext(
         schema_version="2.0",
         dataset_id="cancer",
         domain="oncology",
@@ -329,8 +329,8 @@ def test_model_spec_full() -> None:
 
 
 # Test get_variable returns variable when found.
-def test_model_spec_get_variable_found() -> None:
-    spec = ModelSpec(
+def test_network_context_get_variable_found() -> None:
+    spec = NetworkContext(
         dataset_id="test",
         domain="test",
         variables=[
@@ -344,8 +344,8 @@ def test_model_spec_get_variable_found() -> None:
 
 
 # Test get_variable returns None when not found.
-def test_model_spec_get_variable_not_found() -> None:
-    spec = ModelSpec(
+def test_network_context_get_variable_not_found() -> None:
+    spec = NetworkContext(
         dataset_id="test",
         domain="test",
         variables=[VariableSpec(name="a", type="binary")],
@@ -355,8 +355,8 @@ def test_model_spec_get_variable_not_found() -> None:
 
 
 # Test get_variable_names returns all names.
-def test_model_spec_get_variable_names() -> None:
-    spec = ModelSpec(
+def test_network_context_get_variable_names() -> None:
+    spec = NetworkContext(
         dataset_id="test",
         domain="test",
         variables=[
@@ -370,8 +370,8 @@ def test_model_spec_get_variable_names() -> None:
 
 
 # Test get_llm_names returns list of llm_name values.
-def test_model_spec_get_llm_names() -> None:
-    spec = ModelSpec(
+def test_network_context_get_llm_names() -> None:
+    spec = NetworkContext(
         dataset_id="test",
         domain="test",
         variables=[
@@ -385,8 +385,8 @@ def test_model_spec_get_llm_names() -> None:
 
 
 # Test get_llm_to_name_mapping returns correct mapping.
-def test_model_spec_get_llm_to_name_mapping() -> None:
-    spec = ModelSpec(
+def test_network_context_get_llm_to_name_mapping() -> None:
+    spec = NetworkContext(
         dataset_id="test",
         domain="test",
         variables=[
@@ -399,8 +399,8 @@ def test_model_spec_get_llm_to_name_mapping() -> None:
 
 
 # Test get_name_to_llm_mapping returns correct mapping.
-def test_model_spec_get_name_to_llm_mapping() -> None:
-    spec = ModelSpec(
+def test_network_context_get_name_to_llm_mapping() -> None:
+    spec = NetworkContext(
         dataset_id="test",
         domain="test",
         variables=[
@@ -413,8 +413,8 @@ def test_model_spec_get_name_to_llm_mapping() -> None:
 
 
 # Test uses_distinct_llm_names returns True when names differ.
-def test_model_spec_uses_distinct_llm_names_true() -> None:
-    spec = ModelSpec(
+def test_network_context_uses_distinct_llm_names_true() -> None:
+    spec = NetworkContext(
         dataset_id="test",
         domain="test",
         variables=[
@@ -426,8 +426,8 @@ def test_model_spec_uses_distinct_llm_names_true() -> None:
 
 
 # Test uses_distinct_llm_names returns False when all names same.
-def test_model_spec_uses_distinct_llm_names_false() -> None:
-    spec = ModelSpec(
+def test_network_context_uses_distinct_llm_names_false() -> None:
+    spec = NetworkContext(
         dataset_id="test",
         domain="test",
         variables=[

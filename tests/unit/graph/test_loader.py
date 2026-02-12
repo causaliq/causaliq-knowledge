@@ -1,4 +1,4 @@
-"""Tests for model specification loader."""
+"""Tests for network context loader."""
 
 from __future__ import annotations
 
@@ -7,14 +7,14 @@ from pathlib import Path
 
 import pytest
 
-from causaliq_knowledge.graph.loader import ModelLoader, ModelLoadError
 from causaliq_knowledge.graph.models import (
-    ModelSpec,
+    NetworkContext,
+    NetworkLoadError,
     VariableSpec,
     VariableType,
 )
 
-# --- ModelLoader.load() tests ---
+# --- NetworkContext.load() tests ---
 
 
 # Test loading a valid JSON file.
@@ -31,9 +31,9 @@ def test_load_valid_json(tmp_path: Path) -> None:
     json_file = tmp_path / "test.json"
     json_file.write_text(json.dumps(data))
 
-    spec = ModelLoader.load(json_file)
+    spec = NetworkContext.load(json_file)
 
-    assert isinstance(spec, ModelSpec)
+    assert isinstance(spec, NetworkContext)
     assert spec.dataset_id == "test"
     assert spec.domain == "test_domain"
     assert len(spec.variables) == 2
@@ -52,7 +52,7 @@ def test_load_cancer_model() -> None:
     if not cancer_path.exists():
         pytest.skip("Cancer model file not found")
 
-    spec = ModelLoader.load(cancer_path)
+    spec = NetworkContext.load(cancer_path)
 
     assert spec.dataset_id == "cancer"
     assert spec.domain == "pulmonary_oncology_screening"
@@ -63,8 +63,8 @@ def test_load_cancer_model() -> None:
 
 # Test loading non-existent file raises error.
 def test_load_file_not_found(tmp_path: Path) -> None:
-    with pytest.raises(ModelLoadError) as exc_info:
-        ModelLoader.load(tmp_path / "nonexistent.json")
+    with pytest.raises(NetworkLoadError) as exc_info:
+        NetworkContext.load(tmp_path / "nonexistent.json")
 
     assert "not found" in str(exc_info.value).lower()
 
@@ -74,8 +74,8 @@ def test_load_wrong_extension(tmp_path: Path) -> None:
     txt_file = tmp_path / "test.txt"
     txt_file.write_text("not json")
 
-    with pytest.raises(ModelLoadError) as exc_info:
-        ModelLoader.load(txt_file)
+    with pytest.raises(NetworkLoadError) as exc_info:
+        NetworkContext.load(txt_file)
 
     assert "JSON file" in str(exc_info.value)
 
@@ -85,8 +85,8 @@ def test_load_invalid_json(tmp_path: Path) -> None:
     json_file = tmp_path / "invalid.json"
     json_file.write_text("{invalid json}")
 
-    with pytest.raises(ModelLoadError) as exc_info:
-        ModelLoader.load(json_file)
+    with pytest.raises(NetworkLoadError) as exc_info:
+        NetworkContext.load(json_file)
 
     assert "Invalid JSON" in str(exc_info.value)
 
@@ -103,8 +103,8 @@ def test_load_os_error(
 
     monkeypatch.setattr("builtins.open", mock_open)
 
-    with pytest.raises(ModelLoadError) as exc_info:
-        ModelLoader.load(json_file)
+    with pytest.raises(NetworkLoadError) as exc_info:
+        NetworkContext.load(json_file)
 
     assert "Failed to read" in str(exc_info.value)
 
@@ -115,13 +115,13 @@ def test_load_missing_required_fields(tmp_path: Path) -> None:
     json_file = tmp_path / "incomplete.json"
     json_file.write_text(json.dumps(data))
 
-    with pytest.raises(ModelLoadError) as exc_info:
-        ModelLoader.load(json_file)
+    with pytest.raises(NetworkLoadError) as exc_info:
+        NetworkContext.load(json_file)
 
     assert "Missing required fields" in str(exc_info.value)
 
 
-# --- ModelLoader.from_dict() tests ---
+# --- NetworkContext.from_dict() tests ---
 
 
 # Test creating spec from minimal dict.
@@ -130,7 +130,7 @@ def test_from_dict_minimal() -> None:
         "dataset_id": "test",
         "domain": "test_domain",
     }
-    spec = ModelLoader.from_dict(data)
+    spec = NetworkContext.from_dict(data)
 
     assert spec.dataset_id == "test"
     assert spec.domain == "test_domain"
@@ -150,7 +150,7 @@ def test_from_dict_with_variables() -> None:
             },
         ],
     }
-    spec = ModelLoader.from_dict(data)
+    spec = NetworkContext.from_dict(data)
 
     assert len(spec.variables) == 1
     assert spec.variables[0].name == "smoking"
@@ -161,8 +161,8 @@ def test_from_dict_with_variables() -> None:
 def test_from_dict_missing_required() -> None:
     data = {"schema_version": "2.0"}
 
-    with pytest.raises(ModelLoadError) as exc_info:
-        ModelLoader.from_dict(data)
+    with pytest.raises(NetworkLoadError) as exc_info:
+        NetworkContext.from_dict(data)
 
     assert "Missing required fields" in str(exc_info.value)
 
@@ -175,26 +175,26 @@ def test_from_dict_invalid_variable() -> None:
         "variables": [{"name": "a"}],  # Missing type
     }
 
-    with pytest.raises(ModelLoadError):
-        ModelLoader.from_dict(data)
+    with pytest.raises(NetworkLoadError):
+        NetworkContext.from_dict(data)
 
 
-# --- ModelLoader.validate_variables() tests ---
+# --- NetworkContext.validate_variables() tests ---
 
 
 # Test validation fails for empty variables.
 def test_validate_empty_variables() -> None:
-    spec = ModelSpec(dataset_id="test", domain="test")
+    spec = NetworkContext(dataset_id="test", domain="test")
 
-    with pytest.raises(ModelLoadError) as exc_info:
-        ModelLoader.validate_variables(spec)
+    with pytest.raises(NetworkLoadError) as exc_info:
+        spec.validate_variables()
 
     assert "no variables" in str(exc_info.value).lower()
 
 
 # Test validation fails for duplicate variable names.
 def test_validate_duplicate_names() -> None:
-    spec = ModelSpec(
+    spec = NetworkContext(
         dataset_id="test",
         domain="test",
         variables=[
@@ -203,15 +203,15 @@ def test_validate_duplicate_names() -> None:
         ],
     )
 
-    with pytest.raises(ModelLoadError) as exc_info:
-        ModelLoader.validate_variables(spec)
+    with pytest.raises(NetworkLoadError) as exc_info:
+        spec.validate_variables()
 
     assert "Duplicate" in str(exc_info.value)
 
 
 # Test validation warns about missing states for discrete variables.
 def test_validate_warns_missing_states() -> None:
-    spec = ModelSpec(
+    spec = NetworkContext(
         dataset_id="test",
         domain="test",
         variables=[
@@ -219,7 +219,7 @@ def test_validate_warns_missing_states() -> None:
         ],
     )
 
-    warnings = ModelLoader.validate_variables(spec)
+    warnings = spec.validate_variables()
 
     assert len(warnings) == 1
     assert "no states" in warnings[0].lower()
@@ -227,7 +227,7 @@ def test_validate_warns_missing_states() -> None:
 
 # Test validation warns about binary with wrong number of states.
 def test_validate_warns_binary_wrong_state_count() -> None:
-    spec = ModelSpec(
+    spec = NetworkContext(
         dataset_id="test",
         domain="test",
         variables=[
@@ -235,14 +235,14 @@ def test_validate_warns_binary_wrong_state_count() -> None:
         ],
     )
 
-    warnings = ModelLoader.validate_variables(spec)
+    warnings = spec.validate_variables()
 
     assert any("binary" in w and "3 states" in w for w in warnings)
 
 
 # Test validation returns no warnings for valid spec.
 def test_validate_no_warnings_for_valid_spec() -> None:
-    spec = ModelSpec(
+    spec = NetworkContext(
         dataset_id="test",
         domain="test",
         variables=[
@@ -251,12 +251,12 @@ def test_validate_no_warnings_for_valid_spec() -> None:
         ],
     )
 
-    warnings = ModelLoader.validate_variables(spec)
+    warnings = spec.validate_variables()
 
     assert warnings == []
 
 
-# --- ModelLoader.load_and_validate() tests ---
+# --- NetworkContext.load_and_validate() tests ---
 
 
 # Test load_and_validate with valid file.
@@ -272,7 +272,7 @@ def test_load_and_validate_valid(tmp_path: Path) -> None:
     json_file = tmp_path / "test.json"
     json_file.write_text(json.dumps(data))
 
-    spec, warnings = ModelLoader.load_and_validate(json_file)
+    spec, warnings = NetworkContext.load_and_validate(json_file)
 
     assert spec.dataset_id == "test"
     assert warnings == []
@@ -290,18 +290,18 @@ def test_load_and_validate_with_warnings(tmp_path: Path) -> None:
     json_file = tmp_path / "test.json"
     json_file.write_text(json.dumps(data))
 
-    spec, warnings = ModelLoader.load_and_validate(json_file)
+    spec, warnings = NetworkContext.load_and_validate(json_file)
 
     assert spec is not None
     assert len(warnings) == 1
 
 
-# --- ModelLoadError tests ---
+# --- NetworkLoadError tests ---
 
 
 # Test basic error message.
 def test_error_basic() -> None:
-    error = ModelLoadError("Test error")
+    error = NetworkLoadError("Test error")
     assert str(error) == "Test error"
     assert error.message == "Test error"
     assert error.path is None
@@ -310,21 +310,21 @@ def test_error_basic() -> None:
 
 # Test error with path.
 def test_error_with_path() -> None:
-    error = ModelLoadError("Test error", path="/path/to/file.json")
+    error = NetworkLoadError("Test error", path="/path/to/file.json")
     assert "/path/to/file.json" in str(error)
     assert error.path == "/path/to/file.json"
 
 
 # Test error with details.
 def test_error_with_details() -> None:
-    error = ModelLoadError("Test error", details="Extra info")
+    error = NetworkLoadError("Test error", details="Extra info")
     assert "Extra info" in str(error)
     assert error.details == "Extra info"
 
 
 # Test error with all fields.
 def test_error_with_all_fields() -> None:
-    error = ModelLoadError(
+    error = NetworkLoadError(
         "Test error",
         path="/path/to/file.json",
         details="Extra info",
