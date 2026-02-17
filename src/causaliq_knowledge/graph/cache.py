@@ -1,8 +1,8 @@
 """
-Graph cache encoder for storing generated graphs in Workflow Caches.
+Graph cache compressor for storing generated graphs in Workflow Caches.
 
-This module provides GraphEntryEncoder for compact binary storage of
-LLM-generated causal graphs with associated metadata. The encoder uses
+This module provides GraphCompressor for compact binary storage of
+LLM-generated causal graphs with associated metadata. The compressor uses
 a flexible multi-blob format that can accommodate additional binary
 data (e.g., execution traces) in future iterations.
 
@@ -56,11 +56,11 @@ BLOB_TYPE_CONFIDENCES = "confidences"
 BLOB_TYPE_TRACE = "trace"
 
 
-class GraphEntryEncoder(JsonCompressor):
-    """Encoder for storing GeneratedGraph objects in Workflow Caches.
+class GraphCompressor(JsonCompressor):
+    """Compressor for storing GeneratedGraph objects in Workflow Caches.
 
-    This encoder combines:
-    - Compact binary encoding for graph structure via SDG.encode()
+    This compressor combines:
+    - Compact binary compression for graph structure via SDG.compress()
     - Flexible multi-blob format for additional binary data
     - Tokenised JSON for metadata (provenance, edge confidences)
 
@@ -72,12 +72,12 @@ class GraphEntryEncoder(JsonCompressor):
 
     Example:
         >>> from causaliq_core.cache import TokenCache
-        >>> from causaliq_knowledge.graph.cache import GraphEntryEncoder
+        >>> from causaliq_knowledge.graph.cache import GraphCompressor
         >>> from causaliq_knowledge.graph.response import (
         ...     GeneratedGraph, ProposedEdge, GenerationMetadata
         ... )
         >>> with TokenCache(":memory:") as cache:
-        ...     encoder = GraphEntryEncoder()
+        ...     compressor = GraphCompressor()
         ...     graph = GeneratedGraph(
         ...         edges=[ProposedEdge(
         ...             source="A", target="B", confidence=0.9
@@ -86,18 +86,18 @@ class GraphEntryEncoder(JsonCompressor):
         ...         reasoning="A causes B",
         ...         metadata=GenerationMetadata(model="test"),
         ...     )
-        ...     blob = encoder.encode_entry(graph, cache)
-        ...     restored = encoder.decode_entry(blob, cache)
+        ...     blob = compressor.compress_entry(graph, cache)
+        ...     restored = compressor.decompress_entry(blob, cache)
         ...     assert restored.edges[0].source == "A"
 
-        # Multi-blob encoding with additional data:
+        # Multi-blob compression with additional data:
         >>> with TokenCache(":memory:") as cache:
-        ...     encoder = GraphEntryEncoder()
-        ...     blobs = {"graph": sdg.encode(), "trace": trace_bytes}
+        ...     compressor = GraphCompressor()
+        ...     blobs = {"graph": sdg.compress(), "trace": trace_bytes}
         ...     metadata = {"model": "gpt-4", "variables": ["A", "B"]}
-        ...     encoded = encoder.encode_multi(blobs, metadata, cache)
-        ...     result_blobs, result_meta = encoder.decode_multi(
-        ...         encoded, cache
+        ...     compressed = compressor.compress_multi(blobs, metadata, cache)
+        ...     result_blobs, result_meta = compressor.decompress_multi(
+        ...         compressed, cache
         ...     )
     """
 
@@ -107,10 +107,10 @@ class GraphEntryEncoder(JsonCompressor):
         return "json"
 
     # -------------------------------------------------------------------------
-    # Multi-blob encoding/decoding (flexible format)
+    # Multi-blob compression/decompression (flexible format)
     # -------------------------------------------------------------------------
 
-    def encode_multi(
+    def compress_multi(
         self,
         blobs: Dict[str, bytes],
         metadata: Dict[str, Any],
@@ -133,7 +133,7 @@ class GraphEntryEncoder(JsonCompressor):
         Example:
             >>> blobs = {"graph": graph_bytes, "trace": trace_bytes}
             >>> metadata = {"model": "gpt-4", "variables": ["A", "B"]}
-            >>> encoded = encoder.encode_multi(blobs, metadata, cache)
+            >>> compressed = compressor.compress_multi(blobs, metadata, cache)
         """
         result = bytearray()
 
@@ -154,10 +154,10 @@ class GraphEntryEncoder(JsonCompressor):
 
         return bytes(result)
 
-    def decode_multi(
+    def decompress_multi(
         self, blob: bytes, cache: "TokenCache"
     ) -> tuple[Dict[str, bytes], Dict[str, Any]]:
-        """Decode multiple named blobs with shared metadata.
+        """Decompress multiple named blobs with shared metadata.
 
         Args:
             blob: Binary data from cache.
@@ -170,7 +170,7 @@ class GraphEntryEncoder(JsonCompressor):
             ValueError: If format version is unsupported or data corrupted.
 
         Example:
-            >>> blobs, metadata = encoder.decode_multi(encoded, cache)
+            >>> blobs, meta = compressor.decompress_multi(compressed, cache)
             >>> graph_bytes = blobs.get("graph")
             >>> trace_bytes = blobs.get("trace")
         """
@@ -217,11 +217,11 @@ class GraphEntryEncoder(JsonCompressor):
         return blobs_dict, metadata
 
     # -------------------------------------------------------------------------
-    # Graph-specific encoding (uses multi-blob format internally)
+    # Graph-specific compression (uses multi-blob format internally)
     # -------------------------------------------------------------------------
 
     def _graph_to_sdg(self, graph: GeneratedGraph) -> SDG:
-        """Convert GeneratedGraph to SDG for binary encoding.
+        """Convert GeneratedGraph to SDG for binary compression.
 
         Only edges with confidence >= 0.5 are included as directed edges.
         Lower confidence edges are excluded from the SDG structure.
@@ -330,21 +330,21 @@ class GraphEntryEncoder(JsonCompressor):
         # Only return confidences if there are meaningful values
         return confidence_map if has_non_default else None
 
-    def encode_entry(
+    def compress_entry(
         self,
         graph: GeneratedGraph,
         cache: "TokenCache",
         extra_blobs: Optional[Dict[str, bytes]] = None,
         include_confidences: bool = True,
     ) -> bytes:
-        """Encode a GeneratedGraph to compact binary format.
+        """Compress a GeneratedGraph to compact binary format.
 
         Uses the multi-blob format internally, storing the graph structure
         as a "graph" blob and optionally edge confidences as a separate
         "confidences" blob.
 
         Args:
-            graph: The graph to encode.
+            graph: The graph to compress.
             cache: TokenCache for shared token dictionary.
             extra_blobs: Optional additional blobs to include
                 (e.g., {"trace": trace_bytes}).
@@ -356,13 +356,13 @@ class GraphEntryEncoder(JsonCompressor):
         """
         # Build blobs dict with graph structure
         sdg = self._graph_to_sdg(graph)
-        blobs = {BLOB_TYPE_GRAPH: sdg.encode()}
+        blobs = {BLOB_TYPE_GRAPH: sdg.compress()}
 
         # Add confidences blob if requested and present
         if include_confidences:
             confidences = self._build_confidences_dict(graph)
             if confidences:
-                # Encode confidences as tokenised JSON
+                # Compress confidences as tokenised JSON
                 conf_blob = super().compress(confidences, cache)
                 blobs[BLOB_TYPE_CONFIDENCES] = conf_blob
 
@@ -373,14 +373,14 @@ class GraphEntryEncoder(JsonCompressor):
         # Build metadata dict (excludes confidences)
         metadata = self._build_metadata_dict(graph)
 
-        return self.encode_multi(blobs, metadata, cache)
+        return self.compress_multi(blobs, metadata, cache)
 
-    def decode_entry(
+    def decompress_entry(
         self,
         blob: bytes,
         cache: "TokenCache",
     ) -> tuple[GeneratedGraph, Dict[str, bytes]]:
-        """Decode a GeneratedGraph from binary format.
+        """Decompress a GeneratedGraph from binary format.
 
         Returns both the reconstructed graph and any extra blobs that
         were stored alongside it (e.g., execution traces).
@@ -396,15 +396,15 @@ class GraphEntryEncoder(JsonCompressor):
         Raises:
             ValueError: If no graph blob found in data.
         """
-        # Decode using multi-blob format
-        blobs, meta_dict = self.decode_multi(blob, cache)
+        # Decompress using multi-blob format
+        blobs, meta_dict = self.decompress_multi(blob, cache)
 
         # Extract graph blob
         if BLOB_TYPE_GRAPH not in blobs:
-            raise ValueError("No graph blob found in encoded data")
+            raise ValueError("No graph blob found in compressed data")
 
         graph_blob = blobs.pop(BLOB_TYPE_GRAPH)
-        sdg = SDG.decode(graph_blob)
+        sdg = SDG.decompress(graph_blob)
 
         # Extract confidences from blob (if present)
         confidence_map: Dict[str, float] = {}
@@ -492,10 +492,10 @@ class GraphEntryEncoder(JsonCompressor):
             Compact binary representation.
         """
         if isinstance(data, GeneratedGraph):
-            return self.encode_entry(data, cache)
+            return self.compress_entry(data, cache)
         elif isinstance(data, dict) and "edges" in data:
             graph = self._dict_to_graph(data)
-            return self.encode_entry(graph, cache)
+            return self.compress_entry(graph, cache)
         return super().compress(data, cache)
 
     def decompress(
@@ -510,7 +510,7 @@ class GraphEntryEncoder(JsonCompressor):
         Returns:
             Tuple of (GeneratedGraph, extra_blobs dict).
         """
-        return self.decode_entry(blob, cache)
+        return self.decompress_entry(blob, cache)
 
     def _dict_to_graph(self, data: Dict[str, Any]) -> GeneratedGraph:
         """Convert dictionary to GeneratedGraph.
@@ -658,7 +658,7 @@ class GraphEntryEncoder(JsonCompressor):
         """
         from causaliq_core.graph.io import graphml
 
-        # Handle tuple from decode() which returns (graph, extra_blobs)
+        # Handle tuple from decompress() which returns (graph, extra_blobs)
         if isinstance(data, tuple) and len(data) == 2:
             data = data[0]
 

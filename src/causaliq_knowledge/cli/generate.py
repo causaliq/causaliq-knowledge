@@ -60,7 +60,7 @@ def _map_graph_names(
 @click.option(
     "--network-context",
     "-n",
-    "context",
+    "network_context",
     required=True,
     type=click.Path(exists=True, dir_okay=False, path_type=Path),
     help="Path to network context JSON file.",
@@ -107,7 +107,7 @@ def _map_graph_names(
     help="LLM temperature (0.0-1.0). Lower = more deterministic.",
 )
 def generate_graph(
-    context: Path,
+    network_context: Path,
     prompt_detail: str,
     use_benchmark_names: bool,
     llm_model: str,
@@ -154,7 +154,7 @@ def generate_graph(
     # Validate all parameters using shared model
     try:
         params = GenerateGraphParams(
-            context=context,
+            network_context=network_context,
             prompt_detail=PromptDetail(prompt_detail.lower()),
             use_benchmark_names=use_benchmark_names,
             llm_model=llm_model,
@@ -175,7 +175,7 @@ def generate_graph(
 
     # Load network context
     try:
-        ctx = NetworkContext.load(params.context)
+        ctx = NetworkContext.load(params.network_context)
         click.echo(
             f"Loaded network context: {ctx.network} "
             f"({len(ctx.variables)} variables)",
@@ -304,7 +304,7 @@ def _write_to_workflow_cache(
     from causaliq_workflow import WorkflowCache
     from causaliq_workflow.cache import CacheEntry
 
-    from causaliq_knowledge.graph.cache import GraphEntryEncoder
+    from causaliq_knowledge.graph.cache import GraphCompressor
 
     # Create parent directories if needed
     output_path.parent.mkdir(parents=True, exist_ok=True)
@@ -313,8 +313,8 @@ def _write_to_workflow_cache(
     key_data = {"network": context.network}
 
     with WorkflowCache(str(output_path)) as wf_cache:
-        encoder = GraphEntryEncoder()
-        blob = encoder.encode_entry(graph, wf_cache.token_cache)
+        compressor = GraphCompressor()
+        blob = compressor.compress_entry(graph, wf_cache.token_cache)
         # Base64-encode for JSON-safe storage in CacheEntry
         blob_b64 = base64.b64encode(blob).decode("ascii")
         entry = CacheEntry(metadata={"network": context.network})

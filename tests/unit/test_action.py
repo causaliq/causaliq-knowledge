@@ -45,7 +45,7 @@ def test_action_inputs_specification() -> None:
     action = KnowledgeActionProvider()
 
     assert "action" in action.inputs
-    assert "context" in action.inputs
+    assert "network_context" in action.inputs
     assert "prompt_detail" in action.inputs
     assert "llm_model" in action.inputs
     assert "output" in action.inputs
@@ -75,7 +75,11 @@ def test_run_rejects_unknown_action() -> None:
     with pytest.raises(ActionValidationError) as exc_info:
         action.run(
             "unknown_action",
-            {"context": "model.json", "output": "none", "llm_cache": "none"},
+            {
+                "network_context": "model.json",
+                "output": "none",
+                "llm_cache": "none",
+            },
             mode="dry-run",
         )
 
@@ -92,7 +96,7 @@ def test_run_rejects_missing_context() -> None:
     with pytest.raises(ActionValidationError) as exc_info:
         action.run("generate_graph", {}, mode="dry-run")
 
-    assert "context" in str(exc_info.value).lower()
+    assert "network_context" in str(exc_info.value).lower()
 
 
 # Test run rejects invalid LLM provider.
@@ -106,7 +110,7 @@ def test_run_rejects_invalid_llm_provider() -> None:
         action.run(
             "generate_graph",
             {
-                "context": "model.json",
+                "network_context": "model.json",
                 "llm_model": "invalid/model",
                 "output": "none",
                 "llm_cache": "cache.db",
@@ -132,7 +136,7 @@ def test_run_dry_run_mode(tmp_path: Path) -> None:
     status, metadata, objects = action.run(
         "generate_graph",
         {
-            "context": str(context_file),
+            "network_context": str(context_file),
             "output": "none",
             "llm_cache": "cache.db",
         },
@@ -157,7 +161,7 @@ def test_run_context_not_found() -> None:
         action.run(
             "generate_graph",
             {
-                "context": "/nonexistent/model.json",
+                "network_context": "/nonexistent/model.json",
                 "output": "none",
                 "llm_cache": "cache.db",
             },
@@ -204,7 +208,7 @@ def test_run_execute_mode(tmp_path: Path) -> None:
         status, metadata, objects = action.run(
             "generate_graph",
             {
-                "context": str(context_file),
+                "network_context": str(context_file),
                 "output": "none",
                 "llm_cache": "none",  # Disable cache for simpler test
             },
@@ -325,7 +329,7 @@ def test_run_request_id_from_output(tmp_path: Path) -> None:
         action.run(
             "generate_graph",
             {
-                "context": str(context_file),
+                "network_context": str(context_file),
                 "output": str(output_file),
                 "llm_cache": "none",
             },
@@ -351,7 +355,7 @@ def test_run_generate_graph_validation_error(tmp_path: Path) -> None:
     with pytest.raises(ActionExecutionError) as exc_info:
         action._run_generate_graph(
             parameters={
-                "context": str(tmp_path / "model.json"),
+                "network_context": str(tmp_path / "model.json"),
                 "output": "none",
                 "llm_cache": "none",
                 "llm_temperature": 5.0,  # Invalid: must be 0.0-2.0
@@ -379,7 +383,7 @@ def test_run_context_load_error(tmp_path: Path) -> None:
         action.run(
             "generate_graph",
             {
-                "context": str(context_file),
+                "network_context": str(context_file),
                 "output": "none",
                 "llm_cache": "none",
             },
@@ -430,7 +434,7 @@ def test_run_with_llm_name_mapping(tmp_path: Path) -> None:
         status, metadata, objects = action.run(
             "generate_graph",
             {
-                "context": str(context_file),
+                "network_context": str(context_file),
                 "output": "none",
                 "llm_cache": "none",
                 "use_benchmark_names": False,  # Explicitly use LLM names
@@ -473,7 +477,7 @@ def test_run_cache_open_error(tmp_path: Path) -> None:
             action.run(
                 "generate_graph",
                 {
-                    "context": str(context_file),
+                    "network_context": str(context_file),
                     "output": "none",
                     "llm_cache": str(tmp_path / "cache.db"),  # Use actual path
                 },
@@ -512,7 +516,7 @@ def test_run_graph_generation_error(tmp_path: Path) -> None:
             action.run(
                 "generate_graph",
                 {
-                    "context": str(context_file),
+                    "network_context": str(context_file),
                     "output": "none",
                     "llm_cache": "none",
                 },
@@ -556,7 +560,7 @@ def test_run_cache_closed_on_error(tmp_path: Path) -> None:
             action.run(
                 "generate_graph",
                 {
-                    "context": str(context_file),
+                    "network_context": str(context_file),
                     "output": "none",
                     "llm_cache": str(tmp_path / "cache.db"),
                 },
@@ -629,7 +633,7 @@ def test_build_execution_metadata_with_full_metadata(
         status, metadata, objects = action.run(
             "generate_graph",
             {
-                "context": str(context_file),
+                "network_context": str(context_file),
                 "output": "none",
                 "llm_cache": "none",
             },
@@ -839,3 +843,27 @@ def test_serialise_json_without_metadata() -> None:
     assert "metadata" not in data
     assert data["variables"] == ["A", "B"]
     assert data["reasoning"] == "No metadata"
+
+
+# Test serialise handles tuple input from decompress.
+def test_serialise_with_tuple_input() -> None:
+    """Test serialise correctly unwraps tuple from decompress_entry."""
+    from causaliq_knowledge.graph.response import GeneratedGraph, ProposedEdge
+
+    graph = GeneratedGraph(
+        edges=[ProposedEdge(source="X", target="Y", confidence=0.8)],
+        variables=["X", "Y"],
+        reasoning="Tuple test",
+    )
+
+    # Simulate decompress_entry return value: (graph, extra_blobs)
+    data_tuple = (graph, {"trace": b"some trace data"})
+
+    action = KnowledgeActionProvider()
+
+    result = action.serialise("graphml", data_tuple)
+
+    assert "<?xml" in result
+    assert "<graphml" in result
+    assert 'id="X"' in result
+    assert 'id="Y"' in result

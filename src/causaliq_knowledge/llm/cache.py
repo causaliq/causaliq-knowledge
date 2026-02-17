@@ -1,7 +1,7 @@
 """
-LLM-specific cache encoder and data structures.
+LLM-specific cache compressor and data structures.
 
-This module provides the LLMEntryEncoder for caching LLM requests and
+This module provides the LLMCompressor for caching LLM requests and
 responses with rich metadata for analysis.
 
 Note: This module stays in causaliq-knowledge (LLM-specific).
@@ -302,58 +302,60 @@ class LLMCacheEntry:
         )
 
 
-class LLMEntryEncoder(JsonCompressor):
-    """Encoder for LLM cache entries.
+class LLMCompressor(JsonCompressor):
+    """Compressor for LLM cache entries.
 
     Extends JsonCompressor with LLM-specific convenience methods for
-    encoding/decoding LLMCacheEntry objects.
+    compressing/decompressing LLMCacheEntry objects.
 
-    The encoder stores data in the standard JSON tokenised format,
+    The compressor stores data in the standard JSON tokenised format,
     achieving 50-70% compression through the shared token dictionary.
 
     Example:
         >>> from causaliq_core.cache import TokenCache
         >>> from causaliq_knowledge.llm.cache import (
-        ...     LLMEntryEncoder, LLMCacheEntry,
+        ...     LLMCompressor, LLMCacheEntry,
         ... )
         >>> with TokenCache(":memory:") as cache:
-        ...     encoder = LLMEntryEncoder()
+        ...     compressor = LLMCompressor()
         ...     entry = LLMCacheEntry.create(
         ...         model="gpt-4",
         ...         messages=[{"role": "user", "content": "Hello"}],
         ...         content="Hi there!",
         ...         provider="openai",
         ...     )
-        ...     blob = encoder.encode(entry.to_dict(), cache)
-        ...     data = encoder.decode(blob, cache)
+        ...     blob = compressor.compress(entry.to_dict(), cache)
+        ...     data = compressor.decompress(blob, cache)
         ...     restored = LLMCacheEntry.from_dict(data)
     """
 
-    def encode_entry(self, entry: LLMCacheEntry, cache: TokenCache) -> bytes:
-        """Encode an LLMCacheEntry to bytes.
+    def compress_entry(self, entry: LLMCacheEntry, cache: TokenCache) -> bytes:
+        """Compress an LLMCacheEntry to bytes.
 
         Convenience method that handles to_dict conversion.
 
         Args:
-            entry: The cache entry to encode.
+            entry: The cache entry to compress.
             cache: TokenCache for token dictionary.
 
         Returns:
-            Encoded bytes.
+            Compressed bytes.
         """
         return self.compress(entry.to_dict(), cache)
 
-    def decode_entry(self, blob: bytes, cache: TokenCache) -> LLMCacheEntry:
-        """Decode bytes to an LLMCacheEntry.
+    def decompress_entry(
+        self, blob: bytes, cache: TokenCache
+    ) -> LLMCacheEntry:
+        """Decompress bytes to an LLMCacheEntry.
 
         Convenience method that handles from_dict conversion.
 
         Args:
-            blob: Encoded bytes.
+            blob: Compressed bytes.
             cache: TokenCache for token dictionary.
 
         Returns:
-            Decoded LLMCacheEntry.
+            Decompressed LLMCacheEntry.
         """
         data = self.decompress(blob, cache)
         return LLMCacheEntry.from_dict(data)
@@ -376,7 +378,7 @@ class LLMEntryEncoder(JsonCompressor):
             Human-readable filename with .json extension.
 
         Example:
-            >>> encoder = LLMEntryEncoder()
+            >>> compressor = LLMCompressor()
             >>> entry = LLMCacheEntry.create(
             ...     model="gpt-4",
             ...     messages=[{"role": "user", "content": "test"}],

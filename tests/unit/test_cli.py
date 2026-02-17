@@ -687,3 +687,67 @@ def test_cli_models_mistral_success(monkeypatch):
     assert "mistral/mistral-small-latest" in result.output
     assert "mistral/mistral-large-latest" in result.output
     assert "[OK]" in result.output
+
+
+# =============================================================================
+# Cache helper function tests
+# =============================================================================
+
+
+# Test _is_graph_entry returns False for non-dict input.
+def test_is_graph_entry_non_dict() -> None:
+    """Test _is_graph_entry returns False for non-dict input."""
+    from causaliq_knowledge.cli.cache import _is_graph_entry
+
+    assert _is_graph_entry("not a dict") is False
+    assert _is_graph_entry(123) is False
+    assert _is_graph_entry(None) is False
+    assert _is_graph_entry(["a", "list"]) is False
+
+
+# Test _is_graph_entry returns False for dict missing edges.
+def test_is_graph_entry_missing_edges() -> None:
+    """Test _is_graph_entry returns False when edges key is missing."""
+    from causaliq_knowledge.cli.cache import _is_graph_entry
+
+    data = {"variables": ["A", "B"]}
+    assert _is_graph_entry(data) is False
+
+
+# Test _is_graph_entry returns False when edges is not a list.
+def test_is_graph_entry_edges_not_list() -> None:
+    """Test _is_graph_entry returns False when edges is not a list."""
+    from causaliq_knowledge.cli.cache import _is_graph_entry
+
+    data = {"edges": "not a list", "variables": ["A", "B"]}
+    assert _is_graph_entry(data) is False
+
+
+# Test _is_graph_entry returns False for dict missing variables.
+def test_is_graph_entry_missing_variables() -> None:
+    """Test _is_graph_entry returns False when variables key is missing."""
+    from causaliq_knowledge.cli.cache import _is_graph_entry
+
+    data = {"edges": [{"source": "A", "target": "B"}]}
+    assert _is_graph_entry(data) is False
+
+
+# Test _is_graph_entry returns False when variables is not a list.
+def test_is_graph_entry_variables_not_list() -> None:
+    """Test _is_graph_entry returns False when variables is not a list."""
+    from causaliq_knowledge.cli.cache import _is_graph_entry
+
+    data = {"edges": [], "variables": "not a list"}
+    assert _is_graph_entry(data) is False
+
+
+# Test _is_graph_entry returns True for valid graph entry.
+def test_is_graph_entry_valid() -> None:
+    """Test _is_graph_entry returns True for valid graph data."""
+    from causaliq_knowledge.cli.cache import _is_graph_entry
+
+    data = {
+        "edges": [{"source": "A", "target": "B"}],
+        "variables": ["A", "B"],
+    }
+    assert _is_graph_entry(data) is True

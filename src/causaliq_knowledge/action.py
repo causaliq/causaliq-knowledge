@@ -62,8 +62,8 @@ def _create_action_inputs() -> Dict[str, Any]:
             required=True,
             type_hint="str",
         ),
-        "context": ActionInput(
-            name="context",
+        "network_context": ActionInput(
+            name="network_context",
             description="Path to network context JSON file",
             required=True,
             type_hint="str",
@@ -139,7 +139,7 @@ class KnowledgeActionProvider(CausalIQActionProvider):
             uses: causaliq-knowledge
             with:
               action: generate_graph
-              context: "{{data_dir}}/cancer.json"
+              network_context: "{{data_dir}}/cancer.json"
               output: "{{data_dir}}/results.db"
               llm_cache: "{{data_dir}}/llm_cache.db"
               prompt_detail: standard
@@ -189,10 +189,11 @@ class KnowledgeActionProvider(CausalIQActionProvider):
 
         # For generate_graph, validate using GenerateGraphParams
         if action == "generate_graph":
-            # Check required context
-            if "context" not in parameters:
+            # Check required network_context
+            if "network_context" not in parameters:
                 raise ActionValidationError(
-                    "Missing required input: 'context' for generate_graph"
+                    "Missing required input: 'network_context' for "
+                    "generate_graph"
                 )
 
             try:
@@ -261,10 +262,10 @@ class KnowledgeActionProvider(CausalIQActionProvider):
         except (ValidationError, ValueError) as e:
             raise ActionExecutionError(f"Parameter validation failed: {e}")
 
-        # Check context exists
-        if not params.context.exists():
+        # Check network_context exists
+        if not params.network_context.exists():
             raise ActionExecutionError(
-                f"Network context not found: {params.context}"
+                f"Network context not found: {params.network_context}"
             )
 
         # Dry-run mode: validate only, don't execute
@@ -285,7 +286,7 @@ class KnowledgeActionProvider(CausalIQActionProvider):
         """
         metadata = {
             "message": "Dry-run mode: would generate graph",
-            "context": str(params.context),
+            "network_context": str(params.network_context),
             "llm_model": params.llm_model,
             "llm_prompt_detail": params.prompt_detail.value,
             "output": params.output,
@@ -313,7 +314,7 @@ class KnowledgeActionProvider(CausalIQActionProvider):
         """
         # Start with generation parameters
         metadata: Dict[str, Any] = {
-            "context": str(params.context),
+            "network_context": str(params.network_context),
             "llm_model": params.llm_model,
             "llm_prompt_detail": params.prompt_detail.value,
             "use_benchmark_names": params.use_benchmark_names,
@@ -372,7 +373,7 @@ class KnowledgeActionProvider(CausalIQActionProvider):
 
         try:
             # Load network context
-            network_ctx = NetworkContext.load(params.context)
+            network_ctx = NetworkContext.load(params.network_context)
             logger.info(
                 f"Loaded network context: {network_ctx.network} "
                 f"({len(network_ctx.variables)} variables)"
@@ -514,7 +515,7 @@ class KnowledgeActionProvider(CausalIQActionProvider):
                 - 'graphml': GraphML format
                 - 'json': JSON format with full metadata
             data: GeneratedGraph instance, or tuple (graph, extra_blobs)
-                as returned by GraphEntryEncoder.decode().
+                as returned by GraphCompressor.decompress().
 
         Returns:
             String representation of the graph in the specified format.

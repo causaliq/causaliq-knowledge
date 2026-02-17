@@ -310,7 +310,7 @@ class BaseLLMClient(ABC):
         Returns:
             LLMResponse with the generated content and metadata.
         """
-        from causaliq_knowledge.llm.cache import LLMCacheEntry, LLMEntryEncoder
+        from causaliq_knowledge.llm.cache import LLMCacheEntry, LLMCompressor
 
         cache = self.cache
         use_cache = self.use_cache
@@ -327,7 +327,7 @@ class BaseLLMClient(ABC):
         if use_cache and cache is not None:
             # Ensure compressor is set
             if not cache.has_compressor():
-                cache.set_compressor(LLMEntryEncoder())
+                cache.set_compressor(LLMCompressor())
 
             if cache.exists(cache_key):
                 cached_data = cache.get_data(cache_key)

@@ -13,12 +13,12 @@ from causaliq_knowledge.cli import cli
 def test_cli_cache_stats_llm_model_breakdown(tmp_path):
     from causaliq_core.cache import TokenCache
 
-    from causaliq_knowledge.llm.cache import LLMCacheEntry, LLMEntryEncoder
+    from causaliq_knowledge.llm.cache import LLMCacheEntry, LLMCompressor
 
     cache_path = tmp_path / "llm_cache.db"
     with TokenCache(str(cache_path)) as cache:
-        encoder = LLMEntryEncoder()
-        cache.set_compressor(encoder)
+        compressor = LLMCompressor()
+        cache.set_compressor(compressor)
 
         # Create an LLM cache entry
         entry = LLMCacheEntry.create(
@@ -55,12 +55,12 @@ def test_cli_cache_stats_llm_model_breakdown(tmp_path):
 def test_cli_cache_stats_multiple_models(tmp_path):
     from causaliq_core.cache import TokenCache
 
-    from causaliq_knowledge.llm.cache import LLMCacheEntry, LLMEntryEncoder
+    from causaliq_knowledge.llm.cache import LLMCacheEntry, LLMCompressor
 
     cache_path = tmp_path / "llm_cache.db"
     with TokenCache(str(cache_path)) as cache:
-        encoder = LLMEntryEncoder()
-        cache.set_compressor(encoder)
+        compressor = LLMCompressor()
+        cache.set_compressor(compressor)
 
         # Create entries for different models
         for model, cost in [("gpt-4", 0.01), ("claude-3", 0.005)]:
@@ -90,12 +90,12 @@ def test_cli_cache_stats_multiple_models(tmp_path):
 def test_cli_cache_stats_token_totals(tmp_path):
     from causaliq_core.cache import TokenCache
 
-    from causaliq_knowledge.llm.cache import LLMCacheEntry, LLMEntryEncoder
+    from causaliq_knowledge.llm.cache import LLMCacheEntry, LLMCompressor
 
     cache_path = tmp_path / "llm_cache.db"
     with TokenCache(str(cache_path)) as cache:
-        encoder = LLMEntryEncoder()
-        cache.set_compressor(encoder)
+        compressor = LLMCompressor()
+        cache.set_compressor(compressor)
 
         entry = LLMCacheEntry.create(
             model="test-model",
@@ -122,12 +122,12 @@ def test_cli_cache_stats_token_totals(tmp_path):
 def test_cli_cache_stats_estimated_savings(tmp_path):
     from causaliq_core.cache import TokenCache
 
-    from causaliq_knowledge.llm.cache import LLMCacheEntry, LLMEntryEncoder
+    from causaliq_knowledge.llm.cache import LLMCacheEntry, LLMCompressor
 
     cache_path = tmp_path / "llm_cache.db"
     with TokenCache(str(cache_path)) as cache:
-        encoder = LLMEntryEncoder()
-        cache.set_compressor(encoder)
+        compressor = LLMCompressor()
+        cache.set_compressor(compressor)
 
         entry = LLMCacheEntry.create(
             model="test-model",
@@ -158,12 +158,12 @@ def test_cli_cache_stats_estimated_savings(tmp_path):
 def test_cli_cache_stats_average_latency(tmp_path):
     from causaliq_core.cache import TokenCache
 
-    from causaliq_knowledge.llm.cache import LLMCacheEntry, LLMEntryEncoder
+    from causaliq_knowledge.llm.cache import LLMCacheEntry, LLMCompressor
 
     cache_path = tmp_path / "llm_cache.db"
     with TokenCache(str(cache_path)) as cache:
-        encoder = LLMEntryEncoder()
-        cache.set_compressor(encoder)
+        compressor = LLMCompressor()
+        cache.set_compressor(compressor)
 
         # Add two entries with different latencies
         for i, latency in enumerate([200, 400]):
@@ -191,12 +191,12 @@ def test_cli_cache_stats_average_latency(tmp_path):
 def test_cli_cache_stats_aggregates_by_model(tmp_path):
     from causaliq_core.cache import TokenCache
 
-    from causaliq_knowledge.llm.cache import LLMCacheEntry, LLMEntryEncoder
+    from causaliq_knowledge.llm.cache import LLMCacheEntry, LLMCompressor
 
     cache_path = tmp_path / "llm_cache.db"
     with TokenCache(str(cache_path)) as cache:
-        encoder = LLMEntryEncoder()
-        cache.set_compressor(encoder)
+        compressor = LLMCompressor()
+        cache.set_compressor(compressor)
 
         # Add 3 entries for same model
         for i in range(3):
@@ -225,12 +225,12 @@ def test_cli_cache_stats_aggregates_by_model(tmp_path):
 def test_cli_cache_stats_hit_rate(tmp_path):
     from causaliq_core.cache import TokenCache
 
-    from causaliq_knowledge.llm.cache import LLMCacheEntry, LLMEntryEncoder
+    from causaliq_knowledge.llm.cache import LLMCacheEntry, LLMCompressor
 
     cache_path = tmp_path / "llm_cache.db"
     with TokenCache(str(cache_path)) as cache:
-        encoder = LLMEntryEncoder()
-        cache.set_compressor(encoder)
+        compressor = LLMCompressor()
+        cache.set_compressor(compressor)
 
         entry = LLMCacheEntry.create(
             model="test-model",
@@ -261,12 +261,12 @@ def test_cli_cache_stats_json_includes_models(tmp_path):
 
     from causaliq_core.cache import TokenCache
 
-    from causaliq_knowledge.llm.cache import LLMCacheEntry, LLMEntryEncoder
+    from causaliq_knowledge.llm.cache import LLMCacheEntry, LLMCompressor
 
     cache_path = tmp_path / "llm_cache.db"
     with TokenCache(str(cache_path)) as cache:
-        encoder = LLMEntryEncoder()
-        cache.set_compressor(encoder)
+        compressor = LLMCompressor()
+        cache.set_compressor(compressor)
 
         entry = LLMCacheEntry.create(
             model="gpt-4",
@@ -298,12 +298,12 @@ def test_cli_cache_stats_json_includes_models(tmp_path):
 def test_cli_cache_stats_truncates_long_model_name(tmp_path):
     from causaliq_core.cache import TokenCache
 
-    from causaliq_knowledge.llm.cache import LLMCacheEntry, LLMEntryEncoder
+    from causaliq_knowledge.llm.cache import LLMCacheEntry, LLMCompressor
 
     cache_path = tmp_path / "llm_cache.db"
     with TokenCache(str(cache_path)) as cache:
-        encoder = LLMEntryEncoder()
-        cache.set_compressor(encoder)
+        compressor = LLMCompressor()
+        cache.set_compressor(compressor)
 
         long_model_name = "a-very-long-model-name-that-exceeds-32-characters"
         entry = LLMCacheEntry.create(
@@ -352,12 +352,12 @@ def test_cli_cache_stats_skips_invalid_entries(tmp_path):
 
     from causaliq_core.cache import TokenCache
 
-    from causaliq_knowledge.llm.cache import LLMCacheEntry, LLMEntryEncoder
+    from causaliq_knowledge.llm.cache import LLMCacheEntry, LLMCompressor
 
     cache_path = tmp_path / "mixed_cache.db"
     with TokenCache(str(cache_path)) as cache:
-        encoder = LLMEntryEncoder()
-        cache.set_compressor(encoder)
+        compressor = LLMCompressor()
+        cache.set_compressor(compressor)
 
         # Add a valid entry
         entry = LLMCacheEntry.create(

@@ -22,7 +22,7 @@ class GenerateGraphParams(BaseModel):
     action execution.
 
     Attributes:
-        context: Path to network context JSON file.
+        network_context: Path to network context JSON file.
         prompt_detail: Detail level for variable information in prompts.
         use_benchmark_names: Use benchmark names instead of LLM names.
         llm_model: LLM model identifier with provider prefix.
@@ -32,7 +32,7 @@ class GenerateGraphParams(BaseModel):
 
     Example:
         >>> params = GenerateGraphParams(
-        ...     context=Path("asia.json"),
+        ...     network_context=Path("asia.json"),
         ...     prompt_detail=PromptDetail.STANDARD,
         ...     llm_model="groq/llama-3.1-8b-instant",
         ...     output="results.db",
@@ -40,7 +40,7 @@ class GenerateGraphParams(BaseModel):
         ... )
     """
 
-    context: Path = Field(
+    network_context: Path = Field(
         ...,
         description="Path to network context JSON file",
     )
@@ -148,9 +148,11 @@ class GenerateGraphParams(BaseModel):
                 processed["prompt_detail"].lower()
             )
 
-        # Convert context string to Path
-        if "context" in processed and isinstance(processed["context"], str):
-            processed["context"] = Path(processed["context"])
+        # Convert network_context string to Path
+        if "network_context" in processed and isinstance(
+            processed["network_context"], str
+        ):
+            processed["network_context"] = Path(processed["network_context"])
 
         return cls(**processed)
 

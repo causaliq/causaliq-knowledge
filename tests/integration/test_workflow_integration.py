@@ -65,7 +65,7 @@ steps:
     uses: "causaliq-knowledge"
     with:
       action: "generate_graph"
-      context: "{context_file.as_posix()}"
+      network_context: "{context_file.as_posix()}"
       output: "none"
       llm_cache: "none"
 """
@@ -103,7 +103,7 @@ steps:
     uses: "causaliq-knowledge"
     with:
       action: "generate_graph"
-      context: "{context_file.as_posix()}"
+      network_context: "{context_file.as_posix()}"
       output: "none"
       llm_cache: "none"
       llm_model: "groq/llama-3.1-8b-instant"
@@ -150,7 +150,7 @@ steps:
     uses: "causaliq-knowledge"
     with:
       action: "generate_graph"
-      context: "{context_file.as_posix()}"
+      network_context: "{context_file.as_posix()}"
       output: "none"
       llm_cache: "none"
       llm_model: "groq/llama-3.1-8b-instant"
@@ -218,7 +218,7 @@ steps:
     uses: "causaliq-knowledge"
     with:
       action: "generate_graph"
-      context: "{context_file.as_posix()}"
+      network_context: "{context_file.as_posix()}"
       output: "{output_dir.as_posix()}"
       llm_cache: "none"
 """
@@ -289,7 +289,7 @@ steps:
     uses: "causaliq-knowledge"
     with:
       action: "generate_graph"
-      context: "{context_file.as_posix()}"
+      network_context: "{context_file.as_posix()}"
       output: "none"
       llm_cache: "none"
       llm_model: "invalid-model-no-provider"
@@ -340,7 +340,7 @@ steps:
     uses: "causaliq-knowledge"
     with:
       action: "generate_graph"
-      context: "{{{{model}}}}"
+      network_context: "{{{{model}}}}"
       output: "none"
       llm_cache: "none"
 """

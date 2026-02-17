@@ -47,7 +47,7 @@ def cache_stats(cache_path: str, output_json: bool) -> None:
     """
     from causaliq_core.cache import TokenCache
 
-    from causaliq_knowledge.llm.cache import LLMCacheEntry, LLMEntryEncoder
+    from causaliq_knowledge.llm.cache import LLMCacheEntry, LLMCompressor
 
     try:
         with TokenCache(cache_path) as cache:
@@ -62,9 +62,9 @@ def cache_stats(cache_path: str, output_json: bool) -> None:
             total_output_tokens = 0
 
             if entry_count > 0:
-                # Use LLMEntryEncoder for decompression
-                encoder = LLMEntryEncoder()
-                cache.set_compressor(encoder)
+                # Use LLMCompressor for decompression
+                compressor = LLMCompressor()
+                cache.set_compressor(compressor)
 
                 # Query all entries
                 cursor = cache.conn.execute(
@@ -73,7 +73,7 @@ def cache_stats(cache_path: str, output_json: bool) -> None:
 
                 for row in cursor.fetchall():
                     try:
-                        data = encoder.decompress(row[0], cache)
+                        data = compressor.decompress(row[0], cache)
                         entry = LLMCacheEntry.from_dict(data)
                         hit_count = row[1] or 0
 
@@ -102,7 +102,7 @@ def cache_stats(cache_path: str, output_json: bool) -> None:
                         total_input_tokens += entry.metadata.tokens.input
                         total_output_tokens += entry.metadata.tokens.output
                     except Exception:
-                        # Skip entries that can't be decoded
+                        # Skip entries that can't be decompressed
                         pass
 
                 # Calculate averages
@@ -238,16 +238,16 @@ def export_cache(cache_path: str, output_dir: str, output_json: bool) -> None:
 
     from causaliq_core.cache import TokenCache
 
-    from causaliq_knowledge.llm.cache import LLMCacheEntry, LLMEntryEncoder
+    from causaliq_knowledge.llm.cache import LLMCacheEntry, LLMCompressor
 
     output_path = Path(output_dir)
     is_zip = output_path.suffix.lower() == ".zip"
 
     try:
         with TokenCache(cache_path) as cache:
-            # Use LLMEntryEncoder for decompression
-            encoder = LLMEntryEncoder()
-            cache.set_compressor(encoder)
+            # Use LLMCompressor for decompression
+            compressor = LLMCompressor()
+            cache.set_compressor(compressor)
 
             # Count entries
             cursor = cache.conn.execute("SELECT COUNT(*) FROM cache_entries")
@@ -273,16 +273,16 @@ def export_cache(cache_path: str, output_dir: str, output_json: bool) -> None:
             cursor = cache.conn.execute("SELECT hash, data FROM cache_entries")
             for cache_key, blob in cursor:
                 try:
-                    data = encoder.decompress(blob, cache)
+                    data = compressor.decompress(blob, cache)
                     entry = LLMCacheEntry.from_dict(data)
-                    filename = encoder.generate_export_filename(
+                    filename = compressor.generate_export_filename(
                         entry, cache_key
                     )
                     file_path = export_dir / filename
-                    encoder.export_entry(entry, file_path)
+                    compressor.export_entry(entry, file_path)
                     exported += 1
                 except Exception:
-                    # Skip entries that can't be decoded as LLM entries
+                    # Skip entries that can't be decompressed as LLM entries
                     continue
 
             # Create zip archive if requested
@@ -399,16 +399,16 @@ def import_cache(cache_path: str, input_path: str, output_json: bool) -> None:
 
     from causaliq_core.cache import TokenCache
 
-    from causaliq_knowledge.llm.cache import LLMEntryEncoder
+    from causaliq_knowledge.llm.cache import LLMCompressor
 
     input_file = Path(input_path)
     is_zip = input_file.suffix.lower() == ".zip"
 
     try:
         with TokenCache(cache_path) as cache:
-            # Use LLMEntryEncoder for compression
-            encoder = LLMEntryEncoder()
-            cache.set_compressor(encoder)
+            # Use LLMCompressor for compression
+            compressor = LLMCompressor()
+            cache.set_compressor(compressor)
 
             # Determine input directory
             if is_zip:

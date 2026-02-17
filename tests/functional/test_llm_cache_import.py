@@ -14,7 +14,7 @@ from causaliq_knowledge.llm.base_client import (
     LLMConfig,
     LLMResponse,
 )
-from causaliq_knowledge.llm.cache import LLMCacheEntry, LLMEntryEncoder
+from causaliq_knowledge.llm.cache import LLMCacheEntry, LLMCompressor
 
 # Paths
 TEST_DATA_DIR = Path(__file__).parent.parent / "data" / "functional"
@@ -65,8 +65,8 @@ class MockLLMClient(BaseLLMClient):
 def test_import_llm_cache_data_from_files() -> None:
     """Verify LLM cache data can be imported from test files."""
     with TokenCache(":memory:") as cache:
-        encoder = LLMEntryEncoder()
-        cache.set_compressor(encoder)
+        compressor = LLMCompressor()
+        cache.set_compressor(compressor)
 
         count = cache.import_entries(LLM_CACHE_DATA)
 
@@ -78,8 +78,8 @@ def test_import_llm_cache_data_from_files() -> None:
 def test_imported_data_contains_valid_llm_entries() -> None:
     """Verify imported data deserializes to valid LLMCacheEntry."""
     with TokenCache(":memory:") as cache:
-        encoder = LLMEntryEncoder()
-        cache.set_compressor(encoder)
+        compressor = LLMCompressor()
+        cache.set_compressor(compressor)
         cache.import_entries(LLM_CACHE_DATA)
 
         data = cache.get_data("python_question")
@@ -106,8 +106,8 @@ def test_cached_completion_uses_imported_data() -> None:
     """
     # Create cache and import test data
     with TokenCache(":memory:") as cache:
-        encoder = LLMEntryEncoder()
-        cache.set_compressor(encoder)
+        compressor = LLMCompressor()
+        cache.set_compressor(compressor)
         cache.import_entries(LLM_CACHE_DATA)
 
         # The imported data uses hash "python_question"
@@ -142,8 +142,8 @@ def test_cached_completion_uses_imported_data() -> None:
 def test_cache_miss_falls_through_to_api() -> None:
     """Verify cache miss makes API call for unknown queries."""
     with TokenCache(":memory:") as cache:
-        encoder = LLMEntryEncoder()
-        cache.set_compressor(encoder)
+        compressor = LLMCompressor()
+        cache.set_compressor(compressor)
 
         config = LLMConfig(model="gpt-4", temperature=0.1, max_tokens=500)
         client = MockLLMClient(config)
@@ -183,15 +183,15 @@ def test_export_import_round_trip_preserves_llm_data(tmp_path: Path) -> None:
 
     # Export from first cache
     with TokenCache(":memory:") as cache1:
-        encoder1 = LLMEntryEncoder()
-        cache1.set_compressor(encoder1)
+        compressor = LLMCompressor()
+        cache1.set_compressor(compressor)
         cache1.put_data("test_hash", entry.to_dict())
         cache1.export_entries(export_dir)
 
     # Import to second cache
     with TokenCache(":memory:") as cache2:
-        encoder2 = LLMEntryEncoder()
-        cache2.set_compressor(encoder2)
+        compressor = LLMCompressor()
+        cache2.set_compressor(compressor)
         cache2.import_entries(export_dir)
 
         data = cache2.get_data("test_hash")

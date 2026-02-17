@@ -1,4 +1,4 @@
-"""Unit tests for LLM cache encoder and data structures."""
+"""Unit tests for LLM cache compressor and data structures."""
 
 import json
 import tempfile
@@ -10,7 +10,7 @@ from causaliq_core.cache import TokenCache
 
 from causaliq_knowledge.llm.cache import (
     LLMCacheEntry,
-    LLMEntryEncoder,
+    LLMCompressor,
     LLMMetadata,
     LLMResponse,
     LLMTokenUsage,
@@ -560,54 +560,54 @@ def test_llm_cache_entry_create_model_version_explicit():
 
 
 # =============================================================================
-# LLMEntryEncoder Tests
+# LLMCompressor Tests
 # =============================================================================
 
 
-# Test LLMEntryEncoder inherits from JsonCompressor.
-def test_llm_entry_encoder_is_json_compressor():
+# Test LLMCompressor inherits from JsonCompressor.
+def test_llm_compressor_is_json_compressor():
     from causaliq_core.cache.compressors import JsonCompressor
 
-    encoder = LLMEntryEncoder()
-    assert isinstance(encoder, JsonCompressor)
+    compressor = LLMCompressor()
+    assert isinstance(compressor, JsonCompressor)
 
 
-# Test LLMEntryEncoder.encode_entry encodes to bytes.
-def test_llm_entry_encoder_encode_entry():
+# Test LLMCompressor.compress_entry encodes to bytes.
+def test_llm_compressor_compress_entry():
     with TokenCache(":memory:") as cache:
-        encoder = LLMEntryEncoder()
+        compressor = LLMCompressor()
         entry = LLMCacheEntry.create(
             model="gpt-4",
             messages=[{"role": "user", "content": "Hello"}],
             content="Hi!",
             provider="openai",
         )
-        blob = encoder.encode_entry(entry, cache)
+        blob = compressor.compress_entry(entry, cache)
         assert isinstance(blob, bytes)
         assert len(blob) > 0
 
 
-# Test LLMEntryEncoder.decode_entry decodes to LLMCacheEntry.
-def test_llm_entry_encoder_decode_entry():
+# Test LLMCompressor.decompress_entry decodes to LLMCacheEntry.
+def test_llm_compressor_decompress_entry():
     with TokenCache(":memory:") as cache:
-        encoder = LLMEntryEncoder()
+        compressor = LLMCompressor()
         entry = LLMCacheEntry.create(
             model="claude-3",
             messages=[{"role": "user", "content": "Test"}],
             content="Response",
             provider="anthropic",
         )
-        blob = encoder.encode_entry(entry, cache)
-        restored = encoder.decode_entry(blob, cache)
+        blob = compressor.compress_entry(entry, cache)
+        restored = compressor.decompress_entry(blob, cache)
         assert isinstance(restored, LLMCacheEntry)
         assert restored.model == entry.model
         assert restored.response.content == entry.response.content
 
 
-# Test LLMEntryEncoder encode/decode round-trip.
-def test_llm_entry_encoder_round_trip():
+# Test LLMCompressor encode/decode round-trip.
+def test_llm_compressor_round_trip():
     with TokenCache(":memory:") as cache:
-        encoder = LLMEntryEncoder()
+        compressor = LLMCompressor()
         original = LLMCacheEntry.create(
             model="gpt-4-turbo",
             messages=[
@@ -625,8 +625,8 @@ def test_llm_entry_encoder_round_trip():
             output_tokens=10,
             cost_usd=0.002,
         )
-        blob = encoder.encode_entry(original, cache)
-        restored = encoder.decode_entry(blob, cache)
+        blob = compressor.compress_entry(original, cache)
+        restored = compressor.decompress_entry(blob, cache)
 
         assert restored.model == original.model
         assert restored.messages == original.messages
@@ -652,10 +652,10 @@ def test_llm_entry_encoder_round_trip():
         assert restored.metadata.cache_hit == original.metadata.cache_hit
 
 
-# Test LLMEntryEncoder with complex conversation.
-def test_llm_entry_encoder_complex_conversation():
+# Test LLMCompressor with complex conversation.
+def test_llm_compressor_complex_conversation():
     with TokenCache(":memory:") as cache:
-        encoder = LLMEntryEncoder()
+        compressor = LLMCompressor()
         messages = [
             {"role": "system", "content": "You are a helpful assistant."},
             {"role": "user", "content": "Write a haiku about coding."},
@@ -680,15 +680,15 @@ def test_llm_entry_encoder_complex_conversation():
             content=haiku,
             provider="openai",
         )
-        blob = encoder.encode_entry(original, cache)
-        restored = encoder.decode_entry(blob, cache)
+        blob = compressor.compress_entry(original, cache)
+        restored = compressor.decompress_entry(blob, cache)
         assert restored.messages == messages
         assert restored.response.content == haiku
 
 
-# Test LLMEntryEncoder.export_entry writes JSON file.
-def test_llm_entry_encoder_export_entry():
-    encoder = LLMEntryEncoder()
+# Test LLMCompressor.export_entry writes JSON file.
+def test_llm_compressor_export_entry():
+    compressor = LLMCompressor()
     entry = LLMCacheEntry.create(
         model="gpt-4",
         messages=[{"role": "user", "content": "Test"}],
@@ -697,7 +697,7 @@ def test_llm_entry_encoder_export_entry():
     )
     with tempfile.TemporaryDirectory() as tmpdir:
         path = Path(tmpdir) / "entry.json"
-        encoder.export_entry(entry, path)
+        compressor.export_entry(entry, path)
         assert path.exists()
         with open(path, encoding="utf-8") as f:
             data = json.load(f)
@@ -705,9 +705,9 @@ def test_llm_entry_encoder_export_entry():
         assert data["response"]["content"] == "Response"
 
 
-# Test LLMEntryEncoder.import_entry reads JSON file.
-def test_llm_entry_encoder_import_entry():
-    encoder = LLMEntryEncoder()
+# Test LLMCompressor.import_entry reads JSON file.
+def test_llm_compressor_import_entry():
+    compressor = LLMCompressor()
     data = {
         "cache_key": {
             "model": "claude-3",
@@ -733,16 +733,16 @@ def test_llm_entry_encoder_import_entry():
         path = Path(tmpdir) / "entry.json"
         with open(path, "w", encoding="utf-8") as f:
             json.dump(data, f)
-        entry = encoder.import_entry(path)
+        entry = compressor.import_entry(path)
         assert isinstance(entry, LLMCacheEntry)
         assert entry.model == "claude-3"
         assert entry.response.content == "Hi there!"
         assert entry.metadata.provider == "anthropic"
 
 
-# Test LLMEntryEncoder export/import round-trip.
-def test_llm_entry_encoder_export_import_round_trip():
-    encoder = LLMEntryEncoder()
+# Test LLMCompressor export/import round-trip.
+def test_llm_compressor_export_import_round_trip():
+    compressor = LLMCompressor()
     original = LLMCacheEntry.create(
         model="gemini-pro",
         messages=[{"role": "user", "content": "What is the meaning of life?"}],
@@ -757,8 +757,8 @@ def test_llm_entry_encoder_export_import_round_trip():
     )
     with tempfile.TemporaryDirectory() as tmpdir:
         path = Path(tmpdir) / "round_trip.json"
-        encoder.export_entry(original, path)
-        restored = encoder.import_entry(path)
+        compressor.export_entry(original, path)
+        restored = compressor.import_entry(path)
         assert restored.model == original.model
         assert restored.messages == original.messages
         assert restored.temperature == original.temperature
@@ -767,110 +767,110 @@ def test_llm_entry_encoder_export_import_round_trip():
         assert restored.metadata.provider == original.metadata.provider
 
 
-# Test LLMEntryEncoder base encode/decode still works.
-def test_llm_entry_encoder_base_encode_decode():
+# Test LLMCompressor base encode/decode still works.
+def test_llm_compressor_base_encode_decode():
     with TokenCache(":memory:") as cache:
-        encoder = LLMEntryEncoder()
+        compressor = LLMCompressor()
         data = {"key": "value", "number": 42}
-        blob = encoder.compress(data, cache)
-        restored = encoder.decompress(blob, cache)
+        blob = compressor.compress(data, cache)
+        restored = compressor.decompress(blob, cache)
         assert restored == data
 
 
-# Test LLMEntryEncoder can encode entry to_dict directly.
-def test_llm_entry_encoder_encode_entry_dict():
+# Test LLMCompressor can encode entry to_dict directly.
+def test_llm_compressor_compress_entry_dict():
     with TokenCache(":memory:") as cache:
-        encoder = LLMEntryEncoder()
+        compressor = LLMCompressor()
         entry = LLMCacheEntry.create(
             model="gpt-4",
             messages=[{"role": "user", "content": "Hello"}],
             content="Hi!",
         )
-        blob = encoder.compress(entry.to_dict(), cache)
-        data = encoder.decompress(blob, cache)
+        blob = compressor.compress(entry.to_dict(), cache)
+        data = compressor.decompress(blob, cache)
         restored = LLMCacheEntry.from_dict(data)
         assert restored.model == entry.model
 
 
-# Test LLMEntryEncoder with empty messages.
-def test_llm_entry_encoder_empty_messages():
+# Test LLMCompressor with empty messages.
+def test_llm_compressor_empty_messages():
     with TokenCache(":memory:") as cache:
-        encoder = LLMEntryEncoder()
+        compressor = LLMCompressor()
         entry = LLMCacheEntry.create(
             model="gpt-4",
             messages=[],
             content="Default response",
         )
-        blob = encoder.encode_entry(entry, cache)
-        restored = encoder.decode_entry(blob, cache)
+        blob = compressor.compress_entry(entry, cache)
+        restored = compressor.decompress_entry(blob, cache)
         assert restored.messages == []
         assert restored.response.content == "Default response"
 
 
-# Test LLMEntryEncoder with None max_tokens.
-def test_llm_entry_encoder_none_max_tokens():
+# Test LLMCompressor with None max_tokens.
+def test_llm_compressor_none_max_tokens():
     with TokenCache(":memory:") as cache:
-        encoder = LLMEntryEncoder()
+        compressor = LLMCompressor()
         entry = LLMCacheEntry.create(
             model="gpt-4",
             messages=[{"role": "user", "content": "Test"}],
             content="Response",
             max_tokens=None,
         )
-        blob = encoder.encode_entry(entry, cache)
-        restored = encoder.decode_entry(blob, cache)
+        blob = compressor.compress_entry(entry, cache)
+        restored = compressor.decompress_entry(blob, cache)
         assert restored.max_tokens is None
 
 
-# Test LLMEntryEncoder with zero temperature.
-def test_llm_entry_encoder_zero_temperature():
+# Test LLMCompressor with zero temperature.
+def test_llm_compressor_zero_temperature():
     with TokenCache(":memory:") as cache:
-        encoder = LLMEntryEncoder()
+        compressor = LLMCompressor()
         entry = LLMCacheEntry.create(
             model="gpt-4",
             messages=[{"role": "user", "content": "Test"}],
             content="Deterministic response",
             temperature=0.0,
         )
-        blob = encoder.encode_entry(entry, cache)
-        restored = encoder.decode_entry(blob, cache)
+        blob = compressor.compress_entry(entry, cache)
+        restored = compressor.decompress_entry(blob, cache)
         assert restored.temperature == 0.0
 
 
-# Test LLMEntryEncoder with high temperature.
-def test_llm_entry_encoder_high_temperature():
+# Test LLMCompressor with high temperature.
+def test_llm_compressor_high_temperature():
     with TokenCache(":memory:") as cache:
-        encoder = LLMEntryEncoder()
+        compressor = LLMCompressor()
         entry = LLMCacheEntry.create(
             model="gpt-4",
             messages=[{"role": "user", "content": "Be creative"}],
             content="Creative response",
             temperature=1.5,
         )
-        blob = encoder.encode_entry(entry, cache)
-        restored = encoder.decode_entry(blob, cache)
+        blob = compressor.compress_entry(entry, cache)
+        restored = compressor.decompress_entry(blob, cache)
         assert restored.temperature == 1.5
 
 
-# Test LLMEntryEncoder with special characters in content.
-def test_llm_entry_encoder_special_characters():
+# Test LLMCompressor with special characters in content.
+def test_llm_compressor_special_characters():
     with TokenCache(":memory:") as cache:
-        encoder = LLMEntryEncoder()
+        compressor = LLMCompressor()
         content = "Special chars: © ® ™ € £ ¥ • → ← ↑ ↓ with newlines\n\ttab"
         entry = LLMCacheEntry.create(
             model="gpt-4",
             messages=[{"role": "user", "content": "Test special chars"}],
             content=content,
         )
-        blob = encoder.encode_entry(entry, cache)
-        restored = encoder.decode_entry(blob, cache)
+        blob = compressor.compress_entry(entry, cache)
+        restored = compressor.decompress_entry(blob, cache)
         assert restored.response.content == content
 
 
-# Test LLMEntryEncoder with Unicode content.
-def test_llm_entry_encoder_unicode():
+# Test LLMCompressor with Unicode content.
+def test_llm_compressor_unicode():
     with TokenCache(":memory:") as cache:
-        encoder = LLMEntryEncoder()
+        compressor = LLMCompressor()
         content = "Unicode: 你好世界 こんにちは мир العالم 🌍🎉🚀"
         entry = LLMCacheEntry.create(
             model="gpt-4",
@@ -879,30 +879,30 @@ def test_llm_entry_encoder_unicode():
             ],
             content=content,
         )
-        blob = encoder.encode_entry(entry, cache)
-        restored = encoder.decode_entry(blob, cache)
+        blob = compressor.compress_entry(entry, cache)
+        restored = compressor.decompress_entry(blob, cache)
         assert restored.response.content == content
 
 
-# Test LLMEntryEncoder with long content.
-def test_llm_entry_encoder_long_content():
+# Test LLMCompressor with long content.
+def test_llm_compressor_long_content():
     with TokenCache(":memory:") as cache:
-        encoder = LLMEntryEncoder()
+        compressor = LLMCompressor()
         content = "Lorem ipsum " * 1000
         entry = LLMCacheEntry.create(
             model="gpt-4",
             messages=[{"role": "user", "content": "Write a long response"}],
             content=content,
         )
-        blob = encoder.encode_entry(entry, cache)
-        restored = encoder.decode_entry(blob, cache)
+        blob = compressor.compress_entry(entry, cache)
+        restored = compressor.decompress_entry(blob, cache)
         assert restored.response.content == content
 
 
 # Test multiple entries can be encoded in same cache.
-def test_llm_entry_encoder_multiple_entries():
+def test_llm_compressor_multiple_entries():
     with TokenCache(":memory:") as cache:
-        encoder = LLMEntryEncoder()
+        compressor = LLMCompressor()
         entries = []
         for i in range(5):
             entry = LLMCacheEntry.create(
@@ -912,8 +912,8 @@ def test_llm_entry_encoder_multiple_entries():
             )
             entries.append(entry)
 
-        blobs = [encoder.encode_entry(e, cache) for e in entries]
-        restored = [encoder.decode_entry(b, cache) for b in blobs]
+        blobs = [compressor.compress_entry(e, cache) for e in entries]
+        restored = [compressor.decompress_entry(b, cache) for b in blobs]
 
         for i, entry in enumerate(restored):
             assert entry.model == f"model-{i}"
@@ -921,9 +921,9 @@ def test_llm_entry_encoder_multiple_entries():
 
 
 # Test token dictionary is shared across entries.
-def test_llm_entry_encoder_shared_tokens():
+def test_llm_compressor_shared_tokens():
     with TokenCache(":memory:") as cache:
-        encoder = LLMEntryEncoder()
+        compressor = LLMCompressor()
         # First entry with common strings
         entry1 = LLMCacheEntry.create(
             model="gpt-4",
@@ -931,7 +931,7 @@ def test_llm_entry_encoder_shared_tokens():
             content="Hello back!",
             provider="openai",
         )
-        blob1 = encoder.encode_entry(entry1, cache)
+        blob1 = compressor.compress_entry(entry1, cache)
 
         # Second entry with same common strings
         entry2 = LLMCacheEntry.create(
@@ -940,11 +940,11 @@ def test_llm_entry_encoder_shared_tokens():
             content="Hello once more!",
             provider="openai",
         )
-        blob2 = encoder.encode_entry(entry2, cache)
+        blob2 = compressor.compress_entry(entry2, cache)
 
         # Both should decode correctly
-        restored1 = encoder.decode_entry(blob1, cache)
-        restored2 = encoder.decode_entry(blob2, cache)
+        restored1 = compressor.decompress_entry(blob1, cache)
+        restored2 = compressor.decompress_entry(blob2, cache)
         assert restored1.model == "gpt-4"
         assert restored2.model == "gpt-4"
         assert restored1.metadata.provider == "openai"
@@ -952,13 +952,13 @@ def test_llm_entry_encoder_shared_tokens():
 
 
 # =============================================================================
-# LLMEntryEncoder Filename Generation Tests
+# LLMCompressor Filename Generation Tests
 # =============================================================================
 
 
 # Test generate_export_filename with request_id and provider.
 def test_generate_export_filename_with_request_id():
-    encoder = LLMEntryEncoder()
+    compressor = LLMCompressor()
     entry = LLMCacheEntry.create(
         model="gpt-4",
         messages=[{"role": "user", "content": "test"}],
@@ -966,7 +966,7 @@ def test_generate_export_filename_with_request_id():
         provider="openai",
         request_id="expt23",
     )
-    filename = encoder.generate_export_filename(entry, "abc12345")
+    filename = compressor.generate_export_filename(entry, "abc12345")
 
     assert filename.endswith(".json")
     assert filename.startswith("expt23_")
@@ -980,14 +980,14 @@ def test_generate_export_filename_with_request_id():
 
 # Test generate_export_filename falls back to hash when no request_id.
 def test_generate_export_filename_no_request_id():
-    encoder = LLMEntryEncoder()
+    compressor = LLMCompressor()
     entry = LLMCacheEntry.create(
         model="gpt-4",
         messages=[{"role": "user", "content": "test"}],
         content="Response",
         provider="openai",
     )
-    filename = encoder.generate_export_filename(entry, "abc12345def")
+    filename = compressor.generate_export_filename(entry, "abc12345def")
 
     assert filename.endswith(".json")
     # Should use first 8 chars of hash as fallback
@@ -997,7 +997,7 @@ def test_generate_export_filename_no_request_id():
 
 # Test generate_export_filename sanitises request_id.
 def test_generate_export_filename_sanitises_request_id():
-    encoder = LLMEntryEncoder()
+    compressor = LLMCompressor()
     entry = LLMCacheEntry.create(
         model="gpt-4",
         messages=[{"role": "user", "content": "test"}],
@@ -1005,7 +1005,7 @@ def test_generate_export_filename_sanitises_request_id():
         provider="openai",
         request_id="test/with:special@chars!",
     )
-    filename = encoder.generate_export_filename(entry, "abc12345")
+    filename = compressor.generate_export_filename(entry, "abc12345")
 
     assert filename.endswith(".json")
     # Special chars should be removed
@@ -1014,7 +1014,7 @@ def test_generate_export_filename_sanitises_request_id():
 
 # Test generate_export_filename with different providers.
 def test_generate_export_filename_various_providers():
-    encoder = LLMEntryEncoder()
+    compressor = LLMCompressor()
 
     for provider in ["groq", "anthropic", "gemini", "deepseek"]:
         entry = LLMCacheEntry.create(
@@ -1024,28 +1024,28 @@ def test_generate_export_filename_various_providers():
             provider=provider,
             request_id="test",
         )
-        filename = encoder.generate_export_filename(entry, "hash123")
+        filename = compressor.generate_export_filename(entry, "hash123")
 
         assert filename.endswith(f"_{provider}.json")
 
 
 # Test generate_export_filename handles missing provider.
 def test_generate_export_filename_missing_provider():
-    encoder = LLMEntryEncoder()
+    compressor = LLMCompressor()
     entry = LLMCacheEntry.create(
         model="gpt-4",
         messages=[{"role": "user", "content": "test"}],
         content="Response",
         request_id="test",
     )
-    filename = encoder.generate_export_filename(entry, "abc123")
+    filename = compressor.generate_export_filename(entry, "abc123")
 
     assert filename.endswith("_unknown.json")
 
 
 # Test generate_export_filename handles missing timestamp.
 def test_generate_export_filename_missing_timestamp():
-    encoder = LLMEntryEncoder()
+    compressor = LLMCompressor()
     entry = LLMCacheEntry.create(
         model="gpt-4",
         messages=[{"role": "user", "content": "test"}],
@@ -1055,7 +1055,7 @@ def test_generate_export_filename_missing_timestamp():
     )
     # Clear the timestamp
     entry.metadata.timestamp = ""
-    filename = encoder.generate_export_filename(entry, "abc123")
+    filename = compressor.generate_export_filename(entry, "abc123")
 
     assert filename.endswith(".json")
     assert "_unknown_" in filename
@@ -1063,7 +1063,7 @@ def test_generate_export_filename_missing_timestamp():
 
 # Test generate_export_filename timestamp format.
 def test_generate_export_filename_timestamp_format():
-    encoder = LLMEntryEncoder()
+    compressor = LLMCompressor()
     entry = LLMCacheEntry.create(
         model="gpt-4",
         messages=[{"role": "user", "content": "test"}],
@@ -1073,7 +1073,7 @@ def test_generate_export_filename_timestamp_format():
     )
     # Set a known timestamp
     entry.metadata.timestamp = "2026-01-29T14:30:52+00:00"
-    filename = encoder.generate_export_filename(entry, "abc123")
+    filename = compressor.generate_export_filename(entry, "abc123")
 
     # Should format as yyyy-mm-dd-hhmmss
     assert "2026-01-29-143052" in filename
@@ -1082,7 +1082,7 @@ def test_generate_export_filename_timestamp_format():
 
 # Test generate_export_filename with request_id that sanitises to empty.
 def test_generate_export_filename_request_id_sanitises_to_empty():
-    encoder = LLMEntryEncoder()
+    compressor = LLMCompressor()
     entry = LLMCacheEntry.create(
         model="gpt-4",
         messages=[{"role": "user", "content": "test"}],
@@ -1090,7 +1090,7 @@ def test_generate_export_filename_request_id_sanitises_to_empty():
         provider="openai",
         request_id="@#$%^&*()",  # All special chars, sanitises to empty
     )
-    filename = encoder.generate_export_filename(entry, "fallback123")
+    filename = compressor.generate_export_filename(entry, "fallback123")
 
     # Should use first 8 chars of cache_key as fallback
     assert filename.startswith("fallback_")
@@ -1099,7 +1099,7 @@ def test_generate_export_filename_request_id_sanitises_to_empty():
 
 # Test generate_export_filename with invalid timestamp format.
 def test_generate_export_filename_invalid_timestamp():
-    encoder = LLMEntryEncoder()
+    compressor = LLMCompressor()
     entry = LLMCacheEntry.create(
         model="gpt-4",
         messages=[{"role": "user", "content": "test"}],
@@ -1109,7 +1109,7 @@ def test_generate_export_filename_invalid_timestamp():
     )
     # Set an invalid timestamp that will fail to parse
     entry.metadata.timestamp = "not-a-valid-timestamp"
-    filename = encoder.generate_export_filename(entry, "abc123")
+    filename = compressor.generate_export_filename(entry, "abc123")
 
     # Should use "unknown" for timestamp
     assert filename == "test_unknown_openai.json"
@@ -1117,7 +1117,7 @@ def test_generate_export_filename_invalid_timestamp():
 
 # Test generate_export_filename with provider that sanitises to empty.
 def test_generate_export_filename_provider_sanitises_to_empty():
-    encoder = LLMEntryEncoder()
+    compressor = LLMCompressor()
     entry = LLMCacheEntry.create(
         model="gpt-4",
         messages=[{"role": "user", "content": "test"}],
@@ -1125,7 +1125,7 @@ def test_generate_export_filename_provider_sanitises_to_empty():
         provider="@#$%",  # All special chars, sanitises to empty
         request_id="test",
     )
-    filename = encoder.generate_export_filename(entry, "abc123")
+    filename = compressor.generate_export_filename(entry, "abc123")
 
     # Should use "unknown" for provider
     assert filename.endswith("_unknown.json")

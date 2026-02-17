@@ -8,7 +8,7 @@ from causaliq_knowledge.graph.cache import (
     BLOB_TYPE_CONFIDENCES,
     BLOB_TYPE_GRAPH,
     BLOB_TYPE_TRACE,
-    GraphEntryEncoder,
+    GraphCompressor,
 )
 from causaliq_knowledge.graph.generator import (
     GraphGenerator,
@@ -80,8 +80,8 @@ __all__ = [
     # Generator
     "GraphGenerator",
     "GraphGeneratorConfig",
-    # Cache encoder
-    "GraphEntryEncoder",
+    # Cache compressor
+    "GraphCompressor",
     "BLOB_TYPE_GRAPH",
     "BLOB_TYPE_CONFIDENCES",
     "BLOB_TYPE_TRACE",

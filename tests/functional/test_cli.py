@@ -166,13 +166,13 @@ def test_cli_export_cache_help():
 def test_cli_cache_export_creates_files(tmp_path):
     from causaliq_core.cache import TokenCache
 
-    from causaliq_knowledge.llm.cache import LLMCacheEntry, LLMEntryEncoder
+    from causaliq_knowledge.llm.cache import LLMCacheEntry, LLMCompressor
 
     # Create cache with LLM data
     cache_path = tmp_path / "test_cache.db"
     with TokenCache(str(cache_path)) as cache:
-        encoder = LLMEntryEncoder()
-        cache.set_compressor(encoder)
+        compressor = LLMCompressor()
+        cache.set_compressor(compressor)
         entry = LLMCacheEntry.create(
             model="gpt-4",
             messages=[{"role": "user", "content": "smoking and lung_cancer"}],
@@ -206,12 +206,12 @@ def test_cli_cache_export_json_output(tmp_path):
 
     from causaliq_core.cache import TokenCache
 
-    from causaliq_knowledge.llm.cache import LLMCacheEntry, LLMEntryEncoder
+    from causaliq_knowledge.llm.cache import LLMCacheEntry, LLMCompressor
 
     cache_path = tmp_path / "test_cache.db"
     with TokenCache(str(cache_path)) as cache:
-        encoder = LLMEntryEncoder()
-        cache.set_compressor(encoder)
+        compressor = LLMCompressor()
+        cache.set_compressor(compressor)
         entry = LLMCacheEntry.create(
             model="gpt-4",
             messages=[{"role": "user", "content": "X and Y"}],
@@ -336,13 +336,13 @@ def test_cli_cache_export_to_zip(tmp_path):
 
     from causaliq_core.cache import TokenCache
 
-    from causaliq_knowledge.llm.cache import LLMCacheEntry, LLMEntryEncoder
+    from causaliq_knowledge.llm.cache import LLMCacheEntry, LLMCompressor
 
     # Create cache with LLM data
     cache_path = tmp_path / "test_cache.db"
     with TokenCache(str(cache_path)) as cache:
-        encoder = LLMEntryEncoder()
-        cache.set_compressor(encoder)
+        compressor = LLMCompressor()
+        cache.set_compressor(compressor)
         entry = LLMCacheEntry.create(
             model="gpt-4",
             messages=[{"role": "user", "content": "smoking and lung_cancer"}],
@@ -378,12 +378,12 @@ def test_cli_cache_export_to_zip_json_output(tmp_path):
 
     from causaliq_core.cache import TokenCache
 
-    from causaliq_knowledge.llm.cache import LLMCacheEntry, LLMEntryEncoder
+    from causaliq_knowledge.llm.cache import LLMCacheEntry, LLMCompressor
 
     cache_path = tmp_path / "test_cache.db"
     with TokenCache(str(cache_path)) as cache:
-        encoder = LLMEntryEncoder()
-        cache.set_compressor(encoder)
+        compressor = LLMCompressor()
+        cache.set_compressor(compressor)
         entry = LLMCacheEntry.create(
             model="gpt-4",
             messages=[{"role": "user", "content": "X and Y"}],
@@ -410,12 +410,12 @@ def test_cli_cache_export_to_zip_json_output(tmp_path):
 def test_cli_cache_export_to_zip_creates_parent_dirs(tmp_path):
     from causaliq_core.cache import TokenCache
 
-    from causaliq_knowledge.llm.cache import LLMCacheEntry, LLMEntryEncoder
+    from causaliq_knowledge.llm.cache import LLMCacheEntry, LLMCompressor
 
     cache_path = tmp_path / "test_cache.db"
     with TokenCache(str(cache_path)) as cache:
-        encoder = LLMEntryEncoder()
-        cache.set_compressor(encoder)
+        compressor = LLMCompressor()
+        cache.set_compressor(compressor)
         entry = LLMCacheEntry.create(
             model="gpt-4",
             messages=[{"role": "user", "content": "test"}],
@@ -454,7 +454,7 @@ def test_cli_cache_import_from_directory(tmp_path):
 
     from causaliq_core.cache import TokenCache
 
-    from causaliq_knowledge.llm.cache import LLMEntryEncoder
+    from causaliq_knowledge.llm.cache import LLMCompressor
 
     # Create import directory with LLM JSON file
     import_dir = tmp_path / "import"
@@ -484,7 +484,7 @@ def test_cli_cache_import_from_directory(tmp_path):
 
     # Verify entry was imported
     with TokenCache(str(cache_path)) as cache:
-        cache.set_compressor(LLMEntryEncoder())
+        cache.set_compressor(LLMCompressor())
         assert cache.entry_count() == 1
 
 
@@ -495,7 +495,7 @@ def test_cli_cache_import_from_zip(tmp_path):
 
     from causaliq_core.cache import TokenCache
 
-    from causaliq_knowledge.llm.cache import LLMEntryEncoder
+    from causaliq_knowledge.llm.cache import LLMCompressor
 
     # Create zip file with LLM JSON
     zip_path = tmp_path / "import.zip"
@@ -525,7 +525,7 @@ def test_cli_cache_import_from_zip(tmp_path):
 
     # Verify
     with TokenCache(str(cache_path)) as cache:
-        cache.set_compressor(LLMEntryEncoder())
+        cache.set_compressor(LLMCompressor())
         assert cache.entry_count() == 1
 
 
@@ -641,13 +641,13 @@ def test_cli_import_cache_empty_directory(tmp_path):
 def test_cli_cache_import_export_roundtrip(tmp_path):
     from causaliq_core.cache import TokenCache
 
-    from causaliq_knowledge.llm.cache import LLMCacheEntry, LLMEntryEncoder
+    from causaliq_knowledge.llm.cache import LLMCacheEntry, LLMCompressor
 
     # Create original cache with data
     original_cache = tmp_path / "original.db"
     with TokenCache(str(original_cache)) as cache:
-        encoder = LLMEntryEncoder()
-        cache.set_compressor(encoder)
+        compressor = LLMCompressor()
+        cache.set_compressor(compressor)
         entry = LLMCacheEntry.create(
             model="gpt-4",
             messages=[{"role": "user", "content": "roundtrip test"}],
@@ -674,7 +674,7 @@ def test_cli_cache_import_export_roundtrip(tmp_path):
 
     # Verify data matches
     with TokenCache(str(new_cache)) as cache:
-        cache.set_compressor(LLMEntryEncoder())
+        cache.set_compressor(LLMCompressor())
         assert cache.entry_count() == 1
 
 
@@ -1854,12 +1854,12 @@ def test_cli_generate_graph_workflow_cache_output(tmp_path, mocker):
 
     from causaliq_workflow import WorkflowCache
 
-    from causaliq_knowledge.graph.cache import GraphEntryEncoder
+    from causaliq_knowledge.graph.cache import GraphCompressor
 
     assert output_db.exists()
 
     with WorkflowCache(str(output_db)) as wf_cache:
-        encoder = GraphEntryEncoder()
+        compressor = GraphCompressor()
         entry = wf_cache.get({"network": "cache-test"})
 
         # Entry contains the graph object as a base64-encoded blob
@@ -1867,9 +1867,9 @@ def test_cli_generate_graph_workflow_cache_output(tmp_path, mocker):
         graph_obj = entry.get_object("graph")
         assert graph_obj is not None
 
-        # Decode the base64 blob and then decode the graph
+        # Decode the base64 blob and then decompress the graph
         blob = base64.b64decode(graph_obj.content)
-        retrieved, _extra_blobs = encoder.decode_entry(
+        retrieved, _extra_blobs = compressor.decompress_entry(
             blob, wf_cache.token_cache
         )
     assert len(retrieved.edges) == 1
@@ -1936,3 +1936,56 @@ def test_cli_generate_graph_comprehensive_model_file(mocker):
     # Verify context was loaded and used
     assert "comprehensive_test" in result.output or "Exposure" in result.output
     assert "Disease" in result.output
+
+
+# Test export_cache skips entries that fail to decompress as LLM entries.
+def test_cli_export_cache_skips_invalid_entries(tmp_path):
+    """Test export gracefully skips entries that fail to decompress."""
+    from datetime import datetime, timezone
+
+    from causaliq_core.cache import TokenCache
+
+    from causaliq_knowledge.llm.cache import LLMCacheEntry, LLMCompressor
+
+    cache_path = tmp_path / "mixed_cache.db"
+    with TokenCache(str(cache_path)) as cache:
+        # Store a valid LLM entry
+        compressor = LLMCompressor()
+        cache.set_compressor(compressor)
+        entry = LLMCacheEntry.create(
+            model="gpt-4",
+            messages=[{"role": "user", "content": "test"}],
+            content="Response",
+            provider="openai",
+            request_id="valid_entry",
+        )
+        cache.put_data("valid_hash", entry.to_dict())
+
+        # Insert invalid/corrupted entry directly that can't be decompressed
+        timestamp = datetime.now(timezone.utc).isoformat()
+        cache.conn.execute(
+            "INSERT INTO cache_entries "
+            "(hash, seq, key_json, data, created_at, hit_count) "
+            "VALUES (?, ?, ?, ?, ?, ?)",
+            (
+                "invalid_hash",
+                0,
+                "",
+                "corrupted_data_not_valid_tokens",
+                timestamp,
+                0,
+            ),
+        )
+        cache.conn.commit()
+
+    export_dir = tmp_path / "export"
+    runner = CliRunner()
+    result = runner.invoke(
+        cli, ["export_cache", "-c", str(cache_path), "-o", str(export_dir)]
+    )
+
+    # Should succeed and export 1 valid entry (skip the invalid one)
+    assert result.exit_code == 0
+    assert "Exported 1 entries" in result.output
+    files = list(export_dir.glob("*.json"))
+    assert len(files) == 1

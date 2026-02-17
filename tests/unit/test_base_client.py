@@ -611,7 +611,7 @@ def test_cached_completion_handles_invalid_timestamp():
 
     from causaliq_knowledge.llm.cache import (
         LLMCacheEntry,
-        LLMEntryEncoder,
+        LLMCompressor,
         LLMMetadata,
     )
     from causaliq_knowledge.llm.cache import LLMResponse as CachedLLMResponse
@@ -639,8 +639,8 @@ def test_cached_completion_handles_invalid_timestamp():
             ),
         )
 
-        encoder = LLMEntryEncoder()
-        cache.set_compressor(encoder)
+        compressor = LLMCompressor()
+        cache.set_compressor(compressor)
         cache.put_data(cache_key, entry.to_dict())
 
         # Call cached_completion - should retrieve from cache without error

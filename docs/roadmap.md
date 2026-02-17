@@ -94,7 +94,7 @@ causaliq-core (v0.4.0), causaliq-knowledge (v0.5.0), and causaliq-workflow
 - `TokenCache`, `EntryEncoder`, `JsonEncoder` now from causaliq-core
 - New `graph/cache.py` module
 - `GraphEntryEncoder` extends `EntryEncoder`
-- Uses `SDG.encode()`/`SDG.decode()` from causaliq-core
+- Uses `SDG.compress()`/`SDG.decompress()` from causaliq-core
 - Metadata stored as tokenised JSON (provenance, edge confidences)
 - Unit tests for encode/decode round-trip
 
