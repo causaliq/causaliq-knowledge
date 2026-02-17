@@ -57,11 +57,11 @@ class GenerateGraphParams(BaseModel):
         description="LLM model identifier with provider prefix",
     )
     output: str = Field(
-        ...,
+        default="none",
         description="Output: directory path, Workflow Cache .db, or 'none'",
     )
     llm_cache: str = Field(
-        ...,
+        default="none",
         description="Path to cache database file (.db) or 'none' to disable",
     )
     llm_temperature: float = Field(

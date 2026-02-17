@@ -325,12 +325,12 @@ class BaseLLMClient(ABC):
 
         # Check cache
         if use_cache and cache is not None:
-            # Ensure encoder is registered
-            if not cache.has_encoder("llm"):
-                cache.register_encoder("llm", LLMEntryEncoder())
+            # Ensure compressor is set
+            if not cache.has_compressor():
+                cache.set_compressor(LLMEntryEncoder())
 
-            if cache.exists(cache_key, "llm"):
-                cached_data = cache.get_data(cache_key, "llm")
+            if cache.exists(cache_key):
+                cached_data = cache.get_data(cache_key)
                 if cached_data is not None:
                     entry = LLMCacheEntry.from_dict(cached_data)
                     # Parse original timestamp from cache
@@ -384,6 +384,6 @@ class BaseLLMClient(ABC):
                 cost_usd=response.cost,
                 request_id=request_id,
             )
-            cache.put_data(cache_key, "llm", entry.to_dict())
+            cache.put_data(cache_key, entry.to_dict())
 
         return response

@@ -34,7 +34,7 @@ from datetime import datetime, timezone
 from pathlib import Path
 from typing import TYPE_CHECKING, Any, Dict, List, Optional
 
-from causaliq_core.cache.encoders import JsonEncoder
+from causaliq_core.cache.compressors import JsonCompressor
 from causaliq_core.graph import SDG
 
 from causaliq_knowledge.graph.response import (
@@ -56,7 +56,7 @@ BLOB_TYPE_CONFIDENCES = "confidences"
 BLOB_TYPE_TRACE = "trace"
 
 
-class GraphEntryEncoder(JsonEncoder):
+class GraphEntryEncoder(JsonCompressor):
     """Encoder for storing GeneratedGraph objects in Workflow Caches.
 
     This encoder combines:
@@ -149,7 +149,7 @@ class GraphEntryEncoder(JsonEncoder):
             result.extend(blob_data)
 
         # Metadata as tokenised JSON
-        meta_blob = super().encode(metadata, cache)
+        meta_blob = super().compress(metadata, cache)
         result.extend(meta_blob)
 
         return bytes(result)
@@ -212,7 +212,7 @@ class GraphEntryEncoder(JsonEncoder):
 
         # Decode metadata from remaining bytes
         meta_blob = blob[offset:]
-        metadata = super().decode(meta_blob, cache)
+        metadata = super().decompress(meta_blob, cache)
 
         return blobs_dict, metadata
 
@@ -363,7 +363,7 @@ class GraphEntryEncoder(JsonEncoder):
             confidences = self._build_confidences_dict(graph)
             if confidences:
                 # Encode confidences as tokenised JSON
-                conf_blob = super().encode(confidences, cache)
+                conf_blob = super().compress(confidences, cache)
                 blobs[BLOB_TYPE_CONFIDENCES] = conf_blob
 
         # Add any extra blobs
@@ -410,7 +410,7 @@ class GraphEntryEncoder(JsonEncoder):
         confidence_map: Dict[str, float] = {}
         if BLOB_TYPE_CONFIDENCES in blobs:
             conf_blob = blobs.pop(BLOB_TYPE_CONFIDENCES)
-            confidence_map = super().decode(conf_blob, cache)
+            confidence_map = super().decompress(conf_blob, cache)
 
         # Extract reasoning from metadata
         reasoning_map = meta_dict.get("edge_reasoning", {})
@@ -481,11 +481,11 @@ class GraphEntryEncoder(JsonEncoder):
         # Return graph and any extra blobs (graph + confidences already popped)
         return graph, blobs
 
-    def encode(self, data: Any, cache: "TokenCache") -> bytes:
-        """Encode data to binary format.
+    def compress(self, data: Any, cache: "TokenCache") -> bytes:
+        """Compress data to binary format.
 
         Args:
-            data: The data to encode (GeneratedGraph or dict with edges).
+            data: The data to compress (GeneratedGraph or dict with edges).
             cache: TokenCache for shared token dictionary.
 
         Returns:
@@ -496,12 +496,12 @@ class GraphEntryEncoder(JsonEncoder):
         elif isinstance(data, dict) and "edges" in data:
             graph = self._dict_to_graph(data)
             return self.encode_entry(graph, cache)
-        return super().encode(data, cache)
+        return super().compress(data, cache)
 
-    def decode(
+    def decompress(
         self, blob: bytes, cache: "TokenCache"
     ) -> tuple[GeneratedGraph, Dict[str, bytes]]:
-        """Decode binary data to GeneratedGraph and extra blobs.
+        """Decompress binary data to GeneratedGraph and extra blobs.
 
         Args:
             blob: Binary data from cache.

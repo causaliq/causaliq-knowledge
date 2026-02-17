@@ -65,22 +65,24 @@ class MockLLMClient(BaseLLMClient):
 def test_import_llm_cache_data_from_files() -> None:
     """Verify LLM cache data can be imported from test files."""
     with TokenCache(":memory:") as cache:
-        cache.register_encoder("llm", LLMEntryEncoder())
+        encoder = LLMEntryEncoder()
+        cache.set_compressor(encoder)
 
-        count = cache.import_entries(LLM_CACHE_DATA, "llm")
+        count = cache.import_entries(LLM_CACHE_DATA)
 
         assert count == 2
-        assert cache.exists("python_question", "llm")
-        assert cache.exists("ml_question", "llm")
+        assert cache.exists("python_question")
+        assert cache.exists("ml_question")
 
 
 def test_imported_data_contains_valid_llm_entries() -> None:
     """Verify imported data deserializes to valid LLMCacheEntry."""
     with TokenCache(":memory:") as cache:
-        cache.register_encoder("llm", LLMEntryEncoder())
-        cache.import_entries(LLM_CACHE_DATA, "llm")
+        encoder = LLMEntryEncoder()
+        cache.set_compressor(encoder)
+        cache.import_entries(LLM_CACHE_DATA)
 
-        data = cache.get_data("python_question", "llm")
+        data = cache.get_data("python_question")
         entry = LLMCacheEntry.from_dict(data)
 
         assert entry.model == "gpt-4"
@@ -104,14 +106,15 @@ def test_cached_completion_uses_imported_data() -> None:
     """
     # Create cache and import test data
     with TokenCache(":memory:") as cache:
-        cache.register_encoder("llm", LLMEntryEncoder())
-        cache.import_entries(LLM_CACHE_DATA, "llm")
+        encoder = LLMEntryEncoder()
+        cache.set_compressor(encoder)
+        cache.import_entries(LLM_CACHE_DATA)
 
         # The imported data uses hash "python_question"
         # We need to query with matching parameters to get a cache hit
 
         # Read the imported entry to get matching query params
-        data = cache.get_data("python_question", "llm")
+        data = cache.get_data("python_question")
         entry = LLMCacheEntry.from_dict(data)
 
         # Create client with cache
@@ -127,7 +130,7 @@ def test_cached_completion_uses_imported_data() -> None:
         cache_key = client._build_cache_key(entry.messages)
 
         # Store with correct key (rename from filename to computed hash)
-        cache.put_data(cache_key, "llm", entry.to_dict())
+        cache.put_data(cache_key, entry.to_dict())
 
         # Now cached_completion should hit cache
         response = client.cached_completion(entry.messages)
@@ -139,7 +142,8 @@ def test_cached_completion_uses_imported_data() -> None:
 def test_cache_miss_falls_through_to_api() -> None:
     """Verify cache miss makes API call for unknown queries."""
     with TokenCache(":memory:") as cache:
-        cache.register_encoder("llm", LLMEntryEncoder())
+        encoder = LLMEntryEncoder()
+        cache.set_compressor(encoder)
 
         config = LLMConfig(model="gpt-4", temperature=0.1, max_tokens=500)
         client = MockLLMClient(config)
@@ -179,16 +183,18 @@ def test_export_import_round_trip_preserves_llm_data(tmp_path: Path) -> None:
 
     # Export from first cache
     with TokenCache(":memory:") as cache1:
-        cache1.register_encoder("llm", LLMEntryEncoder())
-        cache1.put_data("test_hash", "llm", entry.to_dict())
-        cache1.export_entries(export_dir, "llm")
+        encoder1 = LLMEntryEncoder()
+        cache1.set_compressor(encoder1)
+        cache1.put_data("test_hash", entry.to_dict())
+        cache1.export_entries(export_dir)
 
     # Import to second cache
     with TokenCache(":memory:") as cache2:
-        cache2.register_encoder("llm", LLMEntryEncoder())
-        cache2.import_entries(export_dir, "llm")
+        encoder2 = LLMEntryEncoder()
+        cache2.set_compressor(encoder2)
+        cache2.import_entries(export_dir)
 
-        data = cache2.get_data("test_hash", "llm")
+        data = cache2.get_data("test_hash")
         restored = LLMCacheEntry.from_dict(data)
 
         assert restored.model == entry.model

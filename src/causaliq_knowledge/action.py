@@ -11,13 +11,14 @@ from __future__ import annotations
 
 import logging
 from pathlib import Path
-from typing import TYPE_CHECKING, Any, Dict, Optional, Set
+from typing import TYPE_CHECKING, Any, Dict, List, Optional, Set
 
-from causaliq_workflow.action import (
+from causaliq_core import (
     ActionExecutionError,
     ActionInput,
+    ActionResult,
     ActionValidationError,
-    BaseActionProvider,
+    CausalIQActionProvider,
 )
 from causaliq_workflow.logger import WorkflowLogger
 from causaliq_workflow.registry import WorkflowContext
@@ -26,7 +27,6 @@ from pydantic import ValidationError
 from causaliq_knowledge.graph.params import GenerateGraphParams
 
 if TYPE_CHECKING:  # pragma: no cover
-    from causaliq_knowledge.graph.models import NetworkContext
     from causaliq_knowledge.graph.response import GeneratedGraph
 
 logger = logging.getLogger(__name__)
@@ -36,7 +36,7 @@ __all__ = [
     "ActionExecutionError",
     "ActionInput",
     "ActionValidationError",
-    "BaseActionProvider",
+    "CausalIQActionProvider",
     "WorkflowContext",
     "WorkflowLogger",
     "KnowledgeActionProvider",
@@ -92,13 +92,15 @@ def _create_action_inputs() -> Dict[str, Any]:
         "output": ActionInput(
             name="output",
             description="Workflow Cache .db path or 'none' for no persistence",
-            required=True,
+            required=False,
+            default="none",
             type_hint="str",
         ),
         "llm_cache": ActionInput(
             name="llm_cache",
             description="Path to LLM cache database (.db) or 'none'",
-            required=True,
+            required=False,
+            default="none",
             type_hint="str",
         ),
         "llm_temperature": ActionInput(
@@ -111,7 +113,7 @@ def _create_action_inputs() -> Dict[str, Any]:
     }
 
 
-class KnowledgeActionProvider(BaseActionProvider):
+class KnowledgeActionProvider(CausalIQActionProvider):
     """Workflow action provider for causaliq-knowledge integration.
 
     This action integrates causaliq-knowledge graph generation into
@@ -151,6 +153,7 @@ class KnowledgeActionProvider(BaseActionProvider):
     author: str = "CausalIQ"
 
     supported_actions: Set[str] = SUPPORTED_ACTIONS
+    supported_types: Set[str] = {"graphml", "json"}
 
     inputs: Dict[str, Any] = _create_action_inputs()
     outputs: Dict[str, str] = {
@@ -165,17 +168,14 @@ class KnowledgeActionProvider(BaseActionProvider):
         """Initialise action with empty execution metadata."""
         super().__init__()
 
-    def validate_parameters(
+    def _validate_parameters(
         self, action: str, parameters: Dict[str, Any]
-    ) -> bool:
-        """Validate action and parameters against specifications.
+    ) -> None:
+        """Validate action and parameters.
 
         Args:
             action: Action to perform (e.g., 'generate_graph').
             parameters: Dictionary of parameter values.
-
-        Returns:
-            True if action and parameters are valid.
 
         Raises:
             ActionValidationError: If validation fails.
@@ -203,8 +203,6 @@ class KnowledgeActionProvider(BaseActionProvider):
                     f"Invalid parameters for generate_graph: {e}"
                 )
 
-        return True
-
     def run(
         self,
         action: str,
@@ -212,7 +210,7 @@ class KnowledgeActionProvider(BaseActionProvider):
         mode: str = "dry-run",
         context: Optional[Any] = None,
         logger: Optional[Any] = None,
-    ) -> Dict[str, Any]:
+    ) -> ActionResult:
         """Execute the action with validated parameters.
 
         Args:
@@ -223,19 +221,16 @@ class KnowledgeActionProvider(BaseActionProvider):
             logger: Optional logger for task execution reporting.
 
         Returns:
-            Dictionary containing:
+            Tuple of (status, metadata, objects) where:
             - status: 'success' or 'skipped' (for dry-run)
-            - graph: Generated graph as JSON (if run mode)
-            - edge_count: Number of edges
-            - variable_count: Number of variables
-            - model_used: LLM model identifier
-            - cached: Whether result was from cache
+            - metadata: Dict with edge_count, variable_count, model_used, etc.
+            - objects: List of serialised objects (graphml, json)
 
         Raises:
             ActionExecutionError: If action execution fails.
         """
         # Validate parameters first
-        self.validate_parameters(action, parameters)
+        self._validate_parameters(action, parameters)
 
         if action == "generate_graph":
             return self._run_generate_graph(parameters, mode, context, logger)
@@ -249,7 +244,7 @@ class KnowledgeActionProvider(BaseActionProvider):
         mode: str,
         context: Optional[Any],
         logger: Optional[Any],
-    ) -> Dict[str, Any]:
+    ) -> ActionResult:
         """Execute the generate_graph action.
 
         Args:
@@ -259,7 +254,7 @@ class KnowledgeActionProvider(BaseActionProvider):
             logger: Optional workflow logger.
 
         Returns:
-            Action result dictionary.
+            ActionResult tuple (status, metadata, objects).
         """
         try:
             params = GenerateGraphParams.from_dict(parameters)
@@ -279,42 +274,45 @@ class KnowledgeActionProvider(BaseActionProvider):
         # Run mode: execute graph generation
         return self._execute_generate_graph(params, context)
 
-    def _dry_run_result(self, params: GenerateGraphParams) -> Dict[str, Any]:
+    def _dry_run_result(self, params: GenerateGraphParams) -> ActionResult:
         """Return dry-run result without executing.
 
         Args:
             params: Validated parameters.
 
         Returns:
-            Dry-run result dictionary.
+            ActionResult tuple for dry-run (skipped status, no objects).
         """
-        return {
-            "status": "skipped",
+        metadata = {
             "message": "Dry-run mode: would generate graph",
             "context": str(params.context),
             "llm_model": params.llm_model,
             "llm_prompt_detail": params.prompt_detail.value,
             "output": params.output,
         }
+        return ("skipped", metadata, [])
 
-    def _populate_execution_metadata(
+    def _build_execution_metadata(
         self,
         graph: "GeneratedGraph",
         params: GenerateGraphParams,
         stats: Dict[str, Any],
-    ) -> None:
-        """Populate execution metadata from graph generation results.
+    ) -> Dict[str, Any]:
+        """Build execution metadata from graph generation results.
 
-        Extracts relevant metadata from the GeneratedGraph and stores it
-        in _execution_metadata for later retrieval via get_action_metadata().
+        Extracts relevant metadata from the GeneratedGraph for inclusion
+        in the ActionResult metadata dictionary.
 
         Args:
             graph: The generated graph with metadata.
             params: Generation parameters used.
             stats: Generator statistics.
+
+        Returns:
+            Dictionary of execution metadata.
         """
         # Start with generation parameters
-        self._execution_metadata = {
+        metadata: Dict[str, Any] = {
             "context": str(params.context),
             "llm_model": params.llm_model,
             "llm_prompt_detail": params.prompt_detail.value,
@@ -328,7 +326,7 @@ class KnowledgeActionProvider(BaseActionProvider):
         # Add generation metadata if present
         if graph.metadata:
             meta = graph.metadata
-            self._execution_metadata.update(
+            metadata.update(
                 {
                     "llm_provider": meta.provider,
                     "timestamp": meta.timestamp.isoformat(),
@@ -345,13 +343,15 @@ class KnowledgeActionProvider(BaseActionProvider):
             )
             # Add messages (can be large, but important for reproducibility)
             if meta.messages:
-                self._execution_metadata["llm_messages"] = meta.messages
+                metadata["llm_messages"] = meta.messages
+
+        return metadata
 
     def _execute_generate_graph(
         self,
         params: GenerateGraphParams,
         context: Optional[Any] = None,
-    ) -> Dict[str, Any]:
+    ) -> ActionResult:
         """Execute graph generation.
 
         Args:
@@ -359,13 +359,12 @@ class KnowledgeActionProvider(BaseActionProvider):
             context: Workflow context for cache key generation.
 
         Returns:
-            Result dictionary with generated graph.
+            ActionResult tuple (status, metadata, objects).
         """
         # Import here to avoid slow startup and circular imports
         from causaliq_core.cache import TokenCache
-        from causaliq_workflow.cache import WorkflowCache
 
-        from causaliq_knowledge.graph import GraphEntryEncoder, NetworkContext
+        from causaliq_knowledge.graph import NetworkContext
         from causaliq_knowledge.graph.generator import (
             GraphGenerator,
             GraphGeneratorConfig,
@@ -389,15 +388,15 @@ class KnowledgeActionProvider(BaseActionProvider):
         if use_llm_names and network_ctx.uses_distinct_llm_names():
             llm_to_benchmark_mapping = network_ctx.get_llm_to_name_mapping()
 
-        # Set up cache
-        cache: Optional[TokenCache] = None
+        # Set up LLM response cache (not workflow cache)
+        llm_cache: Optional[TokenCache] = None
         cache_path = params.get_effective_cache_path()
         if cache_path is not None:
             try:
-                cache = TokenCache(str(cache_path))
-                cache.open()
+                llm_cache = TokenCache(str(cache_path))
+                llm_cache.open()
             except Exception as e:
-                raise ActionExecutionError(f"Failed to open cache: {e}")
+                raise ActionExecutionError(f"Failed to open LLM cache: {e}")
 
         try:
             # Import OutputFormat for generator config
@@ -418,7 +417,7 @@ class KnowledgeActionProvider(BaseActionProvider):
                 request_id=request_id,
             )
             generator = GraphGenerator(
-                model=params.llm_model, config=config, cache=cache
+                model=params.llm_model, config=config, cache=llm_cache
             )
 
             # Generate graph
@@ -433,202 +432,38 @@ class KnowledgeActionProvider(BaseActionProvider):
             # Get stats
             stats = generator.get_stats()
 
-            # Populate execution metadata for get_action_metadata()
-            self._populate_execution_metadata(graph, params, stats)
+            # Build execution metadata
+            metadata = self._build_execution_metadata(graph, params, stats)
 
-            # Build result
-            result = {
-                "status": "success",
-                "graph": self._graph_to_dict(graph),
-                "edge_count": len(graph.edges),
-                "variable_count": len(graph.variables),
-                "model_used": params.llm_model,
-                "cached": stats.get("cache_hits", 0) > 0,
-                "outputs": {
-                    "graph": self._graph_to_dict(graph),
-                    "edge_count": len(graph.edges),
-                    "variable_count": len(graph.variables),
-                    "model_used": params.llm_model,
-                    "cached": stats.get("cache_hits", 0) > 0,
+            # Add cached flag for convenience
+            metadata["cached"] = stats.get("cache_hits", 0) > 0
+            metadata["model_used"] = params.llm_model
+
+            # Serialise graph to open-standard formats
+            graphml_content = self._serialise_graphml(graph)
+            json_content = self._serialise_json(graph)
+
+            # Build objects list
+            objects: List[Dict[str, Any]] = [
+                {
+                    "type": "graphml",
+                    "name": "graph",
+                    "content": graphml_content,
                 },
-            }
+                {
+                    "type": "json",
+                    "name": "confidences",
+                    "content": json_content,
+                },
+            ]
 
-            # Write output if specified
-            output_path = params.get_effective_output_path()
-            if output_path:
-                if params.is_workflow_cache_output():
-                    # Write to Workflow Cache (.db file)
-                    output_path.parent.mkdir(parents=True, exist_ok=True)
-                    self._write_to_workflow_cache(
-                        output_path,
-                        graph,
-                        context,
-                        WorkflowCache,
-                        GraphEntryEncoder,
-                    )
-                    result["output_cache"] = str(output_path)
-                else:
-                    # Directory output - check for matrix context conflict
-                    # Only block if context has non-empty matrix
-                    has_matrix = (
-                        context is not None
-                        and hasattr(context, "matrix")
-                        and context.matrix
-                    )
-                    if has_matrix:
-                        raise ActionExecutionError(
-                            "Workflow with matrix variables requires .db "
-                            "output (Workflow Cache), not directory output. "
-                            "Each matrix combination would overwrite files."
-                        )
-                    # Write GraphML + JSON files to directory
-                    self._write_to_directory(output_path, graph, network_ctx)
-                    result["output_dir"] = str(output_path)
-
-            return result
+            return ("success", metadata, objects)
 
         except Exception as e:
             raise ActionExecutionError(f"Graph generation failed: {e}")
         finally:
-            if cache:
-                cache.close()
-
-    def _write_to_workflow_cache(
-        self,
-        output_path: Path,
-        graph: "GeneratedGraph",
-        context: Optional[Any],
-        workflow_cache_cls: type,
-        encoder_cls: type,
-    ) -> None:
-        """Write generated graph to Workflow Cache.
-
-        Args:
-            output_path: Path to Workflow Cache .db file.
-            graph: Generated graph to store.
-            context: Workflow context for cache key generation.
-            workflow_cache_cls: WorkflowCache class (passed to avoid import).
-            encoder_cls: GraphEntryEncoder class (passed to avoid import).
-        """
-        # Build cache key from context matrix values (if available)
-        if context is not None and hasattr(context, "matrix"):
-            key_data = dict(context.matrix)
-        else:
-            # Fallback: use network context filename as key
-            key_data = {"source": "generate_graph"}
-
-        with workflow_cache_cls(str(output_path)) as wf_cache:
-            encoder = encoder_cls()
-            wf_cache.register_encoder("graph", encoder)
-            wf_cache.put(key_data, "graph", graph)
-
-    def _graph_to_dict(self, graph: "GeneratedGraph") -> Dict[str, Any]:
-        """Convert GeneratedGraph to dictionary.
-
-        Args:
-            graph: Generated graph object.
-
-        Returns:
-            Dictionary representation of the graph.
-        """
-        return {
-            "edges": [
-                {
-                    "source": edge.source,
-                    "target": edge.target,
-                    "confidence": edge.confidence,
-                }
-                for edge in graph.edges
-            ],
-            "variables": graph.variables,
-            "llm_reasoning": graph.reasoning,
-        }
-
-    def _write_to_directory(
-        self,
-        output_dir: Path,
-        graph: "GeneratedGraph",
-        network_ctx: "NetworkContext",
-    ) -> None:
-        """Write graph output to directory as GraphML + JSON files.
-
-        Creates three files in the output directory:
-        - graph.graphml: Graph structure in GraphML format
-        - metadata.json: Variables, reasoning, generation info
-        - confidences.json: Edge confidence scores
-
-        Args:
-            output_dir: Directory path to write files to.
-            graph: Generated graph to write.
-            network_ctx: Network context (for additional metadata).
-        """
-        import json
-
-        from causaliq_core.graph.io import graphml
-        from causaliq_core.graph.sdg import SDG
-
-        # Create output directory
-        output_dir.mkdir(parents=True, exist_ok=True)
-
-        # Build SDG from edges - SDG requires 3-tuple (source, "->", target)
-        edges = [(edge.source, "->", edge.target) for edge in graph.edges]
-        sdg = SDG(list(graph.variables), edges)
-
-        # Write GraphML
-        graphml_path = output_dir / "graph.graphml"
-        graphml.write(sdg, str(graphml_path))
-
-        # Build and write metadata
-        metadata: Dict[str, Any] = {
-            "network": network_ctx.network,
-            "domain": network_ctx.domain,
-            "edge_count": len(graph.edges),
-            "llm_reasoning": graph.reasoning,
-        }
-
-        # Add generation metadata if present (flattened at top level)
-        if graph.metadata:
-            metadata["llm_model"] = graph.metadata.model
-            metadata["llm_provider"] = graph.metadata.provider
-            metadata["timestamp"] = graph.metadata.timestamp.isoformat()
-            metadata["llm_timestamp"] = (
-                graph.metadata.llm_timestamp.isoformat()
-            )
-            metadata["llm_latency_ms"] = graph.metadata.llm_latency_ms
-            metadata["llm_input_tokens"] = graph.metadata.input_tokens
-            metadata["llm_output_tokens"] = graph.metadata.output_tokens
-            metadata["from_cache"] = graph.metadata.from_cache
-            metadata["llm_cost_usd"] = graph.metadata.llm_cost_usd
-
-        # Add objects manifest for causaliq-workflow serialisation
-        metadata["objects"] = [
-            {
-                "provider": "causaliq-knowledge",
-                "type": "graph",
-                "name": "graph",
-            },
-            {
-                "provider": "causaliq-knowledge",
-                "type": "json",
-                "name": "confidences",
-            },
-        ]
-
-        metadata_path = output_dir / "metadata.json"
-        metadata_path.write_text(
-            json.dumps(metadata, indent=2), encoding="utf-8"
-        )
-
-        # Build and write confidences
-        confidences = {
-            f"{edge.source}->{edge.target}": edge.confidence
-            for edge in graph.edges
-        }
-
-        confidences_path = output_dir / "confidences.json"
-        confidences_path.write_text(
-            json.dumps(confidences, indent=2), encoding="utf-8"
-        )
+            if llm_cache:
+                llm_cache.close()
 
     def _map_graph_names(
         self, graph: "GeneratedGraph", mapping: Dict[str, str]
@@ -670,33 +505,36 @@ class KnowledgeActionProvider(BaseActionProvider):
         data_type: str,
         data: Any,
     ) -> str:
-        """Serialise data to GraphML format string.
+        """Serialise data to GraphML or JSON format string.
 
-        Converts a GeneratedGraph to GraphML format.
+        Converts a GeneratedGraph to the specified format.
 
         Args:
-            data_type: Type of data (must be 'graph').
-            data: The GeneratedGraph object to serialise.
+            data_type: Type of data. Supported values:
+                - 'graphml': GraphML format
+                - 'json': JSON format with full metadata
+            data: GeneratedGraph instance, or tuple (graph, extra_blobs)
+                as returned by GraphEntryEncoder.decode().
 
         Returns:
-            GraphML string representation of the graph.
+            String representation of the graph in the specified format.
 
         Raises:
             NotImplementedError: If the data type is not supported.
             ValueError: If data is not a GeneratedGraph.
         """
-        from io import StringIO
-
-        from causaliq_core.graph.io import graphml
-
         from causaliq_knowledge.graph.response import GeneratedGraph
 
-        # Validate data type
-        if data_type != "graph":
+        # Validate against supported_types first
+        if data_type not in self.supported_types:
             raise NotImplementedError(
                 f"Provider '{self.name}' does not support serialising "
-                f"data_type '{data_type}'. Supported: 'graph'"
+                f"data_type '{data_type}'. Supported: {self.supported_types}"
             )
+
+        # Handle tuple from decode() which returns (graph, extra_blobs)
+        if isinstance(data, tuple) and len(data) == 2:
+            data = data[0]
 
         # Validate data is a GeneratedGraph
         if not isinstance(data, GeneratedGraph):
@@ -704,17 +542,61 @@ class KnowledgeActionProvider(BaseActionProvider):
                 f"Expected GeneratedGraph, got {type(data).__name__}"
             )
 
-        # Convert to SDG for graphml export
+        if data_type == "graphml":
+            return self._serialise_graphml(data)
+        else:  # json
+            return self._serialise_json(data)
+
+    def _serialise_graphml(self, graph: "GeneratedGraph") -> str:
+        """Serialise graph to GraphML format."""
+        from io import StringIO
+
         from causaliq_core.graph import SDG
+        from causaliq_core.graph.io import graphml
 
-        edges = [(e.source, "->", e.target) for e in data.edges]
-        sdg = SDG(list(data.variables), edges)
+        edges = [(e.source, "->", e.target) for e in graph.edges]
+        sdg = SDG(list(graph.variables), edges)
 
-        # Write to StringIO
         buffer = StringIO()
         graphml.write(sdg, buffer)
         buffer.seek(0)
         return buffer.getvalue()
+
+    def _serialise_json(self, graph: "GeneratedGraph") -> str:
+        """Serialise graph to JSON format with full metadata."""
+        import json
+
+        result: Dict[str, Any] = {
+            "variables": list(graph.variables),
+            "edges": [
+                {
+                    "source": e.source,
+                    "target": e.target,
+                    "confidence": e.confidence,
+                    "reasoning": e.reasoning,
+                }
+                for e in graph.edges
+            ],
+            "reasoning": graph.reasoning,
+        }
+
+        if graph.metadata is not None:
+            meta = graph.metadata
+            result["metadata"] = {
+                "llm_model": meta.model,
+                "llm_provider": meta.provider,
+                "llm_timestamp": meta.llm_timestamp.isoformat(),
+                "llm_latency_ms": meta.llm_latency_ms,
+                "llm_input_tokens": meta.input_tokens,
+                "llm_output_tokens": meta.output_tokens,
+                "llm_from_cache": meta.from_cache,
+                "llm_temperature": meta.temperature,
+                "llm_max_tokens": meta.max_tokens,
+                "llm_finish_reason": meta.finish_reason,
+                "llm_cost_usd": meta.llm_cost_usd,
+            }
+
+        return json.dumps(result, indent=2)
 
     def deserialise(
         self,
@@ -726,7 +608,7 @@ class KnowledgeActionProvider(BaseActionProvider):
         Converts GraphML format to a GeneratedGraph.
 
         Args:
-            data_type: Type of data (must be 'graph').
+            data_type: Type of data (must be 'graphml').
             content: GraphML string representation of the data.
 
         Returns:
@@ -744,11 +626,18 @@ class KnowledgeActionProvider(BaseActionProvider):
             ProposedEdge,
         )
 
-        # Validate data type
-        if data_type != "graph":
+        # Validate against supported_types
+        if data_type not in self.supported_types:
             raise NotImplementedError(
                 f"Provider '{self.name}' does not support deserialising "
-                f"data_type '{data_type}'. Supported: 'graph'"
+                f"data_type '{data_type}'. Supported: {self.supported_types}"
+            )
+
+        # Only graphml can be deserialised to GeneratedGraph
+        if data_type != "graphml":
+            raise NotImplementedError(
+                f"Provider '{self.name}' cannot deserialise '{data_type}' "
+                f"to GeneratedGraph. Use 'graphml'."
             )
 
         # Read graph from StringIO

@@ -184,6 +184,7 @@ steps:
     step_results = results[0]["steps"]
     assert "Generate graph" in step_results
     assert step_results["Generate graph"]["status"] == "success"
+    # Metadata is flattened directly into result
     assert step_results["Generate graph"]["edge_count"] == 1
 
 
@@ -240,19 +241,25 @@ steps:
 
         executor = WorkflowExecutor()
         workflow = executor.parse_workflow(str(workflow_yaml))
-        executor.execute_workflow(workflow, mode="run")
+        results = executor.execute_workflow(workflow, mode="run")
 
-    # Check output directory was created with files
-    assert output_dir.exists(), f"Output directory not created: {output_dir}"
-    assert (output_dir / "graph.graphml").exists()
-    assert (output_dir / "metadata.json").exists()
-    assert (output_dir / "confidences.json").exists()
+    # Action now returns serialised objects rather than writing files
+    # File writing is handled by workflow, not action
+    step_results = results[0]["steps"]
+    assert step_results["Generate graph"]["status"] == "success"
+    # Check serialised objects are returned
+    objects = step_results["Generate graph"]["objects"]
+    assert len(objects) == 2
+    graphml_obj = next(o for o in objects if o["type"] == "graphml")
+    assert "<graphml" in graphml_obj["content"]
 
-    # Verify confidences content
+    # Verify JSON object contains edge data
     import json
 
-    confidences = json.loads((output_dir / "confidences.json").read_text())
-    assert "x->y" in confidences
+    json_obj = next(o for o in objects if o["type"] == "json")
+    graph_data = json.loads(json_obj["content"])
+    assert len(graph_data["edges"]) == 1
+    assert graph_data["edges"][0]["source"] == "x"
 
 
 # Test workflow rejects invalid action parameter.

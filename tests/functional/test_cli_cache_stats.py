@@ -17,7 +17,8 @@ def test_cli_cache_stats_llm_model_breakdown(tmp_path):
 
     cache_path = tmp_path / "llm_cache.db"
     with TokenCache(str(cache_path)) as cache:
-        cache.register_encoder("llm", LLMEntryEncoder())
+        encoder = LLMEntryEncoder()
+        cache.set_compressor(encoder)
 
         # Create an LLM cache entry
         entry = LLMCacheEntry.create(
@@ -30,7 +31,7 @@ def test_cli_cache_stats_llm_model_breakdown(tmp_path):
             output_tokens=5,
             cost_usd=0.001,
         )
-        cache.put_data("hash1", "llm", entry.to_dict())
+        cache.put_data("hash1", entry.to_dict())
 
     runner = CliRunner()
     result = runner.invoke(cli, ["cache_stats", "-c", str(cache_path)])
@@ -58,7 +59,8 @@ def test_cli_cache_stats_multiple_models(tmp_path):
 
     cache_path = tmp_path / "llm_cache.db"
     with TokenCache(str(cache_path)) as cache:
-        cache.register_encoder("llm", LLMEntryEncoder())
+        encoder = LLMEntryEncoder()
+        cache.set_compressor(encoder)
 
         # Create entries for different models
         for model, cost in [("gpt-4", 0.01), ("claude-3", 0.005)]:
@@ -72,7 +74,7 @@ def test_cli_cache_stats_multiple_models(tmp_path):
                 output_tokens=25,
                 cost_usd=cost,
             )
-            cache.put_data(f"hash_{model}", "llm", entry.to_dict())
+            cache.put_data(f"hash_{model}", entry.to_dict())
 
     runner = CliRunner()
     result = runner.invoke(cli, ["cache_stats", "-c", str(cache_path)])
@@ -92,7 +94,8 @@ def test_cli_cache_stats_token_totals(tmp_path):
 
     cache_path = tmp_path / "llm_cache.db"
     with TokenCache(str(cache_path)) as cache:
-        cache.register_encoder("llm", LLMEntryEncoder())
+        encoder = LLMEntryEncoder()
+        cache.set_compressor(encoder)
 
         entry = LLMCacheEntry.create(
             model="test-model",
@@ -104,7 +107,7 @@ def test_cli_cache_stats_token_totals(tmp_path):
             output_tokens=50,
             cost_usd=0.002,
         )
-        cache.put_data("hash1", "llm", entry.to_dict())
+        cache.put_data("hash1", entry.to_dict())
 
     runner = CliRunner()
     result = runner.invoke(cli, ["cache_stats", "-c", str(cache_path)])
@@ -123,7 +126,8 @@ def test_cli_cache_stats_estimated_savings(tmp_path):
 
     cache_path = tmp_path / "llm_cache.db"
     with TokenCache(str(cache_path)) as cache:
-        cache.register_encoder("llm", LLMEntryEncoder())
+        encoder = LLMEntryEncoder()
+        cache.set_compressor(encoder)
 
         entry = LLMCacheEntry.create(
             model="test-model",
@@ -135,11 +139,11 @@ def test_cli_cache_stats_estimated_savings(tmp_path):
             output_tokens=25,
             cost_usd=0.01,
         )
-        cache.put_data("hash1", "llm", entry.to_dict())
+        cache.put_data("hash1", entry.to_dict())
 
         # Simulate cache hits by calling get multiple times
-        cache.get_data("hash1", "llm")
-        cache.get_data("hash1", "llm")
+        cache.get_data("hash1")
+        cache.get_data("hash1")
 
     runner = CliRunner()
     result = runner.invoke(cli, ["cache_stats", "-c", str(cache_path)])
@@ -158,7 +162,8 @@ def test_cli_cache_stats_average_latency(tmp_path):
 
     cache_path = tmp_path / "llm_cache.db"
     with TokenCache(str(cache_path)) as cache:
-        cache.register_encoder("llm", LLMEntryEncoder())
+        encoder = LLMEntryEncoder()
+        cache.set_compressor(encoder)
 
         # Add two entries with different latencies
         for i, latency in enumerate([200, 400]):
@@ -172,7 +177,7 @@ def test_cli_cache_stats_average_latency(tmp_path):
                 output_tokens=25,
                 cost_usd=0.001,
             )
-            cache.put_data(f"hash{i}", "llm", entry.to_dict())
+            cache.put_data(f"hash{i}", entry.to_dict())
 
     runner = CliRunner()
     result = runner.invoke(cli, ["cache_stats", "-c", str(cache_path)])
@@ -190,7 +195,8 @@ def test_cli_cache_stats_aggregates_by_model(tmp_path):
 
     cache_path = tmp_path / "llm_cache.db"
     with TokenCache(str(cache_path)) as cache:
-        cache.register_encoder("llm", LLMEntryEncoder())
+        encoder = LLMEntryEncoder()
+        cache.set_compressor(encoder)
 
         # Add 3 entries for same model
         for i in range(3):
@@ -204,7 +210,7 @@ def test_cli_cache_stats_aggregates_by_model(tmp_path):
                 output_tokens=5,
                 cost_usd=0.001,
             )
-            cache.put_data(f"hash{i}", "llm", entry.to_dict())
+            cache.put_data(f"hash{i}", entry.to_dict())
 
     runner = CliRunner()
     result = runner.invoke(cli, ["cache_stats", "-c", str(cache_path)])
@@ -223,7 +229,8 @@ def test_cli_cache_stats_hit_rate(tmp_path):
 
     cache_path = tmp_path / "llm_cache.db"
     with TokenCache(str(cache_path)) as cache:
-        cache.register_encoder("llm", LLMEntryEncoder())
+        encoder = LLMEntryEncoder()
+        cache.set_compressor(encoder)
 
         entry = LLMCacheEntry.create(
             model="test-model",
@@ -235,10 +242,10 @@ def test_cli_cache_stats_hit_rate(tmp_path):
             output_tokens=25,
             cost_usd=0.01,
         )
-        cache.put_data("hash1", "llm", entry.to_dict())
+        cache.put_data("hash1", entry.to_dict())
 
         # 1 entry + 1 hit = 50% hit rate
-        cache.get_data("hash1", "llm")
+        cache.get_data("hash1")
 
     runner = CliRunner()
     result = runner.invoke(cli, ["cache_stats", "-c", str(cache_path)])
@@ -258,7 +265,8 @@ def test_cli_cache_stats_json_includes_models(tmp_path):
 
     cache_path = tmp_path / "llm_cache.db"
     with TokenCache(str(cache_path)) as cache:
-        cache.register_encoder("llm", LLMEntryEncoder())
+        encoder = LLMEntryEncoder()
+        cache.set_compressor(encoder)
 
         entry = LLMCacheEntry.create(
             model="gpt-4",
@@ -270,7 +278,7 @@ def test_cli_cache_stats_json_includes_models(tmp_path):
             output_tokens=25,
             cost_usd=0.001,
         )
-        cache.put_data("hash1", "llm", entry.to_dict())
+        cache.put_data("hash1", entry.to_dict())
 
     runner = CliRunner()
     result = runner.invoke(
@@ -294,7 +302,8 @@ def test_cli_cache_stats_truncates_long_model_name(tmp_path):
 
     cache_path = tmp_path / "llm_cache.db"
     with TokenCache(str(cache_path)) as cache:
-        cache.register_encoder("llm", LLMEntryEncoder())
+        encoder = LLMEntryEncoder()
+        cache.set_compressor(encoder)
 
         long_model_name = "a-very-long-model-name-that-exceeds-32-characters"
         entry = LLMCacheEntry.create(
@@ -307,7 +316,7 @@ def test_cli_cache_stats_truncates_long_model_name(tmp_path):
             output_tokens=25,
             cost_usd=0.001,
         )
-        cache.put_data("hash1", "llm", entry.to_dict())
+        cache.put_data("hash1", entry.to_dict())
 
     runner = CliRunner()
     result = runner.invoke(cli, ["cache_stats", "-c", str(cache_path)])
@@ -347,7 +356,8 @@ def test_cli_cache_stats_skips_invalid_entries(tmp_path):
 
     cache_path = tmp_path / "mixed_cache.db"
     with TokenCache(str(cache_path)) as cache:
-        cache.register_encoder("llm", LLMEntryEncoder())
+        encoder = LLMEntryEncoder()
+        cache.set_compressor(encoder)
 
         # Add a valid entry
         entry = LLMCacheEntry.create(
@@ -360,17 +370,16 @@ def test_cli_cache_stats_skips_invalid_entries(tmp_path):
             output_tokens=25,
             cost_usd=0.001,
         )
-        cache.put_data("valid_hash", "llm", entry.to_dict())
+        cache.put_data("valid_hash", entry.to_dict())
 
         # Manually insert an invalid/corrupted entry directly into DB
         timestamp = datetime.now(timezone.utc).isoformat()
         cache.conn.execute(
             "INSERT INTO cache_entries "
-            "(hash, entry_type, seq, key_json, data, created_at, hit_count) "
-            "VALUES (?, ?, ?, ?, ?, ?, ?)",
+            "(hash, seq, key_json, data, created_at, hit_count) "
+            "VALUES (?, ?, ?, ?, ?, ?)",
             (
                 "invalid_hash",
-                "llm",
                 0,
                 "",
                 "corrupted_data_not_valid_tokens",

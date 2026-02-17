@@ -299,7 +299,10 @@ def _write_to_workflow_cache(
         graph: The GeneratedGraph result.
         context: The NetworkContext used (for cache key generation).
     """
+    import base64
+
     from causaliq_workflow import WorkflowCache
+    from causaliq_workflow.cache import CacheEntry
 
     from causaliq_knowledge.graph.cache import GraphEntryEncoder
 
@@ -311,8 +314,12 @@ def _write_to_workflow_cache(
 
     with WorkflowCache(str(output_path)) as wf_cache:
         encoder = GraphEntryEncoder()
-        wf_cache.register_encoder("graph", encoder)
-        wf_cache.put(key_data, "graph", graph)
+        blob = encoder.encode_entry(graph, wf_cache.token_cache)
+        # Base64-encode for JSON-safe storage in CacheEntry
+        blob_b64 = base64.b64encode(blob).decode("ascii")
+        entry = CacheEntry(metadata={"network": context.network})
+        entry.add_object("graph", "graphml", blob_b64)
+        wf_cache.put(key_data, entry)
 
 
 def _write_to_directory(
@@ -358,12 +365,10 @@ def _write_to_directory(
         "llm_reasoning": graph.reasoning,
         "objects": [
             {
-                "provider": "causaliq-knowledge",
-                "type": "graph",
+                "type": "graphml",
                 "name": "graph",
             },
             {
-                "provider": "causaliq-knowledge",
                 "type": "json",
                 "name": "confidences",
             },

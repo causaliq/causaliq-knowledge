@@ -85,14 +85,14 @@ def test_cli_cache_stats_requires_cache():
 # Test cache stats shows entry and token counts.
 def test_cli_cache_stats_shows_counts(tmp_path):
     from causaliq_core.cache import TokenCache
-    from causaliq_core.cache.encoders import JsonEncoder
+    from causaliq_core.cache.compressors import JsonCompressor
 
     # Create cache with some data
     cache_path = tmp_path / "test_cache.db"
     with TokenCache(str(cache_path)) as cache:
-        cache.register_encoder("json", JsonEncoder())
-        cache.put_data("hash1", "json", {"key": "value1"})
-        cache.put_data("hash2", "json", {"key": "value2"})
+        cache.set_compressor(JsonCompressor())
+        cache.put_data("hash1", {"key": "value1"})
+        cache.put_data("hash2", {"key": "value2"})
 
     runner = CliRunner()
     result = runner.invoke(cli, ["cache_stats", "-c", str(cache_path)])
@@ -108,12 +108,12 @@ def test_cli_cache_stats_json_output(tmp_path):
     import json
 
     from causaliq_core.cache import TokenCache
-    from causaliq_core.cache.encoders import JsonEncoder
+    from causaliq_core.cache.compressors import JsonCompressor
 
     cache_path = tmp_path / "test_cache.db"
     with TokenCache(str(cache_path)) as cache:
-        cache.register_encoder("json", JsonEncoder())
-        cache.put_data("hash1", "json", {"test": "data"})
+        cache.set_compressor(JsonCompressor())
+        cache.put_data("hash1", {"test": "data"})
 
     runner = CliRunner()
     result = runner.invoke(
@@ -172,7 +172,7 @@ def test_cli_cache_export_creates_files(tmp_path):
     cache_path = tmp_path / "test_cache.db"
     with TokenCache(str(cache_path)) as cache:
         encoder = LLMEntryEncoder()
-        cache.register_encoder("llm", encoder)
+        cache.set_compressor(encoder)
         entry = LLMCacheEntry.create(
             model="gpt-4",
             messages=[{"role": "user", "content": "smoking and lung_cancer"}],
@@ -180,7 +180,7 @@ def test_cli_cache_export_creates_files(tmp_path):
             provider="openai",
             request_id="test_export",
         )
-        cache.put_data("abc123", "llm", entry.to_dict())
+        cache.put_data("abc123", entry.to_dict())
 
     # Export
     export_dir = tmp_path / "export"
@@ -211,14 +211,14 @@ def test_cli_cache_export_json_output(tmp_path):
     cache_path = tmp_path / "test_cache.db"
     with TokenCache(str(cache_path)) as cache:
         encoder = LLMEntryEncoder()
-        cache.register_encoder("llm", encoder)
+        cache.set_compressor(encoder)
         entry = LLMCacheEntry.create(
             model="gpt-4",
             messages=[{"role": "user", "content": "X and Y"}],
             content="Response",
             provider="openai",
         )
-        cache.put_data("hash1", "llm", entry.to_dict())
+        cache.put_data("hash1", entry.to_dict())
 
     export_dir = tmp_path / "export"
     runner = CliRunner()
@@ -237,7 +237,6 @@ def test_cli_cache_export_json_output(tmp_path):
     assert result.exit_code == 0
     output = json.loads(result.output)
     assert output["exported"] == 1
-    assert output["entry_types"] == ["llm"]
 
 
 # Test cache export with empty cache.
@@ -290,13 +289,13 @@ def test_cli_cache_export_empty_cache_json(tmp_path):
 # Test cache export with non-LLM entry types uses generic export.
 def test_cli_cache_export_non_llm_type(tmp_path):
     from causaliq_core.cache import TokenCache
-    from causaliq_core.cache.encoders import JsonEncoder
+    from causaliq_core.cache.compressors import JsonCompressor
 
     cache_path = tmp_path / "test_cache.db"
     with TokenCache(str(cache_path)) as cache:
-        # Register a generic JSON encoder for a non-LLM type
-        cache.register_encoder("json", JsonEncoder())
-        cache.put_data("hash1", "json", {"key": "value"})
+        # Use JsonCompressor for generic JSON data
+        cache.set_compressor(JsonCompressor())
+        cache.put_data("hash1", {"key": "value"})
 
     export_dir = tmp_path / "export"
     runner = CliRunner()
@@ -343,7 +342,7 @@ def test_cli_cache_export_to_zip(tmp_path):
     cache_path = tmp_path / "test_cache.db"
     with TokenCache(str(cache_path)) as cache:
         encoder = LLMEntryEncoder()
-        cache.register_encoder("llm", encoder)
+        cache.set_compressor(encoder)
         entry = LLMCacheEntry.create(
             model="gpt-4",
             messages=[{"role": "user", "content": "smoking and lung_cancer"}],
@@ -351,7 +350,7 @@ def test_cli_cache_export_to_zip(tmp_path):
             provider="openai",
             request_id="zip_test",
         )
-        cache.put_data("abc123", "llm", entry.to_dict())
+        cache.put_data("abc123", entry.to_dict())
 
     # Export to zip
     zip_path = tmp_path / "export.zip"
@@ -384,14 +383,14 @@ def test_cli_cache_export_to_zip_json_output(tmp_path):
     cache_path = tmp_path / "test_cache.db"
     with TokenCache(str(cache_path)) as cache:
         encoder = LLMEntryEncoder()
-        cache.register_encoder("llm", encoder)
+        cache.set_compressor(encoder)
         entry = LLMCacheEntry.create(
             model="gpt-4",
             messages=[{"role": "user", "content": "X and Y"}],
             content="Response",
             provider="openai",
         )
-        cache.put_data("hash1", "llm", entry.to_dict())
+        cache.put_data("hash1", entry.to_dict())
 
     zip_path = tmp_path / "export.zip"
     runner = CliRunner()
@@ -416,13 +415,13 @@ def test_cli_cache_export_to_zip_creates_parent_dirs(tmp_path):
     cache_path = tmp_path / "test_cache.db"
     with TokenCache(str(cache_path)) as cache:
         encoder = LLMEntryEncoder()
-        cache.register_encoder("llm", encoder)
+        cache.set_compressor(encoder)
         entry = LLMCacheEntry.create(
             model="gpt-4",
             messages=[{"role": "user", "content": "test"}],
             content="Response",
         )
-        cache.put_data("h1", "llm", entry.to_dict())
+        cache.put_data("h1", entry.to_dict())
 
     # Nested path that doesn't exist
     zip_path = tmp_path / "nested" / "dir" / "export.zip"
@@ -482,11 +481,10 @@ def test_cli_cache_import_from_directory(tmp_path):
 
     assert result.exit_code == 0
     assert "Imported 1 entries" in result.output
-    assert "LLM entries: 1" in result.output
 
     # Verify entry was imported
     with TokenCache(str(cache_path)) as cache:
-        cache.register_encoder("llm", LLMEntryEncoder())
+        cache.set_compressor(LLMEntryEncoder())
         assert cache.entry_count() == 1
 
 
@@ -527,12 +525,12 @@ def test_cli_cache_import_from_zip(tmp_path):
 
     # Verify
     with TokenCache(str(cache_path)) as cache:
-        cache.register_encoder("llm", LLMEntryEncoder())
+        cache.set_compressor(LLMEntryEncoder())
         assert cache.entry_count() == 1
 
 
-# Test cache import auto-detects generic JSON.
-def test_cli_cache_import_generic_json(tmp_path):
+# Test cache import skips generic JSON (only LLM entries are imported).
+def test_cli_cache_import_skips_generic_json(tmp_path):
     import json
 
     from causaliq_core.cache import TokenCache
@@ -551,12 +549,12 @@ def test_cli_cache_import_generic_json(tmp_path):
     )
 
     assert result.exit_code == 0
-    assert "Imported 1 entries" in result.output
-    assert "JSON entries: 1" in result.output
+    assert "Imported 0 entries" in result.output
+    assert "Skipped: 1" in result.output
 
-    # Verify - generic entries use filename as key
+    # Verify - generic entries are skipped
     with TokenCache(str(cache_path)) as cache:
-        assert cache.entry_count() == 1
+        assert cache.entry_count() == 0
 
 
 # Test cache import JSON output.
@@ -591,7 +589,6 @@ def test_cli_cache_import_json_output(tmp_path):
     assert result.exit_code == 0
     output = json.loads(result.output)
     assert output["imported"] == 1
-    assert output["llm_entries"] == 1
     assert output["format"] == "directory"
 
 
@@ -602,8 +599,13 @@ def test_cli_cache_import_skips_invalid_files(tmp_path):
     import_dir = tmp_path / "import"
     import_dir.mkdir()
 
-    # Valid JSON
-    (import_dir / "valid.json").write_text(json.dumps({"key": "value"}))
+    # Valid LLM JSON
+    llm_data = {
+        "cache_key": {"model": "gpt-4", "messages": []},
+        "response": {"content": "test"},
+        "metadata": {},
+    }
+    (import_dir / "valid.json").write_text(json.dumps(llm_data))
     # Invalid JSON
     (import_dir / "invalid.json").write_text("not valid json {{{")
     # Non-JSON file (should be ignored)
@@ -645,14 +647,14 @@ def test_cli_cache_import_export_roundtrip(tmp_path):
     original_cache = tmp_path / "original.db"
     with TokenCache(str(original_cache)) as cache:
         encoder = LLMEntryEncoder()
-        cache.register_encoder("llm", encoder)
+        cache.set_compressor(encoder)
         entry = LLMCacheEntry.create(
             model="gpt-4",
             messages=[{"role": "user", "content": "roundtrip test"}],
             content="This is the response",
             provider="openai",
         )
-        cache.put_data("original_key", "llm", entry.to_dict())
+        cache.put_data("original_key", entry.to_dict())
 
     # Export to zip
     zip_path = tmp_path / "export.zip"
@@ -672,20 +674,18 @@ def test_cli_cache_import_export_roundtrip(tmp_path):
 
     # Verify data matches
     with TokenCache(str(new_cache)) as cache:
-        cache.register_encoder("llm", LLMEntryEncoder())
+        cache.set_compressor(LLMEntryEncoder())
         assert cache.entry_count() == 1
-        types = cache.list_entry_types()
-        assert "llm" in types
 
 
-# Test cache import handles JSON arrays (non-dict) correctly.
-def test_cli_cache_import_handles_json_array(tmp_path):
+# Test cache import skips JSON arrays (non-LLM format).
+def test_cli_cache_import_skips_json_array(tmp_path):
     import json
 
     import_dir = tmp_path / "import"
     import_dir.mkdir()
 
-    # JSON file containing an array - should be treated as generic JSON
+    # JSON file containing an array - should be skipped (not LLM format)
     (import_dir / "array_data.json").write_text(json.dumps([1, 2, 3]))
 
     cache_path = tmp_path / "cache.db"
@@ -695,19 +695,19 @@ def test_cli_cache_import_handles_json_array(tmp_path):
     )
 
     assert result.exit_code == 0
-    assert "Imported 1 entries" in result.output
-    assert "JSON entries: 1" in result.output
+    assert "Imported 0 entries" in result.output
+    assert "Skipped: 1" in result.output
 
 
-# Test import_cache with graph entry.
-def test_cli_cache_import_graph_entry(tmp_path):
-    """Import graph entry and verify graph_count output."""
+# Test import_cache skips graph entries (only imports LLM entries).
+def test_cli_cache_import_skips_graph_entry(tmp_path):
+    """Import only accepts LLM entries, graph entries are skipped."""
     import json
 
     import_dir = tmp_path / "import"
     import_dir.mkdir()
 
-    # Create a graph entry JSON file
+    # Create a graph entry JSON file (not LLM format)
     graph_data = {
         "edges": [
             {"source": "A", "target": "B", "confidence": 0.9},
@@ -725,8 +725,8 @@ def test_cli_cache_import_graph_entry(tmp_path):
     )
 
     assert result.exit_code == 0
-    assert "Imported 1 entries" in result.output
-    assert "Graph entries: 1" in result.output
+    assert "Imported 0 entries" in result.output
+    assert "Skipped: 1" in result.output
 
 
 # Test import_cache error handling with invalid cache path.
@@ -1850,6 +1850,8 @@ def test_cli_generate_graph_workflow_cache_output(tmp_path, mocker):
     assert str(output_db) in result.output
 
     # Verify the workflow cache was created and contains the graph
+    import base64
+
     from causaliq_workflow import WorkflowCache
 
     from causaliq_knowledge.graph.cache import GraphEntryEncoder
@@ -1858,12 +1860,18 @@ def test_cli_generate_graph_workflow_cache_output(tmp_path, mocker):
 
     with WorkflowCache(str(output_db)) as wf_cache:
         encoder = GraphEntryEncoder()
-        wf_cache.register_encoder("graph", encoder)
-        result_data = wf_cache.get({"network": "cache-test"}, "graph")
+        entry = wf_cache.get({"network": "cache-test"})
 
-    # GraphEntryEncoder.decode returns (GeneratedGraph, extra_blobs)
-    assert result_data is not None
-    retrieved, _extra_blobs = result_data
+        # Entry contains the graph object as a base64-encoded blob
+        assert entry is not None
+        graph_obj = entry.get_object("graph")
+        assert graph_obj is not None
+
+        # Decode the base64 blob and then decode the graph
+        blob = base64.b64decode(graph_obj.content)
+        retrieved, _extra_blobs = encoder.decode_entry(
+            blob, wf_cache.token_cache
+        )
     assert len(retrieved.edges) == 1
     assert retrieved.edges[0].source == "X"
     assert retrieved.edges[0].target == "Y"

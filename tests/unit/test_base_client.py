@@ -533,8 +533,8 @@ def test_cached_completion_different_messages_different_cache():
         assert client.call_count == 2
 
 
-# Test that cached_completion registers LLMEntryEncoder automatically
-def test_cached_completion_registers_encoder():
+# Test that cached_completion sets compressor automatically
+def test_cached_completion_sets_compressor():
     from causaliq_core.cache import TokenCache
 
     MockClient = _create_mock_client_class()
@@ -544,13 +544,13 @@ def test_cached_completion_registers_encoder():
     with TokenCache(":memory:") as cache:
         client.set_cache(cache)
 
-        # No encoder registered initially
-        assert not cache.has_encoder("llm")
+        # No compressor set initially
+        assert not cache.has_compressor()
 
         client.cached_completion([{"role": "user", "content": "Hello"}])
 
-        # Should auto-register encoder
-        assert cache.has_encoder("llm")
+        # Should auto-set compressor
+        assert cache.has_compressor()
 
 
 # Test that cached_completion captures latency
@@ -572,7 +572,7 @@ def test_cached_completion_captures_latency():
         cache_key = client._build_cache_key(
             [{"role": "user", "content": "Hello"}]
         )
-        cached_data = cache.get_data(cache_key, "llm")
+        cached_data = cache.get_data(cache_key)
         entry = LLMCacheEntry.from_dict(cached_data)
 
         # Latency should be captured (>=0, mock is fast so usually 0-1ms)
@@ -597,7 +597,7 @@ def test_cached_completion_captures_timestamp():
         cache_key = client._build_cache_key(
             [{"role": "user", "content": "Hello"}]
         )
-        cached_data = cache.get_data(cache_key, "llm")
+        cached_data = cache.get_data(cache_key)
         entry = LLMCacheEntry.from_dict(cached_data)
 
         # Timestamp should be set
@@ -640,8 +640,8 @@ def test_cached_completion_handles_invalid_timestamp():
         )
 
         encoder = LLMEntryEncoder()
-        cache.register_encoder("llm", encoder)
-        cache.put_data(cache_key, "llm", entry.to_dict())
+        cache.set_compressor(encoder)
+        cache.put_data(cache_key, entry.to_dict())
 
         # Call cached_completion - should retrieve from cache without error
         response = client.cached_completion(

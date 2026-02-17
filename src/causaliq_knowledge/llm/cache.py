@@ -16,7 +16,7 @@ from datetime import datetime, timezone
 from pathlib import Path
 from typing import TYPE_CHECKING, Any
 
-from causaliq_core.cache.encoders import JsonEncoder
+from causaliq_core.cache.compressors import JsonCompressor
 
 if TYPE_CHECKING:  # pragma: no cover
     from causaliq_core.cache.token_cache import TokenCache
@@ -302,10 +302,10 @@ class LLMCacheEntry:
         )
 
 
-class LLMEntryEncoder(JsonEncoder):
+class LLMEntryEncoder(JsonCompressor):
     """Encoder for LLM cache entries.
 
-    Extends JsonEncoder with LLM-specific convenience methods for
+    Extends JsonCompressor with LLM-specific convenience methods for
     encoding/decoding LLMCacheEntry objects.
 
     The encoder stores data in the standard JSON tokenised format,
@@ -341,7 +341,7 @@ class LLMEntryEncoder(JsonEncoder):
         Returns:
             Encoded bytes.
         """
-        return self.encode(entry.to_dict(), cache)
+        return self.compress(entry.to_dict(), cache)
 
     def decode_entry(self, blob: bytes, cache: TokenCache) -> LLMCacheEntry:
         """Decode bytes to an LLMCacheEntry.
@@ -355,7 +355,7 @@ class LLMEntryEncoder(JsonEncoder):
         Returns:
             Decoded LLMCacheEntry.
         """
-        data = self.decode(blob, cache)
+        data = self.decompress(blob, cache)
         return LLMCacheEntry.from_dict(data)
 
     def generate_export_filename(

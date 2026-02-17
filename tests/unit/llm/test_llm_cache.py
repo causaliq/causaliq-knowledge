@@ -564,12 +564,12 @@ def test_llm_cache_entry_create_model_version_explicit():
 # =============================================================================
 
 
-# Test LLMEntryEncoder inherits from JsonEncoder.
-def test_llm_entry_encoder_is_json_encoder():
-    from causaliq_core.cache.encoders import JsonEncoder
+# Test LLMEntryEncoder inherits from JsonCompressor.
+def test_llm_entry_encoder_is_json_compressor():
+    from causaliq_core.cache.compressors import JsonCompressor
 
     encoder = LLMEntryEncoder()
-    assert isinstance(encoder, JsonEncoder)
+    assert isinstance(encoder, JsonCompressor)
 
 
 # Test LLMEntryEncoder.encode_entry encodes to bytes.
@@ -772,8 +772,8 @@ def test_llm_entry_encoder_base_encode_decode():
     with TokenCache(":memory:") as cache:
         encoder = LLMEntryEncoder()
         data = {"key": "value", "number": 42}
-        blob = encoder.encode(data, cache)
-        restored = encoder.decode(blob, cache)
+        blob = encoder.compress(data, cache)
+        restored = encoder.decompress(blob, cache)
         assert restored == data
 
 
@@ -786,8 +786,8 @@ def test_llm_entry_encoder_encode_entry_dict():
             messages=[{"role": "user", "content": "Hello"}],
             content="Hi!",
         )
-        blob = encoder.encode(entry.to_dict(), cache)
-        data = encoder.decode(blob, cache)
+        blob = encoder.compress(entry.to_dict(), cache)
+        data = encoder.decompress(blob, cache)
         restored = LLMCacheEntry.from_dict(data)
         assert restored.model == entry.model
 

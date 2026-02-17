@@ -190,7 +190,7 @@ def test_latency_captured():
         cache_key = client._build_cache_key(
             [{"role": "user", "content": "Hello"}]
         )
-        cached_data = cache.get_data(cache_key, "llm")
+        cached_data = cache.get_data(cache_key)
         entry = LLMCacheEntry.from_dict(cached_data)
 
         assert entry.metadata.latency_ms >= 0
@@ -211,7 +211,7 @@ def test_token_counts_captured():
         cache_key = client._build_cache_key(
             [{"role": "user", "content": "Count tokens"}]
         )
-        cached_data = cache.get_data(cache_key, "llm")
+        cached_data = cache.get_data(cache_key)
         entry = LLMCacheEntry.from_dict(cached_data)
 
         assert entry.metadata.tokens.input == 2  # "Count tokens"
@@ -232,7 +232,7 @@ def test_provider_captured():
         cache_key = client._build_cache_key(
             [{"role": "user", "content": "Hello"}]
         )
-        cached_data = cache.get_data(cache_key, "llm")
+        cached_data = cache.get_data(cache_key)
         entry = LLMCacheEntry.from_dict(cached_data)
 
         assert entry.metadata.provider == "mock"

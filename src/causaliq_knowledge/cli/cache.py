@@ -61,21 +61,19 @@ def cache_stats(cache_path: str, output_json: bool) -> None:
             total_input_tokens = 0
             total_output_tokens = 0
 
-            if cache.has_encoder("llm") or entry_count > 0:
-                # Register encoder if needed
-                if not cache.has_encoder("llm"):
-                    cache.register_encoder("llm", LLMEntryEncoder())
-
-                # Query all LLM entries with hit counts
-                cursor = cache.conn.execute(
-                    "SELECT data, hit_count FROM cache_entries "
-                    "WHERE entry_type = 'llm'"
-                )
+            if entry_count > 0:
+                # Use LLMEntryEncoder for decompression
                 encoder = LLMEntryEncoder()
+                cache.set_compressor(encoder)
+
+                # Query all entries
+                cursor = cache.conn.execute(
+                    "SELECT data, hit_count FROM cache_entries"
+                )
 
                 for row in cursor.fetchall():
                     try:
-                        data = encoder.decode(row[0], cache)
+                        data = encoder.decompress(row[0], cache)
                         entry = LLMCacheEntry.from_dict(data)
                         hit_count = row[1] or 0
 
@@ -239,9 +237,7 @@ def export_cache(cache_path: str, output_dir: str, output_json: bool) -> None:
     from pathlib import Path
 
     from causaliq_core.cache import TokenCache
-    from causaliq_core.cache.encoders import JsonEncoder
 
-    from causaliq_knowledge.graph.cache import GraphEntryEncoder
     from causaliq_knowledge.llm.cache import LLMCacheEntry, LLMEntryEncoder
 
     output_path = Path(output_dir)
@@ -249,22 +245,15 @@ def export_cache(cache_path: str, output_dir: str, output_json: bool) -> None:
 
     try:
         with TokenCache(cache_path) as cache:
-            # Register encoders for decoding
+            # Use LLMEntryEncoder for decompression
             encoder = LLMEntryEncoder()
-            cache.register_encoder("llm", encoder)
+            cache.set_compressor(encoder)
 
-            # Register GraphEntryEncoder for graph types
-            graph_encoder = GraphEntryEncoder()
-            cache.register_encoder("graph", graph_encoder)
+            # Count entries
+            cursor = cache.conn.execute("SELECT COUNT(*) FROM cache_entries")
+            entry_count = cursor.fetchone()[0]
 
-            # Register generic JsonEncoder for other types
-            json_encoder = JsonEncoder()
-            cache.register_encoder("json", json_encoder)
-
-            # Get entry types in the cache
-            entry_types = cache.list_entry_types()
-
-            if not entry_types:
+            if entry_count == 0:
                 if output_json:
                     click.echo(json.dumps({"exported": 0, "error": None}))
                 else:
@@ -281,27 +270,20 @@ def export_cache(cache_path: str, output_dir: str, output_json: bool) -> None:
 
             # Export entries
             exported = 0
-            for entry_type in entry_types:
-                if entry_type == "llm":
-                    # Query all entries of this type
-                    cursor = cache.conn.execute(
-                        "SELECT hash, data FROM cache_entries "
-                        "WHERE entry_type = ?",
-                        (entry_type,),
+            cursor = cache.conn.execute("SELECT hash, data FROM cache_entries")
+            for cache_key, blob in cursor:
+                try:
+                    data = encoder.decompress(blob, cache)
+                    entry = LLMCacheEntry.from_dict(data)
+                    filename = encoder.generate_export_filename(
+                        entry, cache_key
                     )
-                    for cache_key, blob in cursor:
-                        data = encoder.decode(blob, cache)
-                        entry = LLMCacheEntry.from_dict(data)
-                        filename = encoder.generate_export_filename(
-                            entry, cache_key
-                        )
-                        file_path = export_dir / filename
-                        encoder.export_entry(entry, file_path)
-                        exported += 1
-                else:
-                    # For non-LLM types, use generic export
-                    count = cache.export_entries(export_dir, entry_type)
-                    exported += count
+                    file_path = export_dir / filename
+                    encoder.export_entry(entry, file_path)
+                    exported += 1
+                except Exception:
+                    # Skip entries that can't be decoded as LLM entries
+                    continue
 
             # Create zip archive if requested
             if is_zip:
@@ -324,7 +306,6 @@ def export_cache(cache_path: str, output_dir: str, output_json: bool) -> None:
                     "output_path": str(output_path),
                     "format": "zip" if is_zip else "directory",
                     "exported": exported,
-                    "entry_types": entry_types,
                 }
                 click.echo(json.dumps(output, indent=2))
             else:
@@ -332,7 +313,6 @@ def export_cache(cache_path: str, output_dir: str, output_json: bool) -> None:
                 click.echo(
                     f"\nExported {exported} entries to {fmt}: {output_path}"
                 )
-                click.echo(f"Entry types: {', '.join(entry_types)}")
                 click.echo()
 
     except Exception as e:
@@ -401,10 +381,8 @@ def import_cache(cache_path: str, input_path: str, output_json: bool) -> None:
     Imports previously exported LLM API responses back into a cache.
     Useful for restoring backups or sharing cached responses.
 
-    Entry types are auto-detected from JSON structure:
-    - LLM entries: contain cache_key.model, cache_key.messages, response
-    - Graph entries: contain edges list and variables list
-    - Generic JSON: anything else
+    Only LLM entries (with cache_key.model, cache_key.messages, response)
+    are imported. Other entry types are skipped.
 
     Examples:
 
@@ -420,9 +398,7 @@ def import_cache(cache_path: str, input_path: str, output_json: bool) -> None:
     from pathlib import Path
 
     from causaliq_core.cache import TokenCache
-    from causaliq_core.cache.encoders import JsonEncoder
 
-    from causaliq_knowledge.graph.cache import GraphEntryEncoder
     from causaliq_knowledge.llm.cache import LLMEntryEncoder
 
     input_file = Path(input_path)
@@ -430,13 +406,9 @@ def import_cache(cache_path: str, input_path: str, output_json: bool) -> None:
 
     try:
         with TokenCache(cache_path) as cache:
-            # Register encoders
-            llm_encoder = LLMEntryEncoder()
-            graph_encoder = GraphEntryEncoder()
-            json_encoder = JsonEncoder()
-            cache.register_encoder("llm", llm_encoder)
-            cache.register_encoder("graph", graph_encoder)
-            cache.register_encoder("json", json_encoder)
+            # Use LLMEntryEncoder for compression
+            encoder = LLMEntryEncoder()
+            cache.set_compressor(encoder)
 
             # Determine input directory
             if is_zip:
@@ -450,9 +422,6 @@ def import_cache(cache_path: str, input_path: str, output_json: bool) -> None:
 
             # Import entries
             imported = 0
-            llm_count = 0
-            graph_count = 0
-            json_count = 0
             skipped = 0
 
             for file_path in import_dir.iterdir():
@@ -468,7 +437,7 @@ def import_cache(cache_path: str, input_path: str, output_json: bool) -> None:
                     skipped += 1
                     continue
 
-                # Detect entry type and generate cache key
+                # Only import LLM entries
                 if _is_llm_entry(data):
                     # LLM entry - generate hash from cache_key contents
                     cache_key_data = data.get("cache_key", {})
@@ -476,20 +445,10 @@ def import_cache(cache_path: str, input_path: str, output_json: bool) -> None:
                     cache_key = hashlib.sha256(key_str.encode()).hexdigest()[
                         :16
                     ]
-                    cache.put_data(cache_key, "llm", data)
-                    llm_count += 1
-                elif _is_graph_entry(data):
-                    # Graph entry - use filename stem as key
-                    cache_key = file_path.stem
-                    cache.put_data(cache_key, "graph", data)
-                    graph_count += 1
+                    cache.put_data(cache_key, data)
+                    imported += 1
                 else:
-                    # Generic JSON - use filename stem as key
-                    cache_key = file_path.stem
-                    cache.put_data(cache_key, "json", data)
-                    json_count += 1
-
-                imported += 1
+                    skipped += 1
 
             # Clean up temp directory
             if temp_dir:
@@ -504,9 +463,6 @@ def import_cache(cache_path: str, input_path: str, output_json: bool) -> None:
                     "input_path": str(input_file),
                     "format": "zip" if is_zip else "directory",
                     "imported": imported,
-                    "llm_entries": llm_count,
-                    "graph_entries": graph_count,
-                    "json_entries": json_count,
                     "skipped": skipped,
                 }
                 click.echo(json.dumps(output, indent=2))
@@ -515,12 +471,6 @@ def import_cache(cache_path: str, input_path: str, output_json: bool) -> None:
                 click.echo(
                     f"\nImported {imported} entries from {fmt}: {input_file}"
                 )
-                if llm_count:
-                    click.echo(f"  LLM entries: {llm_count}")
-                if graph_count:
-                    click.echo(f"  Graph entries: {graph_count}")
-                if json_count:
-                    click.echo(f"  JSON entries: {json_count}")
                 if skipped:
                     click.echo(f"  Skipped: {skipped}")
                 click.echo()

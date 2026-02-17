@@ -12,7 +12,6 @@ import pytest
 
 from causaliq_knowledge.action import (
     SUPPORTED_ACTIONS,
-    ActionExecutionError,
     ActionProvider,
     KnowledgeActionProvider,
 )
@@ -66,62 +65,45 @@ def test_action_outputs_specification() -> None:
     assert "cached" in action.outputs
 
 
-# Test validate_parameters rejects unknown action.
-def test_validate_parameters_unknown_action() -> None:
-    """Test validation fails for unknown action type."""
-    from causaliq_workflow.action import ActionValidationError
+# Test run rejects unknown action.
+def test_run_rejects_unknown_action() -> None:
+    """Test run fails for unknown action type."""
+    from causaliq_core import ActionValidationError
 
     action = KnowledgeActionProvider()
 
     with pytest.raises(ActionValidationError) as exc_info:
-        action.validate_parameters(
+        action.run(
             "unknown_action",
-            {"context": "model.json"},
+            {"context": "model.json", "output": "none", "llm_cache": "none"},
+            mode="dry-run",
         )
 
     assert "unknown action" in str(exc_info.value).lower()
 
 
-# Test validate_parameters rejects missing context for generate_graph.
-def test_validate_parameters_missing_context() -> None:
-    """Test validation fails when context missing for generate_graph."""
-    from causaliq_workflow.action import ActionValidationError
+# Test run rejects missing context for generate_graph.
+def test_run_rejects_missing_context() -> None:
+    """Test run fails when context missing for generate_graph."""
+    from causaliq_core import ActionValidationError
 
     action = KnowledgeActionProvider()
 
     with pytest.raises(ActionValidationError) as exc_info:
-        action.validate_parameters("generate_graph", {})
+        action.run("generate_graph", {}, mode="dry-run")
 
     assert "context" in str(exc_info.value).lower()
 
 
-# Test validate_parameters accepts valid generate_graph parameters.
-def test_validate_parameters_valid_generate_graph() -> None:
-    """Test validation passes for valid generate_graph parameters."""
-    action = KnowledgeActionProvider()
-
-    # Should not raise
-    result = action.validate_parameters(
-        "generate_graph",
-        {
-            "context": "model.json",
-            "output": "none",
-            "llm_cache": "cache.db",
-        },
-    )
-
-    assert result is True
-
-
-# Test validate_parameters validates LLM provider.
-def test_validate_parameters_invalid_llm() -> None:
-    """Test validation fails for invalid LLM provider."""
-    from causaliq_workflow.action import ActionValidationError
+# Test run rejects invalid LLM provider.
+def test_run_rejects_invalid_llm_provider() -> None:
+    """Test run fails for invalid LLM provider."""
+    from causaliq_core import ActionValidationError
 
     action = KnowledgeActionProvider()
 
     with pytest.raises(ActionValidationError) as exc_info:
-        action.validate_parameters(
+        action.run(
             "generate_graph",
             {
                 "context": "model.json",
@@ -129,6 +111,7 @@ def test_validate_parameters_invalid_llm() -> None:
                 "output": "none",
                 "llm_cache": "cache.db",
             },
+            mode="dry-run",
         )
 
     assert "provider" in str(exc_info.value).lower()
@@ -146,7 +129,7 @@ def test_run_dry_run_mode(tmp_path: Path) -> None:
 
     action = KnowledgeActionProvider()
 
-    result = action.run(
+    status, metadata, objects = action.run(
         "generate_graph",
         {
             "context": str(context_file),
@@ -156,16 +139,17 @@ def test_run_dry_run_mode(tmp_path: Path) -> None:
         mode="dry-run",
     )
 
-    assert result["status"] == "skipped"
-    assert "dry-run" in result.get("message", "").lower()
-    assert result["llm_model"] == "groq/llama-3.1-8b-instant"
-    assert result["llm_prompt_detail"] == "standard"
+    assert status == "skipped"
+    assert "dry-run" in metadata.get("message", "").lower()
+    assert metadata["llm_model"] == "groq/llama-3.1-8b-instant"
+    assert metadata["llm_prompt_detail"] == "standard"
+    assert objects == []
 
 
 # Test run fails for non-existent context.
 def test_run_context_not_found() -> None:
     """Test run fails when context file doesn't exist."""
-    from causaliq_workflow.action import ActionExecutionError
+    from causaliq_core import ActionExecutionError
 
     action = KnowledgeActionProvider()
 
@@ -217,7 +201,7 @@ def test_run_execute_mode(tmp_path: Path) -> None:
 
         action = KnowledgeActionProvider()
 
-        result = action.run(
+        status, metadata, objects = action.run(
             "generate_graph",
             {
                 "context": str(context_file),
@@ -227,276 +211,25 @@ def test_run_execute_mode(tmp_path: Path) -> None:
             mode="run",
         )
 
-    assert result["status"] == "success"
-    assert result["edge_count"] == 1
-    assert result["variable_count"] == 2
-    assert result["model_used"] == "groq/llama-3.1-8b-instant"
-    assert "graph" in result
-    assert len(result["graph"]["edges"]) == 1
+    assert status == "success"
+    assert metadata["edge_count"] == 1
+    assert metadata["variable_count"] == 2
+    assert metadata["model_used"] == "groq/llama-3.1-8b-instant"
+    assert len(objects) == 2
+    # Check serialised GraphML content
+    graphml_obj = next(o for o in objects if o["type"] == "graphml")
+    assert "<graphml" in graphml_obj["content"]
 
 
-# Test run with output file.
-def test_run_with_output_file(tmp_path: Path) -> None:
-    """Test run writes output to file when specified."""
-    from causaliq_knowledge.graph.response import (
-        GeneratedGraph,
-        ProposedEdge,
-    )
-
-    # Create a minimal context file
-    context_file = tmp_path / "model.json"
-    context_file.write_text(
-        '{"schema_version": "2.0", "network": "test", '
-        '"domain": "test", "variables": ['
-        '{"name": "x", "type": "binary"}, '
-        '{"name": "y", "type": "binary"}]}'
-    )
-
-    output_file = tmp_path / "output" / "workflow_cache.db"
-
-    # Mock the graph generator
-    mock_graph = GeneratedGraph(
-        edges=[ProposedEdge(source="x", target="y", confidence=0.8)],
-        variables=["x", "y"],
-        reasoning="Test reasoning",
-    )
-
-    with patch(
-        "causaliq_knowledge.graph.generator.GraphGenerator"
-    ) as mock_generator_class:
-        mock_generator = MagicMock()
-        mock_generator.generate_from_context.return_value = mock_graph
-        mock_generator.get_stats.return_value = {"cache_hits": 0}
-        mock_generator_class.return_value = mock_generator
-
-        action = KnowledgeActionProvider()
-
-        result = action.run(
-            "generate_graph",
-            {
-                "context": str(context_file),
-                "output": str(output_file),
-                "llm_cache": "none",
-            },
-            mode="run",
-        )
-
-    assert result["status"] == "success"
-    assert "output_cache" in result
-    assert output_file.exists()
+# =============================================================================
+# Output file tests removed - workflow now handles cache storage
+# =============================================================================
 
 
-# Test run writes to directory when directory output specified.
-def test_run_with_directory_output(tmp_path: Path) -> None:
-    """Test run writes GraphML and JSON files to directory."""
-    import json
-
-    from causaliq_knowledge.graph.response import (
-        GeneratedGraph,
-        ProposedEdge,
-    )
-
-    # Create a minimal context file
-    context_file = tmp_path / "model.json"
-    context_file.write_text(
-        '{"schema_version": "2.0", "network": "test", '
-        '"domain": "test", "variables": ['
-        '{"name": "x", "type": "binary"}, '
-        '{"name": "y", "type": "binary"}]}'
-    )
-
-    output_dir = tmp_path / "output"
-
-    # Mock the graph generator
-    mock_graph = GeneratedGraph(
-        edges=[ProposedEdge(source="x", target="y", confidence=0.8)],
-        variables=["x", "y"],
-        reasoning="Test reasoning",
-    )
-
-    with patch(
-        "causaliq_knowledge.graph.generator.GraphGenerator"
-    ) as mock_generator_class:
-        mock_generator = MagicMock()
-        mock_generator.generate_from_context.return_value = mock_graph
-        mock_generator.get_stats.return_value = {"cache_hits": 0}
-        mock_generator_class.return_value = mock_generator
-
-        action = KnowledgeActionProvider()
-
-        result = action.run(
-            "generate_graph",
-            {
-                "context": str(context_file),
-                "output": str(output_dir),
-                "llm_cache": "none",
-            },
-            mode="run",
-        )
-
-    assert result["status"] == "success"
-    assert "output_dir" in result
-    assert output_dir.exists()
-
-    # Verify files created
-    assert (output_dir / "graph.graphml").exists()
-    assert (output_dir / "metadata.json").exists()
-    assert (output_dir / "confidences.json").exists()
-
-    # Verify confidences content
-    confidences = json.loads((output_dir / "confidences.json").read_text())
-    assert "x->y" in confidences
-    assert confidences["x->y"] == 0.8
+# Directory output tests removed - workflow handles export.
 
 
-# Test directory output rejects matrix context.
-def test_run_directory_output_rejects_matrix_context(tmp_path: Path) -> None:
-    """Test directory output raises error when matrix context is present."""
-    from causaliq_knowledge.graph.response import (
-        GeneratedGraph,
-        ProposedEdge,
-    )
-
-    # Create a minimal context file
-    context_file = tmp_path / "model.json"
-    context_file.write_text(
-        '{"schema_version": "2.0", "network": "test", '
-        '"domain": "test", "variables": ['
-        '{"name": "x", "type": "binary"}, '
-        '{"name": "y", "type": "binary"}]}'
-    )
-
-    output_dir = tmp_path / "output"
-
-    # Mock the graph generator
-    mock_graph = GeneratedGraph(
-        edges=[ProposedEdge(source="x", target="y", confidence=0.8)],
-        variables=["x", "y"],
-    )
-
-    # Create a mock context with matrix
-    mock_context = MagicMock()
-    mock_context.matrix = {"model": "test-model"}
-
-    with patch(
-        "causaliq_knowledge.graph.generator.GraphGenerator"
-    ) as mock_generator_class:
-        mock_generator = MagicMock()
-        mock_generator.generate_from_context.return_value = mock_graph
-        mock_generator.get_stats.return_value = {"cache_hits": 0}
-        mock_generator_class.return_value = mock_generator
-
-        action = KnowledgeActionProvider()
-
-        with pytest.raises(ActionExecutionError) as exc_info:
-            action.run(
-                "generate_graph",
-                {
-                    "context": str(context_file),
-                    "output": str(output_dir),
-                    "llm_cache": "none",
-                },
-                mode="run",
-                context=mock_context,
-            )
-
-        assert "matrix variables requires .db output" in str(exc_info.value)
-
-
-# Test directory output includes generation metadata.
-def test_run_directory_output_with_generation_metadata(tmp_path: Path) -> None:
-    """Test directory output includes generation metadata."""
-    import json
-    from datetime import datetime, timezone
-
-    from causaliq_knowledge.graph.response import (
-        GeneratedGraph,
-        GenerationMetadata,
-        ProposedEdge,
-    )
-
-    # Create a minimal context file
-    context_file = tmp_path / "model.json"
-    context_file.write_text(
-        '{"schema_version": "2.0", "network": "test", '
-        '"domain": "test", "variables": ['
-        '{"name": "x", "type": "binary"}, '
-        '{"name": "y", "type": "binary"}]}'
-    )
-
-    output_dir = tmp_path / "output"
-
-    # Mock the graph generator with generation metadata
-    mock_graph = GeneratedGraph(
-        edges=[ProposedEdge(source="x", target="y", confidence=0.8)],
-        variables=["x", "y"],
-        metadata=GenerationMetadata(
-            model="test-model",
-            provider="test-provider",
-            timestamp=datetime(2026, 1, 1, 12, 0, 0, tzinfo=timezone.utc),
-            llm_latency_ms=150,
-            input_tokens=100,
-            output_tokens=50,
-            from_cache=False,
-        ),
-    )
-
-    with patch(
-        "causaliq_knowledge.graph.generator.GraphGenerator"
-    ) as mock_generator_class:
-        mock_generator = MagicMock()
-        mock_generator.generate_from_context.return_value = mock_graph
-        mock_generator.get_stats.return_value = {"cache_hits": 0}
-        mock_generator_class.return_value = mock_generator
-
-        action = KnowledgeActionProvider()
-
-        result = action.run(
-            "generate_graph",
-            {
-                "context": str(context_file),
-                "output": str(output_dir),
-                "llm_cache": "none",
-            },
-            mode="run",
-        )
-
-    assert result["status"] == "success"
-
-    # Verify generation metadata (flattened at top level)
-    metadata = json.loads((output_dir / "metadata.json").read_text())
-    assert metadata["llm_model"] == "test-model"
-    assert metadata["llm_provider"] == "test-provider"
-    assert metadata["llm_input_tokens"] == 100
-    assert metadata["llm_output_tokens"] == 50
-
-
-# Test graph_to_dict conversion.
-def test_graph_to_dict() -> None:
-    """Test _graph_to_dict converts graph correctly."""
-    from causaliq_knowledge.graph.response import (
-        GeneratedGraph,
-        ProposedEdge,
-    )
-
-    graph = GeneratedGraph(
-        edges=[
-            ProposedEdge(source="a", target="b", confidence=0.9),
-            ProposedEdge(source="b", target="c", confidence=0.7),
-        ],
-        variables=["a", "b", "c"],
-        reasoning="Test reasoning",
-    )
-
-    action = KnowledgeActionProvider()
-    result = action._graph_to_dict(graph)
-
-    assert result["variables"] == ["a", "b", "c"]
-    assert result["llm_reasoning"] == "Test reasoning"
-    assert len(result["edges"]) == 2
-    assert result["edges"][0]["source"] == "a"
-    assert result["edges"][0]["target"] == "b"
-    assert result["edges"][0]["confidence"] == 0.9
+# Graph-to-dict test removed - workflow uses serialised objects.
 
 
 # Test map_graph_names conversion.
@@ -552,76 +285,7 @@ def test_map_graph_names_partial() -> None:
     assert result.edges[0].target == "keep_b"
 
 
-# Test _write_to_workflow_cache with no context uses fallback key.
-def test_write_to_workflow_cache_no_context(tmp_path: Path) -> None:
-    """Test _write_to_workflow_cache uses fallback key when context is None."""
-    from causaliq_knowledge.graph.response import GeneratedGraph
-
-    graph = GeneratedGraph(
-        edges=[],
-        variables=["x"],
-        reasoning="Test",
-    )
-
-    mock_cache_instance = MagicMock()
-    mock_cache_instance.__enter__ = MagicMock(return_value=mock_cache_instance)
-    mock_cache_instance.__exit__ = MagicMock(return_value=False)
-    mock_cache_cls = MagicMock(return_value=mock_cache_instance)
-    mock_encoder_cls = MagicMock()
-
-    output_path = tmp_path / "workflow_cache.db"
-
-    action = KnowledgeActionProvider()
-    action._write_to_workflow_cache(
-        output_path=output_path,
-        graph=graph,
-        context=None,  # No context - should hit fallback
-        workflow_cache_cls=mock_cache_cls,
-        encoder_cls=mock_encoder_cls,
-    )
-
-    # Verify put was called with fallback key
-    mock_cache_instance.put.assert_called_once()
-    call_args = mock_cache_instance.put.call_args
-    assert call_args[0][0] == {"source": "generate_graph"}
-
-
-# Test _write_to_workflow_cache with context uses matrix key.
-def test_write_to_workflow_cache_with_context(tmp_path: Path) -> None:
-    """Test _write_to_workflow_cache uses matrix key when context provided."""
-    from causaliq_knowledge.graph.response import GeneratedGraph
-
-    graph = GeneratedGraph(
-        edges=[],
-        variables=["x"],
-        reasoning="Test",
-    )
-
-    mock_cache_instance = MagicMock()
-    mock_cache_instance.__enter__ = MagicMock(return_value=mock_cache_instance)
-    mock_cache_instance.__exit__ = MagicMock(return_value=False)
-    mock_cache_cls = MagicMock(return_value=mock_cache_instance)
-    mock_encoder_cls = MagicMock()
-
-    # Create mock context with matrix attribute
-    mock_context = MagicMock()
-    mock_context.matrix = {"model": "test.json", "seed": 42}
-
-    output_path = tmp_path / "workflow_cache.db"
-
-    action = KnowledgeActionProvider()
-    action._write_to_workflow_cache(
-        output_path=output_path,
-        graph=graph,
-        context=mock_context,  # Context with matrix
-        workflow_cache_cls=mock_cache_cls,
-        encoder_cls=mock_encoder_cls,
-    )
-
-    # Verify put was called with matrix key
-    mock_cache_instance.put.assert_called_once()
-    call_args = mock_cache_instance.put.call_args
-    assert call_args[0][0] == {"model": "test.json", "seed": 42}
+# Tests removed - _write_to_workflow_cache removed (workflow handles caching)
 
 
 # Test request_id is derived from output filename.
@@ -678,7 +342,7 @@ def test_run_request_id_from_output(tmp_path: Path) -> None:
 # Test run fails for parameter validation error.
 def test_run_generate_graph_validation_error(tmp_path: Path) -> None:
     """Test _run_generate_graph fails when param validation fails."""
-    from causaliq_workflow.action import ActionExecutionError
+    from causaliq_core import ActionExecutionError
 
     action = KnowledgeActionProvider()
 
@@ -703,7 +367,7 @@ def test_run_generate_graph_validation_error(tmp_path: Path) -> None:
 # Test run fails when context loading fails.
 def test_run_context_load_error(tmp_path: Path) -> None:
     """Test run fails when context fails to load."""
-    from causaliq_workflow.action import ActionExecutionError
+    from causaliq_core import ActionExecutionError
 
     # Create a context file with invalid JSON structure
     context_file = tmp_path / "model.json"
@@ -763,7 +427,7 @@ def test_run_with_llm_name_mapping(tmp_path: Path) -> None:
 
         action = KnowledgeActionProvider()
 
-        result = action.run(
+        status, metadata, objects = action.run(
             "generate_graph",
             {
                 "context": str(context_file),
@@ -775,16 +439,21 @@ def test_run_with_llm_name_mapping(tmp_path: Path) -> None:
         )
 
     # Graph should have benchmark names (X1, X2), not LLM names
-    assert result["status"] == "success"
-    assert result["graph"]["variables"] == ["X1", "X2"]
-    assert result["graph"]["edges"][0]["source"] == "X1"
-    assert result["graph"]["edges"][0]["target"] == "X2"
+    assert status == "success"
+    # Check serialised JSON contains mapped names
+    import json
+
+    json_obj = next(o for o in objects if o["type"] == "json")
+    graph_data = json.loads(json_obj["content"])
+    assert graph_data["variables"] == ["X1", "X2"]
+    assert graph_data["edges"][0]["source"] == "X1"
+    assert graph_data["edges"][0]["target"] == "X2"
 
 
 # Test run fails when cache fails to open.
 def test_run_cache_open_error(tmp_path: Path) -> None:
     """Test run fails when cache database fails to open."""
-    from causaliq_workflow.action import ActionExecutionError
+    from causaliq_core import ActionExecutionError
 
     # Create a minimal context file
     context_file = tmp_path / "model.json"
@@ -811,13 +480,13 @@ def test_run_cache_open_error(tmp_path: Path) -> None:
                 mode="run",
             )
 
-    assert "failed to open cache" in str(exc_info.value).lower()
+    assert "failed to open llm cache" in str(exc_info.value).lower()
 
 
 # Test run fails when graph generation fails.
 def test_run_graph_generation_error(tmp_path: Path) -> None:
     """Test run fails when graph generation raises an error."""
-    from causaliq_workflow.action import ActionExecutionError
+    from causaliq_core import ActionExecutionError
 
     # Create a minimal context file
     context_file = tmp_path / "model.json"
@@ -899,11 +568,11 @@ def test_run_cache_closed_on_error(tmp_path: Path) -> None:
     mock_cache.close.assert_called_once()
 
 
-# Test _populate_execution_metadata with timestamps and messages.
-def test_populate_execution_metadata_with_full_metadata(
+# Test _build_execution_metadata returns full metadata with timestamps.
+def test_build_execution_metadata_with_full_metadata(
     tmp_path: Path,
 ) -> None:
-    """Test metadata population includes timestamps and messages."""
+    """Test metadata includes timestamps, messages and costs."""
     from datetime import datetime, timezone
 
     from causaliq_knowledge.graph.response import (
@@ -957,7 +626,7 @@ def test_populate_execution_metadata_with_full_metadata(
 
         action = KnowledgeActionProvider()
 
-        action.run(
+        status, metadata, objects = action.run(
             "generate_graph",
             {
                 "context": str(context_file),
@@ -967,10 +636,7 @@ def test_populate_execution_metadata_with_full_metadata(
             mode="run",
         )
 
-    # Verify execution metadata includes messages and costs
-    metadata = action.get_action_metadata()
-
-    # Check messages are present
+    # Verify metadata includes messages and costs
     assert "llm_messages" in metadata
     assert len(metadata["llm_messages"]) == 2
     assert metadata["llm_messages"][0]["role"] == "system"
@@ -1000,7 +666,7 @@ def test_serialise_returns_graphml() -> None:
 
     action = KnowledgeActionProvider()
 
-    result = action.serialise("graph", graph)
+    result = action.serialise("graphml", graph)
 
     assert isinstance(result, str)
     assert "<graphml" in result
@@ -1025,7 +691,7 @@ def test_serialise_wrong_data_type() -> None:
     action = KnowledgeActionProvider()
 
     with pytest.raises(ValueError) as exc_info:
-        action.serialise("graph", "not a graph")
+        action.serialise("graphml", "not a graph")
 
     assert "expected generatedgraph" in str(exc_info.value).lower()
 
@@ -1051,7 +717,7 @@ def test_deserialise_returns_graph() -> None:
 
     action = KnowledgeActionProvider()
 
-    result = action.deserialise("graph", graphml_content)
+    result = action.deserialise("graphml", graphml_content)
 
     assert isinstance(result, GeneratedGraph)
     assert set(result.variables) == {"A", "B"}
@@ -1087,10 +753,10 @@ def test_serialise_deserialise_roundtrip() -> None:
     action = KnowledgeActionProvider()
 
     # Serialise to string
-    exported = action.serialise("graph", original_graph)
+    exported = action.serialise("graphml", original_graph)
 
     # Deserialise from string
-    restored_graph = action.deserialise("graph", exported)
+    restored_graph = action.deserialise("graphml", exported)
 
     # Verify structure preserved
     assert set(restored_graph.variables) == set(original_graph.variables)
@@ -1099,3 +765,77 @@ def test_serialise_deserialise_roundtrip() -> None:
     original_edge_pairs = {(e.source, e.target) for e in original_graph.edges}
     restored_edge_pairs = {(e.source, e.target) for e in restored_graph.edges}
     assert restored_edge_pairs == original_edge_pairs
+
+
+# Test serialise returns JSON string for json data type.
+def test_serialise_returns_json() -> None:
+    """Test serialise returns JSON string for json type."""
+    import json
+    from datetime import datetime, timezone
+
+    from causaliq_knowledge.graph.response import (
+        GeneratedGraph,
+        GenerationMetadata,
+        ProposedEdge,
+    )
+
+    graph = GeneratedGraph(
+        edges=[ProposedEdge(source="A", target="B", confidence=0.8)],
+        variables=["A", "B"],
+        reasoning="Test reasoning",
+        metadata=GenerationMetadata(
+            model="test-model",
+            provider="test-provider",
+            llm_timestamp=datetime(2024, 1, 1, tzinfo=timezone.utc),
+            llm_latency_ms=100,
+            input_tokens=50,
+            output_tokens=25,
+            llm_cost_usd=0.001,
+        ),
+    )
+
+    action = KnowledgeActionProvider()
+
+    result = action.serialise("json", graph)
+
+    assert isinstance(result, str)
+    data = json.loads(result)
+    assert data["variables"] == ["A", "B"]
+    assert len(data["edges"]) == 1
+    assert data["edges"][0]["source"] == "A"
+    assert data["edges"][0]["target"] == "B"
+    assert data["reasoning"] == "Test reasoning"
+    assert data["metadata"]["llm_model"] == "test-model"
+    assert data["metadata"]["llm_provider"] == "test-provider"
+    assert data["metadata"]["llm_cost_usd"] == 0.001
+
+
+# Test supported_types attribute is defined correctly.
+def test_supported_types_attribute() -> None:
+    """Test supported_types contains expected types."""
+    action = KnowledgeActionProvider()
+
+    assert action.supported_types == {"graphml", "json"}
+
+
+# Test serialise JSON without metadata still works.
+def test_serialise_json_without_metadata() -> None:
+    """Test serialise JSON works when graph has no metadata."""
+    import json
+
+    from causaliq_knowledge.graph.response import GeneratedGraph, ProposedEdge
+
+    graph = GeneratedGraph(
+        edges=[ProposedEdge(source="A", target="B", confidence=0.9)],
+        variables=["A", "B"],
+        reasoning="No metadata",
+    )
+
+    action = KnowledgeActionProvider()
+
+    result = action.serialise("json", graph)
+
+    data = json.loads(result)
+    assert "metadata" not in data
+    assert data["variables"] == ["A", "B"]
+    assert data["reasoning"] == "No metadata"

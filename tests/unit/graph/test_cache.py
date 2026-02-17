@@ -201,8 +201,8 @@ def test_encode_method_with_generated_graph() -> None:
             variables=["A", "B"],
         )
 
-        blob = encoder.encode(graph, cache)
-        restored, _ = encoder.decode(blob, cache)
+        blob = encoder.compress(graph, cache)
+        restored, _ = encoder.decompress(blob, cache)
 
         assert isinstance(restored, GeneratedGraph)
         assert len(restored.edges) == 1
@@ -222,8 +222,8 @@ def test_encode_method_with_dict() -> None:
             "reasoning": "Test reasoning",
         }
 
-        blob = encoder.encode(data, cache)
-        restored, _ = encoder.decode(blob, cache)
+        blob = encoder.compress(data, cache)
+        restored, _ = encoder.decompress(blob, cache)
 
         assert isinstance(restored, GeneratedGraph)
         assert len(restored.edges) == 1
@@ -458,7 +458,7 @@ def test_decode_multi_unknown_blob_type_token() -> None:
         blob_header += struct.pack(">I", 4)  # Length 4
         blob_data = b"\x00\x00\x00\x00"  # 4 bytes of data
         # Metadata (empty dict encoded as JSON token)
-        meta = encoder.encode({}, cache)
+        meta = encoder.compress({}, cache)
 
         bad_blob = header + blob_header + blob_data + meta
 
@@ -571,13 +571,13 @@ def test_encode_plain_dict_fallback() -> None:
 
         # Plain dict without 'edges' - should use JSON encoding
         data = {"key": "value", "count": 42}
-        blob = encoder.encode(data, cache)
+        blob = encoder.compress(data, cache)
 
         # Decode as JSON (not via decode_entry)
-        from causaliq_core.cache.encoders import JsonEncoder
+        from causaliq_core.cache.compressors import JsonCompressor
 
-        json_encoder = JsonEncoder()
-        decoded = json_encoder.decode(blob, cache)
+        json_encoder = JsonCompressor()
+        decoded = json_encoder.decompress(blob, cache)
         assert decoded == data
 
 
@@ -596,8 +596,8 @@ def test_dict_to_graph_with_proposed_edge_objects() -> None:
             "reasoning": "Test",
         }
 
-        blob = encoder.encode(data, cache)
-        restored, _ = encoder.decode(blob, cache)
+        blob = encoder.compress(data, cache)
+        restored, _ = encoder.decompress(blob, cache)
 
         assert restored.edges[0].source == "A"
         assert restored.edges[0].confidence == 0.9
@@ -621,8 +621,8 @@ def test_dict_to_graph_with_metadata_object() -> None:
             "metadata": meta,
         }
 
-        blob = encoder.encode(data, cache)
-        restored, _ = encoder.decode(blob, cache)
+        blob = encoder.compress(data, cache)
+        restored, _ = encoder.decompress(blob, cache)
 
         assert restored.metadata is not None
         assert restored.metadata.model == "test-model"
