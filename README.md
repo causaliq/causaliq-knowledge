@@ -31,19 +31,28 @@ print(f"Reasoning: {result.reasoning}")
 
 ## Features
 
-Currently implemented releases:
+## ✅ Currently implemented releases:
 
-- **Release v0.1.0 - Foundation LLM**: Simple LLM queries to 1 or 2 LLMs about edge existence and orientation to support graph averaging
-- **Release v0.2.0 - Additional LLMs**: Support for 7 LLM providers (Groq, Gemini, OpenAI, Anthropic, DeepSeek, Mistral, Ollama)
-- **Release v0.3.0 - LLM Caching**: SQLite-based response caching with CLI tools for cache management
-- **Release v0.4.0 - Graph Generation**: CLI and CausalIQ workflow action for LLM-generated causal graphs
+- **v0.1.0 - Foundation LLM** [January 2026]: Foundation release establishing LLM client infrastructure for causal graph
+generation.
 
-Planned:
+- **v0.2.0 - Additional LLMs** [January 2026]: Expanded LLM provider support from 2 to 7 providers.
 
-- **Release v0.5.0 - Graph Caching**: save generated graphs to Workflow caches
-- **Release v0.6.0 - LLM Cost Tracking**: Query LLM provider APIs for usage and cost statistics
-- **Release v0.7.0 - LLM Context**: Variable/role/literature etc context
-- **Release v0.8.0 - Algorithm integration**: Integration into structure learning algorithms
+- **v0.3.0 - LLM Caching** [January 2026]: SQLite-based response caching with CLI tools for cache management.
+
+- **v0.4.0 - Graph Generation** [February 2026]: CLI tools and CausalIQ workflows for LLM-generated causal graphs.
+
+- **v0.5.0 - Workflow Integration** [February 2026]: Integration into CausalIQ Workflows including writing results to cache.
+
+## 🛣️ Upcoming Releases (speculative)
+
+- **Release v0.6.0 - Statistical Fusion**: Support knowledge requirements for fusing LLM knowledge and statistical graph averaging.
+
+- **Release v0.7.0 - LLM Provider Cost Tracking**: Query LLM provider APIs for usage and cost statistics.
+
+- **Release v0.8.0 - Enhanced LLM Context**: Background literature supplied to LLMs
+
+- **Release v0.9.0 - Legacy Reference**: Support for deriving knowledge from reference networks and migration of functionality from legacy discovery repo
 
 ## Implementation Approach
 

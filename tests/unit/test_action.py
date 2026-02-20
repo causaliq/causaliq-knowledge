@@ -34,7 +34,7 @@ def test_supported_actions() -> None:
 def test_action_class_attributes() -> None:
     """Test action class has required metadata attributes."""
     assert KnowledgeActionProvider.name == "causaliq-knowledge"
-    assert KnowledgeActionProvider.version == "0.4.0"
+    assert KnowledgeActionProvider.version == "0.5.0"
     assert KnowledgeActionProvider.description != ""
     assert KnowledgeActionProvider.author == "CausalIQ"
 

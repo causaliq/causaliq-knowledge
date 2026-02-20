@@ -31,10 +31,31 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Nothing yet
 
+## [0.5.0] - Workflow Integration - 2026-02-20
+
+Integration into CausalIQ Workflows including writing results to cache.
+
+- **GraphCompressor**: Workflow Cache integration for generated graphs
+  - Compression/decompression of `GeneratedGraph` objects
+  - Integration with causaliq-workflow cache system
+- **CausalIQ Workflow Integration**: Action-based workflow support
+  - `ActionProvider` class for workflow step registration
+  - `network_context` parameter for specifying network context file
+  - Entry point discovery via `causaliq.actions` namespace
+  - `py.typed` marker for PEP 561 compliance
+- **Comprehensive API Documentation**: Updated docs for Python usage
+  - Complete `GraphGenerator` API reference with examples
+  - Quick start guides for graph generation
+  - Workflow integration documentation
+
+### Changed
+
+- **Dependencies**: Updated to `causaliq-workflow>=0.2.0` and `causaliq-core>=0.4.0`
+
 
 ## [0.4.0] - Graph Generation - 2026-02-04
 
-LLM-based causal graph generation from variable specifications.
+LLM-based causal graph generation from network context specifications.
 
 ### Added
 
@@ -45,17 +66,19 @@ LLM-based causal graph generation from variable specifications.
   - Support for all 7 LLM providers (Anthropic, DeepSeek, Gemini, Groq,
     Mistral, Ollama, OpenAI)
   - Integration with `TokenCache` for response caching
-- **Model Specification System**: JSON-based model definitions
-  - `ModelSpec` and `VariableSpec` Pydantic models
-  - `ModelLoader` for loading and validating specification files
-  - Support for variable types, roles, states, and descriptions
-  - `ViewDefinition` for minimal/standard/rich context levels
+- **Network Context System**: JSON-based network definitions
+  - `NetworkContext` dataclass with `load()`, `from_dict()`, `load_and_validate()`
+  - `VariableSpec` with name, `llm_name`, type, role, states, and descriptions
+  - `VariableType` and `VariableRole` enums for structured variable metadata
+  - Support for domain, provenance, and constraint definitions
 - **View Filtering**: Context level extraction for LLM prompts
-  - `ViewFilter` to extract minimal/standard/rich views from specifications
+  - `ViewFilter` to extract minimal/standard/rich views from network context
   - `PromptDetail` enum (MINIMAL, STANDARD, RICH)
-- **Variable Disguising**: Name obfuscation to counteract LLM memorisation
-  - `VariableDisguiser` with reproducible seed-based mapping
-  - Automatic reverse translation of LLM responses
+  - `use_llm_names` parameter for semantic name disguising
+- **Semantic Name Disguising**: Built-in name obfuscation via `llm_name` field
+  - Each variable can specify an `llm_name` for LLM prompts
+  - Automatic reverse translation of LLM responses to original names
+  - No separate disguiser class needed - integrated into ViewFilter
 - **Graph Prompts**: Structured prompt building for graph generation
   - `GraphQueryPrompt` builder with configurable context levels
   - `OutputFormat` enum (EDGE_LIST, ADJACENCY_MATRIX)
@@ -66,21 +89,14 @@ LLM-based causal graph generation from variable specifications.
   - `GenerationMetadata` with model, latency, tokens, cost, cache status
 - **CLI Graph Generation**: Command-line interface for graph generation
   - `cqknow generate_graph` command with comprehensive options
+  - `--network-context/-n` option for specifying network context file
   - Support for model selection, prompt detail, output format
   - JSON export with request ID tracking
 - **Request ID Tracking**: Improved export file naming
   - Optional `--id` parameter for CLI commands
   - Export format: `{id}_{timestamp}_{provider}.json`
   - Default cache filename changed to `_llm.db`
-- **CausalIQ Workflow Integration**: Action-based workflow support
-  - `GenerateGraphParams` model for shared parameter validation
-  - `CausalIQAction` export for workflow step registration
-  - Entry point discovery via `causaliq.actions` namespace
-  - `py.typed` marker for PEP 561 compliance
-- **Comprehensive API Documentation**: Updated docs for Python usage
-  - Complete `GraphGenerator` API reference with examples
-  - Quick start guides for graph generation
-  - Workflow integration documentation
+
 
 ### Changed
 
@@ -96,13 +112,14 @@ LLM-based causal graph generation from variable specifications.
   - Disk-based persistence with WAL mode for concurrent access
   - Token counting for cost tracking
   - Entry count and type listing methods
-- **CacheEncoder System**: Extensible serialization framework
-  - `CacheEncoder` abstract base class
-  - `JsonEncoder` for generic JSON serialization with compression
-  - `LLMEntryEncoder` for LLM-specific entry handling
+- **Compressor System**: Extensible serialisation framework
+  - `Compressor` abstract base class in `causaliq-core`
+  - `JsonCompressor` for generic JSON serialisation with compression
+  - `LLMCompressor` for LLM-specific entry handling
 - **LLMCacheEntry**: Structured data model for cached LLM responses
-  - Pydantic model with cache_key, response, and metadata
-  - Factory method for easy creation from API responses
+  - Dataclass with cache_key, response, and metadata
+  - `LLMResponse`, `LLMMetadata`, `LLMTokenUsage` data structures
+  - Factory method `create()` for easy creation from API responses
 - **BaseLLMClient Caching**: Automatic response caching in all LLM clients
   - Cache-first lookup with fallback to API
   - Configurable cache path
@@ -111,7 +128,7 @@ LLM-based causal graph generation from variable specifications.
   - `cqknow cache export` - Export to directory or zip archive
   - `cqknow cache import` - Import from directory or zip with auto-detection
 - **Human-Readable Export Filenames**: Edge query detection for meaningful names
-  - Pattern: `{model}_{node_a}_{node_b}_edge_{hash}.json`
+  - Pattern: `{id}_{timestamp}_{provider}.json`
 - **Zip Archive Support**: Export/import with automatic .zip detection
 
 

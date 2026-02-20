@@ -32,10 +32,10 @@ For a quickstart guide and installation instructions, see the [README on GitHub]
 
 - [Development Roadmap](roadmap.md): Roadmap of upcoming features
 - [User Guide](userguide/introduction.md): Comprehensive user guide
-  - [Model Specification Format](userguide/model_specification.md): JSON format for model specs
+  - [Network Context Format](userguide/model_specification.md): JSON format for network context
 - [Architecture](architecture/overview.md): Overall architecture and design notes
 - [API Reference](api/overview.md): Complete reference for Python code
-  - [Graph Module](api/graph/overview.md): Model specs, filtering, disguising
+  - [Graph Module](api/graph/overview.md): Network context, filtering, generation
 - [Development Guidelines](https://github.com/causaliq/causaliq-knowledge/blob/main/CONTRIBUTING.md): CausalIQ guidelines for developers
 - [Changelog](https://github.com/causaliq/causaliq-knowledge/blob/main/CHANGELOG.md)
 - [License](https://github.com/causaliq/causaliq-knowledge/blob/main/LICENSE)

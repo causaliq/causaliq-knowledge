@@ -148,7 +148,7 @@ class KnowledgeActionProvider(CausalIQActionProvider):
     """
 
     name: str = "causaliq-knowledge"
-    version: str = "0.4.0"
+    version: str = "0.5.0"
     description: str = "Generate causal graphs using LLM knowledge"
     author: str = "CausalIQ"
 
