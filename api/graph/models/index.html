@@ -12,7 +12,7 @@
         <link rel="prev" href="../overview/">
       
       
-        <link rel="next" href="../loader/">
+        <link rel="next" href="../view_filter/">
       
       
         
@@ -23,7 +23,7 @@
     
     
       
-        <title>Model Specification - causaliq-knowledge</title>
+        <title>Network Context - causaliq-knowledge</title>
       
     
     
@@ -78,7 +78,7 @@
     <div data-md-component="skip">
       
         
-        <a href="#model-specification-api-reference" class="md-skip">
+        <a href="#network-context-api-reference" class="md-skip">
           Skip to content
         </a>
       
@@ -114,7 +114,7 @@
         <div class="md-header__topic" data-md-component="header-topic">
           <span class="md-ellipsis">
             
-              Model Specification
+              Network Context
             
           </span>
         </div>
@@ -523,7 +523,7 @@
   <span class="md-ellipsis">
     
   
-    Model Specification Format
+    Network Context Format
   
 
     
@@ -715,34 +715,6 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../architecture/caching/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    Caching
-  
-
-    
-  </span>
-  
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
       <a href="../../../architecture/testing_strategy/" class="md-nav__link">
         
   
@@ -868,34 +840,6 @@
                 
   
   
-  
-  
-    <li class="md-nav__item">
-      <a href="../../models/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    Models
-  
-
-    
-  </span>
-  
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
     
   
   
@@ -917,10 +861,10 @@
       
         
         
-        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_5_3" checked>
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_5_2" checked>
         
           
-          <label class="md-nav__link" for="__nav_5_3" id="__nav_5_3_label" tabindex="">
+          <label class="md-nav__link" for="__nav_5_2" id="__nav_5_2_label" tabindex="">
             
   
   
@@ -938,8 +882,8 @@
             <span class="md-nav__icon md-icon"></span>
           </label>
         
-        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_5_3_label" aria-expanded="true">
-          <label class="md-nav__title" for="__nav_5_3">
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_5_2_label" aria-expanded="true">
+          <label class="md-nav__title" for="__nav_5_2">
             <span class="md-nav__icon md-icon"></span>
             
   
@@ -1000,7 +944,7 @@
   <span class="md-ellipsis">
     
   
-    Model Specification
+    Network Context
   
 
     
@@ -1018,7 +962,7 @@
   <span class="md-ellipsis">
     
   
-    Model Specification
+    Network Context
   
 
     
@@ -1095,6 +1039,17 @@
     <span class="md-ellipsis">
       
         Attributes
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#llm-name-vs-benchmark-name" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        LLM Name vs Benchmark Name
       
     </span>
   </a>
@@ -1308,15 +1263,15 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#modelspec" class="md-nav__link">
+  <a href="#networkcontext" class="md-nav__link">
     <span class="md-ellipsis">
       
-        ModelSpec
+        NetworkContext
       
     </span>
   </a>
   
-    <nav class="md-nav" aria-label="ModelSpec">
+    <nav class="md-nav" aria-label="NetworkContext">
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
@@ -1331,15 +1286,65 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#methods" class="md-nav__link">
+  <a href="#class-methods" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Methods
+        Class Methods
       
     </span>
   </a>
   
-    <nav class="md-nav" aria-label="Methods">
+    <nav class="md-nav" aria-label="Class Methods">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#loadpath-str-path-networkcontext" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        load(path: str | Path) -&gt; NetworkContext
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#from_dictdata-dict-source_path-path-none-none-networkcontext" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        from_dict(data: dict, source_path: Path | None = None) -&gt; NetworkContext
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#load_and_validatepath-str-path-tuplenetworkcontext-liststr" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        load_and_validate(path: str | Path) -&gt; tuple[NetworkContext, list[str]]
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#instance-methods" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Instance Methods
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Instance Methods">
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
@@ -1347,6 +1352,17 @@
     <span class="md-ellipsis">
       
         get_variable_names() -&gt; list[str]
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#get_llm_names-liststr" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        get_llm_names() -&gt; list[str]
       
     </span>
   </a>
@@ -1365,10 +1381,32 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#get_exogenous_variables-listvariablespec" class="md-nav__link">
+  <a href="#get_llm_to_name_mapping-dictstr-str" class="md-nav__link">
     <span class="md-ellipsis">
       
-        get_exogenous_variables() -&gt; list[VariableSpec]
+        get_llm_to_name_mapping() -&gt; dict[str, str]
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#uses_distinct_llm_names-bool" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        uses_distinct_llm_names() -&gt; bool
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#validate_variables-liststr" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        validate_variables() -&gt; list[str]
       
     </span>
   </a>
@@ -1382,6 +1420,45 @@
         
           <li class="md-nav__item">
   <a href="#example_2" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Example
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#networkloaderror" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        NetworkLoadError
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="NetworkLoadError">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#attributes_8" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Attributes
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#example_3" class="md-nav__link">
     <span class="md-ellipsis">
       
         Example
@@ -1423,34 +1500,6 @@
   
   
     <li class="md-nav__item">
-      <a href="../loader/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    Model Loader
-  
-
-    
-  </span>
-  
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
       <a href="../view_filter/" class="md-nav__link">
         
   
@@ -1459,34 +1508,6 @@
     
   
     View Filter
-  
-
-    
-  </span>
-  
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="../disguiser/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    Variable Disguiser
   
 
     
@@ -1617,193 +1638,10 @@
         
           
         
-        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_5_4" >
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_5_3" >
         
           
-          <label class="md-nav__link" for="__nav_5_4" id="__nav_5_4_label" tabindex="">
-            
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    Cache (Core)
-  
-
-    
-  </span>
-  
-  
-
-            <span class="md-nav__icon md-icon"></span>
-          </label>
-        
-        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_5_4_label" aria-expanded="false">
-          <label class="md-nav__title" for="__nav_5_4">
-            <span class="md-nav__icon md-icon"></span>
-            
-  
-    Cache (Core)
-  
-
-          </label>
-          <ul class="md-nav__list" data-md-scrollfix>
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="../../cache/overview/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    Cache Overview
-  
-
-    
-  </span>
-  
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
-  
-  
-    
-    
-    
-    
-      
-      
-        
-      
-    
-    
-    <li class="md-nav__item md-nav__item--nested">
-      
-        
-        
-          
-        
-        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_5_4_2" >
-        
-          
-          <label class="md-nav__link" for="__nav_5_4_2" id="__nav_5_4_2_label" tabindex="0">
-            
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    Encoders
-  
-
-    
-  </span>
-  
-  
-
-            <span class="md-nav__icon md-icon"></span>
-          </label>
-        
-        <nav class="md-nav" data-md-level="3" aria-labelledby="__nav_5_4_2_label" aria-expanded="false">
-          <label class="md-nav__title" for="__nav_5_4_2">
-            <span class="md-nav__icon md-icon"></span>
-            
-  
-    Encoders
-  
-
-          </label>
-          <ul class="md-nav__list" data-md-scrollfix>
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="../../cache/encoders/json_encoder/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    JsonEncoder
-  
-
-    
-  </span>
-  
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-          </ul>
-        </nav>
-      
-    </li>
-  
-
-              
-            
-          </ul>
-        </nav>
-      
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
-  
-  
-    
-    
-    
-    
-      
-      
-        
-          
-          
-        
-      
-    
-    
-    <li class="md-nav__item md-nav__item--section md-nav__item--nested">
-      
-        
-        
-          
-        
-        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_5_5" >
-        
-          
-          <label class="md-nav__link" for="__nav_5_5" id="__nav_5_5_label" tabindex="">
+          <label class="md-nav__link" for="__nav_5_3" id="__nav_5_3_label" tabindex="">
             
   
   
@@ -1821,8 +1659,8 @@
             <span class="md-nav__icon md-icon"></span>
           </label>
         
-        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_5_5_label" aria-expanded="false">
-          <label class="md-nav__title" for="__nav_5_5">
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_5_3_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_5_3">
             <span class="md-nav__icon md-icon"></span>
             
   
@@ -1847,34 +1685,6 @@
     
   
     LLM Cache
-  
-
-    
-  </span>
-  
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="../../provider/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    LLM Provider
   
 
     
@@ -1938,10 +1748,10 @@
         
           
         
-        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_5_5_4" >
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_5_3_3" >
         
           
-          <label class="md-nav__link" for="__nav_5_5_4" id="__nav_5_5_4_label" tabindex="0">
+          <label class="md-nav__link" for="__nav_5_3_3" id="__nav_5_3_3_label" tabindex="0">
             
   
   
@@ -1959,8 +1769,8 @@
             <span class="md-nav__icon md-icon"></span>
           </label>
         
-        <nav class="md-nav" data-md-level="3" aria-labelledby="__nav_5_5_4_label" aria-expanded="false">
-          <label class="md-nav__title" for="__nav_5_5_4">
+        <nav class="md-nav" data-md-level="3" aria-labelledby="__nav_5_3_3_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_5_3_3">
             <span class="md-nav__icon md-icon"></span>
             
   
@@ -2174,65 +1984,9 @@
 
               
             
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="../../prompts/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    Prompts
-  
-
-    
-  </span>
-  
-  
-
-      </a>
-    </li>
-  
-
-              
-            
           </ul>
         </nav>
       
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="../../base/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    Base
-  
-
-    
-  </span>
-  
-  
-
-      </a>
     </li>
   
 
@@ -2351,6 +2105,17 @@
     <span class="md-ellipsis">
       
         Attributes
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#llm-name-vs-benchmark-name" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        LLM Name vs Benchmark Name
       
     </span>
   </a>
@@ -2564,15 +2329,15 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#modelspec" class="md-nav__link">
+  <a href="#networkcontext" class="md-nav__link">
     <span class="md-ellipsis">
       
-        ModelSpec
+        NetworkContext
       
     </span>
   </a>
   
-    <nav class="md-nav" aria-label="ModelSpec">
+    <nav class="md-nav" aria-label="NetworkContext">
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
@@ -2587,15 +2352,65 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#methods" class="md-nav__link">
+  <a href="#class-methods" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Methods
+        Class Methods
       
     </span>
   </a>
   
-    <nav class="md-nav" aria-label="Methods">
+    <nav class="md-nav" aria-label="Class Methods">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#loadpath-str-path-networkcontext" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        load(path: str | Path) -&gt; NetworkContext
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#from_dictdata-dict-source_path-path-none-none-networkcontext" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        from_dict(data: dict, source_path: Path | None = None) -&gt; NetworkContext
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#load_and_validatepath-str-path-tuplenetworkcontext-liststr" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        load_and_validate(path: str | Path) -&gt; tuple[NetworkContext, list[str]]
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#instance-methods" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Instance Methods
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Instance Methods">
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
@@ -2603,6 +2418,17 @@
     <span class="md-ellipsis">
       
         get_variable_names() -&gt; list[str]
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#get_llm_names-liststr" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        get_llm_names() -&gt; list[str]
       
     </span>
   </a>
@@ -2621,10 +2447,32 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#get_exogenous_variables-listvariablespec" class="md-nav__link">
+  <a href="#get_llm_to_name_mapping-dictstr-str" class="md-nav__link">
     <span class="md-ellipsis">
       
-        get_exogenous_variables() -&gt; list[VariableSpec]
+        get_llm_to_name_mapping() -&gt; dict[str, str]
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#uses_distinct_llm_names-bool" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        uses_distinct_llm_names() -&gt; bool
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#validate_variables-liststr" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        validate_variables() -&gt; list[str]
       
     </span>
   </a>
@@ -2638,6 +2486,45 @@
         
           <li class="md-nav__item">
   <a href="#example_2" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Example
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#networkloaderror" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        NetworkLoadError
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="NetworkLoadError">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#attributes_8" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Attributes
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#example_3" class="md-nav__link">
     <span class="md-ellipsis">
       
         Example
@@ -2680,19 +2567,20 @@
 
 
 
-<h1 id="model-specification-api-reference">Model Specification API Reference<a class="headerlink" href="#model-specification-api-reference" title="Permanent link">&para;</a></h1>
-<p>Pydantic models for defining causal model specifications in JSON format.</p>
+<h1 id="network-context-api-reference">Network Context API Reference<a class="headerlink" href="#network-context-api-reference" title="Permanent link">&para;</a></h1>
+<p>Pydantic models for defining network context specifications in JSON format.</p>
 <h2 id="overview">Overview<a class="headerlink" href="#overview" title="Permanent link">&para;</a></h2>
-<p>Model specifications define the variables and metadata for a causal model,
-enabling LLMs to generate causal graphs with appropriate domain context.</p>
+<p>Network context specifications define the variables and metadata for a causal
+network, enabling LLMs to generate causal graphs with appropriate domain context.</p>
 <div class="language-python highlight"><pre><span></span><code><span id="__span-0-1"><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="kn">from</span><span class="w"> </span><span class="nn">causaliq_knowledge.graph</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
-</span><span id="__span-0-2"><a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a>    <span class="n">ModelSpec</span><span class="p">,</span>
-</span><span id="__span-0-3"><a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a>    <span class="n">VariableSpec</span><span class="p">,</span>
-</span><span id="__span-0-4"><a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a>    <span class="n">VariableType</span><span class="p">,</span>
-</span><span id="__span-0-5"><a id="__codelineno-0-5" name="__codelineno-0-5" href="#__codelineno-0-5"></a>    <span class="n">VariableRole</span><span class="p">,</span>
-</span><span id="__span-0-6"><a id="__codelineno-0-6" name="__codelineno-0-6" href="#__codelineno-0-6"></a>    <span class="n">PromptDetails</span><span class="p">,</span>
-</span><span id="__span-0-7"><a id="__codelineno-0-7" name="__codelineno-0-7" href="#__codelineno-0-7"></a>    <span class="n">ViewDefinition</span><span class="p">,</span>
-</span><span id="__span-0-8"><a id="__codelineno-0-8" name="__codelineno-0-8" href="#__codelineno-0-8"></a><span class="p">)</span>
+</span><span id="__span-0-2"><a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a>    <span class="n">NetworkContext</span><span class="p">,</span>
+</span><span id="__span-0-3"><a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a>    <span class="n">NetworkLoadError</span><span class="p">,</span>
+</span><span id="__span-0-4"><a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a>    <span class="n">VariableSpec</span><span class="p">,</span>
+</span><span id="__span-0-5"><a id="__codelineno-0-5" name="__codelineno-0-5" href="#__codelineno-0-5"></a>    <span class="n">VariableType</span><span class="p">,</span>
+</span><span id="__span-0-6"><a id="__codelineno-0-6" name="__codelineno-0-6" href="#__codelineno-0-6"></a>    <span class="n">VariableRole</span><span class="p">,</span>
+</span><span id="__span-0-7"><a id="__codelineno-0-7" name="__codelineno-0-7" href="#__codelineno-0-7"></a>    <span class="n">PromptDetails</span><span class="p">,</span>
+</span><span id="__span-0-8"><a id="__codelineno-0-8" name="__codelineno-0-8" href="#__codelineno-0-8"></a>    <span class="n">ViewDefinition</span><span class="p">,</span>
+</span><span id="__span-0-9"><a id="__codelineno-0-9" name="__codelineno-0-9" href="#__codelineno-0-9"></a><span class="p">)</span>
 </span></code></pre></div>
 <h2 id="variabletype">VariableType<a class="headerlink" href="#variabletype" title="Permanent link">&para;</a></h2>
 <p>Enumeration of supported variable types.</p>
@@ -2738,19 +2626,19 @@ enabling LLMs to generate causal graphs with appropriate domain context.</p>
 <td><code>name</code></td>
 <td><code>str</code></td>
 <td>Yes</td>
-<td>Primary identifier used in experiments</td>
+<td>Benchmark/literature name for ground truth</td>
+</tr>
+<tr>
+<td><code>llm_name</code></td>
+<td><code>str</code></td>
+<td>No</td>
+<td>Name used for LLM queries (defaults to name)</td>
 </tr>
 <tr>
 <td><code>type</code></td>
 <td><code>VariableType</code></td>
 <td>Yes</td>
 <td>Variable type (binary, categorical, etc.)</td>
-</tr>
-<tr>
-<td><code>canonical_name</code></td>
-<td><code>str</code></td>
-<td>No</td>
-<td>Original benchmark name (for evaluation)</td>
 </tr>
 <tr>
 <td><code>display_name</code></td>
@@ -2826,18 +2714,34 @@ enabling LLMs to generate causal graphs with appropriate domain context.</p>
 </tr>
 </tbody>
 </table>
-<h3 id="example">Example<a class="headerlink" href="#example" title="Permanent link">&para;</a></h3>
-<div class="language-python highlight"><pre><span></span><code><span id="__span-5-1"><a id="__codelineno-5-1" name="__codelineno-5-1" href="#__codelineno-5-1"></a><span class="kn">from</span><span class="w"> </span><span class="nn">causaliq_knowledge.graph</span><span class="w"> </span><span class="kn">import</span> <span class="n">VariableSpec</span><span class="p">,</span> <span class="n">VariableType</span><span class="p">,</span> <span class="n">VariableRole</span>
-</span><span id="__span-5-2"><a id="__codelineno-5-2" name="__codelineno-5-2" href="#__codelineno-5-2"></a>
-</span><span id="__span-5-3"><a id="__codelineno-5-3" name="__codelineno-5-3" href="#__codelineno-5-3"></a><span class="n">smoking</span> <span class="o">=</span> <span class="n">VariableSpec</span><span class="p">(</span>
-</span><span id="__span-5-4"><a id="__codelineno-5-4" name="__codelineno-5-4" href="#__codelineno-5-4"></a>    <span class="n">name</span><span class="o">=</span><span class="s2">&quot;smoking_status&quot;</span><span class="p">,</span>
+<h3 id="llm-name-vs-benchmark-name">LLM Name vs Benchmark Name<a class="headerlink" href="#llm-name-vs-benchmark-name" title="Permanent link">&para;</a></h3>
+<p>The <code>name</code> and <code>llm_name</code> fields enable <strong>semantic disguising</strong> to reduce LLM
+memorisation of well-known benchmark networks:</p>
+<ul>
+<li><strong><code>name</code></strong>: The benchmark/literature name used for ground truth evaluation</li>
+<li><strong><code>llm_name</code></strong>: The name sent to the LLM (defaults to <code>name</code> if not specified)</li>
+</ul>
+<p><strong>Example</strong>: For the ASIA network's "Tuberculosis" variable:</p>
+<div class="language-python highlight"><pre><span></span><code><span id="__span-5-1"><a id="__codelineno-5-1" name="__codelineno-5-1" href="#__codelineno-5-1"></a><span class="n">VariableSpec</span><span class="p">(</span>
+</span><span id="__span-5-2"><a id="__codelineno-5-2" name="__codelineno-5-2" href="#__codelineno-5-2"></a>    <span class="n">name</span><span class="o">=</span><span class="s2">&quot;tub&quot;</span><span class="p">,</span>              <span class="c1"># Original benchmark name</span>
+</span><span id="__span-5-3"><a id="__codelineno-5-3" name="__codelineno-5-3" href="#__codelineno-5-3"></a>    <span class="n">llm_name</span><span class="o">=</span><span class="s2">&quot;HasTB&quot;</span><span class="p">,</span>        <span class="c1"># Meaningful but non-canonical name for LLM</span>
+</span><span id="__span-5-4"><a id="__codelineno-5-4" name="__codelineno-5-4" href="#__codelineno-5-4"></a>    <span class="n">display_name</span><span class="o">=</span><span class="s2">&quot;Tuberculosis Status&quot;</span><span class="p">,</span>
 </span><span id="__span-5-5"><a id="__codelineno-5-5" name="__codelineno-5-5" href="#__codelineno-5-5"></a>    <span class="nb">type</span><span class="o">=</span><span class="n">VariableType</span><span class="o">.</span><span class="n">BINARY</span><span class="p">,</span>
-</span><span id="__span-5-6"><a id="__codelineno-5-6" name="__codelineno-5-6" href="#__codelineno-5-6"></a>    <span class="n">states</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;never&quot;</span><span class="p">,</span> <span class="s2">&quot;ever&quot;</span><span class="p">],</span>
-</span><span id="__span-5-7"><a id="__codelineno-5-7" name="__codelineno-5-7" href="#__codelineno-5-7"></a>    <span class="n">role</span><span class="o">=</span><span class="n">VariableRole</span><span class="o">.</span><span class="n">EXOGENOUS</span><span class="p">,</span>
-</span><span id="__span-5-8"><a id="__codelineno-5-8" name="__codelineno-5-8" href="#__codelineno-5-8"></a>    <span class="n">short_description</span><span class="o">=</span><span class="s2">&quot;Patient has history of tobacco smoking.&quot;</span><span class="p">,</span>
-</span><span id="__span-5-9"><a id="__codelineno-5-9" name="__codelineno-5-9" href="#__codelineno-5-9"></a>    <span class="n">extended_description</span><span class="o">=</span><span class="s2">&quot;Self-reported smoking history, known risk factor.&quot;</span><span class="p">,</span>
-</span><span id="__span-5-10"><a id="__codelineno-5-10" name="__codelineno-5-10" href="#__codelineno-5-10"></a>    <span class="n">base_rate</span><span class="o">=</span><span class="p">{</span><span class="s2">&quot;never&quot;</span><span class="p">:</span> <span class="mf">0.7</span><span class="p">,</span> <span class="s2">&quot;ever&quot;</span><span class="p">:</span> <span class="mf">0.3</span><span class="p">},</span>
-</span><span id="__span-5-11"><a id="__codelineno-5-11" name="__codelineno-5-11" href="#__codelineno-5-11"></a><span class="p">)</span>
+</span><span id="__span-5-6"><a id="__codelineno-5-6" name="__codelineno-5-6" href="#__codelineno-5-6"></a><span class="p">)</span>
+</span></code></pre></div>
+<h3 id="example">Example<a class="headerlink" href="#example" title="Permanent link">&para;</a></h3>
+<div class="language-python highlight"><pre><span></span><code><span id="__span-6-1"><a id="__codelineno-6-1" name="__codelineno-6-1" href="#__codelineno-6-1"></a><span class="kn">from</span><span class="w"> </span><span class="nn">causaliq_knowledge.graph</span><span class="w"> </span><span class="kn">import</span> <span class="n">VariableSpec</span><span class="p">,</span> <span class="n">VariableType</span><span class="p">,</span> <span class="n">VariableRole</span>
+</span><span id="__span-6-2"><a id="__codelineno-6-2" name="__codelineno-6-2" href="#__codelineno-6-2"></a>
+</span><span id="__span-6-3"><a id="__codelineno-6-3" name="__codelineno-6-3" href="#__codelineno-6-3"></a><span class="n">smoking</span> <span class="o">=</span> <span class="n">VariableSpec</span><span class="p">(</span>
+</span><span id="__span-6-4"><a id="__codelineno-6-4" name="__codelineno-6-4" href="#__codelineno-6-4"></a>    <span class="n">name</span><span class="o">=</span><span class="s2">&quot;smoke&quot;</span><span class="p">,</span>
+</span><span id="__span-6-5"><a id="__codelineno-6-5" name="__codelineno-6-5" href="#__codelineno-6-5"></a>    <span class="n">llm_name</span><span class="o">=</span><span class="s2">&quot;tobacco_history&quot;</span><span class="p">,</span>
+</span><span id="__span-6-6"><a id="__codelineno-6-6" name="__codelineno-6-6" href="#__codelineno-6-6"></a>    <span class="nb">type</span><span class="o">=</span><span class="n">VariableType</span><span class="o">.</span><span class="n">BINARY</span><span class="p">,</span>
+</span><span id="__span-6-7"><a id="__codelineno-6-7" name="__codelineno-6-7" href="#__codelineno-6-7"></a>    <span class="n">states</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;never&quot;</span><span class="p">,</span> <span class="s2">&quot;ever&quot;</span><span class="p">],</span>
+</span><span id="__span-6-8"><a id="__codelineno-6-8" name="__codelineno-6-8" href="#__codelineno-6-8"></a>    <span class="n">role</span><span class="o">=</span><span class="n">VariableRole</span><span class="o">.</span><span class="n">EXOGENOUS</span><span class="p">,</span>
+</span><span id="__span-6-9"><a id="__codelineno-6-9" name="__codelineno-6-9" href="#__codelineno-6-9"></a>    <span class="n">short_description</span><span class="o">=</span><span class="s2">&quot;Patient has history of tobacco smoking.&quot;</span><span class="p">,</span>
+</span><span id="__span-6-10"><a id="__codelineno-6-10" name="__codelineno-6-10" href="#__codelineno-6-10"></a>    <span class="n">extended_description</span><span class="o">=</span><span class="s2">&quot;Self-reported smoking history, known risk factor.&quot;</span><span class="p">,</span>
+</span><span id="__span-6-11"><a id="__codelineno-6-11" name="__codelineno-6-11" href="#__codelineno-6-11"></a>    <span class="n">base_rate</span><span class="o">=</span><span class="p">{</span><span class="s2">&quot;never&quot;</span><span class="p">:</span> <span class="mf">0.7</span><span class="p">,</span> <span class="s2">&quot;ever&quot;</span><span class="p">:</span> <span class="mf">0.3</span><span class="p">},</span>
+</span><span id="__span-6-12"><a id="__codelineno-6-12" name="__codelineno-6-12" href="#__codelineno-6-12"></a><span class="p">)</span>
 </span></code></pre></div>
 <h2 id="viewdefinition">ViewDefinition<a class="headerlink" href="#viewdefinition" title="Permanent link">&para;</a></h2>
 <p>Configuration for a single context view level.</p>
@@ -2867,17 +2771,17 @@ enabling LLMs to generate causal graphs with appropriate domain context.</p>
 </tbody>
 </table>
 <h3 id="example_1">Example<a class="headerlink" href="#example_1" title="Permanent link">&para;</a></h3>
-<div class="language-python highlight"><pre><span></span><code><span id="__span-6-1"><a id="__codelineno-6-1" name="__codelineno-6-1" href="#__codelineno-6-1"></a><span class="kn">from</span><span class="w"> </span><span class="nn">causaliq_knowledge.graph</span><span class="w"> </span><span class="kn">import</span> <span class="n">ViewDefinition</span>
-</span><span id="__span-6-2"><a id="__codelineno-6-2" name="__codelineno-6-2" href="#__codelineno-6-2"></a>
-</span><span id="__span-6-3"><a id="__codelineno-6-3" name="__codelineno-6-3" href="#__codelineno-6-3"></a><span class="n">minimal_view</span> <span class="o">=</span> <span class="n">ViewDefinition</span><span class="p">(</span>
-</span><span id="__span-6-4"><a id="__codelineno-6-4" name="__codelineno-6-4" href="#__codelineno-6-4"></a>    <span class="n">description</span><span class="o">=</span><span class="s2">&quot;Variable names only&quot;</span><span class="p">,</span>
-</span><span id="__span-6-5"><a id="__codelineno-6-5" name="__codelineno-6-5" href="#__codelineno-6-5"></a>    <span class="n">include_fields</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;name&quot;</span><span class="p">]</span>
-</span><span id="__span-6-6"><a id="__codelineno-6-6" name="__codelineno-6-6" href="#__codelineno-6-6"></a><span class="p">)</span>
-</span><span id="__span-6-7"><a id="__codelineno-6-7" name="__codelineno-6-7" href="#__codelineno-6-7"></a>
-</span><span id="__span-6-8"><a id="__codelineno-6-8" name="__codelineno-6-8" href="#__codelineno-6-8"></a><span class="n">standard_view</span> <span class="o">=</span> <span class="n">ViewDefinition</span><span class="p">(</span>
-</span><span id="__span-6-9"><a id="__codelineno-6-9" name="__codelineno-6-9" href="#__codelineno-6-9"></a>    <span class="n">description</span><span class="o">=</span><span class="s2">&quot;Names with basic metadata&quot;</span><span class="p">,</span>
-</span><span id="__span-6-10"><a id="__codelineno-6-10" name="__codelineno-6-10" href="#__codelineno-6-10"></a>    <span class="n">include_fields</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;name&quot;</span><span class="p">,</span> <span class="s2">&quot;type&quot;</span><span class="p">,</span> <span class="s2">&quot;short_description&quot;</span><span class="p">,</span> <span class="s2">&quot;states&quot;</span><span class="p">]</span>
-</span><span id="__span-6-11"><a id="__codelineno-6-11" name="__codelineno-6-11" href="#__codelineno-6-11"></a><span class="p">)</span>
+<div class="language-python highlight"><pre><span></span><code><span id="__span-7-1"><a id="__codelineno-7-1" name="__codelineno-7-1" href="#__codelineno-7-1"></a><span class="kn">from</span><span class="w"> </span><span class="nn">causaliq_knowledge.graph</span><span class="w"> </span><span class="kn">import</span> <span class="n">ViewDefinition</span>
+</span><span id="__span-7-2"><a id="__codelineno-7-2" name="__codelineno-7-2" href="#__codelineno-7-2"></a>
+</span><span id="__span-7-3"><a id="__codelineno-7-3" name="__codelineno-7-3" href="#__codelineno-7-3"></a><span class="n">minimal_view</span> <span class="o">=</span> <span class="n">ViewDefinition</span><span class="p">(</span>
+</span><span id="__span-7-4"><a id="__codelineno-7-4" name="__codelineno-7-4" href="#__codelineno-7-4"></a>    <span class="n">description</span><span class="o">=</span><span class="s2">&quot;Variable names only&quot;</span><span class="p">,</span>
+</span><span id="__span-7-5"><a id="__codelineno-7-5" name="__codelineno-7-5" href="#__codelineno-7-5"></a>    <span class="n">include_fields</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;name&quot;</span><span class="p">]</span>
+</span><span id="__span-7-6"><a id="__codelineno-7-6" name="__codelineno-7-6" href="#__codelineno-7-6"></a><span class="p">)</span>
+</span><span id="__span-7-7"><a id="__codelineno-7-7" name="__codelineno-7-7" href="#__codelineno-7-7"></a>
+</span><span id="__span-7-8"><a id="__codelineno-7-8" name="__codelineno-7-8" href="#__codelineno-7-8"></a><span class="n">standard_view</span> <span class="o">=</span> <span class="n">ViewDefinition</span><span class="p">(</span>
+</span><span id="__span-7-9"><a id="__codelineno-7-9" name="__codelineno-7-9" href="#__codelineno-7-9"></a>    <span class="n">description</span><span class="o">=</span><span class="s2">&quot;Names with basic metadata&quot;</span><span class="p">,</span>
+</span><span id="__span-7-10"><a id="__codelineno-7-10" name="__codelineno-7-10" href="#__codelineno-7-10"></a>    <span class="n">include_fields</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;name&quot;</span><span class="p">,</span> <span class="s2">&quot;type&quot;</span><span class="p">,</span> <span class="s2">&quot;short_description&quot;</span><span class="p">,</span> <span class="s2">&quot;states&quot;</span><span class="p">]</span>
+</span><span id="__span-7-11"><a id="__codelineno-7-11" name="__codelineno-7-11" href="#__codelineno-7-11"></a><span class="p">)</span>
 </span></code></pre></div>
 <h2 id="promptdetails">PromptDetails<a class="headerlink" href="#promptdetails" title="Permanent link">&para;</a></h2>
 <p>Container for the three standard prompt detail levels.</p>
@@ -2910,18 +2814,18 @@ enabling LLMs to generate causal graphs with appropriate domain context.</p>
 </table>
 <h3 id="default-prompt-details">Default Prompt Details<a class="headerlink" href="#default-prompt-details" title="Permanent link">&para;</a></h3>
 <p>If not specified, the following defaults are used:</p>
-<div class="language-python highlight"><pre><span></span><code><span id="__span-7-1"><a id="__codelineno-7-1" name="__codelineno-7-1" href="#__codelineno-7-1"></a><span class="n">PromptDetails</span><span class="p">(</span>
-</span><span id="__span-7-2"><a id="__codelineno-7-2" name="__codelineno-7-2" href="#__codelineno-7-2"></a>    <span class="n">minimal</span><span class="o">=</span><span class="n">ViewDefinition</span><span class="p">(</span><span class="n">include_fields</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;name&quot;</span><span class="p">]),</span>
-</span><span id="__span-7-3"><a id="__codelineno-7-3" name="__codelineno-7-3" href="#__codelineno-7-3"></a>    <span class="n">standard</span><span class="o">=</span><span class="n">ViewDefinition</span><span class="p">(</span>
-</span><span id="__span-7-4"><a id="__codelineno-7-4" name="__codelineno-7-4" href="#__codelineno-7-4"></a>        <span class="n">include_fields</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;name&quot;</span><span class="p">,</span> <span class="s2">&quot;type&quot;</span><span class="p">,</span> <span class="s2">&quot;short_description&quot;</span><span class="p">,</span> <span class="s2">&quot;states&quot;</span><span class="p">]</span>
-</span><span id="__span-7-5"><a id="__codelineno-7-5" name="__codelineno-7-5" href="#__codelineno-7-5"></a>    <span class="p">),</span>
-</span><span id="__span-7-6"><a id="__codelineno-7-6" name="__codelineno-7-6" href="#__codelineno-7-6"></a>    <span class="n">rich</span><span class="o">=</span><span class="n">ViewDefinition</span><span class="p">(</span>
-</span><span id="__span-7-7"><a id="__codelineno-7-7" name="__codelineno-7-7" href="#__codelineno-7-7"></a>        <span class="n">include_fields</span><span class="o">=</span><span class="p">[</span>
-</span><span id="__span-7-8"><a id="__codelineno-7-8" name="__codelineno-7-8" href="#__codelineno-7-8"></a>            <span class="s2">&quot;name&quot;</span><span class="p">,</span> <span class="s2">&quot;type&quot;</span><span class="p">,</span> <span class="s2">&quot;role&quot;</span><span class="p">,</span> <span class="s2">&quot;short_description&quot;</span><span class="p">,</span>
-</span><span id="__span-7-9"><a id="__codelineno-7-9" name="__codelineno-7-9" href="#__codelineno-7-9"></a>            <span class="s2">&quot;extended_description&quot;</span><span class="p">,</span> <span class="s2">&quot;states&quot;</span><span class="p">,</span> <span class="s2">&quot;sensitivity_hints&quot;</span>
-</span><span id="__span-7-10"><a id="__codelineno-7-10" name="__codelineno-7-10" href="#__codelineno-7-10"></a>        <span class="p">]</span>
-</span><span id="__span-7-11"><a id="__codelineno-7-11" name="__codelineno-7-11" href="#__codelineno-7-11"></a>    <span class="p">),</span>
-</span><span id="__span-7-12"><a id="__codelineno-7-12" name="__codelineno-7-12" href="#__codelineno-7-12"></a><span class="p">)</span>
+<div class="language-python highlight"><pre><span></span><code><span id="__span-8-1"><a id="__codelineno-8-1" name="__codelineno-8-1" href="#__codelineno-8-1"></a><span class="n">PromptDetails</span><span class="p">(</span>
+</span><span id="__span-8-2"><a id="__codelineno-8-2" name="__codelineno-8-2" href="#__codelineno-8-2"></a>    <span class="n">minimal</span><span class="o">=</span><span class="n">ViewDefinition</span><span class="p">(</span><span class="n">include_fields</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;name&quot;</span><span class="p">]),</span>
+</span><span id="__span-8-3"><a id="__codelineno-8-3" name="__codelineno-8-3" href="#__codelineno-8-3"></a>    <span class="n">standard</span><span class="o">=</span><span class="n">ViewDefinition</span><span class="p">(</span>
+</span><span id="__span-8-4"><a id="__codelineno-8-4" name="__codelineno-8-4" href="#__codelineno-8-4"></a>        <span class="n">include_fields</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;name&quot;</span><span class="p">,</span> <span class="s2">&quot;type&quot;</span><span class="p">,</span> <span class="s2">&quot;short_description&quot;</span><span class="p">,</span> <span class="s2">&quot;states&quot;</span><span class="p">]</span>
+</span><span id="__span-8-5"><a id="__codelineno-8-5" name="__codelineno-8-5" href="#__codelineno-8-5"></a>    <span class="p">),</span>
+</span><span id="__span-8-6"><a id="__codelineno-8-6" name="__codelineno-8-6" href="#__codelineno-8-6"></a>    <span class="n">rich</span><span class="o">=</span><span class="n">ViewDefinition</span><span class="p">(</span>
+</span><span id="__span-8-7"><a id="__codelineno-8-7" name="__codelineno-8-7" href="#__codelineno-8-7"></a>        <span class="n">include_fields</span><span class="o">=</span><span class="p">[</span>
+</span><span id="__span-8-8"><a id="__codelineno-8-8" name="__codelineno-8-8" href="#__codelineno-8-8"></a>            <span class="s2">&quot;name&quot;</span><span class="p">,</span> <span class="s2">&quot;type&quot;</span><span class="p">,</span> <span class="s2">&quot;role&quot;</span><span class="p">,</span> <span class="s2">&quot;short_description&quot;</span><span class="p">,</span>
+</span><span id="__span-8-9"><a id="__codelineno-8-9" name="__codelineno-8-9" href="#__codelineno-8-9"></a>            <span class="s2">&quot;extended_description&quot;</span><span class="p">,</span> <span class="s2">&quot;states&quot;</span><span class="p">,</span> <span class="s2">&quot;sensitivity_hints&quot;</span>
+</span><span id="__span-8-10"><a id="__codelineno-8-10" name="__codelineno-8-10" href="#__codelineno-8-10"></a>        <span class="p">]</span>
+</span><span id="__span-8-11"><a id="__codelineno-8-11" name="__codelineno-8-11" href="#__codelineno-8-11"></a>    <span class="p">),</span>
+</span><span id="__span-8-12"><a id="__codelineno-8-12" name="__codelineno-8-12" href="#__codelineno-8-12"></a><span class="p">)</span>
 </span></code></pre></div>
 <h2 id="provenance">Provenance<a class="headerlink" href="#provenance" title="Permanent link">&para;</a></h2>
 <p>Provenance information for the model specification.</p>
@@ -3059,8 +2963,11 @@ enabling LLMs to generate causal graphs with appropriate domain context.</p>
 </tr>
 </tbody>
 </table>
-<h2 id="modelspec">ModelSpec<a class="headerlink" href="#modelspec" title="Permanent link">&para;</a></h2>
-<p>Complete model specification combining all components.</p>
+<h2 id="networkcontext">NetworkContext<a class="headerlink" href="#networkcontext" title="Permanent link">&para;</a></h2>
+<p>Complete network context for LLM-based causal graph generation.</p>
+<p>Provides domain and variable information needed to generate causal graphs
+using LLMs. This is not the network itself, but the context required to
+generate one.</p>
 <h3 id="attributes_7">Attributes<a class="headerlink" href="#attributes_7" title="Permanent link">&para;</a></h3>
 <table>
 <thead>
@@ -3079,22 +2986,22 @@ enabling LLMs to generate causal graphs with appropriate domain context.</p>
 <td>Schema version (default: "2.0")</td>
 </tr>
 <tr>
-<td><code>dataset_id</code></td>
+<td><code>network</code></td>
 <td><code>str</code></td>
 <td>Yes</td>
-<td>Unique identifier for the dataset</td>
+<td>Network identifier (e.g., "asia")</td>
 </tr>
 <tr>
 <td><code>domain</code></td>
 <td><code>str</code></td>
 <td>Yes</td>
-<td>Domain of the model (e.g., "epidemiology")</td>
+<td>Domain of the model (e.g., "pulmonary_oncology")</td>
 </tr>
 <tr>
 <td><code>purpose</code></td>
 <td><code>str</code></td>
 <td>No</td>
-<td>Purpose of the model</td>
+<td>Purpose of the context specification</td>
 </tr>
 <tr>
 <td><code>variables</code></td>
@@ -3127,6 +3034,12 @@ enabling LLMs to generate causal graphs with appropriate domain context.</p>
 <td>Structural constraints</td>
 </tr>
 <tr>
+<td><code>causal_principles</code></td>
+<td><code>list[CausalPrinciple]</code></td>
+<td>No</td>
+<td>Domain causal principles</td>
+</tr>
+<tr>
 <td><code>ground_truth</code></td>
 <td><code>GroundTruth</code></td>
 <td>No</td>
@@ -3134,54 +3047,132 @@ enabling LLMs to generate causal graphs with appropriate domain context.</p>
 </tr>
 </tbody>
 </table>
-<h3 id="methods">Methods<a class="headerlink" href="#methods" title="Permanent link">&para;</a></h3>
+<h3 id="class-methods">Class Methods<a class="headerlink" href="#class-methods" title="Permanent link">&para;</a></h3>
+<h4 id="loadpath-str-path-networkcontext"><code>load(path: str | Path) -&gt; NetworkContext</code><a class="headerlink" href="#loadpath-str-path-networkcontext" title="Permanent link">&para;</a></h4>
+<p>Load a network context from a JSON file.</p>
+<div class="language-python highlight"><pre><span></span><code><span id="__span-9-1"><a id="__codelineno-9-1" name="__codelineno-9-1" href="#__codelineno-9-1"></a><span class="n">context</span> <span class="o">=</span> <span class="n">NetworkContext</span><span class="o">.</span><span class="n">load</span><span class="p">(</span><span class="s2">&quot;models/cancer.json&quot;</span><span class="p">)</span>
+</span></code></pre></div>
+<p><strong>Raises:</strong> <code>NetworkLoadError</code> - If the file cannot be read or validation fails.</p>
+<h4 id="from_dictdata-dict-source_path-path-none-none-networkcontext"><code>from_dict(data: dict, source_path: Path | None = None) -&gt; NetworkContext</code><a class="headerlink" href="#from_dictdata-dict-source_path-path-none-none-networkcontext" title="Permanent link">&para;</a></h4>
+<p>Create a network context from a dictionary.</p>
+<div class="language-python highlight"><pre><span></span><code><span id="__span-10-1"><a id="__codelineno-10-1" name="__codelineno-10-1" href="#__codelineno-10-1"></a><span class="n">context</span> <span class="o">=</span> <span class="n">NetworkContext</span><span class="o">.</span><span class="n">from_dict</span><span class="p">({</span>
+</span><span id="__span-10-2"><a id="__codelineno-10-2" name="__codelineno-10-2" href="#__codelineno-10-2"></a>    <span class="s2">&quot;network&quot;</span><span class="p">:</span> <span class="s2">&quot;test&quot;</span><span class="p">,</span>
+</span><span id="__span-10-3"><a id="__codelineno-10-3" name="__codelineno-10-3" href="#__codelineno-10-3"></a>    <span class="s2">&quot;domain&quot;</span><span class="p">:</span> <span class="s2">&quot;testing&quot;</span><span class="p">,</span>
+</span><span id="__span-10-4"><a id="__codelineno-10-4" name="__codelineno-10-4" href="#__codelineno-10-4"></a>    <span class="s2">&quot;variables&quot;</span><span class="p">:</span> <span class="p">[{</span><span class="s2">&quot;name&quot;</span><span class="p">:</span> <span class="s2">&quot;X&quot;</span><span class="p">,</span> <span class="s2">&quot;type&quot;</span><span class="p">:</span> <span class="s2">&quot;binary&quot;</span><span class="p">}]</span>
+</span><span id="__span-10-5"><a id="__codelineno-10-5" name="__codelineno-10-5" href="#__codelineno-10-5"></a><span class="p">})</span>
+</span></code></pre></div>
+<h4 id="load_and_validatepath-str-path-tuplenetworkcontext-liststr"><code>load_and_validate(path: str | Path) -&gt; tuple[NetworkContext, list[str]]</code><a class="headerlink" href="#load_and_validatepath-str-path-tuplenetworkcontext-liststr" title="Permanent link">&para;</a></h4>
+<p>Load and fully validate a network context, returning warnings.</p>
+<div class="language-python highlight"><pre><span></span><code><span id="__span-11-1"><a id="__codelineno-11-1" name="__codelineno-11-1" href="#__codelineno-11-1"></a><span class="n">context</span><span class="p">,</span> <span class="n">warnings</span> <span class="o">=</span> <span class="n">NetworkContext</span><span class="o">.</span><span class="n">load_and_validate</span><span class="p">(</span><span class="s2">&quot;model.json&quot;</span><span class="p">)</span>
+</span><span id="__span-11-2"><a id="__codelineno-11-2" name="__codelineno-11-2" href="#__codelineno-11-2"></a><span class="k">for</span> <span class="n">warning</span> <span class="ow">in</span> <span class="n">warnings</span><span class="p">:</span>
+</span><span id="__span-11-3"><a id="__codelineno-11-3" name="__codelineno-11-3" href="#__codelineno-11-3"></a>    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Warning: </span><span class="si">{</span><span class="n">warning</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+</span></code></pre></div>
+<h3 id="instance-methods">Instance Methods<a class="headerlink" href="#instance-methods" title="Permanent link">&para;</a></h3>
 <h4 id="get_variable_names-liststr"><code>get_variable_names() -&gt; list[str]</code><a class="headerlink" href="#get_variable_names-liststr" title="Permanent link">&para;</a></h4>
-<p>Return list of all variable names.</p>
-<div class="language-python highlight"><pre><span></span><code><span id="__span-8-1"><a id="__codelineno-8-1" name="__codelineno-8-1" href="#__codelineno-8-1"></a><span class="n">spec</span> <span class="o">=</span> <span class="n">ModelLoader</span><span class="o">.</span><span class="n">load</span><span class="p">(</span><span class="s2">&quot;model.json&quot;</span><span class="p">)</span>
-</span><span id="__span-8-2"><a id="__codelineno-8-2" name="__codelineno-8-2" href="#__codelineno-8-2"></a><span class="n">names</span> <span class="o">=</span> <span class="n">spec</span><span class="o">.</span><span class="n">get_variable_names</span><span class="p">()</span>
-</span><span id="__span-8-3"><a id="__codelineno-8-3" name="__codelineno-8-3" href="#__codelineno-8-3"></a><span class="c1"># [&quot;smoking&quot;, &quot;cancer&quot;, &quot;age&quot;]</span>
+<p>Return list of all benchmark variable names.</p>
+<div class="language-python highlight"><pre><span></span><code><span id="__span-12-1"><a id="__codelineno-12-1" name="__codelineno-12-1" href="#__codelineno-12-1"></a><span class="n">context</span> <span class="o">=</span> <span class="n">NetworkContext</span><span class="o">.</span><span class="n">load</span><span class="p">(</span><span class="s2">&quot;model.json&quot;</span><span class="p">)</span>
+</span><span id="__span-12-2"><a id="__codelineno-12-2" name="__codelineno-12-2" href="#__codelineno-12-2"></a><span class="n">names</span> <span class="o">=</span> <span class="n">context</span><span class="o">.</span><span class="n">get_variable_names</span><span class="p">()</span>
+</span><span id="__span-12-3"><a id="__codelineno-12-3" name="__codelineno-12-3" href="#__codelineno-12-3"></a><span class="c1"># [&quot;smoking&quot;, &quot;cancer&quot;, &quot;age&quot;]</span>
+</span></code></pre></div>
+<h4 id="get_llm_names-liststr"><code>get_llm_names() -&gt; list[str]</code><a class="headerlink" href="#get_llm_names-liststr" title="Permanent link">&para;</a></h4>
+<p>Return list of all LLM variable names.</p>
+<div class="language-python highlight"><pre><span></span><code><span id="__span-13-1"><a id="__codelineno-13-1" name="__codelineno-13-1" href="#__codelineno-13-1"></a><span class="n">context</span> <span class="o">=</span> <span class="n">NetworkContext</span><span class="o">.</span><span class="n">load</span><span class="p">(</span><span class="s2">&quot;model.json&quot;</span><span class="p">)</span>
+</span><span id="__span-13-2"><a id="__codelineno-13-2" name="__codelineno-13-2" href="#__codelineno-13-2"></a><span class="n">llm_names</span> <span class="o">=</span> <span class="n">context</span><span class="o">.</span><span class="n">get_llm_names</span><span class="p">()</span>
+</span><span id="__span-13-3"><a id="__codelineno-13-3" name="__codelineno-13-3" href="#__codelineno-13-3"></a><span class="c1"># [&quot;tobacco_use&quot;, &quot;malignancy&quot;, &quot;patient_age&quot;]</span>
 </span></code></pre></div>
 <h4 id="get_variablename-str-variablespec-none"><code>get_variable(name: str) -&gt; VariableSpec | None</code><a class="headerlink" href="#get_variablename-str-variablespec-none" title="Permanent link">&para;</a></h4>
 <p>Get a variable specification by name.</p>
-<div class="language-python highlight"><pre><span></span><code><span id="__span-9-1"><a id="__codelineno-9-1" name="__codelineno-9-1" href="#__codelineno-9-1"></a><span class="n">spec</span> <span class="o">=</span> <span class="n">ModelLoader</span><span class="o">.</span><span class="n">load</span><span class="p">(</span><span class="s2">&quot;model.json&quot;</span><span class="p">)</span>
-</span><span id="__span-9-2"><a id="__codelineno-9-2" name="__codelineno-9-2" href="#__codelineno-9-2"></a><span class="n">smoking</span> <span class="o">=</span> <span class="n">spec</span><span class="o">.</span><span class="n">get_variable</span><span class="p">(</span><span class="s2">&quot;smoking&quot;</span><span class="p">)</span>
+<div class="language-python highlight"><pre><span></span><code><span id="__span-14-1"><a id="__codelineno-14-1" name="__codelineno-14-1" href="#__codelineno-14-1"></a><span class="n">context</span> <span class="o">=</span> <span class="n">NetworkContext</span><span class="o">.</span><span class="n">load</span><span class="p">(</span><span class="s2">&quot;model.json&quot;</span><span class="p">)</span>
+</span><span id="__span-14-2"><a id="__codelineno-14-2" name="__codelineno-14-2" href="#__codelineno-14-2"></a><span class="n">smoking</span> <span class="o">=</span> <span class="n">context</span><span class="o">.</span><span class="n">get_variable</span><span class="p">(</span><span class="s2">&quot;smoking&quot;</span><span class="p">)</span>
 </span></code></pre></div>
-<h4 id="get_exogenous_variables-listvariablespec"><code>get_exogenous_variables() -&gt; list[VariableSpec]</code><a class="headerlink" href="#get_exogenous_variables-listvariablespec" title="Permanent link">&para;</a></h4>
-<p>Get all variables with exogenous role.</p>
-<div class="language-python highlight"><pre><span></span><code><span id="__span-10-1"><a id="__codelineno-10-1" name="__codelineno-10-1" href="#__codelineno-10-1"></a><span class="n">spec</span> <span class="o">=</span> <span class="n">ModelLoader</span><span class="o">.</span><span class="n">load</span><span class="p">(</span><span class="s2">&quot;model.json&quot;</span><span class="p">)</span>
-</span><span id="__span-10-2"><a id="__codelineno-10-2" name="__codelineno-10-2" href="#__codelineno-10-2"></a><span class="n">root_causes</span> <span class="o">=</span> <span class="n">spec</span><span class="o">.</span><span class="n">get_exogenous_variables</span><span class="p">()</span>
+<h4 id="get_llm_to_name_mapping-dictstr-str"><code>get_llm_to_name_mapping() -&gt; dict[str, str]</code><a class="headerlink" href="#get_llm_to_name_mapping-dictstr-str" title="Permanent link">&para;</a></h4>
+<p>Get mapping from LLM names to benchmark names.</p>
+<div class="language-python highlight"><pre><span></span><code><span id="__span-15-1"><a id="__codelineno-15-1" name="__codelineno-15-1" href="#__codelineno-15-1"></a><span class="n">mapping</span> <span class="o">=</span> <span class="n">context</span><span class="o">.</span><span class="n">get_llm_to_name_mapping</span><span class="p">()</span>
+</span><span id="__span-15-2"><a id="__codelineno-15-2" name="__codelineno-15-2" href="#__codelineno-15-2"></a><span class="c1"># {&quot;tobacco_use&quot;: &quot;smoking&quot;, &quot;malignancy&quot;: &quot;cancer&quot;}</span>
+</span></code></pre></div>
+<h4 id="uses_distinct_llm_names-bool"><code>uses_distinct_llm_names() -&gt; bool</code><a class="headerlink" href="#uses_distinct_llm_names-bool" title="Permanent link">&para;</a></h4>
+<p>Check if any variable has a different llm_name from name.</p>
+<div class="language-python highlight"><pre><span></span><code><span id="__span-16-1"><a id="__codelineno-16-1" name="__codelineno-16-1" href="#__codelineno-16-1"></a><span class="k">if</span> <span class="n">context</span><span class="o">.</span><span class="n">uses_distinct_llm_names</span><span class="p">():</span>
+</span><span id="__span-16-2"><a id="__codelineno-16-2" name="__codelineno-16-2" href="#__codelineno-16-2"></a>    <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Context uses LLM name disguising&quot;</span><span class="p">)</span>
+</span></code></pre></div>
+<h4 id="validate_variables-liststr"><code>validate_variables() -&gt; list[str]</code><a class="headerlink" href="#validate_variables-liststr" title="Permanent link">&para;</a></h4>
+<p>Validate variable specifications and return warnings.</p>
+<div class="language-python highlight"><pre><span></span><code><span id="__span-17-1"><a id="__codelineno-17-1" name="__codelineno-17-1" href="#__codelineno-17-1"></a><span class="n">warnings</span> <span class="o">=</span> <span class="n">context</span><span class="o">.</span><span class="n">validate_variables</span><span class="p">()</span>
+</span><span id="__span-17-2"><a id="__codelineno-17-2" name="__codelineno-17-2" href="#__codelineno-17-2"></a><span class="k">for</span> <span class="n">warning</span> <span class="ow">in</span> <span class="n">warnings</span><span class="p">:</span>
+</span><span id="__span-17-3"><a id="__codelineno-17-3" name="__codelineno-17-3" href="#__codelineno-17-3"></a>    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Warning: </span><span class="si">{</span><span class="n">warning</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
 </span></code></pre></div>
 <h3 id="example_2">Example<a class="headerlink" href="#example_2" title="Permanent link">&para;</a></h3>
-<div class="language-python highlight"><pre><span></span><code><span id="__span-11-1"><a id="__codelineno-11-1" name="__codelineno-11-1" href="#__codelineno-11-1"></a><span class="kn">from</span><span class="w"> </span><span class="nn">causaliq_knowledge.graph</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
-</span><span id="__span-11-2"><a id="__codelineno-11-2" name="__codelineno-11-2" href="#__codelineno-11-2"></a>    <span class="n">ModelSpec</span><span class="p">,</span>
-</span><span id="__span-11-3"><a id="__codelineno-11-3" name="__codelineno-11-3" href="#__codelineno-11-3"></a>    <span class="n">VariableSpec</span><span class="p">,</span>
-</span><span id="__span-11-4"><a id="__codelineno-11-4" name="__codelineno-11-4" href="#__codelineno-11-4"></a>    <span class="n">VariableType</span><span class="p">,</span>
-</span><span id="__span-11-5"><a id="__codelineno-11-5" name="__codelineno-11-5" href="#__codelineno-11-5"></a>    <span class="n">VariableRole</span><span class="p">,</span>
-</span><span id="__span-11-6"><a id="__codelineno-11-6" name="__codelineno-11-6" href="#__codelineno-11-6"></a><span class="p">)</span>
-</span><span id="__span-11-7"><a id="__codelineno-11-7" name="__codelineno-11-7" href="#__codelineno-11-7"></a>
-</span><span id="__span-11-8"><a id="__codelineno-11-8" name="__codelineno-11-8" href="#__codelineno-11-8"></a><span class="n">spec</span> <span class="o">=</span> <span class="n">ModelSpec</span><span class="p">(</span>
-</span><span id="__span-11-9"><a id="__codelineno-11-9" name="__codelineno-11-9" href="#__codelineno-11-9"></a>    <span class="n">dataset_id</span><span class="o">=</span><span class="s2">&quot;smoking_cancer&quot;</span><span class="p">,</span>
-</span><span id="__span-11-10"><a id="__codelineno-11-10" name="__codelineno-11-10" href="#__codelineno-11-10"></a>    <span class="n">domain</span><span class="o">=</span><span class="s2">&quot;epidemiology&quot;</span><span class="p">,</span>
-</span><span id="__span-11-11"><a id="__codelineno-11-11" name="__codelineno-11-11" href="#__codelineno-11-11"></a>    <span class="n">purpose</span><span class="o">=</span><span class="s2">&quot;Causal model for smoking and cancer&quot;</span><span class="p">,</span>
-</span><span id="__span-11-12"><a id="__codelineno-11-12" name="__codelineno-11-12" href="#__codelineno-11-12"></a>    <span class="n">variables</span><span class="o">=</span><span class="p">[</span>
-</span><span id="__span-11-13"><a id="__codelineno-11-13" name="__codelineno-11-13" href="#__codelineno-11-13"></a>        <span class="n">VariableSpec</span><span class="p">(</span>
-</span><span id="__span-11-14"><a id="__codelineno-11-14" name="__codelineno-11-14" href="#__codelineno-11-14"></a>            <span class="n">name</span><span class="o">=</span><span class="s2">&quot;smoking&quot;</span><span class="p">,</span>
-</span><span id="__span-11-15"><a id="__codelineno-11-15" name="__codelineno-11-15" href="#__codelineno-11-15"></a>            <span class="nb">type</span><span class="o">=</span><span class="n">VariableType</span><span class="o">.</span><span class="n">BINARY</span><span class="p">,</span>
-</span><span id="__span-11-16"><a id="__codelineno-11-16" name="__codelineno-11-16" href="#__codelineno-11-16"></a>            <span class="n">role</span><span class="o">=</span><span class="n">VariableRole</span><span class="o">.</span><span class="n">EXOGENOUS</span><span class="p">,</span>
-</span><span id="__span-11-17"><a id="__codelineno-11-17" name="__codelineno-11-17" href="#__codelineno-11-17"></a>            <span class="n">short_description</span><span class="o">=</span><span class="s2">&quot;Smoking status&quot;</span><span class="p">,</span>
-</span><span id="__span-11-18"><a id="__codelineno-11-18" name="__codelineno-11-18" href="#__codelineno-11-18"></a>        <span class="p">),</span>
-</span><span id="__span-11-19"><a id="__codelineno-11-19" name="__codelineno-11-19" href="#__codelineno-11-19"></a>        <span class="n">VariableSpec</span><span class="p">(</span>
-</span><span id="__span-11-20"><a id="__codelineno-11-20" name="__codelineno-11-20" href="#__codelineno-11-20"></a>            <span class="n">name</span><span class="o">=</span><span class="s2">&quot;cancer&quot;</span><span class="p">,</span>
-</span><span id="__span-11-21"><a id="__codelineno-11-21" name="__codelineno-11-21" href="#__codelineno-11-21"></a>            <span class="nb">type</span><span class="o">=</span><span class="n">VariableType</span><span class="o">.</span><span class="n">BINARY</span><span class="p">,</span>
-</span><span id="__span-11-22"><a id="__codelineno-11-22" name="__codelineno-11-22" href="#__codelineno-11-22"></a>            <span class="n">role</span><span class="o">=</span><span class="n">VariableRole</span><span class="o">.</span><span class="n">ENDOGENOUS</span><span class="p">,</span>
-</span><span id="__span-11-23"><a id="__codelineno-11-23" name="__codelineno-11-23" href="#__codelineno-11-23"></a>            <span class="n">short_description</span><span class="o">=</span><span class="s2">&quot;Cancer diagnosis&quot;</span><span class="p">,</span>
-</span><span id="__span-11-24"><a id="__codelineno-11-24" name="__codelineno-11-24" href="#__codelineno-11-24"></a>        <span class="p">),</span>
-</span><span id="__span-11-25"><a id="__codelineno-11-25" name="__codelineno-11-25" href="#__codelineno-11-25"></a>    <span class="p">],</span>
-</span><span id="__span-11-26"><a id="__codelineno-11-26" name="__codelineno-11-26" href="#__codelineno-11-26"></a><span class="p">)</span>
+<div class="language-python highlight"><pre><span></span><code><span id="__span-18-1"><a id="__codelineno-18-1" name="__codelineno-18-1" href="#__codelineno-18-1"></a><span class="kn">from</span><span class="w"> </span><span class="nn">causaliq_knowledge.graph</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
+</span><span id="__span-18-2"><a id="__codelineno-18-2" name="__codelineno-18-2" href="#__codelineno-18-2"></a>    <span class="n">NetworkContext</span><span class="p">,</span>
+</span><span id="__span-18-3"><a id="__codelineno-18-3" name="__codelineno-18-3" href="#__codelineno-18-3"></a>    <span class="n">VariableSpec</span><span class="p">,</span>
+</span><span id="__span-18-4"><a id="__codelineno-18-4" name="__codelineno-18-4" href="#__codelineno-18-4"></a>    <span class="n">VariableType</span><span class="p">,</span>
+</span><span id="__span-18-5"><a id="__codelineno-18-5" name="__codelineno-18-5" href="#__codelineno-18-5"></a>    <span class="n">VariableRole</span><span class="p">,</span>
+</span><span id="__span-18-6"><a id="__codelineno-18-6" name="__codelineno-18-6" href="#__codelineno-18-6"></a><span class="p">)</span>
+</span><span id="__span-18-7"><a id="__codelineno-18-7" name="__codelineno-18-7" href="#__codelineno-18-7"></a>
+</span><span id="__span-18-8"><a id="__codelineno-18-8" name="__codelineno-18-8" href="#__codelineno-18-8"></a><span class="n">context</span> <span class="o">=</span> <span class="n">NetworkContext</span><span class="p">(</span>
+</span><span id="__span-18-9"><a id="__codelineno-18-9" name="__codelineno-18-9" href="#__codelineno-18-9"></a>    <span class="n">network</span><span class="o">=</span><span class="s2">&quot;smoking_cancer&quot;</span><span class="p">,</span>
+</span><span id="__span-18-10"><a id="__codelineno-18-10" name="__codelineno-18-10" href="#__codelineno-18-10"></a>    <span class="n">domain</span><span class="o">=</span><span class="s2">&quot;epidemiology&quot;</span><span class="p">,</span>
+</span><span id="__span-18-11"><a id="__codelineno-18-11" name="__codelineno-18-11" href="#__codelineno-18-11"></a>    <span class="n">purpose</span><span class="o">=</span><span class="s2">&quot;Causal model for smoking and cancer&quot;</span><span class="p">,</span>
+</span><span id="__span-18-12"><a id="__codelineno-18-12" name="__codelineno-18-12" href="#__codelineno-18-12"></a>    <span class="n">variables</span><span class="o">=</span><span class="p">[</span>
+</span><span id="__span-18-13"><a id="__codelineno-18-13" name="__codelineno-18-13" href="#__codelineno-18-13"></a>        <span class="n">VariableSpec</span><span class="p">(</span>
+</span><span id="__span-18-14"><a id="__codelineno-18-14" name="__codelineno-18-14" href="#__codelineno-18-14"></a>            <span class="n">name</span><span class="o">=</span><span class="s2">&quot;smoking&quot;</span><span class="p">,</span>
+</span><span id="__span-18-15"><a id="__codelineno-18-15" name="__codelineno-18-15" href="#__codelineno-18-15"></a>            <span class="n">llm_name</span><span class="o">=</span><span class="s2">&quot;tobacco_use&quot;</span><span class="p">,</span>
+</span><span id="__span-18-16"><a id="__codelineno-18-16" name="__codelineno-18-16" href="#__codelineno-18-16"></a>            <span class="nb">type</span><span class="o">=</span><span class="n">VariableType</span><span class="o">.</span><span class="n">BINARY</span><span class="p">,</span>
+</span><span id="__span-18-17"><a id="__codelineno-18-17" name="__codelineno-18-17" href="#__codelineno-18-17"></a>            <span class="n">role</span><span class="o">=</span><span class="n">VariableRole</span><span class="o">.</span><span class="n">EXOGENOUS</span><span class="p">,</span>
+</span><span id="__span-18-18"><a id="__codelineno-18-18" name="__codelineno-18-18" href="#__codelineno-18-18"></a>            <span class="n">short_description</span><span class="o">=</span><span class="s2">&quot;Smoking status&quot;</span><span class="p">,</span>
+</span><span id="__span-18-19"><a id="__codelineno-18-19" name="__codelineno-18-19" href="#__codelineno-18-19"></a>        <span class="p">),</span>
+</span><span id="__span-18-20"><a id="__codelineno-18-20" name="__codelineno-18-20" href="#__codelineno-18-20"></a>        <span class="n">VariableSpec</span><span class="p">(</span>
+</span><span id="__span-18-21"><a id="__codelineno-18-21" name="__codelineno-18-21" href="#__codelineno-18-21"></a>            <span class="n">name</span><span class="o">=</span><span class="s2">&quot;cancer&quot;</span><span class="p">,</span>
+</span><span id="__span-18-22"><a id="__codelineno-18-22" name="__codelineno-18-22" href="#__codelineno-18-22"></a>            <span class="n">llm_name</span><span class="o">=</span><span class="s2">&quot;malignancy&quot;</span><span class="p">,</span>
+</span><span id="__span-18-23"><a id="__codelineno-18-23" name="__codelineno-18-23" href="#__codelineno-18-23"></a>            <span class="nb">type</span><span class="o">=</span><span class="n">VariableType</span><span class="o">.</span><span class="n">BINARY</span><span class="p">,</span>
+</span><span id="__span-18-24"><a id="__codelineno-18-24" name="__codelineno-18-24" href="#__codelineno-18-24"></a>            <span class="n">role</span><span class="o">=</span><span class="n">VariableRole</span><span class="o">.</span><span class="n">ENDOGENOUS</span><span class="p">,</span>
+</span><span id="__span-18-25"><a id="__codelineno-18-25" name="__codelineno-18-25" href="#__codelineno-18-25"></a>            <span class="n">short_description</span><span class="o">=</span><span class="s2">&quot;Cancer diagnosis&quot;</span><span class="p">,</span>
+</span><span id="__span-18-26"><a id="__codelineno-18-26" name="__codelineno-18-26" href="#__codelineno-18-26"></a>        <span class="p">),</span>
+</span><span id="__span-18-27"><a id="__codelineno-18-27" name="__codelineno-18-27" href="#__codelineno-18-27"></a>    <span class="p">],</span>
+</span><span id="__span-18-28"><a id="__codelineno-18-28" name="__codelineno-18-28" href="#__codelineno-18-28"></a><span class="p">)</span>
+</span></code></pre></div>
+<h2 id="networkloaderror">NetworkLoadError<a class="headerlink" href="#networkloaderror" title="Permanent link">&para;</a></h2>
+<p>Exception raised when network context loading fails.</p>
+<h3 id="attributes_8">Attributes<a class="headerlink" href="#attributes_8" title="Permanent link">&para;</a></h3>
+<table>
+<thead>
+<tr>
+<th>Attribute</th>
+<th>Type</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>message</code></td>
+<td><code>str</code></td>
+<td>Error description</td>
+</tr>
+<tr>
+<td><code>path</code></td>
+<td><code>Path \| str \| None</code></td>
+<td>Path to the file that failed</td>
+</tr>
+<tr>
+<td><code>details</code></td>
+<td><code>str \| None</code></td>
+<td>Additional error details</td>
+</tr>
+</tbody>
+</table>
+<h3 id="example_3">Example<a class="headerlink" href="#example_3" title="Permanent link">&para;</a></h3>
+<div class="language-python highlight"><pre><span></span><code><span id="__span-19-1"><a id="__codelineno-19-1" name="__codelineno-19-1" href="#__codelineno-19-1"></a><span class="kn">from</span><span class="w"> </span><span class="nn">causaliq_knowledge.graph</span><span class="w"> </span><span class="kn">import</span> <span class="n">NetworkContext</span><span class="p">,</span> <span class="n">NetworkLoadError</span>
+</span><span id="__span-19-2"><a id="__codelineno-19-2" name="__codelineno-19-2" href="#__codelineno-19-2"></a>
+</span><span id="__span-19-3"><a id="__codelineno-19-3" name="__codelineno-19-3" href="#__codelineno-19-3"></a><span class="k">try</span><span class="p">:</span>
+</span><span id="__span-19-4"><a id="__codelineno-19-4" name="__codelineno-19-4" href="#__codelineno-19-4"></a>    <span class="n">context</span> <span class="o">=</span> <span class="n">NetworkContext</span><span class="o">.</span><span class="n">load</span><span class="p">(</span><span class="s2">&quot;nonexistent.json&quot;</span><span class="p">)</span>
+</span><span id="__span-19-5"><a id="__codelineno-19-5" name="__codelineno-19-5" href="#__codelineno-19-5"></a><span class="k">except</span> <span class="n">NetworkLoadError</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+</span><span id="__span-19-6"><a id="__codelineno-19-6" name="__codelineno-19-6" href="#__codelineno-19-6"></a>    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Failed to load: </span><span class="si">{</span><span class="n">e</span><span class="o">.</span><span class="n">message</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+</span><span id="__span-19-7"><a id="__codelineno-19-7" name="__codelineno-19-7" href="#__codelineno-19-7"></a>    <span class="k">if</span> <span class="n">e</span><span class="o">.</span><span class="n">path</span><span class="p">:</span>
+</span><span id="__span-19-8"><a id="__codelineno-19-8" name="__codelineno-19-8" href="#__codelineno-19-8"></a>        <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;File: </span><span class="si">{</span><span class="n">e</span><span class="o">.</span><span class="n">path</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
 </span></code></pre></div>
 <h2 id="json-schema">JSON Schema<a class="headerlink" href="#json-schema" title="Permanent link">&para;</a></h2>
-<p>Model specifications are typically stored as JSON files. See
-<a href="../../../userguide/model_specification/">Model Specification Format</a> for
+<p>Network context specifications are typically stored as JSON files. See
+<a href="../../../userguide/model_specification/">Network Context Format</a> for
 the complete JSON schema and examples.</p>
 
 
@@ -3237,13 +3228,13 @@ the complete JSON schema and examples.</p>
         
         
           
-          <a href="../loader/" class="md-footer__link md-footer__link--next" aria-label="Next: Model Loader">
+          <a href="../view_filter/" class="md-footer__link md-footer__link--next" aria-label="Next: View Filter">
             <div class="md-footer__title">
               <span class="md-footer__direction">
                 Next
               </span>
               <div class="md-ellipsis">
-                Model Loader
+                View Filter
               </div>
             </div>
             <div class="md-footer__button md-icon">

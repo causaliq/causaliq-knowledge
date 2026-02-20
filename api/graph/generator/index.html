@@ -12,7 +12,7 @@
         <link rel="prev" href="../response/">
       
       
-        <link rel="next" href="../../cache/overview/">
+        <link rel="next" href="../../llm/cache/">
       
       
         
@@ -523,7 +523,7 @@
   <span class="md-ellipsis">
     
   
-    Model Specification Format
+    Network Context Format
   
 
     
@@ -715,34 +715,6 @@
   
   
     <li class="md-nav__item">
-      <a href="../../../architecture/caching/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    Caching
-  
-
-    
-  </span>
-  
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
       <a href="../../../architecture/testing_strategy/" class="md-nav__link">
         
   
@@ -868,34 +840,6 @@
                 
   
   
-  
-  
-    <li class="md-nav__item">
-      <a href="../../models/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    Models
-  
-
-    
-  </span>
-  
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
     
   
   
@@ -917,10 +861,10 @@
       
         
         
-        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_5_3" checked>
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_5_2" checked>
         
           
-          <label class="md-nav__link" for="__nav_5_3" id="__nav_5_3_label" tabindex="">
+          <label class="md-nav__link" for="__nav_5_2" id="__nav_5_2_label" tabindex="">
             
   
   
@@ -938,8 +882,8 @@
             <span class="md-nav__icon md-icon"></span>
           </label>
         
-        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_5_3_label" aria-expanded="true">
-          <label class="md-nav__title" for="__nav_5_3">
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_5_2_label" aria-expanded="true">
+          <label class="md-nav__title" for="__nav_5_2">
             <span class="md-nav__icon md-icon"></span>
             
   
@@ -991,35 +935,7 @@
   <span class="md-ellipsis">
     
   
-    Model Specification
-  
-
-    
-  </span>
-  
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="../loader/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    Model Loader
+    Network Context
   
 
     
@@ -1048,34 +964,6 @@
     
   
     View Filter
-  
-
-    
-  </span>
-  
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="../disguiser/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    Variable Disguiser
   
 
     
@@ -1297,10 +1185,10 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#generating-from-model-specifications" class="md-nav__link">
+  <a href="#generating-from-network-context" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Generating from Model Specifications
+        Generating from Network Context
       
     </span>
   </a>
@@ -1447,10 +1335,10 @@
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
-  <a href="#causaliq_knowledge.graph.generator.GraphGenerator--load-model-specification" class="md-nav__link">
+  <a href="#causaliq_knowledge.graph.generator.GraphGenerator--load-network-context" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Load model specification
+        Load network context
       
     </span>
   </a>
@@ -1546,22 +1434,22 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#causaliq_knowledge.graph.generator.GraphGenerator.generate_from_spec" class="md-nav__link">
+  <a href="#causaliq_knowledge.graph.generator.GraphGenerator.generate_from_context" class="md-nav__link">
     <span class="md-ellipsis">
       
-        generate_from_spec
+        generate_from_context
       
     </span>
   </a>
   
-    <nav class="md-nav" aria-label="generate_from_spec">
+    <nav class="md-nav" aria-label="generate_from_context">
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
-  <a href="#causaliq_knowledge.graph.generator.GraphGenerator.generate_from_spec(spec)" class="md-nav__link">
+  <a href="#causaliq_knowledge.graph.generator.GraphGenerator.generate_from_context(context)" class="md-nav__link">
     <span class="md-ellipsis">
       
-        spec
+        context
       
     </span>
   </a>
@@ -1569,7 +1457,7 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#causaliq_knowledge.graph.generator.GraphGenerator.generate_from_spec(level)" class="md-nav__link">
+  <a href="#causaliq_knowledge.graph.generator.GraphGenerator.generate_from_context(level)" class="md-nav__link">
     <span class="md-ellipsis">
       
         level
@@ -1580,7 +1468,7 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#causaliq_knowledge.graph.generator.GraphGenerator.generate_from_spec(output_format)" class="md-nav__link">
+  <a href="#causaliq_knowledge.graph.generator.GraphGenerator.generate_from_context(output_format)" class="md-nav__link">
     <span class="md-ellipsis">
       
         output_format
@@ -1591,7 +1479,7 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#causaliq_knowledge.graph.generator.GraphGenerator.generate_from_spec(system_prompt)" class="md-nav__link">
+  <a href="#causaliq_knowledge.graph.generator.GraphGenerator.generate_from_context(system_prompt)" class="md-nav__link">
     <span class="md-ellipsis">
       
         system_prompt
@@ -1602,7 +1490,7 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#causaliq_knowledge.graph.generator.GraphGenerator.generate_from_spec(use_llm_names)" class="md-nav__link">
+  <a href="#causaliq_knowledge.graph.generator.GraphGenerator.generate_from_context(use_llm_names)" class="md-nav__link">
     <span class="md-ellipsis">
       
         use_llm_names
@@ -1786,193 +1674,10 @@
         
           
         
-        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_5_4" >
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_5_3" >
         
           
-          <label class="md-nav__link" for="__nav_5_4" id="__nav_5_4_label" tabindex="">
-            
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    Cache (Core)
-  
-
-    
-  </span>
-  
-  
-
-            <span class="md-nav__icon md-icon"></span>
-          </label>
-        
-        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_5_4_label" aria-expanded="false">
-          <label class="md-nav__title" for="__nav_5_4">
-            <span class="md-nav__icon md-icon"></span>
-            
-  
-    Cache (Core)
-  
-
-          </label>
-          <ul class="md-nav__list" data-md-scrollfix>
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="../../cache/overview/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    Cache Overview
-  
-
-    
-  </span>
-  
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
-  
-  
-    
-    
-    
-    
-      
-      
-        
-      
-    
-    
-    <li class="md-nav__item md-nav__item--nested">
-      
-        
-        
-          
-        
-        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_5_4_2" >
-        
-          
-          <label class="md-nav__link" for="__nav_5_4_2" id="__nav_5_4_2_label" tabindex="0">
-            
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    Encoders
-  
-
-    
-  </span>
-  
-  
-
-            <span class="md-nav__icon md-icon"></span>
-          </label>
-        
-        <nav class="md-nav" data-md-level="3" aria-labelledby="__nav_5_4_2_label" aria-expanded="false">
-          <label class="md-nav__title" for="__nav_5_4_2">
-            <span class="md-nav__icon md-icon"></span>
-            
-  
-    Encoders
-  
-
-          </label>
-          <ul class="md-nav__list" data-md-scrollfix>
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="../../cache/encoders/json_encoder/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    JsonEncoder
-  
-
-    
-  </span>
-  
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-          </ul>
-        </nav>
-      
-    </li>
-  
-
-              
-            
-          </ul>
-        </nav>
-      
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
-  
-  
-    
-    
-    
-    
-      
-      
-        
-          
-          
-        
-      
-    
-    
-    <li class="md-nav__item md-nav__item--section md-nav__item--nested">
-      
-        
-        
-          
-        
-        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_5_5" >
-        
-          
-          <label class="md-nav__link" for="__nav_5_5" id="__nav_5_5_label" tabindex="">
+          <label class="md-nav__link" for="__nav_5_3" id="__nav_5_3_label" tabindex="">
             
   
   
@@ -1990,8 +1695,8 @@
             <span class="md-nav__icon md-icon"></span>
           </label>
         
-        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_5_5_label" aria-expanded="false">
-          <label class="md-nav__title" for="__nav_5_5">
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_5_3_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_5_3">
             <span class="md-nav__icon md-icon"></span>
             
   
@@ -2016,34 +1721,6 @@
     
   
     LLM Cache
-  
-
-    
-  </span>
-  
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="../../provider/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    LLM Provider
   
 
     
@@ -2107,10 +1784,10 @@
         
           
         
-        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_5_5_4" >
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_5_3_3" >
         
           
-          <label class="md-nav__link" for="__nav_5_5_4" id="__nav_5_5_4_label" tabindex="0">
+          <label class="md-nav__link" for="__nav_5_3_3" id="__nav_5_3_3_label" tabindex="0">
             
   
   
@@ -2128,8 +1805,8 @@
             <span class="md-nav__icon md-icon"></span>
           </label>
         
-        <nav class="md-nav" data-md-level="3" aria-labelledby="__nav_5_5_4_label" aria-expanded="false">
-          <label class="md-nav__title" for="__nav_5_5_4">
+        <nav class="md-nav" data-md-level="3" aria-labelledby="__nav_5_3_3_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_5_3_3">
             <span class="md-nav__icon md-icon"></span>
             
   
@@ -2343,65 +2020,9 @@
 
               
             
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="../../prompts/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    Prompts
-  
-
-    
-  </span>
-  
-  
-
-      </a>
-    </li>
-  
-
-              
-            
           </ul>
         </nav>
       
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="../../base/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    Base
-  
-
-    
-  </span>
-  
-  
-
-      </a>
     </li>
   
 
@@ -2554,10 +2175,10 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#generating-from-model-specifications" class="md-nav__link">
+  <a href="#generating-from-network-context" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Generating from Model Specifications
+        Generating from Network Context
       
     </span>
   </a>
@@ -2704,10 +2325,10 @@
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
-  <a href="#causaliq_knowledge.graph.generator.GraphGenerator--load-model-specification" class="md-nav__link">
+  <a href="#causaliq_knowledge.graph.generator.GraphGenerator--load-network-context" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Load model specification
+        Load network context
       
     </span>
   </a>
@@ -2803,22 +2424,22 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#causaliq_knowledge.graph.generator.GraphGenerator.generate_from_spec" class="md-nav__link">
+  <a href="#causaliq_knowledge.graph.generator.GraphGenerator.generate_from_context" class="md-nav__link">
     <span class="md-ellipsis">
       
-        generate_from_spec
+        generate_from_context
       
     </span>
   </a>
   
-    <nav class="md-nav" aria-label="generate_from_spec">
+    <nav class="md-nav" aria-label="generate_from_context">
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
-  <a href="#causaliq_knowledge.graph.generator.GraphGenerator.generate_from_spec(spec)" class="md-nav__link">
+  <a href="#causaliq_knowledge.graph.generator.GraphGenerator.generate_from_context(context)" class="md-nav__link">
     <span class="md-ellipsis">
       
-        spec
+        context
       
     </span>
   </a>
@@ -2826,7 +2447,7 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#causaliq_knowledge.graph.generator.GraphGenerator.generate_from_spec(level)" class="md-nav__link">
+  <a href="#causaliq_knowledge.graph.generator.GraphGenerator.generate_from_context(level)" class="md-nav__link">
     <span class="md-ellipsis">
       
         level
@@ -2837,7 +2458,7 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#causaliq_knowledge.graph.generator.GraphGenerator.generate_from_spec(output_format)" class="md-nav__link">
+  <a href="#causaliq_knowledge.graph.generator.GraphGenerator.generate_from_context(output_format)" class="md-nav__link">
     <span class="md-ellipsis">
       
         output_format
@@ -2848,7 +2469,7 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#causaliq_knowledge.graph.generator.GraphGenerator.generate_from_spec(system_prompt)" class="md-nav__link">
+  <a href="#causaliq_knowledge.graph.generator.GraphGenerator.generate_from_context(system_prompt)" class="md-nav__link">
     <span class="md-ellipsis">
       
         system_prompt
@@ -2859,7 +2480,7 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#causaliq_knowledge.graph.generator.GraphGenerator.generate_from_spec(use_llm_names)" class="md-nav__link">
+  <a href="#causaliq_knowledge.graph.generator.GraphGenerator.generate_from_context(use_llm_names)" class="md-nav__link">
     <span class="md-ellipsis">
       
         use_llm_names
@@ -3020,24 +2641,24 @@
 
 <h1 id="graph-generator">Graph Generator<a class="headerlink" href="#graph-generator" title="Permanent link">&para;</a></h1>
 <p>The <code>generator</code> module provides the <code>GraphGenerator</code> class for generating
-complete causal graphs from variable specifications using LLMs.</p>
+complete causal graphs from network context using LLMs.</p>
 <h2 id="import-pattern">Import Pattern<a class="headerlink" href="#import-pattern" title="Permanent link">&para;</a></h2>
 <div class="language-python highlight"><pre><span></span><code><span id="__span-0-1"><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="kn">from</span><span class="w"> </span><span class="nn">causaliq_knowledge.graph</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
 </span><span id="__span-0-2"><a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a>    <span class="n">GraphGenerator</span><span class="p">,</span>
 </span><span id="__span-0-3"><a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a>    <span class="n">GraphGeneratorConfig</span><span class="p">,</span>
-</span><span id="__span-0-4"><a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a>    <span class="n">ModelLoader</span><span class="p">,</span>
+</span><span id="__span-0-4"><a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a>    <span class="n">NetworkContext</span><span class="p">,</span>
 </span><span id="__span-0-5"><a id="__codelineno-0-5" name="__codelineno-0-5" href="#__codelineno-0-5"></a>    <span class="n">GeneratedGraph</span><span class="p">,</span>
 </span><span id="__span-0-6"><a id="__codelineno-0-6" name="__codelineno-0-6" href="#__codelineno-0-6"></a>    <span class="n">PromptDetail</span><span class="p">,</span>
 </span><span id="__span-0-7"><a id="__codelineno-0-7" name="__codelineno-0-7" href="#__codelineno-0-7"></a>    <span class="n">OutputFormat</span><span class="p">,</span>
 </span><span id="__span-0-8"><a id="__codelineno-0-8" name="__codelineno-0-8" href="#__codelineno-0-8"></a><span class="p">)</span>
-</span><span id="__span-0-9"><a id="__codelineno-0-9" name="__codelineno-0-9" href="#__codelineno-0-9"></a><span class="kn">from</span><span class="w"> </span><span class="nn">causaliq_knowledge.cache</span><span class="w"> </span><span class="kn">import</span> <span class="n">TokenCache</span>
+</span><span id="__span-0-9"><a id="__codelineno-0-9" name="__codelineno-0-9" href="#__codelineno-0-9"></a><span class="kn">from</span><span class="w"> </span><span class="nn">causaliq_core.cache</span><span class="w"> </span><span class="kn">import</span> <span class="n">TokenCache</span>
 </span></code></pre></div>
 <h2 id="overview">Overview<a class="headerlink" href="#overview" title="Permanent link">&para;</a></h2>
 <p><code>GraphGenerator</code> orchestrates the full graph generation workflow:</p>
 <ol>
 <li>Create a generator with model and configuration</li>
 <li>Optionally set up caching with <code>TokenCache</code></li>
-<li>Generate graphs from variable dictionaries or <code>ModelSpec</code> files</li>
+<li>Generate graphs from variable dictionaries or <code>NetworkContext</code> files</li>
 <li>Receive structured <code>GeneratedGraph</code> objects with edges and metadata</li>
 </ol>
 <h2 id="quick-start">Quick Start<a class="headerlink" href="#quick-start" title="Permanent link">&para;</a></h2>
@@ -3045,7 +2666,7 @@ complete causal graphs from variable specifications using LLMs.</p>
 <div class="language-python highlight"><pre><span></span><code><span id="__span-1-1"><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a><span class="kn">from</span><span class="w"> </span><span class="nn">causaliq_knowledge.graph</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
 </span><span id="__span-1-2"><a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a>    <span class="n">GraphGenerator</span><span class="p">,</span>
 </span><span id="__span-1-3"><a id="__codelineno-1-3" name="__codelineno-1-3" href="#__codelineno-1-3"></a>    <span class="n">GraphGeneratorConfig</span><span class="p">,</span>
-</span><span id="__span-1-4"><a id="__codelineno-1-4" name="__codelineno-1-4" href="#__codelineno-1-4"></a>    <span class="n">ModelLoader</span><span class="p">,</span>
+</span><span id="__span-1-4"><a id="__codelineno-1-4" name="__codelineno-1-4" href="#__codelineno-1-4"></a>    <span class="n">NetworkContext</span><span class="p">,</span>
 </span><span id="__span-1-5"><a id="__codelineno-1-5" name="__codelineno-1-5" href="#__codelineno-1-5"></a>    <span class="n">PromptDetail</span><span class="p">,</span>
 </span><span id="__span-1-6"><a id="__codelineno-1-6" name="__codelineno-1-6" href="#__codelineno-1-6"></a>    <span class="n">OutputFormat</span><span class="p">,</span>
 </span><span id="__span-1-7"><a id="__codelineno-1-7" name="__codelineno-1-7" href="#__codelineno-1-7"></a><span class="p">)</span>
@@ -3064,9 +2685,9 @@ complete causal graphs from variable specifications using LLMs.</p>
 </span><span id="__span-1-20"><a id="__codelineno-1-20" name="__codelineno-1-20" href="#__codelineno-1-20"></a>    <span class="n">domain</span><span class="o">=</span><span class="s2">&quot;oncology&quot;</span><span class="p">,</span>
 </span><span id="__span-1-21"><a id="__codelineno-1-21" name="__codelineno-1-21" href="#__codelineno-1-21"></a><span class="p">)</span>
 </span><span id="__span-1-22"><a id="__codelineno-1-22" name="__codelineno-1-22" href="#__codelineno-1-22"></a>
-</span><span id="__span-1-23"><a id="__codelineno-1-23" name="__codelineno-1-23" href="#__codelineno-1-23"></a><span class="c1"># Option 2: Generate from a model specification file</span>
-</span><span id="__span-1-24"><a id="__codelineno-1-24" name="__codelineno-1-24" href="#__codelineno-1-24"></a><span class="n">spec</span> <span class="o">=</span> <span class="n">ModelLoader</span><span class="o">.</span><span class="n">load</span><span class="p">(</span><span class="s2">&quot;research/models/my_model.json&quot;</span><span class="p">)</span>
-</span><span id="__span-1-25"><a id="__codelineno-1-25" name="__codelineno-1-25" href="#__codelineno-1-25"></a><span class="n">graph</span> <span class="o">=</span> <span class="n">generator</span><span class="o">.</span><span class="n">generate_from_spec</span><span class="p">(</span><span class="n">spec</span><span class="p">)</span>
+</span><span id="__span-1-23"><a id="__codelineno-1-23" name="__codelineno-1-23" href="#__codelineno-1-23"></a><span class="c1"># Option 2: Generate from a network context file</span>
+</span><span id="__span-1-24"><a id="__codelineno-1-24" name="__codelineno-1-24" href="#__codelineno-1-24"></a><span class="n">context</span> <span class="o">=</span> <span class="n">NetworkContext</span><span class="o">.</span><span class="n">load</span><span class="p">(</span><span class="s2">&quot;research/models/my_model.json&quot;</span><span class="p">)</span>
+</span><span id="__span-1-25"><a id="__codelineno-1-25" name="__codelineno-1-25" href="#__codelineno-1-25"></a><span class="n">graph</span> <span class="o">=</span> <span class="n">generator</span><span class="o">.</span><span class="n">generate_from_context</span><span class="p">(</span><span class="n">context</span><span class="p">)</span>
 </span><span id="__span-1-26"><a id="__codelineno-1-26" name="__codelineno-1-26" href="#__codelineno-1-26"></a>
 </span><span id="__span-1-27"><a id="__codelineno-1-27" name="__codelineno-1-27" href="#__codelineno-1-27"></a><span class="c1"># Access the results</span>
 </span><span id="__span-1-28"><a id="__codelineno-1-28" name="__codelineno-1-28" href="#__codelineno-1-28"></a><span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Generated </span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">graph</span><span class="o">.</span><span class="n">edges</span><span class="p">)</span><span class="si">}</span><span class="s2"> edges&quot;</span><span class="p">)</span>
@@ -3150,7 +2771,7 @@ complete causal graphs from variable specifications using LLMs.</p>
 </table>
 <h2 id="creating-a-generator">Creating a Generator<a class="headerlink" href="#creating-a-generator" title="Permanent link">&para;</a></h2>
 <div class="language-python highlight"><pre><span></span><code><span id="__span-3-1"><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a><span class="kn">from</span><span class="w"> </span><span class="nn">causaliq_knowledge.graph</span><span class="w"> </span><span class="kn">import</span> <span class="n">GraphGenerator</span><span class="p">,</span> <span class="n">GraphGeneratorConfig</span>
-</span><span id="__span-3-2"><a id="__codelineno-3-2" name="__codelineno-3-2" href="#__codelineno-3-2"></a><span class="kn">from</span><span class="w"> </span><span class="nn">causaliq_knowledge.cache</span><span class="w"> </span><span class="kn">import</span> <span class="n">TokenCache</span>
+</span><span id="__span-3-2"><a id="__codelineno-3-2" name="__codelineno-3-2" href="#__codelineno-3-2"></a><span class="kn">from</span><span class="w"> </span><span class="nn">causaliq_core.cache</span><span class="w"> </span><span class="kn">import</span> <span class="n">TokenCache</span>
 </span><span id="__span-3-3"><a id="__codelineno-3-3" name="__codelineno-3-3" href="#__codelineno-3-3"></a>
 </span><span id="__span-3-4"><a id="__codelineno-3-4" name="__codelineno-3-4" href="#__codelineno-3-4"></a><span class="c1"># Basic creation with just a model</span>
 </span><span id="__span-3-5"><a id="__codelineno-3-5" name="__codelineno-3-5" href="#__codelineno-3-5"></a><span class="n">generator</span> <span class="o">=</span> <span class="n">GraphGenerator</span><span class="p">(</span><span class="n">model</span><span class="o">=</span><span class="s2">&quot;groq/llama-3.1-8b-instant&quot;</span><span class="p">)</span>
@@ -3215,21 +2836,21 @@ complete causal graphs from variable specifications using LLMs.</p>
 </span><span id="__span-4-37"><a id="__codelineno-4-37" name="__codelineno-4-37" href="#__codelineno-4-37"></a>    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;  Confidence: </span><span class="si">{</span><span class="n">edge</span><span class="o">.</span><span class="n">confidence</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
 </span><span id="__span-4-38"><a id="__codelineno-4-38" name="__codelineno-4-38" href="#__codelineno-4-38"></a>    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;  Rationale: </span><span class="si">{</span><span class="n">edge</span><span class="o">.</span><span class="n">rationale</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
 </span></code></pre></div>
-<h2 id="generating-from-model-specifications">Generating from Model Specifications<a class="headerlink" href="#generating-from-model-specifications" title="Permanent link">&para;</a></h2>
-<p>Use <code>generate_from_spec()</code> when you have a JSON model specification file:</p>
-<div class="language-python highlight"><pre><span></span><code><span id="__span-5-1"><a id="__codelineno-5-1" name="__codelineno-5-1" href="#__codelineno-5-1"></a><span class="kn">from</span><span class="w"> </span><span class="nn">causaliq_knowledge.graph</span><span class="w"> </span><span class="kn">import</span> <span class="n">GraphGenerator</span><span class="p">,</span> <span class="n">ModelLoader</span><span class="p">,</span> <span class="n">PromptDetail</span>
+<h2 id="generating-from-network-context">Generating from Network Context<a class="headerlink" href="#generating-from-network-context" title="Permanent link">&para;</a></h2>
+<p>Use <code>generate_from_context()</code> when you have a JSON network context file:</p>
+<div class="language-python highlight"><pre><span></span><code><span id="__span-5-1"><a id="__codelineno-5-1" name="__codelineno-5-1" href="#__codelineno-5-1"></a><span class="kn">from</span><span class="w"> </span><span class="nn">causaliq_knowledge.graph</span><span class="w"> </span><span class="kn">import</span> <span class="n">GraphGenerator</span><span class="p">,</span> <span class="n">NetworkContext</span><span class="p">,</span> <span class="n">PromptDetail</span>
 </span><span id="__span-5-2"><a id="__codelineno-5-2" name="__codelineno-5-2" href="#__codelineno-5-2"></a>
 </span><span id="__span-5-3"><a id="__codelineno-5-3" name="__codelineno-5-3" href="#__codelineno-5-3"></a><span class="n">generator</span> <span class="o">=</span> <span class="n">GraphGenerator</span><span class="p">(</span><span class="n">model</span><span class="o">=</span><span class="s2">&quot;gemini/gemini-2.0-flash&quot;</span><span class="p">)</span>
 </span><span id="__span-5-4"><a id="__codelineno-5-4" name="__codelineno-5-4" href="#__codelineno-5-4"></a>
-</span><span id="__span-5-5"><a id="__codelineno-5-5" name="__codelineno-5-5" href="#__codelineno-5-5"></a><span class="c1"># Load the specification</span>
-</span><span id="__span-5-6"><a id="__codelineno-5-6" name="__codelineno-5-6" href="#__codelineno-5-6"></a><span class="n">spec</span> <span class="o">=</span> <span class="n">ModelLoader</span><span class="o">.</span><span class="n">load</span><span class="p">(</span><span class="s2">&quot;research/models/asia/asia.json&quot;</span><span class="p">)</span>
+</span><span id="__span-5-5"><a id="__codelineno-5-5" name="__codelineno-5-5" href="#__codelineno-5-5"></a><span class="c1"># Load the network context</span>
+</span><span id="__span-5-6"><a id="__codelineno-5-6" name="__codelineno-5-6" href="#__codelineno-5-6"></a><span class="n">context</span> <span class="o">=</span> <span class="n">NetworkContext</span><span class="o">.</span><span class="n">load</span><span class="p">(</span><span class="s2">&quot;research/models/asia/asia.json&quot;</span><span class="p">)</span>
 </span><span id="__span-5-7"><a id="__codelineno-5-7" name="__codelineno-5-7" href="#__codelineno-5-7"></a>
 </span><span id="__span-5-8"><a id="__codelineno-5-8" name="__codelineno-5-8" href="#__codelineno-5-8"></a><span class="c1"># Generate with default settings from config</span>
-</span><span id="__span-5-9"><a id="__codelineno-5-9" name="__codelineno-5-9" href="#__codelineno-5-9"></a><span class="n">graph</span> <span class="o">=</span> <span class="n">generator</span><span class="o">.</span><span class="n">generate_from_spec</span><span class="p">(</span><span class="n">spec</span><span class="p">)</span>
+</span><span id="__span-5-9"><a id="__codelineno-5-9" name="__codelineno-5-9" href="#__codelineno-5-9"></a><span class="n">graph</span> <span class="o">=</span> <span class="n">generator</span><span class="o">.</span><span class="n">generate_from_context</span><span class="p">(</span><span class="n">context</span><span class="p">)</span>
 </span><span id="__span-5-10"><a id="__codelineno-5-10" name="__codelineno-5-10" href="#__codelineno-5-10"></a>
 </span><span id="__span-5-11"><a id="__codelineno-5-11" name="__codelineno-5-11" href="#__codelineno-5-11"></a><span class="c1"># Override settings for this specific call</span>
-</span><span id="__span-5-12"><a id="__codelineno-5-12" name="__codelineno-5-12" href="#__codelineno-5-12"></a><span class="n">graph</span> <span class="o">=</span> <span class="n">generator</span><span class="o">.</span><span class="n">generate_from_spec</span><span class="p">(</span>
-</span><span id="__span-5-13"><a id="__codelineno-5-13" name="__codelineno-5-13" href="#__codelineno-5-13"></a>    <span class="n">spec</span><span class="o">=</span><span class="n">spec</span><span class="p">,</span>
+</span><span id="__span-5-12"><a id="__codelineno-5-12" name="__codelineno-5-12" href="#__codelineno-5-12"></a><span class="n">graph</span> <span class="o">=</span> <span class="n">generator</span><span class="o">.</span><span class="n">generate_from_context</span><span class="p">(</span>
+</span><span id="__span-5-13"><a id="__codelineno-5-13" name="__codelineno-5-13" href="#__codelineno-5-13"></a>    <span class="n">context</span><span class="o">=</span><span class="n">context</span><span class="p">,</span>
 </span><span id="__span-5-14"><a id="__codelineno-5-14" name="__codelineno-5-14" href="#__codelineno-5-14"></a>    <span class="n">level</span><span class="o">=</span><span class="n">PromptDetail</span><span class="o">.</span><span class="n">MINIMAL</span><span class="p">,</span>
 </span><span id="__span-5-15"><a id="__codelineno-5-15" name="__codelineno-5-15" href="#__codelineno-5-15"></a>    <span class="n">use_llm_names</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>  <span class="c1"># Use benchmark names instead</span>
 </span><span id="__span-5-16"><a id="__codelineno-5-16" name="__codelineno-5-16" href="#__codelineno-5-16"></a><span class="p">)</span>
@@ -3283,7 +2904,7 @@ complete causal graphs from variable specifications using LLMs.</p>
 <h2 id="caching">Caching<a class="headerlink" href="#caching" title="Permanent link">&para;</a></h2>
 <p>GraphGenerator integrates with <code>TokenCache</code> for response caching:</p>
 <div class="language-python highlight"><pre><span></span><code><span id="__span-7-1"><a id="__codelineno-7-1" name="__codelineno-7-1" href="#__codelineno-7-1"></a><span class="kn">from</span><span class="w"> </span><span class="nn">causaliq_knowledge.graph</span><span class="w"> </span><span class="kn">import</span> <span class="n">GraphGenerator</span>
-</span><span id="__span-7-2"><a id="__codelineno-7-2" name="__codelineno-7-2" href="#__codelineno-7-2"></a><span class="kn">from</span><span class="w"> </span><span class="nn">causaliq_knowledge.cache</span><span class="w"> </span><span class="kn">import</span> <span class="n">TokenCache</span>
+</span><span id="__span-7-2"><a id="__codelineno-7-2" name="__codelineno-7-2" href="#__codelineno-7-2"></a><span class="kn">from</span><span class="w"> </span><span class="nn">causaliq_core.cache</span><span class="w"> </span><span class="kn">import</span> <span class="n">TokenCache</span>
 </span><span id="__span-7-3"><a id="__codelineno-7-3" name="__codelineno-7-3" href="#__codelineno-7-3"></a>
 </span><span id="__span-7-4"><a id="__codelineno-7-4" name="__codelineno-7-4" href="#__codelineno-7-4"></a><span class="c1"># Create cache and generator</span>
 </span><span id="__span-7-5"><a id="__codelineno-7-5" name="__codelineno-7-5" href="#__codelineno-7-5"></a><span class="n">cache</span> <span class="o">=</span> <span class="n">TokenCache</span><span class="p">(</span><span class="n">db_path</span><span class="o">=</span><span class="s2">&quot;graph_cache.db&quot;</span><span class="p">)</span>
@@ -3403,7 +3024,7 @@ complete causal graphs from variable specifications using LLMs.</p>
 </span><span id="__span-12-9"><a id="__codelineno-12-9" name="__codelineno-12-9" href="#__codelineno-12-9"></a>    <span class="n">PromptDetail</span><span class="p">,</span>
 </span><span id="__span-12-10"><a id="__codelineno-12-10" name="__codelineno-12-10" href="#__codelineno-12-10"></a>    <span class="n">OutputFormat</span><span class="p">,</span>
 </span><span id="__span-12-11"><a id="__codelineno-12-11" name="__codelineno-12-11" href="#__codelineno-12-11"></a><span class="p">)</span>
-</span><span id="__span-12-12"><a id="__codelineno-12-12" name="__codelineno-12-12" href="#__codelineno-12-12"></a><span class="kn">from</span><span class="w"> </span><span class="nn">causaliq_knowledge.cache</span><span class="w"> </span><span class="kn">import</span> <span class="n">TokenCache</span>
+</span><span id="__span-12-12"><a id="__codelineno-12-12" name="__codelineno-12-12" href="#__codelineno-12-12"></a><span class="kn">from</span><span class="w"> </span><span class="nn">causaliq_core.cache</span><span class="w"> </span><span class="kn">import</span> <span class="n">TokenCache</span>
 </span><span id="__span-12-13"><a id="__codelineno-12-13" name="__codelineno-12-13" href="#__codelineno-12-13"></a>
 </span><span id="__span-12-14"><a id="__codelineno-12-14" name="__codelineno-12-14" href="#__codelineno-12-14"></a>
 </span><span id="__span-12-15"><a id="__codelineno-12-15" name="__codelineno-12-15" href="#__codelineno-12-15"></a><span class="k">def</span><span class="w"> </span><span class="nf">main</span><span class="p">():</span>
@@ -3493,7 +3114,7 @@ causal graphs from variable specifications using LLM providers.</p>
           <b><code><a class="autorefs autorefs-internal" title="            GraphGenerator (causaliq_knowledge.graph.generator.GraphGenerator)" href="#causaliq_knowledge.graph.generator.GraphGenerator">GraphGenerator</a></code></b>
           –
           <div class="doc-md-description">
-            <p>Generate causal graphs from variable specifications using LLMs.</p>
+            <p>Generate causal graphs from network context using LLMs.</p>
           </div>
         </li>
     </ul>
@@ -3663,9 +3284,9 @@ causal graphs from variable specifications using LLM providers.</p>
     <div class="doc doc-contents ">
 
 
-        <p>Generate causal graphs from variable specifications using LLMs.</p>
+        <p>Generate causal graphs from network context using LLMs.</p>
 <p>This class provides methods for generating complete causal graphs
-from ModelSpec objects or variable dictionaries. It supports all
+from NetworkContext objects or variable dictionaries. It supports all
 LLM providers available in causaliq-knowledge and integrates with
 the TokenCache for efficient caching of requests.</p>
 
@@ -3711,14 +3332,14 @@ the TokenCache for efficient caching of requests.</p>
   <blockquote>
 <blockquote>
 <blockquote>
-<p>from causaliq_knowledge.graph import ModelLoader
+<p>from causaliq_knowledge.graph import NetworkContext
 from causaliq_knowledge.graph.generator import GraphGenerator</p>
-<h3 id="causaliq_knowledge.graph.generator.GraphGenerator--load-model-specification">Load model specification<a class="headerlink" href="#causaliq_knowledge.graph.generator.GraphGenerator--load-model-specification" title="Permanent link">&para;</a></h3>
-<p>spec = ModelLoader.load("model.json")</p>
+<h3 id="causaliq_knowledge.graph.generator.GraphGenerator--load-network-context">Load network context<a class="headerlink" href="#causaliq_knowledge.graph.generator.GraphGenerator--load-network-context" title="Permanent link">&para;</a></h3>
+<p>context = NetworkContext.load("asia.json")</p>
 <h3 id="causaliq_knowledge.graph.generator.GraphGenerator--create-generator">Create generator<a class="headerlink" href="#causaliq_knowledge.graph.generator.GraphGenerator--create-generator" title="Permanent link">&para;</a></h3>
 <p>generator = GraphGenerator(model="groq/llama-3.1-8b-instant")</p>
 <h3 id="causaliq_knowledge.graph.generator.GraphGenerator--generate-graph">Generate graph<a class="headerlink" href="#causaliq_knowledge.graph.generator.GraphGenerator--generate-graph" title="Permanent link">&para;</a></h3>
-<p>graph = generator.generate_from_spec(spec)
+<p>graph = generator.generate_from_context(context)
 print(f"Generated {len(graph.edges)} edges")</p>
 </blockquote>
 </blockquote>
@@ -3799,10 +3420,10 @@ print(f"Generated {len(graph.edges)} edges")</p>
 <p><span class="doc-section-title">Methods:</span></p>
     <ul>
           <li class="doc-section-item field-body">
-            <b><code><a class="autorefs autorefs-internal" title="            generate_from_spec (causaliq_knowledge.graph.generator.GraphGenerator.generate_from_spec)" href="#causaliq_knowledge.graph.generator.GraphGenerator.generate_from_spec">generate_from_spec</a></code></b>
+            <b><code><a class="autorefs autorefs-internal" title="            generate_from_context (causaliq_knowledge.graph.generator.GraphGenerator.generate_from_context)" href="#causaliq_knowledge.graph.generator.GraphGenerator.generate_from_context">generate_from_context</a></code></b>
             –
             <div class="doc-md-description">
-              <p>Generate a causal graph from a ModelSpec.</p>
+              <p>Generate a causal graph from a NetworkContext.</p>
             </div>
           </li>
           <li class="doc-section-item field-body">
@@ -3927,17 +3548,17 @@ print(f"Generated {len(graph.edges)} edges")</p>
 <div class="doc doc-object doc-function">
 
 
-<h3 id="causaliq_knowledge.graph.generator.GraphGenerator.generate_from_spec" class="doc doc-heading">
-<code class="doc-symbol doc-symbol-heading doc-symbol-method"></code>            <span class="doc doc-object-name doc-function-name">generate_from_spec</span>
+<h3 id="causaliq_knowledge.graph.generator.GraphGenerator.generate_from_context" class="doc doc-heading">
+<code class="doc-symbol doc-symbol-heading doc-symbol-method"></code>            <span class="doc doc-object-name doc-function-name">generate_from_context</span>
 
 
-<a href="#causaliq_knowledge.graph.generator.GraphGenerator.generate_from_spec" class="headerlink" title="Permanent link">&para;</a></h3>
-<div class="language-python doc-signature highlight"><pre><span></span><code><span id="__span-0-1"><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="nf">generate_from_spec</span><span class="p">(</span>
-</span><span id="__span-0-2"><a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a>    <span class="n"><a class="autorefs autorefs-internal" title="spec (causaliq_knowledge.graph.generator.GraphGenerator.generate_from_spec(spec))" href="#causaliq_knowledge.graph.generator.GraphGenerator.generate_from_spec(spec)">spec</a></span><span class="p">:</span> <span class="s2">&quot;ModelSpec&quot;</span><span class="p">,</span>
-</span><span id="__span-0-3"><a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a>    <span class="n"><a class="autorefs autorefs-internal" title="level (causaliq_knowledge.graph.generator.GraphGenerator.generate_from_spec(level))" href="#causaliq_knowledge.graph.generator.GraphGenerator.generate_from_spec(level)">level</a></span><span class="p">:</span> <span class="n"><span title="typing.Optional">Optional</span></span><span class="p">[</span><span class="n"><span title="causaliq_knowledge.graph.view_filter.PromptDetail">PromptDetail</span></span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
-</span><span id="__span-0-4"><a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a>    <span class="n"><a class="autorefs autorefs-internal" title="output_format (causaliq_knowledge.graph.generator.GraphGenerator.generate_from_spec(output_format))" href="#causaliq_knowledge.graph.generator.GraphGenerator.generate_from_spec(output_format)">output_format</a></span><span class="p">:</span> <span class="n"><span title="typing.Optional">Optional</span></span><span class="p">[</span><span class="n"><span title="causaliq_knowledge.graph.prompts.OutputFormat">OutputFormat</span></span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
-</span><span id="__span-0-5"><a id="__codelineno-0-5" name="__codelineno-0-5" href="#__codelineno-0-5"></a>    <span class="n"><a class="autorefs autorefs-internal" title="system_prompt (causaliq_knowledge.graph.generator.GraphGenerator.generate_from_spec(system_prompt))" href="#causaliq_knowledge.graph.generator.GraphGenerator.generate_from_spec(system_prompt)">system_prompt</a></span><span class="p">:</span> <span class="n"><span title="typing.Optional">Optional</span></span><span class="p">[</span><span class="n"><span title="str">str</span></span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
-</span><span id="__span-0-6"><a id="__codelineno-0-6" name="__codelineno-0-6" href="#__codelineno-0-6"></a>    <span class="n"><a class="autorefs autorefs-internal" title="use_llm_names (causaliq_knowledge.graph.generator.GraphGenerator.generate_from_spec(use_llm_names))" href="#causaliq_knowledge.graph.generator.GraphGenerator.generate_from_spec(use_llm_names)">use_llm_names</a></span><span class="p">:</span> <span class="n"><span title="typing.Optional">Optional</span></span><span class="p">[</span><span class="n"><span title="bool">bool</span></span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+<a href="#causaliq_knowledge.graph.generator.GraphGenerator.generate_from_context" class="headerlink" title="Permanent link">&para;</a></h3>
+<div class="language-python doc-signature highlight"><pre><span></span><code><span id="__span-0-1"><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="nf">generate_from_context</span><span class="p">(</span>
+</span><span id="__span-0-2"><a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a>    <span class="n"><a class="autorefs autorefs-internal" title="context (causaliq_knowledge.graph.generator.GraphGenerator.generate_from_context(context))" href="#causaliq_knowledge.graph.generator.GraphGenerator.generate_from_context(context)">context</a></span><span class="p">:</span> <span class="s2">&quot;NetworkContext&quot;</span><span class="p">,</span>
+</span><span id="__span-0-3"><a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a>    <span class="n"><a class="autorefs autorefs-internal" title="level (causaliq_knowledge.graph.generator.GraphGenerator.generate_from_context(level))" href="#causaliq_knowledge.graph.generator.GraphGenerator.generate_from_context(level)">level</a></span><span class="p">:</span> <span class="n"><span title="typing.Optional">Optional</span></span><span class="p">[</span><span class="n"><span title="causaliq_knowledge.graph.view_filter.PromptDetail">PromptDetail</span></span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+</span><span id="__span-0-4"><a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a>    <span class="n"><a class="autorefs autorefs-internal" title="output_format (causaliq_knowledge.graph.generator.GraphGenerator.generate_from_context(output_format))" href="#causaliq_knowledge.graph.generator.GraphGenerator.generate_from_context(output_format)">output_format</a></span><span class="p">:</span> <span class="n"><span title="typing.Optional">Optional</span></span><span class="p">[</span><span class="n"><span title="causaliq_knowledge.graph.prompts.OutputFormat">OutputFormat</span></span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+</span><span id="__span-0-5"><a id="__codelineno-0-5" name="__codelineno-0-5" href="#__codelineno-0-5"></a>    <span class="n"><a class="autorefs autorefs-internal" title="system_prompt (causaliq_knowledge.graph.generator.GraphGenerator.generate_from_context(system_prompt))" href="#causaliq_knowledge.graph.generator.GraphGenerator.generate_from_context(system_prompt)">system_prompt</a></span><span class="p">:</span> <span class="n"><span title="typing.Optional">Optional</span></span><span class="p">[</span><span class="n"><span title="str">str</span></span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+</span><span id="__span-0-6"><a id="__codelineno-0-6" name="__codelineno-0-6" href="#__codelineno-0-6"></a>    <span class="n"><a class="autorefs autorefs-internal" title="use_llm_names (causaliq_knowledge.graph.generator.GraphGenerator.generate_from_context(use_llm_names))" href="#causaliq_knowledge.graph.generator.GraphGenerator.generate_from_context(use_llm_names)">use_llm_names</a></span><span class="p">:</span> <span class="n"><span title="typing.Optional">Optional</span></span><span class="p">[</span><span class="n"><span title="bool">bool</span></span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
 </span><span id="__span-0-7"><a id="__codelineno-0-7" name="__codelineno-0-7" href="#__codelineno-0-7"></a><span class="p">)</span> <span class="o">-&gt;</span> <span class="n"><a class="autorefs autorefs-internal" title="            GeneratedGraph
 
 
@@ -3948,24 +3569,24 @@ print(f"Generated {len(graph.edges)} edges")</p>
 
     <div class="doc doc-contents ">
 
-        <p>Generate a causal graph from a ModelSpec.</p>
+        <p>Generate a causal graph from a NetworkContext.</p>
 <p>Convenience method that extracts variables and domain from the
-specification automatically.</p>
+context automatically.</p>
 
 
 <p><span class="doc-section-title">Parameters:</span></p>
     <ul>
         <li class="doc-section-item field-body">
-<h4 id="causaliq_knowledge.graph.generator.GraphGenerator.generate_from_spec(spec)" class="doc doc-heading doc-heading-parameter">              <b><code>spec</code></b>
-<a href="#causaliq_knowledge.graph.generator.GraphGenerator.generate_from_spec(spec)" class="headerlink" title="Permanent link">&para;</a></h4>              (<code>&#39;ModelSpec&#39;</code>)
+<h4 id="causaliq_knowledge.graph.generator.GraphGenerator.generate_from_context(context)" class="doc doc-heading doc-heading-parameter">              <b><code>context</code></b>
+<a href="#causaliq_knowledge.graph.generator.GraphGenerator.generate_from_context(context)" class="headerlink" title="Permanent link">&para;</a></h4>              (<code>&#39;NetworkContext&#39;</code>)
           –
           <div class="doc-md-description">
-            <p>The model specification.</p>
+            <p>The network context.</p>
           </div>
         </li>
         <li class="doc-section-item field-body">
-<h4 id="causaliq_knowledge.graph.generator.GraphGenerator.generate_from_spec(level)" class="doc doc-heading doc-heading-parameter">              <b><code>level</code></b>
-<a href="#causaliq_knowledge.graph.generator.GraphGenerator.generate_from_spec(level)" class="headerlink" title="Permanent link">&para;</a></h4>              (<code><span title="typing.Optional">Optional</span>[<span title="causaliq_knowledge.graph.view_filter.PromptDetail">PromptDetail</span>]</code>, default:
+<h4 id="causaliq_knowledge.graph.generator.GraphGenerator.generate_from_context(level)" class="doc doc-heading doc-heading-parameter">              <b><code>level</code></b>
+<a href="#causaliq_knowledge.graph.generator.GraphGenerator.generate_from_context(level)" class="headerlink" title="Permanent link">&para;</a></h4>              (<code><span title="typing.Optional">Optional</span>[<span title="causaliq_knowledge.graph.view_filter.PromptDetail">PromptDetail</span>]</code>, default:
                   <code>None</code>
 )
           –
@@ -3974,8 +3595,8 @@ specification automatically.</p>
           </div>
         </li>
         <li class="doc-section-item field-body">
-<h4 id="causaliq_knowledge.graph.generator.GraphGenerator.generate_from_spec(output_format)" class="doc doc-heading doc-heading-parameter">              <b><code>output_format</code></b>
-<a href="#causaliq_knowledge.graph.generator.GraphGenerator.generate_from_spec(output_format)" class="headerlink" title="Permanent link">&para;</a></h4>              (<code><span title="typing.Optional">Optional</span>[<span title="causaliq_knowledge.graph.prompts.OutputFormat">OutputFormat</span>]</code>, default:
+<h4 id="causaliq_knowledge.graph.generator.GraphGenerator.generate_from_context(output_format)" class="doc doc-heading doc-heading-parameter">              <b><code>output_format</code></b>
+<a href="#causaliq_knowledge.graph.generator.GraphGenerator.generate_from_context(output_format)" class="headerlink" title="Permanent link">&para;</a></h4>              (<code><span title="typing.Optional">Optional</span>[<span title="causaliq_knowledge.graph.prompts.OutputFormat">OutputFormat</span>]</code>, default:
                   <code>None</code>
 )
           –
@@ -3984,8 +3605,8 @@ specification automatically.</p>
           </div>
         </li>
         <li class="doc-section-item field-body">
-<h4 id="causaliq_knowledge.graph.generator.GraphGenerator.generate_from_spec(system_prompt)" class="doc doc-heading doc-heading-parameter">              <b><code>system_prompt</code></b>
-<a href="#causaliq_knowledge.graph.generator.GraphGenerator.generate_from_spec(system_prompt)" class="headerlink" title="Permanent link">&para;</a></h4>              (<code><span title="typing.Optional">Optional</span>[<span title="str">str</span>]</code>, default:
+<h4 id="causaliq_knowledge.graph.generator.GraphGenerator.generate_from_context(system_prompt)" class="doc doc-heading doc-heading-parameter">              <b><code>system_prompt</code></b>
+<a href="#causaliq_knowledge.graph.generator.GraphGenerator.generate_from_context(system_prompt)" class="headerlink" title="Permanent link">&para;</a></h4>              (<code><span title="typing.Optional">Optional</span>[<span title="str">str</span>]</code>, default:
                   <code>None</code>
 )
           –
@@ -3994,8 +3615,8 @@ specification automatically.</p>
           </div>
         </li>
         <li class="doc-section-item field-body">
-<h4 id="causaliq_knowledge.graph.generator.GraphGenerator.generate_from_spec(use_llm_names)" class="doc doc-heading doc-heading-parameter">              <b><code>use_llm_names</code></b>
-<a href="#causaliq_knowledge.graph.generator.GraphGenerator.generate_from_spec(use_llm_names)" class="headerlink" title="Permanent link">&para;</a></h4>              (<code><span title="typing.Optional">Optional</span>[<span title="bool">bool</span>]</code>, default:
+<h4 id="causaliq_knowledge.graph.generator.GraphGenerator.generate_from_context(use_llm_names)" class="doc doc-heading doc-heading-parameter">              <b><code>use_llm_names</code></b>
+<a href="#causaliq_knowledge.graph.generator.GraphGenerator.generate_from_context(use_llm_names)" class="headerlink" title="Permanent link">&para;</a></h4>              (<code><span title="typing.Optional">Optional</span>[<span title="bool">bool</span>]</code>, default:
                   <code>None</code>
 )
           –
@@ -4302,13 +3923,13 @@ Uses config default if None.</p>
         
         
           
-          <a href="../../cache/overview/" class="md-footer__link md-footer__link--next" aria-label="Next: Cache Overview">
+          <a href="../../llm/cache/" class="md-footer__link md-footer__link--next" aria-label="Next: LLM Cache">
             <div class="md-footer__title">
               <span class="md-footer__direction">
                 Next
               </span>
               <div class="md-ellipsis">
-                Cache Overview
+                LLM Cache
               </div>
             </div>
             <div class="md-footer__button md-icon">
