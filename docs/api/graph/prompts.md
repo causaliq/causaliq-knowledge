@@ -72,17 +72,17 @@ GraphQueryPrompt(
 **Example:**
 
 ```python
-from causaliq_knowledge.graph import ModelLoader, ViewFilter, PromptDetail
+from causaliq_knowledge.graph import NetworkContext, ViewFilter, PromptDetail
 from causaliq_knowledge.graph.prompts import GraphQueryPrompt
 
-spec = ModelLoader.load("model.json")
-view_filter = ViewFilter(spec)
+context = NetworkContext.load("context.json")
+view_filter = ViewFilter(context)
 variables = view_filter.filter_variables(PromptDetail.STANDARD)
 
 prompt = GraphQueryPrompt(
     variables=variables,
     level=PromptDetail.STANDARD,
-    domain=spec.domain,
+    domain=context.domain,
 )
 ```
 
@@ -134,16 +134,16 @@ names = prompt.get_variable_names()
 # ["age", "income", "education", ...]
 ```
 
-#### from_model_spec (class method)
+#### from_context (class method)
 
-Create a `GraphQueryPrompt` directly from a `ModelSpec`. This is a
+Create a `GraphQueryPrompt` directly from a `NetworkContext`. This is a
 convenience method that handles view filtering automatically.
 
 ```python
 @classmethod
-def from_model_spec(
+def from_context(
     cls,
-    spec: ModelSpec,
+    context: NetworkContext,
     level: PromptDetail = PromptDetail.STANDARD,
     output_format: OutputFormat = OutputFormat.EDGE_LIST,
     system_prompt: Optional[str] = None,
@@ -154,24 +154,24 @@ def from_model_spec(
 
 | Parameter | Type | Default | Description |
 |-----------|------|---------|-------------|
-| `spec` | `ModelSpec` | Required | The model specification |
+| `context` | `NetworkContext` | Required | The network context |
 | `level` | `PromptDetail` | `STANDARD` | The prompt detail level |
 | `output_format` | `OutputFormat` | `EDGE_LIST` | Desired output format |
 | `system_prompt` | `Optional[str]` | `None` | Custom system prompt |
 
 **Returns:**
 
-A `GraphQueryPrompt` instance configured from the model specification.
+A `GraphQueryPrompt` instance configured from the network context.
 
 **Example:**
 
 ```python
-from causaliq_knowledge.graph import ModelLoader, PromptDetail
+from causaliq_knowledge.graph import NetworkContext, PromptDetail
 from causaliq_knowledge.graph.prompts import GraphQueryPrompt
 
-spec = ModelLoader.load("model.json")
-prompt = GraphQueryPrompt.from_model_spec(
-    spec,
+context = NetworkContext.load("context.json")
+prompt = GraphQueryPrompt.from_context(
+    context,
     level=PromptDetail.RICH,
 )
 system, user = prompt.build()
@@ -286,15 +286,15 @@ User prompts are selected based on the `PromptDetail`:
 ## Complete Example
 
 ```python
-from causaliq_knowledge.graph import ModelLoader, PromptDetail
+from causaliq_knowledge.graph import NetworkContext, PromptDetail
 from causaliq_knowledge.graph.prompts import GraphQueryPrompt, OutputFormat
 
-# Load model specification
-spec = ModelLoader.load("research/models/health_model.json")
+# Load network context
+context = NetworkContext.load("research/models/cancer/cancer.json")
 
 # Create prompt with rich context
-prompt = GraphQueryPrompt.from_model_spec(
-    spec,
+prompt = GraphQueryPrompt.from_context(
+    context,
     level=PromptDetail.RICH,
     output_format=OutputFormat.EDGE_LIST,
 )

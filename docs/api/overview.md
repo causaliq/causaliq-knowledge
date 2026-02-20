@@ -8,24 +8,37 @@ Graph generation classes are available from the `graph` submodule:
 
 ```python
 from causaliq_knowledge.graph import (
-    # Model specification
-    ModelSpec,
+    # Network context (main model)
+    NetworkContext,
+    NetworkLoadError,
+    # Variable specification
     VariableSpec,
     VariableType,
     VariableRole,
+    # Supporting models
     ViewDefinition,
     Provenance,
     LLMGuidance,
     Constraints,
+    CausalPrinciple,
     GroundTruth,
-    # Loading
-    ModelLoader,
-    ModelLoadError,
+    PromptDetails,
     # Filtering
     ViewFilter,
     PromptDetail,
-    # Disguising
-    VariableDisguiser,
+    # Generation
+    GraphGenerator,
+    GraphGeneratorConfig,
+    GeneratedGraph,
+    ProposedEdge,
+    GenerationMetadata,
+    # Parameters
+    GenerateGraphParams,
+    # Prompts
+    GraphQueryPrompt,
+    OutputFormat,
+    # Cache
+    GraphCompressor,
 )
 ```
 
@@ -65,20 +78,21 @@ from causaliq_knowledge.llm import (
 
 ### [Graph Module](graph/overview.md)
 
-LLM-based causal graph generation from variable specifications:
+LLM-based causal graph generation from network context specifications:
 
 - **[Graph Generator](graph/generator.md)** - Generate complete causal graphs
   - GraphGenerator, GraphGeneratorConfig
   - GeneratedGraph, ProposedEdge, GenerationMetadata
-- **[Model Specification](graph/models.md)** - Pydantic models for model specs
-  - ModelSpec, VariableSpec, VariableType, VariableRole
+- **[Network Context](graph/models.md)** - Pydantic models for network context
+  - NetworkContext, NetworkLoadError
+  - VariableSpec, VariableType, VariableRole
   - PromptDetails, ViewDefinition, Provenance, Constraints
-- **[Model Loader](graph/loader.md)** - Load and validate JSON model files
-  - ModelLoader, ModelLoadError
 - **[View Filter](graph/view_filter.md)** - Extract context levels
   - ViewFilter, PromptDetail (MINIMAL, STANDARD, RICH)
-- **[Variable Disguiser](graph/disguiser.md)** - Name obfuscation
-  - VariableDisguiser with reproducible seed-based mapping
+- **[Graph Prompts](graph/prompts.md)** - Prompt builders
+  - GraphQueryPrompt, OutputFormat
+- **[Response Models](graph/response.md)** - Response parsing
+  - ProposedEdge, GeneratedGraph, GenerationMetadata
 
 ### [LLM Client Interface](base_client.md)
 

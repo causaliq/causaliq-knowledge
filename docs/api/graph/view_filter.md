@@ -1,11 +1,11 @@
 # View Filter API Reference
 
-Filtering model specifications to extract specific context levels for LLM queries.
+Filtering network context to extract specific context levels for LLM queries.
 
 ## Overview
 
 The `ViewFilter` class extracts variable information according to view
-definitions (minimal, standard, rich) from a model specification. This
+definitions (minimal, standard, rich) from a network context. This
 allows controlling how much context is provided to LLMs.
 
 ```python
@@ -34,38 +34,42 @@ print(level.value)  # "standard"
 
 ## ViewFilter
 
-Filter model specifications to extract specific view levels.
+Filter network context to extract specific view levels.
 
 ### Constructor
 
 ```python
-ViewFilter(spec: ModelSpec)
+ViewFilter(context: NetworkContext, *, use_llm_names: bool = True)
 ```
 
 **Parameters:**
 
-| Parameter | Type | Description |
-|-----------|------|-------------|
-| `spec` | `ModelSpec` | The model specification to filter |
+| Parameter | Type | Default | Description |
+|-----------|------|---------|-------------|
+| `context` | `NetworkContext` | - | The network context to filter |
+| `use_llm_names` | `bool` | `True` | Output llm_name as 'name' field |
 
 **Example:**
 
 ```python
-from causaliq_knowledge.graph import ModelLoader, ViewFilter
+from causaliq_knowledge.graph import NetworkContext, ViewFilter
 
-spec = ModelLoader.load("model.json")
-view_filter = ViewFilter(spec)
+context = NetworkContext.load("model.json")
+view_filter = ViewFilter(context)
+
+# Use benchmark names instead of LLM names
+view_filter = ViewFilter(context, use_llm_names=False)
 ```
 
 ### Properties
 
-#### `spec -> ModelSpec`
+#### `context -> NetworkContext`
 
-Return the model specification.
+Return the network context.
 
 ```python
-filter = ViewFilter(spec)
-print(filter.spec.domain)
+filter = ViewFilter(context)
+print(filter.context.domain)
 ```
 
 ### Methods
@@ -87,7 +91,7 @@ Get the fields to include for a given view level.
 ```python
 from causaliq_knowledge.graph import ViewFilter, PromptDetail
 
-filter = ViewFilter(spec)
+filter = ViewFilter(context)
 
 # Get fields for minimal view
 fields = filter.get_include_fields(PromptDetail.MINIMAL)
@@ -114,8 +118,8 @@ Filter a single variable to include only specified fields.
 **Example:**
 
 ```python
-filter = ViewFilter(spec)
-var = spec.variables[0]
+filter = ViewFilter(context)
+var = context.variables[0]
 
 minimal = filter.filter_variable(var, PromptDetail.MINIMAL)
 # {"name": "smoking"}
@@ -139,7 +143,7 @@ Filter all variables to the specified view level.
 **Example:**
 
 ```python
-filter = ViewFilter(spec)
+filter = ViewFilter(context)
 
 # Get minimal view of all variables
 minimal_vars = filter.filter_variables(PromptDetail.MINIMAL)
@@ -151,24 +155,24 @@ rich_vars = filter.filter_variables(PromptDetail.RICH)
 
 #### `get_variable_names() -> list[str]`
 
-Get all variable names from the specification.
+Get all variable names from the context.
 
 **Returns:** `list[str]` - List of variable names.
 
 ```python
-filter = ViewFilter(spec)
+filter = ViewFilter(context)
 names = filter.get_variable_names()
 # ["smoking", "cancer", "age"]
 ```
 
 #### `get_domain() -> str`
 
-Get the domain from the specification.
+Get the domain from the context.
 
 **Returns:** `str` - The domain string.
 
 ```python
-filter = ViewFilter(spec)
+filter = ViewFilter(context)
 domain = filter.get_domain()
 # "epidemiology"
 ```
@@ -183,17 +187,17 @@ Get a complete context summary for LLM prompts.
 |-----------|------|-------------|
 | `level` | `PromptDetail` | The prompt detail level for variable filtering |
 
-**Returns:** `dict` - Dictionary with domain, dataset_id, and filtered variables.
+**Returns:** `dict` - Dictionary with domain, network, and filtered variables.
 
 **Example:**
 
 ```python
-filter = ViewFilter(spec)
+filter = ViewFilter(context)
 summary = filter.get_context_summary(PromptDetail.STANDARD)
 
 # {
 #     "domain": "epidemiology",
-#     "dataset_id": "cancer",
+#     "network": "cancer",
 #     "variables": [
 #         {"name": "smoking", "type": "binary", ...},
 #         {"name": "cancer", "type": "binary", ...},
@@ -206,22 +210,22 @@ summary = filter.get_context_summary(PromptDetail.STANDARD)
 ### Generating LLM Context
 
 ```python
-from causaliq_knowledge.graph import ModelLoader, ViewFilter, PromptDetail
+from causaliq_knowledge.graph import NetworkContext, ViewFilter, PromptDetail
 import json
 
-# Load model and create filter
-spec = ModelLoader.load("model.json")
-filter = ViewFilter(spec)
+# Load network context and create filter
+context = NetworkContext.load("model.json")
+filter = ViewFilter(context)
 
 # Get context for LLM prompt
-context = filter.get_context_summary(PromptDetail.STANDARD)
+summary = filter.get_context_summary(PromptDetail.STANDARD)
 
 # Format for prompt
 prompt = f"""
-Domain: {context['domain']}
+Domain: {summary['domain']}
 
 Variables:
-{json.dumps(context['variables'], indent=2)}
+{json.dumps(summary['variables'], indent=2)}
 
 Please generate a causal graph for these variables.
 """
@@ -232,7 +236,7 @@ Please generate a causal graph for these variables.
 ```python
 from causaliq_knowledge.graph import ViewFilter, PromptDetail
 
-filter = ViewFilter(spec)
+filter = ViewFilter(context)
 
 # Compare information at different levels
 for level in PromptDetail:
@@ -249,7 +253,7 @@ for level in PromptDetail:
 
 ### Custom Prompt Details
 
-Models can define custom prompt detail configurations:
+Network context can define custom prompt detail configurations:
 
 ```json
 {

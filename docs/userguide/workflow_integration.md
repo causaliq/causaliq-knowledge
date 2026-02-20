@@ -25,28 +25,31 @@ pip install --extra-index-url https://test.pypi.org/simple/ \
 
 ## Quick Start
 
-### 1. Create a Model Specification
+### 1. Create a Network Context
 
 Create `models/smoking.json`:
 
 ```json
 {
     "schema_version": "2.0",
-    "dataset_id": "smoking",
+    "network": "smoking",
     "domain": "epidemiology",
     "variables": [
         {
             "name": "smoking",
+            "llm_name": "tobacco_use",
             "type": "binary",
             "short_description": "Patient smoking status"
         },
         {
             "name": "lung_cancer",
+            "llm_name": "malignancy",
             "type": "binary",
             "short_description": "Lung cancer diagnosis"
         },
         {
             "name": "genetics",
+            "llm_name": "genetic_risk",
             "type": "categorical",
             "states": ["low", "medium", "high"],
             "short_description": "Genetic risk factors"
@@ -68,7 +71,7 @@ steps:
     uses: "causaliq-knowledge"
     with:
       action: "generate_graph"
-      model_spec: "models/smoking.json"
+      network_context: "models/smoking.json"
       output: "results/smoking_graph.json"
       llm_cache: "cache/smoking.db"
       llm_model: "groq/llama-3.1-8b-instant"
@@ -91,7 +94,7 @@ The `causaliq-knowledge` action supports the `generate_graph` operation:
 | Parameter | Required | Default | Description |
 |-----------|----------|---------|-------------|
 | `action` | Yes | - | Must be `generate_graph` |
-| `model_spec` | Yes | - | Path to model specification JSON file |
+| `network_context` | Yes | - | Path to network context JSON file |
 | `output` | Yes | - | Output: `.json` file path or `none` for stdout |
 | `llm_cache` | Yes | - | Cache: `.db` file path or `none` to disable |
 | `llm_model` | No | `groq/llama-3.1-8b-instant` | LLM model identifier |
@@ -137,7 +140,7 @@ steps:
     uses: "causaliq-knowledge"
     with:
       action: "generate_graph"
-      model_spec: "models/cancer.json"
+      network_context: "models/cancer.json"
       llm_cache: "cache/llm_cache.db"
       llm_model: "{{model}}"
       # Results written to workflow_cache with key: {model}
@@ -163,7 +166,7 @@ steps:
     uses: "causaliq-knowledge"
     with:
       action: "generate_graph"
-      model_spec: "models/asia.json"
+      network_context: "models/asia.json"
       llm_cache: "cache/asia_llm.db"
       llm_model: "groq/llama-3.1-8b-instant"
       prompt_detail: "{{detail}}"
@@ -188,7 +191,7 @@ steps:
     uses: "causaliq-knowledge"
     with:
       action: "generate_graph"
-      model_spec: "models/{{network}}/{{network}}.json"
+      network_context: "models/{{network}}/{{network}}.json"
       llm_cache: "cache/{{network}}_llm.db"
 ```
 
@@ -215,7 +218,7 @@ steps:
     uses: "causaliq-knowledge"
     with:
       action: "generate_graph"
-      model_spec: "models/{{network}}.json"
+      network_context: "models/{{network}}.json"
       llm_cache: "cache/llm_cache.db"
       llm_model: "{{model}}"
       prompt_detail: "{{detail}}"
@@ -248,7 +251,7 @@ In dry-run mode, it returns validation results without executing:
     "status": "skipped",
     "reason": "dry-run mode",
     "validated_params": {
-        "model_spec": "models/cancer.json",
+        "network_context": "models/cancer.json",
         "output": "results/graph.json",
         "llm_cache": "cache/cancer.db"
     }
@@ -377,6 +380,6 @@ llm_cache: "none"
 
 ## Next Steps
 
-- [Model Specification Format](model_specification.md) - Define variables
+- [Network Context Format](model_specification.md) - Define variables
 - [CLI Reference](introduction.md#graph-generation) - Command-line usage
 - [API Reference](../api/overview.md) - Programmatic access

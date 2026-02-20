@@ -1,21 +1,21 @@
-# Model Specification Format
+# Network Context Format
 
-This guide describes the JSON format for model specification files used
+This guide describes the JSON format for network context files used
 in causaliq-knowledge graph generation.
 
 ## Overview
 
-Model specifications define the variables, metadata, and constraints for
-a causal model. They enable LLMs to generate causal graphs with appropriate
+Network context files define the variables, metadata, and constraints for
+a causal network. They enable LLMs to generate causal graphs with appropriate
 domain context while allowing control over how much information is provided.
 
 ## Minimal Example
 
-The simplest valid model specification:
+The simplest valid network context:
 
 ```json
 {
-    "dataset_id": "simple",
+    "network": "simple",
     "domain": "test",
     "variables": [
         {"name": "X", "type": "binary"},
@@ -26,12 +26,12 @@ The simplest valid model specification:
 
 ## Complete Example
 
-A comprehensive model specification with all optional fields:
+A comprehensive network context with all optional fields:
 
 ```json
 {
     "schema_version": "2.0",
-    "dataset_id": "smoking_cancer",
+    "network": "smoking_cancer",
     "domain": "epidemiology",
     "purpose": "Causal model for smoking and lung cancer relationship",
     
@@ -75,8 +75,8 @@ A comprehensive model specification with all optional fields:
     
     "variables": [
         {
-            "name": "smoking_status",
-            "canonical_name": "Smoking",
+            "name": "smoke",
+            "llm_name": "tobacco_history",
             "display_name": "Smoking Status",
             "type": "binary",
             "states": ["never", "ever"],
@@ -93,8 +93,8 @@ A comprehensive model specification with all optional fields:
             "references": ["Doll & Hill (1950)", "IARC Monograph"]
         },
         {
-            "name": "lung_cancer",
-            "canonical_name": "Cancer",
+            "name": "cancer",
+            "llm_name": "lung_malignancy",
             "display_name": "Lung Cancer Status",
             "type": "binary",
             "states": ["negative", "positive"],
@@ -105,8 +105,8 @@ A comprehensive model specification with all optional fields:
             "sensitivity_hints": "Caused by multiple factors including smoking and genetics."
         },
         {
-            "name": "genetic_risk",
-            "canonical_name": "Genetics",
+            "name": "genetics",
+            "llm_name": "genetic_predisposition",
             "type": "categorical",
             "states": ["low", "medium", "high"],
             "role": "exogenous",
@@ -117,20 +117,20 @@ A comprehensive model specification with all optional fields:
     
     "constraints": {
         "forbidden_edges": [
-            ["lung_cancer", "smoking_status"],
-            ["lung_cancer", "genetic_risk"]
+            ["cancer", "smoke"],
+            ["cancer", "genetics"]
         ],
         "required_edges": [],
         "partial_order": [
-            ["smoking_status", "lung_cancer"],
-            ["genetic_risk", "lung_cancer"]
+            ["smoke", "cancer"],
+            ["genetics", "cancer"]
         ]
     },
     
     "ground_truth": {
         "edges_expert": [
-            ["smoking_status", "lung_cancer"],
-            ["genetic_risk", "lung_cancer"]
+            ["smoke", "cancer"],
+            ["genetics", "cancer"]
         ]
     }
 }
@@ -143,29 +143,30 @@ A comprehensive model specification with all optional fields:
 | Field | Type | Required | Description |
 |-------|------|----------|-------------|
 | `schema_version` | string | No | Schema version (default: "2.0") |
-| `dataset_id` | string | Yes | Unique identifier for the dataset |
+| `network` | string | Yes | Identifier for the network (e.g., "asia") |
 | `domain` | string | Yes | Domain (e.g., "epidemiology", "genetics") |
-| `purpose` | string | No | Purpose or description of the model |
+| `purpose` | string | No | Purpose or description of the context |
 | `provenance` | object | No | Source and provenance information |
 | `llm_guidance` | object | No | Guidance for LLM interactions |
 | `prompt_details` | object | No | Custom prompt detail definitions |
 | `variables` | array | Yes | List of variable specifications |
 | `constraints` | object | No | Structural constraints |
+| `causal_principles` | array | No | Domain causal principles |
 | `ground_truth` | object | No | Ground truth for evaluation |
 
 ### Variable Fields
 
 | Field | Type | Required | Description |
 |-------|------|----------|-------------|
-| `name` | string | Yes | Primary identifier used in LLM prompts |
+| `name` | string | Yes | Benchmark/literature name for ground truth |
+| `llm_name` | string | No | Name used for LLM queries (defaults to name) |
 | `type` | string | Yes | One of: binary, categorical, ordinal, continuous |
-| `canonical_name` | string | No | Original benchmark name (for evaluation) |
 | `display_name` | string | No | Human-readable name for reports |
 | `aliases` | array | No | Alternative names |
 
-#### Semantic Disguising with name vs canonical_name
+#### Semantic Disguising with name vs llm_name
 
-The `name` and `canonical_name` fields enable **semantic disguising** - using
+The `name` and `llm_name` fields enable **semantic disguising** - using
 meaningful but non-canonical names to reduce LLM memorisation whilst still
 allowing evaluation against benchmarks.
 
@@ -173,25 +174,22 @@ allowing evaluation against benchmarks.
 
 ```json
 {
-  "name": "HasTB",
-  "canonical_name": "tub",
+  "name": "tub",
+  "llm_name": "HasTB",
   "display_name": "Tuberculosis Status",
   "type": "binary"
 }
 ```
 
-- **`name`**: "HasTB" - sent to the LLM (meaningful but not the benchmark name)
-- **`canonical_name`**: "tub" - the original ASIA benchmark identifier
+- **`name`**: "tub" - the original ASIA benchmark identifier for evaluation
+- **`llm_name`**: "HasTB" - sent to the LLM (meaningful but not the benchmark name)
 - **`display_name`**: "Tuberculosis Status" - for human-readable reports
 
 This approach:
 
 1. **Reduces memorisation** - LLM sees "HasTB" not "tub" from the benchmark
-2. **Preserves semantics** - The name still conveys clinical meaning
-3. **Enables evaluation** - Results mapped back via `canonical_name`
-
-See the [VariableDisguiser](../api/graph/disguiser.md) for an alternative
-abstract disguising approach using opaque identifiers (V1, V2, etc.).
+2. **Preserves semantics** - The llm_name still conveys clinical meaning
+3. **Enables evaluation** - Results mapped back via `name` field
 
 #### Additional Variable Fields
 
@@ -316,34 +314,37 @@ For evaluation, ground truth edges can be specified:
 - **edges_experiment** - Edges confirmed by experiments
 - **edges_observational** - Edges from observational studies
 
-## Loading Models
+## Loading Network Context
 
 ```python
-from causaliq_knowledge.graph import ModelLoader
+from causaliq_knowledge.graph import NetworkContext
 
 # Load from file
-spec = ModelLoader.load("models/cancer.json")
+context = NetworkContext.load("models/cancer.json")
 
 # Load with full validation
-spec = ModelLoader.load_and_validate("models/cancer.json")
+context, warnings = NetworkContext.load_and_validate("models/cancer.json")
 
 # Access data
-print(f"Domain: {spec.domain}")
-print(f"Variables: {spec.get_variable_names()}")
+print(f"Network: {context.network}")
+print(f"Domain: {context.domain}")
+print(f"Variables: {context.get_variable_names()}")
+print(f"LLM Names: {context.get_llm_names()}")
 ```
 
-## Example Models
+## Example Network Contexts
 
-Example model specifications are in the `research/models/` directory:
+Example network context files are in the `research/models/` directory:
 
 - `asia/` - ASIA network (pulmonary disease)
 - `cancer/` - Lung cancer model
 - `sachs/` - SACHS protein signalling network
-- `simple_chain/` - Simple A→B→C chain for testing
+- `diabetes/` - Diabetes risk factors
+- `sepsis/` - Sepsis clinical model
 
 ## Best Practices
 
-1. **Use meaningful variable names** - Aids human review
+1. **Use meaningful llm_names** - Aids LLM reasoning whilst avoiding memorisation
 2. **Provide short descriptions** - Essential context for LLMs
 3. **Define custom prompt details** - Control information disclosure
 4. **Set provenance** - Document data sources

@@ -1,21 +1,21 @@
 # Graph Module API Reference
 
 The `graph` module provides functionality for LLM-based causal graph generation
-from variable specifications.
+from network context specifications.
 
 ## Quick Start
 
 Generate a causal graph in Python:
 
 ```python
-from causaliq_knowledge.graph import GraphGenerator, ModelLoader
+from causaliq_knowledge.graph import GraphGenerator, NetworkContext
 
 # Create a generator with your chosen model
 generator = GraphGenerator(model="groq/llama-3.1-8b-instant")
 
-# Load a model specification and generate
-spec = ModelLoader.load("research/models/asia/asia.json")
-graph = generator.generate_from_spec(spec)
+# Load a network context and generate
+context = NetworkContext.load("research/models/asia/asia.json")
+graph = generator.generate_from_context(context)
 
 # Access the results
 for edge in graph.edges:
@@ -31,11 +31,14 @@ All graph module classes are available from `causaliq_knowledge.graph`:
 
 ```python
 from causaliq_knowledge.graph import (
-    # Model specification
-    ModelSpec,
+    # Network context (main model)
+    NetworkContext,
+    NetworkLoadError,
+    # Variable specification
     VariableSpec,
     VariableType,
     VariableRole,
+    # Supporting models
     PromptDetails,
     ViewDefinition,
     Provenance,
@@ -43,14 +46,9 @@ from causaliq_knowledge.graph import (
     Constraints,
     CausalPrinciple,
     GroundTruth,
-    # Loading
-    ModelLoader,
-    ModelLoadError,
     # Filtering
     ViewFilter,
     PromptDetail,
-    # Disguising
-    VariableDisguiser,
     # Prompts
     GraphQueryPrompt,
     OutputFormat,
@@ -64,41 +62,33 @@ from causaliq_knowledge.graph import (
     # Graph generation
     GraphGenerator,
     GraphGeneratorConfig,
+    # Parameters
+    GenerateGraphParams,
+    # Cache integration
+    GraphCompressor,
 )
 ```
 
 ## Modules
 
-### [Model Specification](models.md)
+### [Network Context](models.md)
 
-Pydantic models for defining causal model specifications:
+Pydantic models for defining network context specifications:
 
-- **ModelSpec** - Complete model specification with variables and metadata
+- **NetworkContext** - Complete network context with variables and metadata
+- **NetworkLoadError** - Exception for context loading failures
 - **VariableSpec** - Single variable definition with type, role, descriptions
 - **VariableType** - Enum for variable types (binary, categorical, ordinal, continuous)
 - **VariableRole** - Enum for causal roles (exogenous, endogenous, latent)
 - **PromptDetails** - Prompt detail definitions for minimal/standard/rich context levels
 - **ViewDefinition** - Single view configuration with included fields
 
-### [Model Loader](loader.md)
-
-Loading and validation of model specification JSON files:
-
-- **ModelLoader** - Static methods for loading and validating model specs
-- **ModelLoadError** - Exception for model loading failures
-
 ### [View Filter](view_filter.md)
 
-Filtering model specifications to extract specific context levels:
+Filtering network context to extract specific context levels:
 
-- **ViewFilter** - Extract minimal/standard/rich views from ModelSpec
+- **ViewFilter** - Extract minimal/standard/rich views from NetworkContext
 - **PromptDetail** - Enum for context levels (MINIMAL, STANDARD, RICH)
-
-### [Variable Disguiser](disguiser.md)
-
-Variable name obfuscation for LLM queries:
-
-- **VariableDisguiser** - Reproducible name mapping with reverse translation
 
 ### [Graph Prompts](prompts.md)
 

@@ -47,7 +47,7 @@ nav:
   - User Guide:
     - User Guide Introduction: userguide/introduction.md
     - Workflow Integration: userguide/workflow_integration.md
-    - Model Specification Format: userguide/model_specification.md
+    - Network Context Format: userguide/model_specification.md
   - Architecture: 
     - Architectural Overview: architecture/overview.md
     - Design Notes: 
@@ -55,19 +55,15 @@ nav:
       - Testing Strategy: architecture/testing_strategy.md
   - API Reference: 
     - API Overview: api/overview.md
-    - Models: api/models.md
     - Graph:
       - Graph Overview: api/graph/overview.md
-      - Model Specification: api/graph/models.md
-      - Model Loader: api/graph/loader.md
+      - Network Context: api/graph/models.md
       - View Filter: api/graph/view_filter.md
-      - Variable Disguiser: api/graph/disguiser.md
       - Graph Prompts: api/graph/prompts.md
       - Response Models: api/graph/response.md
       - Graph Generator: api/graph/generator.md
     - LLM:
       - LLM Cache: api/llm/cache.md
-      - LLM Provider: api/provider.md
       - LLM Client Interface: api/base_client.md
       - Vendor API Clients:
         - Anthropic: api/clients/anthropic.md
@@ -77,8 +73,6 @@ nav:
         - Mistral: api/clients/mistral.md
         - Ollama: api/clients/ollama.md
         - OpenAI: api/clients/openai.md
-      - Prompts: api/prompts.md
-    - Base: api/base.md
     - CLI: api/cli.md
 
 plugins:

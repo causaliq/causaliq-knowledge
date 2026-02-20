@@ -1,15 +1,16 @@
-# Model Specification API Reference
+# Network Context API Reference
 
-Pydantic models for defining causal model specifications in JSON format.
+Pydantic models for defining network context specifications in JSON format.
 
 ## Overview
 
-Model specifications define the variables and metadata for a causal model,
-enabling LLMs to generate causal graphs with appropriate domain context.
+Network context specifications define the variables and metadata for a causal
+network, enabling LLMs to generate causal graphs with appropriate domain context.
 
 ```python
 from causaliq_knowledge.graph import (
-    ModelSpec,
+    NetworkContext,
+    NetworkLoadError,
     VariableSpec,
     VariableType,
     VariableRole,
@@ -67,9 +68,9 @@ Specification for a single variable in the causal model.
 
 | Attribute | Type | Required | Description |
 |-----------|------|----------|-------------|
-| `name` | `str` | Yes | Primary identifier used in experiments |
+| `name` | `str` | Yes | Benchmark/literature name for ground truth |
+| `llm_name` | `str` | No | Name used for LLM queries (defaults to name) |
 | `type` | `VariableType` | Yes | Variable type (binary, categorical, etc.) |
-| `canonical_name` | `str` | No | Original benchmark name (for evaluation) |
 | `display_name` | `str` | No | Human-readable display name |
 | `aliases` | `list[str]` | No | Alternative names for the variable |
 | `states` | `list[str]` | No | Possible values for discrete variables |
@@ -83,13 +84,33 @@ Specification for a single variable in the causal model.
 | `related_domain_knowledge` | `list[str]` | No | Domain knowledge statements |
 | `references` | `list[str]` | No | Literature references |
 
+### LLM Name vs Benchmark Name
+
+The `name` and `llm_name` fields enable **semantic disguising** to reduce LLM
+memorisation of well-known benchmark networks:
+
+- **`name`**: The benchmark/literature name used for ground truth evaluation
+- **`llm_name`**: The name sent to the LLM (defaults to `name` if not specified)
+
+**Example**: For the ASIA network's "Tuberculosis" variable:
+
+```python
+VariableSpec(
+    name="tub",              # Original benchmark name
+    llm_name="HasTB",        # Meaningful but non-canonical name for LLM
+    display_name="Tuberculosis Status",
+    type=VariableType.BINARY,
+)
+```
+
 ### Example
 
 ```python
 from causaliq_knowledge.graph import VariableSpec, VariableType, VariableRole
 
 smoking = VariableSpec(
-    name="smoking_status",
+    name="smoke",
+    llm_name="tobacco_history",
     type=VariableType.BINARY,
     states=["never", "ever"],
     role=VariableRole.EXOGENOUS,
@@ -209,35 +230,84 @@ Ground truth edges for evaluation.
 | `edges_experiment` | `list[list[str]]` | Experimentally-derived edges |
 | `edges_observational` | `list[list[str]]` | Observationally-derived edges |
 
-## ModelSpec
+## NetworkContext
 
-Complete model specification combining all components.
+Complete network context for LLM-based causal graph generation.
+
+Provides domain and variable information needed to generate causal graphs
+using LLMs. This is not the network itself, but the context required to
+generate one.
 
 ### Attributes
 
 | Attribute | Type | Required | Description |
 |-----------|------|----------|-------------|
 | `schema_version` | `str` | No | Schema version (default: "2.0") |
-| `dataset_id` | `str` | Yes | Unique identifier for the dataset |
-| `domain` | `str` | Yes | Domain of the model (e.g., "epidemiology") |
-| `purpose` | `str` | No | Purpose of the model |
+| `network` | `str` | Yes | Network identifier (e.g., "asia") |
+| `domain` | `str` | Yes | Domain of the model (e.g., "pulmonary_oncology") |
+| `purpose` | `str` | No | Purpose of the context specification |
 | `variables` | `list[VariableSpec]` | Yes | List of variable specifications |
 | `provenance` | `Provenance` | No | Source and provenance information |
 | `llm_guidance` | `LLMGuidance` | No | Guidance for LLM interactions |
 | `prompt_details` | `PromptDetails` | No | Prompt detail definitions (uses defaults if omitted) |
 | `constraints` | `Constraints` | No | Structural constraints |
+| `causal_principles` | `list[CausalPrinciple]` | No | Domain causal principles |
 | `ground_truth` | `GroundTruth` | No | Ground truth for evaluation |
 
-### Methods
+### Class Methods
+
+#### `load(path: str | Path) -> NetworkContext`
+
+Load a network context from a JSON file.
+
+```python
+context = NetworkContext.load("models/cancer.json")
+```
+
+**Raises:** `NetworkLoadError` - If the file cannot be read or validation fails.
+
+#### `from_dict(data: dict, source_path: Path | None = None) -> NetworkContext`
+
+Create a network context from a dictionary.
+
+```python
+context = NetworkContext.from_dict({
+    "network": "test",
+    "domain": "testing",
+    "variables": [{"name": "X", "type": "binary"}]
+})
+```
+
+#### `load_and_validate(path: str | Path) -> tuple[NetworkContext, list[str]]`
+
+Load and fully validate a network context, returning warnings.
+
+```python
+context, warnings = NetworkContext.load_and_validate("model.json")
+for warning in warnings:
+    print(f"Warning: {warning}")
+```
+
+### Instance Methods
 
 #### `get_variable_names() -> list[str]`
 
-Return list of all variable names.
+Return list of all benchmark variable names.
 
 ```python
-spec = ModelLoader.load("model.json")
-names = spec.get_variable_names()
+context = NetworkContext.load("model.json")
+names = context.get_variable_names()
 # ["smoking", "cancer", "age"]
+```
+
+#### `get_llm_names() -> list[str]`
+
+Return list of all LLM variable names.
+
+```python
+context = NetworkContext.load("model.json")
+llm_names = context.get_llm_names()
+# ["tobacco_use", "malignancy", "patient_age"]
 ```
 
 #### `get_variable(name: str) -> VariableSpec | None`
@@ -245,42 +315,63 @@ names = spec.get_variable_names()
 Get a variable specification by name.
 
 ```python
-spec = ModelLoader.load("model.json")
-smoking = spec.get_variable("smoking")
+context = NetworkContext.load("model.json")
+smoking = context.get_variable("smoking")
 ```
 
-#### `get_exogenous_variables() -> list[VariableSpec]`
+#### `get_llm_to_name_mapping() -> dict[str, str]`
 
-Get all variables with exogenous role.
+Get mapping from LLM names to benchmark names.
 
 ```python
-spec = ModelLoader.load("model.json")
-root_causes = spec.get_exogenous_variables()
+mapping = context.get_llm_to_name_mapping()
+# {"tobacco_use": "smoking", "malignancy": "cancer"}
+```
+
+#### `uses_distinct_llm_names() -> bool`
+
+Check if any variable has a different llm_name from name.
+
+```python
+if context.uses_distinct_llm_names():
+    print("Context uses LLM name disguising")
+```
+
+#### `validate_variables() -> list[str]`
+
+Validate variable specifications and return warnings.
+
+```python
+warnings = context.validate_variables()
+for warning in warnings:
+    print(f"Warning: {warning}")
 ```
 
 ### Example
 
 ```python
 from causaliq_knowledge.graph import (
-    ModelSpec,
+    NetworkContext,
     VariableSpec,
     VariableType,
     VariableRole,
 )
 
-spec = ModelSpec(
-    dataset_id="smoking_cancer",
+context = NetworkContext(
+    network="smoking_cancer",
     domain="epidemiology",
     purpose="Causal model for smoking and cancer",
     variables=[
         VariableSpec(
             name="smoking",
+            llm_name="tobacco_use",
             type=VariableType.BINARY,
             role=VariableRole.EXOGENOUS,
             short_description="Smoking status",
         ),
         VariableSpec(
             name="cancer",
+            llm_name="malignancy",
             type=VariableType.BINARY,
             role=VariableRole.ENDOGENOUS,
             short_description="Cancer diagnosis",
@@ -289,8 +380,33 @@ spec = ModelSpec(
 )
 ```
 
+## NetworkLoadError
+
+Exception raised when network context loading fails.
+
+### Attributes
+
+| Attribute | Type | Description |
+|-----------|------|-------------|
+| `message` | `str` | Error description |
+| `path` | `Path \| str \| None` | Path to the file that failed |
+| `details` | `str \| None` | Additional error details |
+
+### Example
+
+```python
+from causaliq_knowledge.graph import NetworkContext, NetworkLoadError
+
+try:
+    context = NetworkContext.load("nonexistent.json")
+except NetworkLoadError as e:
+    print(f"Failed to load: {e.message}")
+    if e.path:
+        print(f"File: {e.path}")
+```
+
 ## JSON Schema
 
-Model specifications are typically stored as JSON files. See
-[Model Specification Format](../../userguide/model_specification.md) for
+Network context specifications are typically stored as JSON files. See
+[Network Context Format](../../userguide/model_specification.md) for
 the complete JSON schema and examples.

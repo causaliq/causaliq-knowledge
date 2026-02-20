@@ -1,7 +1,7 @@
 # Graph Generator
 
 The `generator` module provides the `GraphGenerator` class for generating
-complete causal graphs from variable specifications using LLMs.
+complete causal graphs from network context using LLMs.
 
 ## Import Pattern
 
@@ -9,7 +9,7 @@ complete causal graphs from variable specifications using LLMs.
 from causaliq_knowledge.graph import (
     GraphGenerator,
     GraphGeneratorConfig,
-    ModelLoader,
+    NetworkContext,
     GeneratedGraph,
     PromptDetail,
     OutputFormat,
@@ -23,7 +23,7 @@ from causaliq_core.cache import TokenCache
 
 1. Create a generator with model and configuration
 2. Optionally set up caching with `TokenCache`
-3. Generate graphs from variable dictionaries or `ModelSpec` files
+3. Generate graphs from variable dictionaries or `NetworkContext` files
 4. Receive structured `GeneratedGraph` objects with edges and metadata
 
 ## Quick Start
@@ -34,7 +34,7 @@ Here's a complete working example:
 from causaliq_knowledge.graph import (
     GraphGenerator,
     GraphGeneratorConfig,
-    ModelLoader,
+    NetworkContext,
     PromptDetail,
     OutputFormat,
 )
@@ -53,9 +53,9 @@ graph = generator.generate_graph(
     domain="oncology",
 )
 
-# Option 2: Generate from a model specification file
-spec = ModelLoader.load("research/models/my_model.json")
-graph = generator.generate_from_spec(spec)
+# Option 2: Generate from a network context file
+context = NetworkContext.load("research/models/my_model.json")
+graph = generator.generate_from_context(context)
 
 # Access the results
 print(f"Generated {len(graph.edges)} edges")
@@ -174,24 +174,24 @@ for edge in graph.edges:
     print(f"  Rationale: {edge.rationale}")
 ```
 
-## Generating from Model Specifications
+## Generating from Network Context
 
-Use `generate_from_spec()` when you have a JSON model specification file:
+Use `generate_from_context()` when you have a JSON network context file:
 
 ```python
-from causaliq_knowledge.graph import GraphGenerator, ModelLoader, PromptDetail
+from causaliq_knowledge.graph import GraphGenerator, NetworkContext, PromptDetail
 
 generator = GraphGenerator(model="gemini/gemini-2.0-flash")
 
-# Load the specification
-spec = ModelLoader.load("research/models/asia/asia.json")
+# Load the network context
+context = NetworkContext.load("research/models/asia/asia.json")
 
 # Generate with default settings from config
-graph = generator.generate_from_spec(spec)
+graph = generator.generate_from_context(context)
 
 # Override settings for this specific call
-graph = generator.generate_from_spec(
-    spec=spec,
+graph = generator.generate_from_context(
+    context=context,
     level=PromptDetail.MINIMAL,
     use_llm_names=False,  # Use benchmark names instead
 )

@@ -1,18 +1,18 @@
 # LLM Cache
 
-LLM-specific cache encoder and data structures for storing and retrieving
+LLM-specific cache compressor and data structures for storing and retrieving
 LLM requests and responses with rich metadata.
 
 !!! info "Package Separation"
     This module stays in `causaliq-knowledge` as it contains LLM-specific logic.
-    The core cache infrastructure (`TokenCache`, `EntryEncoder`, `JsonEncoder`) 
+    The core cache infrastructure (`TokenCache`, `Compressor`, `JsonCompressor`)
     is in `causaliq-core`. Import from `causaliq_core.cache`.
 
 ## Overview
 
 The LLM cache module provides:
 
-- **LLMEntryEncoder** - Extends JsonEncoder with LLM-specific convenience methods
+- **LLMCompressor** - Extends JsonCompressor with LLM-specific convenience methods
 - **LLMCacheEntry** - Complete cache entry with request, response, and metadata
 - **LLMResponse** - Response data (content, finish reason, model version)
 - **LLMMetadata** - Rich metadata (provider, tokens, latency, cost)
@@ -23,11 +23,11 @@ The LLM cache module provides:
 The LLM cache separates concerns:
 
 | Component | Package |
-|-----------|---------|  
+|-----------|---------|
 | `TokenCache` | `causaliq_core.cache` |
-| `EntryEncoder` | `causaliq_core.cache.encoders` |
-| `JsonEncoder` | `causaliq_core.cache.encoders` |
-| `LLMEntryEncoder` | `causaliq_knowledge.llm.cache` |
+| `Compressor` | `causaliq_core.cache.compressors` |
+| `JsonCompressor` | `causaliq_core.cache.compressors` |
+| `LLMCompressor` | `causaliq_knowledge.llm.cache` |
 | `LLMCacheEntry` | `causaliq_knowledge.llm.cache` |
 
 This allows the base cache to be reused across projects while keeping
@@ -59,15 +59,15 @@ entry = LLMCacheEntry.create(
 )
 ```
 
-### Encoding and Storing Entries
+### Compressing and Storing Entries
 
 ```python
 from causaliq_core.cache import TokenCache
-from causaliq_knowledge.llm.cache import LLMCacheEntry, LLMEntryEncoder
+from causaliq_knowledge.llm.cache import LLMCacheEntry, LLMCompressor
 
 with TokenCache(":memory:") as cache:
-    encoder = LLMEntryEncoder()
-    
+    compressor = LLMCompressor()
+
     # Create an entry
     entry = LLMCacheEntry.create(
         model="gpt-4",
@@ -75,28 +75,28 @@ with TokenCache(":memory:") as cache:
         content="Python is a programming language.",
         provider="openai",
     )
-    
-    # Encode to bytes
-    blob = encoder.encode_entry(entry, cache)
-    
+
+    # Compress to bytes
+    blob = compressor.compress_entry(entry, cache)
+
     # Store in cache
     cache.put("request-hash", "llm", blob)
 ```
 
-### Retrieving and Decoding Entries
+### Retrieving and Decompressing Entries
 
 ```python
 from causaliq_core.cache import TokenCache
-from causaliq_knowledge.llm.cache import LLMEntryEncoder
+from causaliq_knowledge.llm.cache import LLMCompressor
 
 with TokenCache("cache.db") as cache:
-    encoder = LLMEntryEncoder()
-    
+    compressor = LLMCompressor()
+
     # Retrieve from cache
     blob = cache.get("request-hash", "llm")
     if blob:
-        # Decode to LLMCacheEntry
-        entry = encoder.decode_entry(blob, cache)
+        # Decompress to LLMCacheEntry
+        entry = compressor.decompress_entry(blob, cache)
         print(f"Response: {entry.response.content}")
         print(f"Latency: {entry.metadata.latency_ms}ms")
 ```
@@ -107,9 +107,9 @@ Export entries to JSON for inspection or migration:
 
 ```python
 from pathlib import Path
-from causaliq_knowledge.llm.cache import LLMCacheEntry, LLMEntryEncoder
+from causaliq_knowledge.llm.cache import LLMCacheEntry, LLMCompressor
 
-encoder = LLMEntryEncoder()
+compressor = LLMCompressor()
 
 # Create entry
 entry = LLMCacheEntry.create(
@@ -120,34 +120,34 @@ entry = LLMCacheEntry.create(
 )
 
 # Export to JSON file
-encoder.export_entry(entry, Path("entry.json"))
+compressor.export_entry(entry, Path("entry.json"))
 
 # Import from JSON file
-restored = encoder.import_entry(Path("entry.json"))
+restored = compressor.import_entry(Path("entry.json"))
 ```
 
-### Using with TokenCache Auto-Encoding
+### Using with TokenCache Auto-Compression
 
-Register the encoder for automatic encoding/decoding:
+Register the compressor for automatic compression/decompression:
 
 ```python
 from causaliq_core.cache import TokenCache
-from causaliq_knowledge.llm.cache import LLMCacheEntry, LLMEntryEncoder
+from causaliq_knowledge.llm.cache import LLMCacheEntry, LLMCompressor
 
 with TokenCache(":memory:") as cache:
-    # Register encoder for "llm" entry type
-    cache.register_encoder("llm", LLMEntryEncoder())
-    
+    # Register compressor for "llm" entry type
+    cache.register_compressor("llm", LLMCompressor())
+
     entry = LLMCacheEntry.create(
         model="gpt-4",
         messages=[{"role": "user", "content": "Hello"}],
         content="Hi!",
     )
-    
-    # Store with auto-encoding
+
+    # Store with auto-compression
     cache.put_data("hash123", "llm", entry.to_dict())
-    
-    # Retrieve with auto-decoding
+
+    # Retrieve with auto-decompression
     data = cache.get_data("hash123", "llm")
     restored = LLMCacheEntry.from_dict(data)
 ```
@@ -163,12 +163,12 @@ from causaliq_knowledge.llm import GroqClient, LLMConfig
 with TokenCache("llm_cache.db") as cache:
     client = GroqClient(LLMConfig(model="llama-3.1-8b-instant"))
     client.set_cache(cache)
-    
+
     # First call - makes API request, caches response with latency
     response = client.cached_completion(
         [{"role": "user", "content": "What is Python?"}]
     )
-    
+
     # Second call - returns from cache, no API call
     response = client.cached_completion(
         [{"role": "user", "content": "What is Python?"}]
@@ -189,11 +189,11 @@ Load cached responses from JSON files for testing or migration:
 ```python
 from pathlib import Path
 from causaliq_core.cache import TokenCache
-from causaliq_knowledge.llm.cache import LLMEntryEncoder
+from causaliq_knowledge.llm.cache import LLMCompressor
 
 with TokenCache("llm_cache.db") as cache:
-    cache.register_encoder("llm", LLMEntryEncoder())
-    
+    cache.register_compressor("llm", LLMCompressor())
+
     # Import all LLM entries from directory
     count = cache.import_entries(Path("./cached_responses"), "llm")
     print(f"Imported {count} cached LLM responses")
@@ -210,7 +210,7 @@ from causaliq_knowledge.llm.cache import LLMTokenUsage
 
 usage = LLMTokenUsage(
     input=100,   # Prompt tokens
-    output=50,   # Completion tokens  
+    output=50,   # Completion tokens
     total=150,   # Total tokens
 )
 ```
@@ -287,17 +287,18 @@ restored = LLMCacheEntry.from_dict(data)
 
 ## API Reference
 
-### LLMEntryEncoder
+### LLMCompressor
 
-::: causaliq_knowledge.llm.cache.LLMEntryEncoder
+::: causaliq_knowledge.llm.cache.LLMCompressor
     options:
       show_root_heading: true
       show_source: false
       members:
-        - encode_entry
-        - decode_entry
+        - compress_entry
+        - decompress_entry
         - export_entry
         - import_entry
+        - generate_export_filename
 
 ### LLMCacheEntry
 
@@ -308,6 +309,7 @@ restored = LLMCacheEntry.from_dict(data)
       members:
         - create
         - to_dict
+        - to_export_dict
         - from_dict
 
 ### LLMResponse
@@ -318,6 +320,7 @@ restored = LLMCacheEntry.from_dict(data)
       show_source: false
       members:
         - to_dict
+        - to_export_dict
         - from_dict
 
 ### LLMMetadata

@@ -91,13 +91,21 @@ causaliq_knowledge/
 
 ```
 causaliq_knowledge/
+├── action.py                # CausalIQ workflow action integration
+├── cli/                     # Command-line interface
+│   ├── main.py              # Core CLI entry point
+│   ├── cache.py             # Cache management commands
+│   ├── generate.py          # Graph generation commands
+│   └── models.py            # Model listing command
 └── graph/
     ├── __init__.py          # Module exports
-    ├── models.py            # Pydantic models for model specification
-    │                        # (ModelSpec, VariableSpec, PromptDetails, etc.)
-    ├── loader.py            # ModelLoader for JSON file loading
-    ├── view_filter.py       # ViewFilter for context level extraction
-    └── disguiser.py         # VariableDisguiser for name obfuscation
+    ├── models.py            # NetworkContext, VariableSpec, etc.
+    ├── generator.py         # GraphGenerator class
+    ├── view_filter.py       # ViewFilter for context levels
+    ├── prompts.py           # GraphQueryPrompt builder
+    ├── response.py          # GeneratedGraph, ProposedEdge
+    ├── params.py            # GenerateGraphParams
+    └── cache.py             # GraphCompressor for workflow cache
 ```
 
 ### Graph Generation Data Flow
@@ -106,40 +114,43 @@ causaliq_knowledge/
 ┌─────────────────────────────────────────────────────────────────┐
 │                    Graph Generation Flow                         │
 │                                                                 │
-│   model_spec.json                                               │
+│   network_context.json                                          │
 │       │                                                         │
 │       ▼                                                         │
 │   ┌───────────────┐                                             │
-│   │  ModelLoader  │  Load and validate JSON specification       │
+│   │NetworkContext │  Load and validate JSON context             │
+│   │   .load()     │                                             │
 │   └───────────────┘                                             │
 │       │                                                         │
 │       ▼                                                         │
-│   ┌───────────────┐    ┌─────────────────────┐                    │
-│   │  ViewFilter   │───▶│ PromptDetail.MINIMAL │  Names only        │
-│   │               │    │ PromptDetail.STANDARD│  + descriptions    │
-│   │               │    │ PromptDetail.RICH    │  Full metadata     │
-│   └───────────────┘    └─────────────────────┘                    │
+│   ┌───────────────┐    ┌─────────────────────┐                  │
+│   │  ViewFilter   │───▶│ PromptDetail.MINIMAL │  Names only     │
+│   │               │    │ PromptDetail.STANDARD│  + descriptions │
+│   │               │    │ PromptDetail.RICH    │  Full metadata  │
+│   └───────────────┘    └─────────────────────┘                  │
 │       │                                                         │
 │       ▼                                                         │
-│   ┌───────────────────┐                                         │
-│   │VariableDisguiser  │  smoking → V1, cancer → V2 (optional)   │
-│   │   (seed=42)       │  Reproducible mapping                   │
-│   └───────────────────┘                                         │
+│   name/llm_name mapping:  smoke → tobacco_history               │
+│   (via VariableSpec.llm_name field)                             │
 │       │                                                         │
 │       ▼                                                         │
 │   ┌───────────────┐                                             │
-│   │  LLM Client   │  Generate causal graph                      │
+│   │GraphGenerator │  Generate causal graph                      │
+│   │  + LLM Client │  (multiple provider support)                │
 │   │  + TokenCache │  (cached responses)                         │
 │   └───────────────┘                                             │
 │       │                                                         │
 │       ▼                                                         │
-│   ┌───────────────────┐                                         │
-│   │VariableDisguiser  │  V1 → smoking, V2 → cancer              │
-│   │   .reveal_text()  │  Translate response back                │
-│   └───────────────────┘                                         │
+│   llm_name → name mapping:  tobacco_history → smoke             │
+│   (automatic translation in response)                           │
 │       │                                                         │
 │       ▼                                                         │
-│   GeneratedGraph(edges=[("smoking", "cancer"), ...])            │
+│   GeneratedGraph(edges=[("smoke", "cancer"), ...])              │
+│       │                                                         │
+│       ▼                                                         │
+│   ┌───────────────┐                                             │
+│   │GraphCompressor│  Compress for Workflow Cache                │
+│   └───────────────┘                                             │
 └─────────────────────────────────────────────────────────────────┘
 ```
 

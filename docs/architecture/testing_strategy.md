@@ -104,18 +104,20 @@ pytestmark = pytest.mark.skipif(
 def test_groq_generates_valid_graph():
     """Validate real Groq API returns parseable graph."""
     from causaliq_knowledge.graph import GraphGenerator, GraphGeneratorConfig
-    from causaliq_knowledge.graph import ModelLoader
+    from causaliq_knowledge.graph import NetworkContext
 
-    loader = ModelLoader()
-    spec = loader.load("tests/data/simple_model.json")
+    context = NetworkContext.load("tests/data/simple_context.json")
 
     config = GraphGeneratorConfig(
-        llm_model="groq/llama-3.1-8b-instant",
+        temperature=0.1,
         prompt_detail="standard",
     )
 
-    generator = GraphGenerator(config)
-    result = generator.generate(spec)
+    generator = GraphGenerator(
+        model="groq/llama-3.1-8b-instant",
+        config=config,
+    )
+    result = generator.generate_from_context(context)
 
     # Don't assert specific values - LLM may vary
     # Just validate structure and reasonable bounds
@@ -210,8 +212,8 @@ tests/
 │   ├── __init__.py
 │   ├── graph/
 │   │   ├── test_generator.py   # Graph generation
-│   │   ├── test_models.py      # Model specs
-│   │   └── test_loader.py      # JSON loading
+│   │   ├── test_models.py      # Network context models
+│   │   └── test_view_filter.py # View filtering
 │   └── llm/
 │       ├── test_clients.py     # LLM clients
 │       └── test_config.py      # Configuration
@@ -222,7 +224,7 @@ tests/
 │   ├── __init__.py
 │   └── test_graph_cached.py    # Using cached responses
 └── data/
-    ├── model_specs/            # Test model specifications
+    ├── network_contexts/       # Test network context files
     │   ├── simple.json
     │   └── cancer.json
     └── functional/

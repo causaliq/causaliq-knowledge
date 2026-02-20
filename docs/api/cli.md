@@ -130,39 +130,37 @@ This enables round-trip operations: export from one cache, import into another.
 ## Graph Generation
 
 The `generate` command group provides tools for generating causal graphs from
-model specifications using LLMs.
+network context files using LLMs.
 
 ### Generate Graph
 
-Generate a complete causal graph from a model specification:
+Generate a complete causal graph from a network context file:
 
 ```bash
 # Basic usage with default settings
-cqknow generate graph -s model.json
+cqknow generate graph -n context.json
 
 # Use a specific LLM and request ID
-cqknow generate graph -s model.json -m gemini/gemini-2.5-flash --id expt01
+cqknow generate graph -n context.json -m gemini/gemini-2.5-flash --id expt01
 
-# Use rich context level with variable disguising
-cqknow generate graph -s model.json --prompt-detail rich --disguise --seed 42
+# Use rich context level
+cqknow generate graph -n context.json --prompt-detail rich
 
 # Save output to file
-cqknow generate graph -s model.json -o output.json
+cqknow generate graph -n context.json -o output.json
 ```
 
 ### Generate Command Options
 
 | Option | Short | Description |
 |--------|-------|-------------|
-| `--model-spec` | `-s` | Path to model specification JSON file (required) |
+| `--network-context` | `-n` | Path to network context JSON file (required) |
 | `--prompt-detail` | `-p` | Context level: `minimal`, `standard`, or `rich` |
 | `--llm` | `-m` | LLM model to use |
 | `--output` | `-o` | Output file path (JSON) |
 | `--format` | `-f` | Output format: `edge_list` or `adjacency_matrix` |
 | `--json` | | Output result as JSON to stdout |
 | `--id` | | Request identifier for export filenames (default: cli) |
-| `--disguise` | `-D` | Enable variable name disguising |
-| `--seed` | | Random seed for reproducible disguising |
 | `--use-benchmark-names` | | Use benchmark names instead of LLM names |
 | `--cache/--no-cache` | | Enable/disable response caching |
 | `--cache-path` | `-c` | Path to cache database |
