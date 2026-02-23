@@ -1,8 +1,8 @@
 """Response models and parsing for LLM graph generation.
 
 This module provides Pydantic models for representing LLM-generated
-causal graphs and functions for parsing LLM responses in both edge
-list and adjacency matrix formats.
+causal graphs and functions for parsing LLM responses in edge list,
+adjacency matrix, and PDG (Probabilistic Dependency Graph) formats.
 """
 
 from __future__ import annotations
@@ -13,6 +13,7 @@ from dataclasses import dataclass, field
 from datetime import datetime, timezone
 from typing import Any, Dict, List, Optional
 
+from causaliq_core.graph.pdg import PDG, EdgeProbabilities
 from pydantic import BaseModel, Field, field_validator
 
 logger = logging.getLogger(__name__)
@@ -252,6 +253,24 @@ class GeneratedGraph:
         )
 
 
+@dataclass
+class PDGGenerationResult:
+    """Result of PDG generation including graph and metadata.
+
+    Combines the generated PDG with comprehensive generation metadata
+    for full provenance tracking.
+
+    Attributes:
+        pdg: The generated Probabilistic Dependency Graph.
+        metadata: Generation metadata (model, timing, cost, etc.).
+        raw_response: The original LLM response for debugging.
+    """
+
+    pdg: PDG
+    metadata: GenerationMetadata
+    raw_response: Optional[str] = field(default=None, repr=False)
+
+
 def parse_edge_list_response(
     response: Dict[str, Any],
     variables: List[str],
@@ -462,3 +481,139 @@ def parse_graph_response(
         return parse_adjacency_matrix_response(response, variables)
     else:
         return parse_edge_list_response(response, variables)
+
+
+def parse_pdg_response(
+    response_text: str,
+    variables: List[str],
+) -> PDG:
+    """Parse an LLM response into a PDG (Probabilistic Dependency Graph).
+
+    Expected JSON format:
+    {
+        "edges": [
+            {
+                "source": "var1",
+                "target": "var2",
+                "existence": 0.9,
+                "orientation": 0.8
+            },
+            ...
+        ],
+        "reasoning": "explanation"
+    }
+
+    The existence and orientation probabilities are converted to
+    EdgeProbabilities format:
+    - p_forward = existence * orientation
+    - p_backward = existence * (1 - orientation)
+    - p_undirected = 0.0 (from causal perspective)
+    - p_none = 1 - existence
+
+    Args:
+        response_text: Raw text response from the LLM.
+        variables: List of valid variable names.
+
+    Returns:
+        PDG with edge probabilities.
+
+    Raises:
+        ValueError: If JSON parsing fails or format is invalid.
+    """
+    # Clean up potential markdown code blocks
+    text = response_text.strip()
+    if text.startswith("```json"):
+        text = text[7:]
+    elif text.startswith("```"):
+        text = text[3:]
+    if text.endswith("```"):
+        text = text[:-3]
+    text = text.strip()
+
+    try:
+        response = json.loads(text)
+    except json.JSONDecodeError as e:
+        raise ValueError(f"Failed to parse JSON response: {e}")
+
+    if not isinstance(response, dict):
+        raise ValueError(f"Expected dict response, got {type(response)}")
+
+    edges_data = response.get("edges", [])
+    if not isinstance(edges_data, list):
+        raise ValueError(
+            f"Expected 'edges' to be a list, got {type(edges_data)}"
+        )
+
+    valid_vars = set(variables)
+    pdg_edges: Dict[tuple[str, str], EdgeProbabilities] = {}
+
+    for i, edge_data in enumerate(edges_data):
+        if not isinstance(edge_data, dict):
+            logger.warning(f"Skipping invalid edge at index {i}: not a dict")
+            continue
+
+        source = edge_data.get("source", "")
+        target = edge_data.get("target", "")
+
+        # Validate variable names
+        if source not in valid_vars:
+            logger.warning(f"Unknown source variable: {source}")
+            continue
+        if target not in valid_vars:
+            logger.warning(f"Unknown target variable: {target}")
+            continue
+        if source == target:
+            logger.warning(f"Skipping self-loop: {source} -> {target}")
+            continue
+
+        # Get existence and orientation probabilities
+        existence = edge_data.get("existence", 0.5)
+        orientation = edge_data.get("orientation", 0.5)
+
+        # Clamp to valid range
+        try:
+            existence = max(0.0, min(1.0, float(existence)))
+            orientation = max(0.0, min(1.0, float(orientation)))
+        except (TypeError, ValueError):
+            logger.warning(f"Invalid probability values for edge {i}")
+            existence = 0.5
+            orientation = 0.5
+
+        # Convert to EdgeProbabilities format
+        # p_forward = P(source -> target) = P(exists) * P(orientation)
+        # p_backward = P(target -> source) = P(exists) * (1 - P(orientation))
+        p_forward = existence * orientation
+        p_backward = existence * (1.0 - orientation)
+        p_undirected = 0.0  # Causal LLM perspective: no undirected
+        p_none = 1.0 - existence
+
+        # Canonicalise edge key (alphabetical order)
+        if source < target:
+            key = (source, target)
+            probs = EdgeProbabilities(
+                forward=p_forward,
+                backward=p_backward,
+                undirected=p_undirected,
+                none=p_none,
+            )
+        else:
+            key = (target, source)
+            # Swap forward/backward for canonical order
+            probs = EdgeProbabilities(
+                forward=p_backward,
+                backward=p_forward,
+                undirected=p_undirected,
+                none=p_none,
+            )
+
+        # If we already have an edge for this pair, keep the one with
+        # higher existence probability (LLM may have proposed both
+        # directions)
+        if key in pdg_edges:
+            existing = pdg_edges[key]
+            if existing.p_exist >= probs.p_exist:
+                continue
+
+        pdg_edges[key] = probs
+
+    return PDG(list(variables), pdg_edges)

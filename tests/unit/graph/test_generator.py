@@ -615,3 +615,189 @@ def test_generate_graph_detects_cache_hit(mocker) -> None:
 
     assert graph.metadata is not None
     assert graph.metadata.from_cache is True
+
+
+# --- GraphGenerator generate_pdg_from_context tests ---
+
+
+# Test generate_pdg_from_context returns PDGGenerationResult.
+def test_generate_pdg_from_context_returns_pdg(mocker) -> None:
+    from causaliq_core.graph.pdg import PDG
+
+    from causaliq_knowledge.graph.models import (
+        NetworkContext,
+        VariableSpec,
+        VariableType,
+    )
+
+    mock_groq = mocker.patch("causaliq_knowledge.graph.generator.GroqClient")
+    mock_client = mocker.MagicMock()
+    mock_client.completion.return_value = LLMResponse(
+        content='{"edges": [{"source": "a", "target": "b", '
+        '"existence": 0.8, "orientation": 0.7}]}',
+        model="test-model",
+    )
+    mock_client.use_cache = False
+    mock_groq.return_value = mock_client
+
+    spec = NetworkContext(
+        network="test-dataset",
+        domain="test",
+        variables=[
+            VariableSpec(
+                name="a",
+                type=VariableType.BINARY,
+                short_description="Variable A",
+            ),
+            VariableSpec(
+                name="b",
+                type=VariableType.BINARY,
+                short_description="Variable B",
+            ),
+        ],
+    )
+
+    generator = GraphGenerator(model="groq/test-model")
+    result = generator.generate_pdg_from_context(spec)
+
+    assert isinstance(result.pdg, PDG)
+    assert len(result.pdg.nodes) == 2
+    assert len(result.pdg.edges) == 1
+    assert result.metadata is not None
+    assert generator.call_count == 1
+
+
+# Test generate_pdg_from_context with custom prompt_detail level.
+def test_generate_pdg_from_context_with_level(mocker) -> None:
+    from causaliq_core.graph.pdg import PDG
+
+    from causaliq_knowledge.graph.models import (
+        NetworkContext,
+        VariableSpec,
+        VariableType,
+    )
+
+    mock_groq = mocker.patch("causaliq_knowledge.graph.generator.GroqClient")
+    mock_client = mocker.MagicMock()
+    mock_client.completion.return_value = LLMResponse(
+        content='{"edges": []}',
+        model="test-model",
+    )
+    mock_client.use_cache = False
+    mock_groq.return_value = mock_client
+
+    spec = NetworkContext(
+        network="test-rich",
+        domain="epidemiology",
+        variables=[
+            VariableSpec(
+                name="smoking",
+                type=VariableType.BINARY,
+                short_description="Smoking status",
+            ),
+            VariableSpec(
+                name="cancer",
+                type=VariableType.BINARY,
+                short_description="Cancer diagnosis",
+            ),
+        ],
+    )
+
+    generator = GraphGenerator(model="groq/test-model")
+    result = generator.generate_pdg_from_context(spec, level=PromptDetail.RICH)
+
+    assert isinstance(result.pdg, PDG)
+    assert result.metadata is not None
+
+
+# Test generate_pdg_from_context uses cached_completion when cache enabled.
+def test_generate_pdg_from_context_uses_cache(mocker) -> None:
+    from causaliq_core.graph.pdg import PDG
+
+    from causaliq_knowledge.graph.models import (
+        NetworkContext,
+        VariableSpec,
+        VariableType,
+    )
+
+    mock_groq = mocker.patch("causaliq_knowledge.graph.generator.GroqClient")
+    mock_client = mocker.MagicMock()
+    mock_client.cached_completion.return_value = LLMResponse(
+        content='{"edges": [{"source": "x", "target": "y", '
+        '"existence": 0.9, "orientation": 0.5}]}',
+        model="test-model",
+    )
+    mock_client.use_cache = True
+    mock_groq.return_value = mock_client
+
+    mock_cache = mocker.MagicMock()
+
+    spec = NetworkContext(
+        network="cached-test",
+        domain="test",
+        variables=[
+            VariableSpec(
+                name="x",
+                type=VariableType.CONTINUOUS,
+                short_description="X variable",
+            ),
+            VariableSpec(
+                name="y",
+                type=VariableType.CONTINUOUS,
+                short_description="Y variable",
+            ),
+        ],
+    )
+
+    generator = GraphGenerator(model="groq/test-model", cache=mock_cache)
+    result = generator.generate_pdg_from_context(spec)
+
+    assert isinstance(result.pdg, PDG)
+    assert result.metadata is not None
+    mock_client.cached_completion.assert_called_once()
+    mock_client.completion.assert_not_called()
+
+
+# Test generate_pdg_from_context with use_llm_names parameter.
+def test_generate_pdg_from_context_with_llm_names(mocker) -> None:
+    from causaliq_core.graph.pdg import PDG
+
+    from causaliq_knowledge.graph.models import (
+        NetworkContext,
+        VariableSpec,
+        VariableType,
+    )
+
+    mock_groq = mocker.patch("causaliq_knowledge.graph.generator.GroqClient")
+    mock_client = mocker.MagicMock()
+    mock_client.completion.return_value = LLMResponse(
+        content='{"edges": []}',
+        model="test-model",
+    )
+    mock_client.use_cache = False
+    mock_groq.return_value = mock_client
+
+    spec = NetworkContext(
+        network="llm-names-test",
+        domain="test",
+        variables=[
+            VariableSpec(
+                name="var_a",
+                llm_name="Variable A",
+                type=VariableType.BINARY,
+                short_description="First variable",
+            ),
+            VariableSpec(
+                name="var_b",
+                llm_name="Variable B",
+                type=VariableType.BINARY,
+                short_description="Second variable",
+            ),
+        ],
+    )
+
+    generator = GraphGenerator(model="groq/test-model")
+    result = generator.generate_pdg_from_context(spec, use_llm_names=True)
+
+    assert isinstance(result.pdg, PDG)
+    assert result.metadata is not None

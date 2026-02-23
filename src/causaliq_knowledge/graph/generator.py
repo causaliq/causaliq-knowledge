@@ -18,7 +18,9 @@ from causaliq_knowledge.graph.prompts import GraphQueryPrompt, OutputFormat
 from causaliq_knowledge.graph.response import (
     GeneratedGraph,
     GenerationMetadata,
+    PDGGenerationResult,
     parse_graph_response,
+    parse_pdg_response,
 )
 from causaliq_knowledge.graph.view_filter import PromptDetail
 from causaliq_knowledge.llm.anthropic_client import (
@@ -378,6 +380,129 @@ class GraphGenerator:
         )
 
         return self._execute_query(prompt)
+
+    def generate_pdg_from_context(
+        self,
+        context: "NetworkContext",
+        level: Optional[PromptDetail] = None,
+        system_prompt: Optional[str] = None,
+        use_llm_names: Optional[bool] = None,
+    ) -> PDGGenerationResult:
+        """Generate a PDG (Probabilistic Dependency Graph) from context.
+
+        Unlike generate_from_context which returns a GeneratedGraph with
+        discrete edge proposals, this returns a PDGGenerationResult with
+        the PDG and comprehensive generation metadata including LLM
+        messages, token counts, and costs.
+
+        Args:
+            context: The network context.
+            level: View level for context. Uses config default if None.
+            system_prompt: Custom system prompt (optional).
+            use_llm_names: Use llm_name instead of benchmark name.
+                Uses config default if None.
+
+        Returns:
+            PDGGenerationResult with PDG and generation metadata.
+
+        Raises:
+            ValueError: If LLM response cannot be parsed.
+        """
+        level = level or self._config.prompt_detail
+        use_llm = (
+            use_llm_names
+            if use_llm_names is not None
+            else self._config.use_llm_names
+        )
+
+        # Use PDG output format
+        prompt = GraphQueryPrompt.from_context(
+            context=context,
+            level=level,
+            output_format=OutputFormat.PDG,
+            system_prompt=system_prompt,
+            use_llm_names=use_llm,
+        )
+
+        return self._execute_pdg_query(prompt)
+
+    def _execute_pdg_query(
+        self, prompt: GraphQueryPrompt
+    ) -> PDGGenerationResult:
+        """Execute the LLM query and parse the response as PDG.
+
+        Args:
+            prompt: The configured GraphQueryPrompt with PDG output format.
+
+        Returns:
+            PDGGenerationResult with PDG and generation metadata.
+
+        Raises:
+            ValueError: If LLM response cannot be parsed.
+        """
+        system_prompt, user_prompt = prompt.build()
+        variable_names = prompt.get_variable_names()
+
+        # Build messages for the LLM
+        messages: List[Dict[str, str]] = []
+        if system_prompt:
+            messages.append({"role": "system", "content": system_prompt})
+        messages.append({"role": "user", "content": user_prompt})
+
+        # Record request timestamp before making the call
+        request_timestamp = datetime.now(timezone.utc)
+        start_time = time.perf_counter()
+        from_cache = False
+
+        if self._cache is not None and self._client.use_cache:
+            response = self._client.cached_completion(
+                messages, request_id=self._config.request_id
+            )
+            # Check if response was from cache by comparing timing
+            latency_ms = int((time.perf_counter() - start_time) * 1000)
+            from_cache = latency_ms < 50
+        else:
+            response = self._client.completion(messages)
+
+        latency_ms = int((time.perf_counter() - start_time) * 1000)
+        logger.debug(f"PDG generation completed in {latency_ms}ms")
+
+        self._call_count += 1
+
+        # Parse the response as PDG
+        pdg = parse_pdg_response(response.content, variable_names)
+
+        # Build metadata (same as _execute_query)
+        provider = self._model.split("/")[0] if "/" in self._model else ""
+        model_name = (
+            self._model.split("/", 1)[1] if "/" in self._model else self._model
+        )
+
+        # Get original LLM timestamp and latency (from cache or current)
+        llm_timestamp = response.llm_timestamp or request_timestamp
+        llm_latency = response.llm_latency_ms or latency_ms
+
+        metadata = GenerationMetadata(
+            model=model_name,
+            provider=provider,
+            timestamp=request_timestamp,
+            llm_timestamp=llm_timestamp,
+            llm_latency_ms=llm_latency,
+            input_tokens=response.input_tokens,
+            output_tokens=response.output_tokens,
+            from_cache=from_cache,
+            messages=messages,
+            temperature=self._config.temperature,
+            max_tokens=self._config.max_tokens,
+            finish_reason=response.finish_reason,
+            llm_cost_usd=response.cost,
+        )
+
+        return PDGGenerationResult(
+            pdg=pdg,
+            metadata=metadata,
+            raw_response=response.content,
+        )
 
     def _execute_query(self, prompt: GraphQueryPrompt) -> GeneratedGraph:
         """Execute the LLM query and parse the response.

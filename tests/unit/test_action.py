@@ -4,17 +4,68 @@ Tests for KnowledgeActionProvider which integrates causaliq-knowledge
 graph generation into CausalIQ workflows.
 """
 
+from io import StringIO
 from pathlib import Path
 from typing import Any
 from unittest.mock import MagicMock, patch
 
 import pytest
+from causaliq_core.graph.io import graphml
 
 from causaliq_knowledge.action import (
     SUPPORTED_ACTIONS,
     ActionProvider,
     KnowledgeActionProvider,
 )
+
+
+def _make_mock_result(pdg: Any) -> MagicMock:
+    """Create a mock PDGGenerationResult for testing.
+
+    Args:
+        pdg: The PDG to wrap.
+
+    Returns:
+        A mock result with PDG and metadata.
+    """
+    from datetime import datetime, timezone
+
+    mock_metadata = MagicMock()
+    mock_metadata.model = "test-model"
+    mock_metadata.provider = "test"
+    mock_metadata.timestamp = datetime.now(timezone.utc)
+    mock_metadata.llm_timestamp = datetime.now(timezone.utc)
+    mock_metadata.llm_latency_ms = 100
+    mock_metadata.input_tokens = 500
+    mock_metadata.output_tokens = 200
+    mock_metadata.from_cache = False
+    mock_metadata.messages = [{"role": "user", "content": "test"}]
+    mock_metadata.temperature = 0.1
+    mock_metadata.max_tokens = 2000
+    mock_metadata.finish_reason = "stop"
+    mock_metadata.llm_cost_usd = 0.001
+    mock_metadata.to_dict.return_value = {
+        "llm_model": "test-model",
+        "llm_provider": "test",
+        "timestamp": mock_metadata.timestamp.isoformat(),
+        "llm_timestamp": mock_metadata.llm_timestamp.isoformat(),
+        "llm_latency_ms": 100,
+        "llm_input_tokens": 500,
+        "llm_output_tokens": 200,
+        "from_cache": False,
+        "llm_messages": [{"role": "user", "content": "test"}],
+        "llm_temperature": 0.1,
+        "llm_max_tokens": 2000,
+        "llm_finish_reason": "stop",
+        "llm_cost_usd": 0.001,
+    }
+
+    mock_result = MagicMock()
+    mock_result.pdg = pdg
+    mock_result.metadata = mock_metadata
+    mock_result.raw_response = '{"edges": []}'
+
+    return mock_result
 
 
 # Test ActionProvider is aliased to KnowledgeActionProvider.
@@ -174,10 +225,7 @@ def test_run_context_not_found() -> None:
 # Test run mode executes graph generation.
 def test_run_execute_mode(tmp_path: Path) -> None:
     """Test run mode executes graph generation with mocked LLM."""
-    from causaliq_knowledge.graph.response import (
-        GeneratedGraph,
-        ProposedEdge,
-    )
+    from causaliq_core.graph.pdg import PDG, EdgeProbabilities
 
     # Create a minimal context file
     context_file = tmp_path / "model.json"
@@ -188,18 +236,23 @@ def test_run_execute_mode(tmp_path: Path) -> None:
         '{"name": "y", "type": "binary"}]}'
     )
 
-    # Mock the graph generator
-    mock_graph = GeneratedGraph(
-        edges=[ProposedEdge(source="x", target="y", confidence=0.8)],
-        variables=["x", "y"],
-        reasoning="Test reasoning",
+    # Mock the graph generator to return a PDG
+    mock_pdg = PDG(
+        ["x", "y"],
+        {
+            ("x", "y"): EdgeProbabilities(
+                forward=0.8, backward=0.1, undirected=0.0, none=0.1
+            )
+        },
     )
 
     with patch(
         "causaliq_knowledge.graph.generator.GraphGenerator"
     ) as mock_generator_class:
         mock_generator = MagicMock()
-        mock_generator.generate_from_context.return_value = mock_graph
+        mock_generator.generate_pdg_from_context.return_value = (
+            _make_mock_result(mock_pdg)
+        )
         mock_generator.get_stats.return_value = {"cache_hits": 0}
         mock_generator_class.return_value = mock_generator
 
@@ -219,10 +272,11 @@ def test_run_execute_mode(tmp_path: Path) -> None:
     assert metadata["edge_count"] == 1
     assert metadata["variable_count"] == 2
     assert metadata["model_used"] == "groq/llama-3.1-8b-instant"
-    assert len(objects) == 2
-    # Check serialised GraphML content
-    graphml_obj = next(o for o in objects if o["type"] == "graphml")
-    assert "<graphml" in graphml_obj["content"]
+    assert len(objects) == 1
+    # Check PDG object returned as GraphML string
+    pdg_obj = next(o for o in objects if o["type"] == "pdg")
+    assert isinstance(pdg_obj["content"], str)
+    assert "graphml" in pdg_obj["content"]
 
 
 # =============================================================================
@@ -236,57 +290,84 @@ def test_run_execute_mode(tmp_path: Path) -> None:
 # Graph-to-dict test removed - workflow uses serialised objects.
 
 
-# Test map_graph_names conversion.
-def test_map_graph_names() -> None:
-    """Test _map_graph_names maps variable names correctly."""
-    from causaliq_knowledge.graph.response import (
-        GeneratedGraph,
-        ProposedEdge,
-    )
+# Test map_pdg_names conversion.
+def test_map_pdg_names() -> None:
+    """Test _map_pdg_names maps variable names correctly."""
+    from causaliq_core.graph.pdg import PDG, EdgeProbabilities
 
-    graph = GeneratedGraph(
-        edges=[
-            ProposedEdge(source="old_a", target="old_b", confidence=0.9),
-        ],
-        variables=["old_a", "old_b"],
-        reasoning="Test",
+    pdg = PDG(
+        ["old_a", "old_b"],
+        {
+            ("old_a", "old_b"): EdgeProbabilities(
+                forward=0.8, backward=0.1, undirected=0.0, none=0.1
+            )
+        },
     )
 
     mapping = {"old_a": "new_a", "old_b": "new_b"}
 
     action = KnowledgeActionProvider()
-    result = action._map_graph_names(graph, mapping)
+    result = action._map_pdg_names(pdg, mapping)
 
-    assert result.variables == ["new_a", "new_b"]
-    assert result.edges[0].source == "new_a"
-    assert result.edges[0].target == "new_b"
+    assert set(result.nodes) == {"new_a", "new_b"}
+    assert ("new_a", "new_b") in result.edges
 
 
-# Test map_graph_names with partial mapping.
-def test_map_graph_names_partial() -> None:
-    """Test _map_graph_names handles partial mapping."""
-    from causaliq_knowledge.graph.response import (
-        GeneratedGraph,
-        ProposedEdge,
-    )
+# Test map_pdg_names with partial mapping.
+def test_map_pdg_names_partial() -> None:
+    """Test _map_pdg_names handles partial mapping."""
+    from causaliq_core.graph.pdg import PDG, EdgeProbabilities
 
-    graph = GeneratedGraph(
-        edges=[
-            ProposedEdge(source="old_a", target="keep_b", confidence=0.9),
-        ],
-        variables=["old_a", "keep_b"],
-        reasoning="Test",
+    pdg = PDG(
+        ["old_a", "keep_b"],
+        {
+            ("keep_b", "old_a"): EdgeProbabilities(
+                forward=0.8, backward=0.1, undirected=0.0, none=0.1
+            )
+        },
     )
 
     # Only map old_a
     mapping = {"old_a": "new_a"}
 
     action = KnowledgeActionProvider()
-    result = action._map_graph_names(graph, mapping)
+    result = action._map_pdg_names(pdg, mapping)
 
-    assert result.variables == ["new_a", "keep_b"]
-    assert result.edges[0].source == "new_a"
-    assert result.edges[0].target == "keep_b"
+    assert set(result.nodes) == {"new_a", "keep_b"}
+    assert ("keep_b", "new_a") in result.edges
+
+
+# Test map_pdg_names swaps probabilities when canonical order changes.
+def test_map_pdg_names_swaps_probs_for_canonical_order() -> None:
+    """Test _map_pdg_names swaps forward/backward when order reverses."""
+    from causaliq_core.graph.pdg import PDG, EdgeProbabilities
+
+    # Edge (a, b) with forward=0.8, backward=0.1
+    pdg = PDG(
+        ["a", "b"],
+        {
+            ("a", "b"): EdgeProbabilities(
+                forward=0.8, backward=0.1, undirected=0.05, none=0.05
+            )
+        },
+    )
+
+    # Map so resulting names are NOT alphabetical: a->z, b->a
+    # After mapping: (z, a) which needs canonical reorder to (a, z)
+    mapping = {"a": "z", "b": "a"}
+
+    action = KnowledgeActionProvider()
+    result = action._map_pdg_names(pdg, mapping)
+
+    assert set(result.nodes) == {"a", "z"}
+    # Key should be canonical (a, z)
+    assert ("a", "z") in result.edges
+    # forward/backward should be swapped
+    probs = result.edges[("a", "z")]
+    assert abs(probs.forward - 0.1) < 0.001  # Was backward
+    assert abs(probs.backward - 0.8) < 0.001  # Was forward
+    assert abs(probs.undirected - 0.05) < 0.001
+    assert abs(probs.none - 0.05) < 0.001
 
 
 # Tests removed - _write_to_workflow_cache removed (workflow handles caching)
@@ -295,7 +376,7 @@ def test_map_graph_names_partial() -> None:
 # Test request_id is derived from output filename.
 def test_run_request_id_from_output(tmp_path: Path) -> None:
     """Test request_id is derived from output filename stem."""
-    from causaliq_knowledge.graph.response import GeneratedGraph
+    from causaliq_core.graph.pdg import PDG
 
     # Create a minimal context file
     context_file = tmp_path / "model.json"
@@ -304,18 +385,16 @@ def test_run_request_id_from_output(tmp_path: Path) -> None:
         '"domain": "test", "variables": [{"name": "x", "type": "binary"}]}'
     )
 
-    mock_graph = GeneratedGraph(
-        edges=[],
-        variables=["x"],
-        reasoning="Test",
-    )
+    mock_pdg = PDG(["x"], {})
 
     captured_config = {}
 
     def capture_config(*args: Any, **kwargs: Any) -> MagicMock:
         captured_config.update(kwargs)
         mock = MagicMock()
-        mock.generate_from_context.return_value = mock_graph
+        mock.generate_pdg_from_context.return_value = _make_mock_result(
+            mock_pdg
+        )
         mock.get_stats.return_value = {"cache_hits": 0}
         return mock
 
@@ -396,10 +475,7 @@ def test_run_context_load_error(tmp_path: Path) -> None:
 # Test run uses LLM name mapping when context has distinct names.
 def test_run_with_llm_name_mapping(tmp_path: Path) -> None:
     """Test run maps LLM names back to benchmark names when distinct."""
-    from causaliq_knowledge.graph.response import (
-        GeneratedGraph,
-        ProposedEdge,
-    )
+    from causaliq_core.graph.pdg import PDG, EdgeProbabilities
 
     # Create context with distinct llm_names
     context_file = tmp_path / "model.json"
@@ -410,22 +486,23 @@ def test_run_with_llm_name_mapping(tmp_path: Path) -> None:
         '{"name": "X2", "llm_name": "Variable Two", "type": "binary"}]}'
     )
 
-    # Mock graph returns LLM names
-    mock_graph = GeneratedGraph(
-        edges=[
-            ProposedEdge(
-                source="Variable One", target="Variable Two", confidence=0.8
+    # Mock PDG returns LLM names (note: canonical order is alphabetical)
+    mock_pdg = PDG(
+        ["Variable One", "Variable Two"],
+        {
+            ("Variable One", "Variable Two"): EdgeProbabilities(
+                forward=0.8, backward=0.1, undirected=0.0, none=0.1
             )
-        ],
-        variables=["Variable One", "Variable Two"],
-        reasoning="Test reasoning",
+        },
     )
 
     with patch(
         "causaliq_knowledge.graph.generator.GraphGenerator"
     ) as mock_generator_class:
         mock_generator = MagicMock()
-        mock_generator.generate_from_context.return_value = mock_graph
+        mock_generator.generate_pdg_from_context.return_value = (
+            _make_mock_result(mock_pdg)
+        )
         mock_generator.get_stats.return_value = {"cache_hits": 0}
         mock_generator_class.return_value = mock_generator
 
@@ -444,14 +521,11 @@ def test_run_with_llm_name_mapping(tmp_path: Path) -> None:
 
     # Graph should have benchmark names (X1, X2), not LLM names
     assert status == "success"
-    # Check serialised JSON contains mapped names
-    import json
-
-    json_obj = next(o for o in objects if o["type"] == "json")
-    graph_data = json.loads(json_obj["content"])
-    assert graph_data["variables"] == ["X1", "X2"]
-    assert graph_data["edges"][0]["source"] == "X1"
-    assert graph_data["edges"][0]["target"] == "X2"
+    # Check PDG contains mapped names (parse GraphML string)
+    pdg_obj = next(o for o in objects if o["type"] == "pdg")
+    result_pdg = graphml.read_pdg(StringIO(pdg_obj["content"]))
+    assert set(result_pdg.nodes) == {"X1", "X2"}
+    assert ("X1", "X2") in result_pdg.edges
 
 
 # Test run fails when cache fails to open.
@@ -572,18 +646,12 @@ def test_run_cache_closed_on_error(tmp_path: Path) -> None:
     mock_cache.close.assert_called_once()
 
 
-# Test _build_execution_metadata returns full metadata with timestamps.
+# Test _build_execution_metadata returns full metadata with LLM info.
 def test_build_execution_metadata_with_full_metadata(
     tmp_path: Path,
 ) -> None:
-    """Test metadata includes timestamps, messages and costs."""
-    from datetime import datetime, timezone
-
-    from causaliq_knowledge.graph.response import (
-        GeneratedGraph,
-        GenerationMetadata,
-        ProposedEdge,
-    )
+    """Test metadata includes expected fields for PDG output."""
+    from causaliq_core.graph.pdg import PDG, EdgeProbabilities
 
     # Create a minimal context file
     context_file = tmp_path / "model.json"
@@ -594,38 +662,27 @@ def test_build_execution_metadata_with_full_metadata(
         '{"name": "y", "type": "binary"}]}'
     )
 
-    # Create metadata with all optional fields populated
-    llm_time = datetime(2026, 1, 1, 12, 0, 0, tzinfo=timezone.utc)
-    messages = [
-        {"role": "system", "content": "You are a causal expert."},
-        {"role": "user", "content": "Identify causal relationships."},
-    ]
-
-    mock_graph = GeneratedGraph(
-        edges=[ProposedEdge(source="x", target="y", confidence=0.8)],
-        variables=["x", "y"],
-        metadata=GenerationMetadata(
-            model="test-model",
-            provider="test-provider",
-            timestamp=llm_time,
-            llm_latency_ms=1000,
-            input_tokens=100,
-            output_tokens=50,
-            from_cache=False,
-            messages=messages,
-            temperature=0.5,
-            max_tokens=2000,
-            finish_reason="stop",
-            llm_cost_usd=0.001,
-        ),
+    # Create PDG with edge probabilities
+    mock_pdg = PDG(
+        ["x", "y"],
+        {
+            ("x", "y"): EdgeProbabilities(
+                forward=0.8, backward=0.1, undirected=0.0, none=0.1
+            )
+        },
     )
 
     with patch(
         "causaliq_knowledge.graph.generator.GraphGenerator"
     ) as mock_generator_class:
         mock_generator = MagicMock()
-        mock_generator.generate_from_context.return_value = mock_graph
-        mock_generator.get_stats.return_value = {"cache_hits": 0}
+        mock_generator.generate_pdg_from_context.return_value = (
+            _make_mock_result(mock_pdg)
+        )
+        mock_generator.get_stats.return_value = {
+            "call_count": 1,
+            "client_call_count": 1,
+        }
         mock_generator_class.return_value = mock_generator
 
         action = KnowledgeActionProvider()
@@ -640,16 +697,17 @@ def test_build_execution_metadata_with_full_metadata(
             mode="run",
         )
 
-    # Verify metadata includes messages and costs
+    # Verify metadata includes expected fields
+    assert metadata["edge_count"] == 1
+    assert metadata["variable_count"] == 2
+    # Comprehensive LLM metadata fields from GenerationMetadata
+    assert "llm_model" in metadata
+    assert "llm_provider" in metadata
+    assert "llm_input_tokens" in metadata
+    assert "llm_output_tokens" in metadata
+    assert "llm_cost_usd" in metadata
     assert "llm_messages" in metadata
-    assert len(metadata["llm_messages"]) == 2
-    assert metadata["llm_messages"][0]["role"] == "system"
-    assert metadata["llm_messages"][1]["role"] == "user"
-
-    # Check other metadata fields
-    assert metadata["llm_temperature"] == 0.5
-    assert metadata["llm_finish_reason"] == "stop"
-    assert metadata["llm_cost_usd"] == 0.001
+    assert "from_cache" in metadata
 
 
 # =============================================================================
@@ -657,213 +715,32 @@ def test_build_execution_metadata_with_full_metadata(
 # =============================================================================
 
 
-# Test serialise returns graphml string for graph data.
-def test_serialise_returns_graphml() -> None:
-    """Test serialise returns GraphML string."""
-    from causaliq_knowledge.graph.response import GeneratedGraph, ProposedEdge
-
-    graph = GeneratedGraph(
-        edges=[ProposedEdge(source="A", target="B", confidence=0.8)],
-        variables=["A", "B"],
-        reasoning="Test",
-    )
-
-    action = KnowledgeActionProvider()
-
-    result = action.serialise("graphml", graph)
-
-    assert isinstance(result, str)
-    assert "<graphml" in result
-    assert 'id="A"' in result
-    assert 'id="B"' in result
-
-
-# Test serialise raises NotImplementedError for unsupported data_type.
-def test_serialise_unsupported_type() -> None:
-    """Test serialise raises NotImplementedError for unknown type."""
+# Test serialise raises NotImplementedError (PDG handled by causaliq-core).
+def test_serialise_raises_not_implemented() -> None:
+    """Test serialise raises NotImplementedError for any type."""
     action = KnowledgeActionProvider()
 
     with pytest.raises(NotImplementedError) as exc_info:
-        action.serialise("unknown", "data")
+        action.serialise("pdg", "data")
 
-    assert "does not support serialising" in str(exc_info.value)
-
-
-# Test serialise raises ValueError for wrong data type.
-def test_serialise_wrong_data_type() -> None:
-    """Test serialise raises ValueError when data is not GeneratedGraph."""
-    action = KnowledgeActionProvider()
-
-    with pytest.raises(ValueError) as exc_info:
-        action.serialise("graphml", "not a graph")
-
-    assert "expected generatedgraph" in str(exc_info.value).lower()
+    assert "does not support serialisation" in str(exc_info.value)
 
 
-# =============================================================================
-# deserialise method tests
-# =============================================================================
-
-
-# Test deserialise returns GeneratedGraph from graphml string.
-def test_deserialise_returns_graph() -> None:
-    """Test deserialise returns GeneratedGraph from GraphML."""
-    from causaliq_knowledge.graph.response import GeneratedGraph
-
-    graphml_content = """<?xml version="1.0" encoding="utf-8"?>
-    <graphml xmlns="http://graphml.graphdrawing.org/xmlns">
-        <graph id="G" edgedefault="directed">
-            <node id="A"/>
-            <node id="B"/>
-            <edge source="A" target="B"/>
-        </graph>
-    </graphml>"""
-
-    action = KnowledgeActionProvider()
-
-    result = action.deserialise("graphml", graphml_content)
-
-    assert isinstance(result, GeneratedGraph)
-    assert set(result.variables) == {"A", "B"}
-    assert len(result.edges) == 1
-
-
-# Test deserialise raises NotImplementedError for unsupported data_type.
-def test_deserialise_unsupported_type() -> None:
-    """Test deserialise raises NotImplementedError for unknown type."""
+# Test deserialise raises NotImplementedError (PDG handled by causaliq-core).
+def test_deserialise_raises_not_implemented() -> None:
+    """Test deserialise raises NotImplementedError for any type."""
     action = KnowledgeActionProvider()
 
     with pytest.raises(NotImplementedError) as exc_info:
-        action.deserialise("unknown", "content")
+        action.deserialise("pdg", "content")
 
-    assert "does not support deserialising" in str(exc_info.value)
-
-
-# Test serialise then deserialise roundtrip preserves graph structure.
-def test_serialise_deserialise_roundtrip() -> None:
-    """Test serialise then deserialise preserves graph structure."""
-    from causaliq_knowledge.graph.response import GeneratedGraph, ProposedEdge
-
-    # Create original graph
-    original_graph = GeneratedGraph(
-        edges=[
-            ProposedEdge(source="A", target="B", confidence=0.9),
-            ProposedEdge(source="B", target="C", confidence=0.8),
-        ],
-        variables=["A", "B", "C"],
-        reasoning="Original graph",
-    )
-
-    action = KnowledgeActionProvider()
-
-    # Serialise to string
-    exported = action.serialise("graphml", original_graph)
-
-    # Deserialise from string
-    restored_graph = action.deserialise("graphml", exported)
-
-    # Verify structure preserved
-    assert set(restored_graph.variables) == set(original_graph.variables)
-    assert len(restored_graph.edges) == len(original_graph.edges)
-
-    original_edge_pairs = {(e.source, e.target) for e in original_graph.edges}
-    restored_edge_pairs = {(e.source, e.target) for e in restored_graph.edges}
-    assert restored_edge_pairs == original_edge_pairs
+    assert "does not support deserialisation" in str(exc_info.value)
 
 
-# Test serialise returns JSON string for json data type.
-def test_serialise_returns_json() -> None:
-    """Test serialise returns JSON string for json type."""
-    import json
-    from datetime import datetime, timezone
-
-    from causaliq_knowledge.graph.response import (
-        GeneratedGraph,
-        GenerationMetadata,
-        ProposedEdge,
-    )
-
-    graph = GeneratedGraph(
-        edges=[ProposedEdge(source="A", target="B", confidence=0.8)],
-        variables=["A", "B"],
-        reasoning="Test reasoning",
-        metadata=GenerationMetadata(
-            model="test-model",
-            provider="test-provider",
-            llm_timestamp=datetime(2024, 1, 1, tzinfo=timezone.utc),
-            llm_latency_ms=100,
-            input_tokens=50,
-            output_tokens=25,
-            llm_cost_usd=0.001,
-        ),
-    )
-
-    action = KnowledgeActionProvider()
-
-    result = action.serialise("json", graph)
-
-    assert isinstance(result, str)
-    data = json.loads(result)
-    assert data["variables"] == ["A", "B"]
-    assert len(data["edges"]) == 1
-    assert data["edges"][0]["source"] == "A"
-    assert data["edges"][0]["target"] == "B"
-    assert data["reasoning"] == "Test reasoning"
-    assert data["metadata"]["llm_model"] == "test-model"
-    assert data["metadata"]["llm_provider"] == "test-provider"
-    assert data["metadata"]["llm_cost_usd"] == 0.001
-
-
-# Test supported_types attribute is defined correctly.
+# Test supported_types attribute is empty (PDG handled by causaliq-core).
 def test_supported_types_attribute() -> None:
-    """Test supported_types contains expected types."""
+    """Test supported_types is empty set."""
     action = KnowledgeActionProvider()
 
-    assert action.supported_types == {"graphml", "json"}
-
-
-# Test serialise JSON without metadata still works.
-def test_serialise_json_without_metadata() -> None:
-    """Test serialise JSON works when graph has no metadata."""
-    import json
-
-    from causaliq_knowledge.graph.response import GeneratedGraph, ProposedEdge
-
-    graph = GeneratedGraph(
-        edges=[ProposedEdge(source="A", target="B", confidence=0.9)],
-        variables=["A", "B"],
-        reasoning="No metadata",
-    )
-
-    action = KnowledgeActionProvider()
-
-    result = action.serialise("json", graph)
-
-    data = json.loads(result)
-    assert "metadata" not in data
-    assert data["variables"] == ["A", "B"]
-    assert data["reasoning"] == "No metadata"
-
-
-# Test serialise handles tuple input from decompress.
-def test_serialise_with_tuple_input() -> None:
-    """Test serialise correctly unwraps tuple from decompress_entry."""
-    from causaliq_knowledge.graph.response import GeneratedGraph, ProposedEdge
-
-    graph = GeneratedGraph(
-        edges=[ProposedEdge(source="X", target="Y", confidence=0.8)],
-        variables=["X", "Y"],
-        reasoning="Tuple test",
-    )
-
-    # Simulate decompress_entry return value: (graph, extra_blobs)
-    data_tuple = (graph, {"trace": b"some trace data"})
-
-    action = KnowledgeActionProvider()
-
-    result = action.serialise("graphml", data_tuple)
-
-    assert "<?xml" in result
-    assert "<graphml" in result
-    assert 'id="X"' in result
-    assert 'id="Y"' in result
+    # PDG compression is handled by causaliq-core, not this provider
+    assert action.supported_types == set()

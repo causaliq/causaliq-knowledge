@@ -13,6 +13,7 @@ from causaliq_knowledge.graph.response import (
     parse_adjacency_matrix_response,
     parse_edge_list_response,
     parse_graph_response,
+    parse_pdg_response,
 )
 
 # --- ProposedEdge tests ---
@@ -569,3 +570,277 @@ def test_parse_adjacency_matrix_skips_non_numeric_confidence() -> None:
     graph = parse_adjacency_matrix_response(response, ["a", "b"])
     # "invalid" should be skipped, so no edges
     assert len(graph.edges) == 0
+
+
+# =============================================================================
+# PDG Response Parsing Tests
+# =============================================================================
+
+
+# Test parse_pdg_response with valid response.
+def test_parse_pdg_response_basic() -> None:
+    from causaliq_core.graph.pdg import PDG
+
+    response_text = """
+    {
+        "edges": [
+            {
+                "source": "smoking",
+                "target": "cancer",
+                "existence": 0.9,
+                "orientation": 0.8
+            }
+        ],
+        "reasoning": "Smoking causes cancer"
+    }
+    """
+    pdg = parse_pdg_response(response_text, ["smoking", "cancer"])
+
+    assert isinstance(pdg, PDG)
+    assert len(pdg.nodes) == 2
+    assert "smoking" in pdg.nodes
+    assert "cancer" in pdg.nodes
+    assert len(pdg.edges) == 1
+
+    # Check probability conversion
+    # p_forward = 0.9 * 0.8 = 0.72
+    # p_backward = 0.9 * 0.2 = 0.18
+    # p_none = 0.1
+    key = ("cancer", "smoking")  # Canonical order (alphabetical)
+    assert key in pdg.edges
+    probs = pdg.edges[key]
+    # Because "cancer" < "smoking", forward/backward are swapped
+    assert abs(probs.backward - 0.72) < 0.001
+    assert abs(probs.forward - 0.18) < 0.001
+    assert probs.undirected == 0.0
+    assert abs(probs.none - 0.1) < 0.001
+
+
+# Test parse_pdg_response with markdown code blocks.
+def test_parse_pdg_response_with_markdown() -> None:
+    response_text = """```json
+    {
+        "edges": [
+            {
+                "source": "a", "target": "b",
+                "existence": 0.5, "orientation": 0.5
+            }
+        ]
+    }
+    ```"""
+    pdg = parse_pdg_response(response_text, ["a", "b"])
+    assert len(pdg.edges) == 1
+
+
+# Test parse_pdg_response handles invalid JSON.
+def test_parse_pdg_response_invalid_json() -> None:
+    with pytest.raises(ValueError) as exc_info:
+        parse_pdg_response("not valid json", ["a", "b"])
+    assert "failed to parse json" in str(exc_info.value).lower()
+
+
+# Test parse_pdg_response rejects non-dict response.
+def test_parse_pdg_response_non_dict() -> None:
+    with pytest.raises(ValueError) as exc_info:
+        parse_pdg_response("[]", ["a", "b"])
+    assert "expected dict" in str(exc_info.value).lower()
+
+
+# Test parse_pdg_response rejects non-list edges.
+def test_parse_pdg_response_non_list_edges() -> None:
+    with pytest.raises(ValueError) as exc_info:
+        parse_pdg_response('{"edges": "not a list"}', ["a", "b"])
+    assert "expected 'edges' to be a list" in str(exc_info.value).lower()
+
+
+# Test parse_pdg_response skips invalid edge entries.
+def test_parse_pdg_response_skips_invalid_edges() -> None:
+    response_text = """
+    {
+        "edges": [
+            "not a dict",
+            {
+                "source": "a", "target": "b",
+                "existence": 0.5, "orientation": 0.5
+            }
+        ]
+    }
+    """
+    pdg = parse_pdg_response(response_text, ["a", "b"])
+    # Should have 1 valid edge, the invalid one is skipped
+    assert len(pdg.edges) == 1
+
+
+# Test parse_pdg_response skips unknown source variable.
+def test_parse_pdg_response_skips_unknown_source() -> None:
+    response_text = """
+    {
+        "edges": [
+            {
+                "source": "unknown", "target": "b",
+                "existence": 0.9, "orientation": 0.5
+            }
+        ]
+    }
+    """
+    pdg = parse_pdg_response(response_text, ["a", "b"])
+    # Edge with unknown source should be skipped
+    assert len(pdg.edges) == 0
+
+
+# Test parse_pdg_response skips unknown target variable.
+def test_parse_pdg_response_skips_unknown_target() -> None:
+    response_text = """
+    {
+        "edges": [
+            {
+                "source": "a", "target": "unknown",
+                "existence": 0.9, "orientation": 0.5
+            }
+        ]
+    }
+    """
+    pdg = parse_pdg_response(response_text, ["a", "b"])
+    # Edge with unknown target should be skipped
+    assert len(pdg.edges) == 0
+
+
+# Test parse_pdg_response skips self-loops.
+def test_parse_pdg_response_skips_self_loops() -> None:
+    response_text = """
+    {
+        "edges": [
+            {
+                "source": "a", "target": "a",
+                "existence": 0.9, "orientation": 0.5
+            }
+        ]
+    }
+    """
+    pdg = parse_pdg_response(response_text, ["a", "b"])
+    assert len(pdg.edges) == 0
+
+
+# Test parse_pdg_response handles invalid probability values.
+def test_parse_pdg_response_clamps_invalid_probabilities() -> None:
+    response_text = """
+    {
+        "edges": [
+            {
+                "source": "a", "target": "b",
+                "existence": 1.5, "orientation": -0.5
+            }
+        ]
+    }
+    """
+    pdg = parse_pdg_response(response_text, ["a", "b"])
+    # Values should be clamped to [0, 1]
+    probs = pdg.edges[("a", "b")]
+    assert probs.p_exist == 1.0  # Clamped from 1.5
+    # orientation clamped to 0.0 means p_forward = 0, p_backward = 1.0
+
+
+# Test parse_pdg_response handles non-numeric probability values.
+def test_parse_pdg_response_handles_non_numeric_probabilities() -> None:
+    response_text = """
+    {
+        "edges": [
+            {
+                "source": "a", "target": "b",
+                "existence": "high", "orientation": "left"
+            }
+        ]
+    }
+    """
+    pdg = parse_pdg_response(response_text, ["a", "b"])
+    # Should fall back to default 0.5 for both
+    probs = pdg.edges[("a", "b")]
+    assert probs.p_exist == 0.5
+
+
+# Test parse_pdg_response keeps first edge when it has higher existence.
+def test_parse_pdg_response_keeps_first_higher_existence() -> None:
+    response_text = """
+    {
+        "edges": [
+            {
+                "source": "a", "target": "b",
+                "existence": 0.9, "orientation": 0.5
+            },
+            {
+                "source": "b", "target": "a",
+                "existence": 0.5, "orientation": 0.7
+            }
+        ]
+    }
+    """
+    pdg = parse_pdg_response(response_text, ["a", "b"])
+    # Should keep first edge (higher existence 0.9 > 0.5)
+    assert len(pdg.edges) == 1
+    probs = pdg.edges[("a", "b")]
+    # First edge: existence=0.9, orientation=0.5
+    # p_forward = 0.9 * 0.5 = 0.45
+    assert abs(probs.forward - 0.45) < 0.001
+
+
+# Test parse_pdg_response preserves edge with higher existence.
+def test_parse_pdg_response_keeps_higher_existence() -> None:
+    response_text = """
+    {
+        "edges": [
+            {
+                "source": "a", "target": "b",
+                "existence": 0.3, "orientation": 0.5
+            },
+            {
+                "source": "b", "target": "a",
+                "existence": 0.9, "orientation": 0.7
+            }
+        ]
+    }
+    """
+    pdg = parse_pdg_response(response_text, ["a", "b"])
+    # Should keep the edge with higher existence (0.9)
+    assert len(pdg.edges) == 1
+    probs = pdg.edges[("a", "b")]
+    assert abs(probs.p_exist - 0.9) < 0.001
+
+
+# Test parse_pdg_response with empty edges list.
+def test_parse_pdg_response_empty_edges() -> None:
+    response_text = '{"edges": []}'
+    pdg = parse_pdg_response(response_text, ["a", "b"])
+    assert len(pdg.edges) == 0
+    assert len(pdg.nodes) == 2
+
+
+# Test parse_pdg_response with default probabilities.
+def test_parse_pdg_response_missing_probabilities() -> None:
+    response_text = """
+    {
+        "edges": [
+            {"source": "a", "target": "b"}
+        ]
+    }
+    """
+    pdg = parse_pdg_response(response_text, ["a", "b"])
+    # Should use default 0.5 for both existence and orientation
+    probs = pdg.edges[("a", "b")]
+    assert probs.p_exist == 0.5
+    assert abs(probs.forward - 0.25) < 0.001  # 0.5 * 0.5
+    assert abs(probs.backward - 0.25) < 0.001  # 0.5 * 0.5
+
+
+# Test parse_pdg_response with plain markdown code block.
+def test_parse_pdg_response_plain_markdown() -> None:
+    response_text = """```
+    {
+        "edges": [
+            {"source": "a", "target": "b", "existence": 0.8}
+        ]
+    }
+    ```"""
+    pdg = parse_pdg_response(response_text, ["a", "b"])
+    assert len(pdg.edges) == 1
+    probs = pdg.edges[("a", "b")]
+    assert abs(probs.p_exist - 0.8) < 0.001

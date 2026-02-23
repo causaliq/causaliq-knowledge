@@ -26,10 +26,46 @@ class OutputFormat(str, Enum):
         EDGE_LIST: Graph as a list of edges with source, target, confidence.
         ADJACENCY_MATRIX: Graph as a square matrix where entry (i,j)
             represents confidence that variable i causes variable j.
+        PDG: Probabilistic Dependency Graph with existence and orientation
+            probabilities for each proposed edge.
     """
 
     EDGE_LIST = "edge_list"
     ADJACENCY_MATRIX = "adjacency_matrix"
+    PDG = "pdg"
+
+
+# System prompt for PDG (Probabilistic Dependency Graph) format
+GRAPH_SYSTEM_PROMPT_PDG = """\
+You are an expert in causal reasoning and domain knowledge.
+Your task is to propose causal relationships between variables with \
+uncertainty estimates.
+
+Respond ONLY with valid JSON in this exact format:
+{
+  "edges": [
+    {
+      "source": "variable_name_1",
+      "target": "variable_name_2",
+      "existence": 0.0 to 1.0,
+      "orientation": 0.0 to 1.0
+    }
+  ],
+  "reasoning": "brief explanation of your approach"
+}
+
+Guidelines:
+- source/target: the variable names (source is your proposed cause)
+- existence: probability that ANY causal relationship exists between these \
+variables (0.0 = definitely no relationship, 1.0 = definitely related)
+- orientation: given a relationship exists, confidence that source causes \
+target rather than target causes source (0.5 = uncertain direction, 1.0 = \
+certain source causes target, 0.0 = certain target causes source)
+- Include ONLY direct causal relationships, not indirect ones
+- Use the exact variable names provided
+- Do not add edges between a variable and itself
+- Consider domain knowledge and temporal ordering
+- Omit pairs where no causal relationship exists (existence would be 0)"""
 
 
 # System prompt for graph generation (edge list format)
@@ -278,6 +314,8 @@ class GraphQueryPrompt:
             system = self.system_prompt
         elif self.output_format == OutputFormat.ADJACENCY_MATRIX:
             system = GRAPH_SYSTEM_PROMPT_ADJACENCY
+        elif self.output_format == OutputFormat.PDG:
+            system = GRAPH_SYSTEM_PROMPT_PDG
         else:
             system = GRAPH_SYSTEM_PROMPT_EDGE_LIST
 

@@ -10,6 +10,7 @@ imported, using the convention of exporting a class named 'ActionProvider'.
 from __future__ import annotations
 
 import logging
+from io import StringIO
 from pathlib import Path
 from typing import TYPE_CHECKING, Any, Dict, List, Optional, Set
 
@@ -20,6 +21,8 @@ from causaliq_core import (
     ActionValidationError,
     CausalIQActionProvider,
 )
+from causaliq_core.graph.io import graphml
+from causaliq_core.graph.pdg import PDG
 from causaliq_workflow.logger import WorkflowLogger
 from causaliq_workflow.registry import WorkflowContext
 from pydantic import ValidationError
@@ -27,7 +30,7 @@ from pydantic import ValidationError
 from causaliq_knowledge.graph.params import GenerateGraphParams
 
 if TYPE_CHECKING:  # pragma: no cover
-    from causaliq_knowledge.graph.response import GeneratedGraph
+    pass
 
 logger = logging.getLogger(__name__)
 
@@ -153,7 +156,7 @@ class KnowledgeActionProvider(CausalIQActionProvider):
     author: str = "CausalIQ"
 
     supported_actions: Set[str] = SUPPORTED_ACTIONS
-    supported_types: Set[str] = {"graphml", "json"}
+    supported_types: Set[str] = set()  # PDG compression handled by core
 
     inputs: Dict[str, Any] = _create_action_inputs()
     outputs: Dict[str, str] = {
@@ -295,56 +298,42 @@ class KnowledgeActionProvider(CausalIQActionProvider):
 
     def _build_execution_metadata(
         self,
-        graph: "GeneratedGraph",
+        pdg: PDG,
         params: GenerateGraphParams,
-        stats: Dict[str, Any],
+        generation_metadata: Any,
     ) -> Dict[str, Any]:
-        """Build execution metadata from graph generation results.
+        """Build execution metadata from PDG generation results.
 
-        Extracts relevant metadata from the GeneratedGraph for inclusion
-        in the ActionResult metadata dictionary.
+        Combines PDG statistics with comprehensive LLM generation metadata
+        for full provenance tracking.
 
         Args:
-            graph: The generated graph with metadata.
+            pdg: The generated PDG with edge probabilities.
             params: Generation parameters used.
-            stats: Generator statistics.
+            generation_metadata: GenerationMetadata from the generator.
 
         Returns:
             Dictionary of execution metadata.
         """
-        # Start with generation parameters
+        # Count edges with non-zero existence probability
+        edge_count = sum(
+            1
+            for probs in pdg.edges.values()
+            if probs.p_exist > 0.01  # Threshold for "exists"
+        )
+
+        # Get comprehensive LLM metadata
+        llm_metadata = generation_metadata.to_dict()
+
+        # Build metadata combining parameters and LLM generation info
         metadata: Dict[str, Any] = {
             "network_context": str(params.network_context),
-            "llm_model": params.llm_model,
-            "llm_prompt_detail": params.prompt_detail.value,
             "use_benchmark_names": params.use_benchmark_names,
-            "edge_count": len(graph.edges),
-            "variable_count": len(graph.variables),
-            "cache_hits": stats.get("cache_hits", 0),
-            "cache_misses": stats.get("cache_misses", 0),
+            "edge_count": edge_count,
+            "variable_count": len(pdg.nodes),
+            # Include all LLM generation metadata
+            **llm_metadata,
         }
-
-        # Add generation metadata if present
-        if graph.metadata:
-            meta = graph.metadata
-            metadata.update(
-                {
-                    "llm_provider": meta.provider,
-                    "timestamp": meta.timestamp.isoformat(),
-                    "llm_timestamp": meta.llm_timestamp.isoformat(),
-                    "llm_latency_ms": meta.llm_latency_ms,
-                    "llm_input_tokens": meta.input_tokens,
-                    "llm_output_tokens": meta.output_tokens,
-                    "from_cache": meta.from_cache,
-                    "llm_temperature": meta.temperature,
-                    "llm_max_tokens": meta.max_tokens,
-                    "llm_finish_reason": meta.finish_reason,
-                    "llm_cost_usd": meta.llm_cost_usd,
-                }
-            )
-            # Add messages (can be large, but important for reproducibility)
-            if meta.messages:
-                metadata["llm_messages"] = meta.messages
 
         return metadata
 
@@ -400,10 +389,6 @@ class KnowledgeActionProvider(CausalIQActionProvider):
                 raise ActionExecutionError(f"Failed to open LLM cache: {e}")
 
         try:
-            # Import OutputFormat for generator config
-            from causaliq_knowledge.graph.prompts import OutputFormat
-
-            # Create generator - always use edge_list format
             # Derive request_id from output filename stem
             if params.output.lower() == "none":
                 request_id = "none"
@@ -412,7 +397,6 @@ class KnowledgeActionProvider(CausalIQActionProvider):
 
             config = GraphGeneratorConfig(
                 temperature=params.llm_temperature,
-                output_format=OutputFormat.EDGE_LIST,
                 prompt_detail=params.prompt_detail,
                 use_llm_names=use_llm_names,
                 request_id=request_id,
@@ -421,40 +405,37 @@ class KnowledgeActionProvider(CausalIQActionProvider):
                 model=params.llm_model, config=config, cache=llm_cache
             )
 
-            # Generate graph
-            graph = generator.generate_from_context(
+            # Generate PDG with edge probabilities
+            result = generator.generate_pdg_from_context(
                 network_ctx, level=params.prompt_detail
             )
+            pdg = result.pdg
+            generation_metadata = result.metadata
 
-            # Map LLM names back to benchmark names
+            # Map LLM names back to benchmark names if needed
             if llm_to_benchmark_mapping:
-                graph = self._map_graph_names(graph, llm_to_benchmark_mapping)
+                pdg = self._map_pdg_names(pdg, llm_to_benchmark_mapping)
 
-            # Get stats
-            stats = generator.get_stats()
-
-            # Build execution metadata
-            metadata = self._build_execution_metadata(graph, params, stats)
+            # Build execution metadata with comprehensive LLM info
+            metadata = self._build_execution_metadata(
+                pdg, params, generation_metadata
+            )
 
             # Add cached flag for convenience
-            metadata["cached"] = stats.get("cache_hits", 0) > 0
+            metadata["cached"] = generation_metadata.from_cache
             metadata["model_used"] = params.llm_model
 
-            # Serialise graph to open-standard formats
-            graphml_content = self._serialise_graphml(graph)
-            json_content = self._serialise_json(graph)
+            # Convert PDG to GraphML string for interchange
+            graphml_buffer = StringIO()
+            graphml.write_pdg(pdg, graphml_buffer)
+            graphml_content = graphml_buffer.getvalue()
 
-            # Build objects list
+            # Return GraphML string for workflow cache compression
             objects: List[Dict[str, Any]] = [
                 {
-                    "type": "graphml",
+                    "type": "pdg",
                     "name": "graph",
                     "content": graphml_content,
-                },
-                {
-                    "type": "json",
-                    "name": "confidences",
-                    "content": json_content,
                 },
             ]
 
@@ -466,196 +447,89 @@ class KnowledgeActionProvider(CausalIQActionProvider):
             if llm_cache:
                 llm_cache.close()
 
-    def _map_graph_names(
-        self, graph: "GeneratedGraph", mapping: Dict[str, str]
-    ) -> "GeneratedGraph":
-        """Map variable names in a graph using a mapping dictionary.
+    def _map_pdg_names(self, pdg: PDG, mapping: Dict[str, str]) -> PDG:
+        """Map variable names in a PDG using a mapping dictionary.
 
         Args:
-            graph: The generated graph with edges to map.
+            pdg: The generated PDG with edges to map.
             mapping: Dictionary mapping old names to new names.
 
         Returns:
-            New GeneratedGraph with mapped variable names.
+            New PDG with mapped variable names.
         """
-        from causaliq_knowledge.graph.response import (
-            GeneratedGraph,
-            ProposedEdge,
-        )
+        from causaliq_core.graph.pdg import EdgeProbabilities
 
-        new_edges = []
-        for edge in graph.edges:
-            new_edge = ProposedEdge(
-                source=mapping.get(edge.source, edge.source),
-                target=mapping.get(edge.target, edge.target),
-                confidence=edge.confidence,
-            )
-            new_edges.append(new_edge)
+        # Map node names
+        new_nodes = [mapping.get(n, n) for n in pdg.nodes]
 
-        new_variables = [mapping.get(v, v) for v in graph.variables]
+        # Map edge keys and maintain probability values
+        new_edges: Dict[tuple[str, str], EdgeProbabilities] = {}
+        for (src, tgt), probs in pdg.edges.items():
+            new_src = mapping.get(src, src)
+            new_tgt = mapping.get(tgt, tgt)
 
-        return GeneratedGraph(
-            edges=new_edges,
-            variables=new_variables,
-            reasoning=graph.reasoning,
-            metadata=graph.metadata,
-        )
+            # Maintain canonical order (alphabetical)
+            if new_src < new_tgt:
+                key = (new_src, new_tgt)
+                new_probs = probs
+            else:
+                key = (new_tgt, new_src)
+                # Swap forward/backward for canonical order
+                new_probs = EdgeProbabilities(
+                    forward=probs.backward,
+                    backward=probs.forward,
+                    undirected=probs.undirected,
+                    none=probs.none,
+                )
+            new_edges[key] = new_probs
+
+        return PDG(new_nodes, new_edges)
 
     def serialise(
         self,
         data_type: str,
         data: Any,
     ) -> str:
-        """Serialise data to GraphML or JSON format string.
+        """Serialise data to string format.
 
-        Converts a GeneratedGraph to the specified format.
+        This provider does not support direct serialisation. PDG objects
+        are compressed by causaliq-core's CoreActionProvider.
 
         Args:
-            data_type: Type of data. Supported values:
-                - 'graphml': GraphML format
-                - 'json': JSON format with full metadata
-            data: GeneratedGraph instance, or tuple (graph, extra_blobs)
-                as returned by GraphCompressor.decompress().
-
-        Returns:
-            String representation of the graph in the specified format.
+            data_type: Type of data.
+            data: Data to serialise.
 
         Raises:
-            NotImplementedError: If the data type is not supported.
-            ValueError: If data is not a GeneratedGraph.
+            NotImplementedError: Always, as this provider doesn't
+                handle serialisation.
         """
-        from causaliq_knowledge.graph.response import GeneratedGraph
-
-        # Validate against supported_types first
-        if data_type not in self.supported_types:
-            raise NotImplementedError(
-                f"Provider '{self.name}' does not support serialising "
-                f"data_type '{data_type}'. Supported: {self.supported_types}"
-            )
-
-        # Handle tuple from decode() which returns (graph, extra_blobs)
-        if isinstance(data, tuple) and len(data) == 2:
-            data = data[0]
-
-        # Validate data is a GeneratedGraph
-        if not isinstance(data, GeneratedGraph):
-            raise ValueError(
-                f"Expected GeneratedGraph, got {type(data).__name__}"
-            )
-
-        if data_type == "graphml":
-            return self._serialise_graphml(data)
-        else:  # json
-            return self._serialise_json(data)
-
-    def _serialise_graphml(self, graph: "GeneratedGraph") -> str:
-        """Serialise graph to GraphML format."""
-        from io import StringIO
-
-        from causaliq_core.graph import SDG
-        from causaliq_core.graph.io import graphml
-
-        edges = [(e.source, "->", e.target) for e in graph.edges]
-        sdg = SDG(list(graph.variables), edges)
-
-        buffer = StringIO()
-        graphml.write(sdg, buffer)
-        buffer.seek(0)
-        return buffer.getvalue()
-
-    def _serialise_json(self, graph: "GeneratedGraph") -> str:
-        """Serialise graph to JSON format with full metadata."""
-        import json
-
-        result: Dict[str, Any] = {
-            "variables": list(graph.variables),
-            "edges": [
-                {
-                    "source": e.source,
-                    "target": e.target,
-                    "confidence": e.confidence,
-                    "reasoning": e.reasoning,
-                }
-                for e in graph.edges
-            ],
-            "reasoning": graph.reasoning,
-        }
-
-        if graph.metadata is not None:
-            meta = graph.metadata
-            result["metadata"] = {
-                "llm_model": meta.model,
-                "llm_provider": meta.provider,
-                "llm_timestamp": meta.llm_timestamp.isoformat(),
-                "llm_latency_ms": meta.llm_latency_ms,
-                "llm_input_tokens": meta.input_tokens,
-                "llm_output_tokens": meta.output_tokens,
-                "llm_from_cache": meta.from_cache,
-                "llm_temperature": meta.temperature,
-                "llm_max_tokens": meta.max_tokens,
-                "llm_finish_reason": meta.finish_reason,
-                "llm_cost_usd": meta.llm_cost_usd,
-            }
-
-        return json.dumps(result, indent=2)
+        raise NotImplementedError(
+            f"Provider '{self.name}' does not support serialisation. "
+            f"PDG compression is handled by causaliq-core."
+        )
 
     def deserialise(
         self,
         data_type: str,
         content: str,
-    ) -> "GeneratedGraph":
-        """Deserialise data from GraphML format string.
+    ) -> Any:
+        """Deserialise data from string format.
 
-        Converts GraphML format to a GeneratedGraph.
+        This provider does not support direct deserialisation. PDG objects
+        are decompressed by causaliq-core's CoreActionProvider.
 
         Args:
-            data_type: Type of data (must be 'graphml').
-            content: GraphML string representation of the data.
-
-        Returns:
-            The deserialised GeneratedGraph object.
+            data_type: Type of data.
+            content: String content to deserialise.
 
         Raises:
-            NotImplementedError: If the data type is not supported.
+            NotImplementedError: Always, as this provider doesn't
+                handle deserialisation.
         """
-        from io import StringIO
-
-        from causaliq_core.graph.io import graphml
-
-        from causaliq_knowledge.graph.response import (
-            GeneratedGraph,
-            ProposedEdge,
+        raise NotImplementedError(
+            f"Provider '{self.name}' does not support deserialisation. "
+            f"PDG decompression is handled by causaliq-core."
         )
-
-        # Validate against supported_types
-        if data_type not in self.supported_types:
-            raise NotImplementedError(
-                f"Provider '{self.name}' does not support deserialising "
-                f"data_type '{data_type}'. Supported: {self.supported_types}"
-            )
-
-        # Only graphml can be deserialised to GeneratedGraph
-        if data_type != "graphml":
-            raise NotImplementedError(
-                f"Provider '{self.name}' cannot deserialise '{data_type}' "
-                f"to GeneratedGraph. Use 'graphml'."
-            )
-
-        # Read graph from StringIO
-        sdg = graphml.read(StringIO(content))
-
-        # Convert SDG to GeneratedGraph
-        edges = [
-            ProposedEdge(source=src, target=tgt, confidence=0.5)
-            for (src, tgt) in sdg.edges.keys()
-        ]
-        graph = GeneratedGraph(
-            edges=edges,
-            variables=list(sdg.nodes),
-            reasoning="Deserialised from GraphML",
-        )
-
-        return graph
 
 
 # Export as ActionProvider for auto-discovery by causaliq-workflow

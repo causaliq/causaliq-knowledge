@@ -178,3 +178,113 @@ def test_generator_get_stats():
     assert stats["model"] == "groq/llama-3.1-8b-instant"
     assert stats["call_count"] == 1
     assert "client_call_count" in stats
+
+
+# Test GraphGenerator generates PDG from NetworkContext.
+def test_generator_generates_pdg_from_context():
+    from causaliq_core.graph.pdg import PDG
+
+    from causaliq_knowledge.graph import (
+        GraphGenerator,
+        GraphGeneratorConfig,
+        PromptDetail,
+    )
+    from causaliq_knowledge.graph.models import (
+        NetworkContext,
+        VariableSpec,
+        VariableType,
+    )
+
+    config = GraphGeneratorConfig(
+        temperature=0.1,
+        max_tokens=500,
+        prompt_detail=PromptDetail.MINIMAL,
+    )
+    generator = GraphGenerator(
+        model="groq/llama-3.1-8b-instant", config=config
+    )
+
+    context = NetworkContext(
+        network="smoking-test",
+        domain="epidemiology",
+        variables=[
+            VariableSpec(
+                name="smoking",
+                type=VariableType.BINARY,
+                short_description="Smoking status",
+            ),
+            VariableSpec(
+                name="lung_cancer",
+                type=VariableType.BINARY,
+                short_description="Lung cancer diagnosis",
+            ),
+            VariableSpec(
+                name="age",
+                type=VariableType.CONTINUOUS,
+                short_description="Age in years",
+            ),
+        ],
+    )
+
+    result = generator.generate_pdg_from_context(context)
+
+    assert isinstance(result.pdg, PDG)
+    assert result.metadata is not None
+    assert len(result.pdg.nodes) == 3
+    assert set(result.pdg.nodes) == {"smoking", "lung_cancer", "age"}
+    assert generator.call_count == 1
+
+    # Check edge probabilities sum to ~1.0 for each edge
+    for key, probs in result.pdg.edges.items():
+        total = probs.forward + probs.backward + probs.undirected + probs.none
+        assert 0.99 < total < 1.01, f"Edge {key} probabilities sum to {total}"
+
+
+# Test PDG generation with STANDARD prompt detail level.
+def test_generator_pdg_with_standard_level():
+    from causaliq_core.graph.pdg import PDG
+
+    from causaliq_knowledge.graph import (
+        GraphGenerator,
+        GraphGeneratorConfig,
+        PromptDetail,
+    )
+    from causaliq_knowledge.graph.models import (
+        NetworkContext,
+        VariableSpec,
+        VariableType,
+    )
+
+    config = GraphGeneratorConfig(
+        temperature=0.1,
+        max_tokens=800,
+        prompt_detail=PromptDetail.STANDARD,
+    )
+    generator = GraphGenerator(
+        model="groq/llama-3.1-8b-instant", config=config
+    )
+
+    context = NetworkContext(
+        network="economics-test",
+        domain="economics",
+        variables=[
+            VariableSpec(
+                name="education",
+                type=VariableType.ORDINAL,
+                short_description="Highest level of education",
+            ),
+            VariableSpec(
+                name="income",
+                type=VariableType.CONTINUOUS,
+                short_description="Annual income in USD",
+            ),
+        ],
+    )
+
+    result = generator.generate_pdg_from_context(
+        context, level=PromptDetail.STANDARD
+    )
+
+    assert isinstance(result.pdg, PDG)
+    assert result.metadata is not None
+    assert len(result.pdg.nodes) == 2

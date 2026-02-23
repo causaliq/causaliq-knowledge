@@ -258,5 +258,8 @@ def test_all_output_formats(
 
     if output_format == OutputFormat.EDGE_LIST:
         assert "edges" in system
-    else:
+    elif output_format == OutputFormat.ADJACENCY_MATRIX:
         assert "adjacency_matrix" in system
+    elif output_format == OutputFormat.PDG:
+        assert "existence" in system
+        assert "orientation" in system

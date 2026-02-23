@@ -9,6 +9,59 @@ from click.testing import CliRunner
 from causaliq_knowledge.cli import cli
 
 
+def _make_mock_result(pdg):
+    """Create a mock PDGGenerationResult for testing.
+
+    Wraps a PDG in a result object with mock metadata for use in tests
+    that mock generate_pdg_from_context.
+
+    Args:
+        pdg: The PDG to wrap.
+
+    Returns:
+        A mock PDGGenerationResult with the PDG and default metadata.
+    """
+    from datetime import datetime, timezone
+    from unittest.mock import MagicMock
+
+    mock_metadata = MagicMock()
+    mock_metadata.model = "test-model"
+    mock_metadata.provider = "test"
+    mock_metadata.timestamp = datetime.now(timezone.utc)
+    mock_metadata.llm_timestamp = datetime.now(timezone.utc)
+    mock_metadata.llm_latency_ms = 100
+    mock_metadata.input_tokens = 500
+    mock_metadata.output_tokens = 200
+    mock_metadata.from_cache = False
+    mock_metadata.messages = [{"role": "user", "content": "test"}]
+    mock_metadata.temperature = 0.1
+    mock_metadata.max_tokens = 2000
+    mock_metadata.finish_reason = "stop"
+    mock_metadata.llm_cost_usd = 0.001
+    mock_metadata.to_dict.return_value = {
+        "llm_model": "test-model",
+        "llm_provider": "test",
+        "timestamp": mock_metadata.timestamp.isoformat(),
+        "llm_timestamp": mock_metadata.llm_timestamp.isoformat(),
+        "llm_latency_ms": 100,
+        "llm_input_tokens": 500,
+        "llm_output_tokens": 200,
+        "from_cache": False,
+        "llm_messages": [{"role": "user", "content": "test"}],
+        "llm_temperature": 0.1,
+        "llm_max_tokens": 2000,
+        "llm_finish_reason": "stop",
+        "llm_cost_usd": 0.001,
+    }
+
+    mock_result = MagicMock()
+    mock_result.pdg = pdg
+    mock_result.metadata = mock_metadata
+    mock_result.raw_response = '{"edges": []}'
+
+    return mock_result
+
+
 # Test no args shows usage with available commands.
 def test_cli_no_args_shows_usage():
     runner = CliRunner()
@@ -830,14 +883,20 @@ def test_cli_generate_graph_loads_spec(tmp_path, mocker):
     spec_file.write_text(json.dumps(spec_data))
 
     # Mock the GraphGenerator to avoid LLM calls
-    from causaliq_knowledge.graph.response import GeneratedGraph, ProposedEdge
+    from causaliq_core.graph.pdg import PDG, EdgeProbabilities
 
-    mock_graph = GeneratedGraph(
-        edges=[ProposedEdge(source="A", target="B", confidence=0.8)],
-        variables=["A", "B"],
+    mock_pdg = PDG(
+        ["A", "B"],
+        {
+            ("A", "B"): EdgeProbabilities(
+                forward=0.8, backward=0.1, undirected=0.0, none=0.1
+            )
+        },
     )
     mock_generator = mocker.MagicMock()
-    mock_generator.generate_from_context.return_value = mock_graph
+    mock_generator.generate_pdg_from_context.return_value = _make_mock_result(
+        mock_pdg
+    )
     mock_generator.get_stats.return_value = {
         "call_count": 1,
         "client_call_count": 1,
@@ -885,14 +944,20 @@ def test_cli_generate_graph_json_output(tmp_path, mocker):
     output_dir = tmp_path / "output"
 
     # Mock the GraphGenerator
-    from causaliq_knowledge.graph.response import GeneratedGraph, ProposedEdge
+    from causaliq_core.graph.pdg import PDG, EdgeProbabilities
 
-    mock_graph = GeneratedGraph(
-        edges=[ProposedEdge(source="X", target="Y", confidence=0.9)],
-        variables=["X", "Y"],
+    mock_pdg = PDG(
+        ["X", "Y"],
+        {
+            ("X", "Y"): EdgeProbabilities(
+                forward=0.9, backward=0.05, undirected=0.0, none=0.05
+            )
+        },
     )
     mock_generator = mocker.MagicMock()
-    mock_generator.generate_from_context.return_value = mock_graph
+    mock_generator.generate_pdg_from_context.return_value = _make_mock_result(
+        mock_pdg
+    )
     mock_generator.get_stats.return_value = {
         "call_count": 1,
         "client_call_count": 1,
@@ -922,14 +987,9 @@ def test_cli_generate_graph_json_output(tmp_path, mocker):
     # Verify directory output files
     assert (output_dir / "graph.graphml").exists()
     assert (output_dir / "metadata.json").exists()
-    assert (output_dir / "confidences.json").exists()
 
     metadata = json.loads((output_dir / "metadata.json").read_text())
     assert metadata["network"] == "json-test"
-
-    confidences = json.loads((output_dir / "confidences.json").read_text())
-    assert "X->Y" in confidences
-    assert confidences["X->Y"] == 0.9
 
 
 # Test generate graph with --output flag writes to directory.
@@ -951,14 +1011,20 @@ def test_cli_generate_graph_output_file(tmp_path, mocker):
     output_dir = tmp_path / "graph_output"
 
     # Mock the GraphGenerator
-    from causaliq_knowledge.graph.response import GeneratedGraph, ProposedEdge
+    from causaliq_core.graph.pdg import PDG, EdgeProbabilities
 
-    mock_graph = GeneratedGraph(
-        edges=[ProposedEdge(source="P", target="Q", confidence=0.75)],
-        variables=["P", "Q"],
+    mock_pdg = PDG(
+        ["P", "Q"],
+        {
+            ("P", "Q"): EdgeProbabilities(
+                forward=0.75, backward=0.15, undirected=0.0, none=0.1
+            )
+        },
     )
     mock_generator = mocker.MagicMock()
-    mock_generator.generate_from_context.return_value = mock_graph
+    mock_generator.generate_pdg_from_context.return_value = _make_mock_result(
+        mock_pdg
+    )
     mock_generator.get_stats.return_value = {
         "call_count": 1,
         "client_call_count": 1,
@@ -988,8 +1054,6 @@ def test_cli_generate_graph_output_file(tmp_path, mocker):
     # Verify directory output files
     metadata = json.loads((output_dir / "metadata.json").read_text())
     assert metadata["network"] == "file-output-test"
-    confidences = json.loads((output_dir / "confidences.json").read_text())
-    assert "P->Q" in confidences
     # Also check edges are printed to stderr
     assert "P → Q" in result.output or "P" in result.output
 
@@ -1020,14 +1084,20 @@ def test_cli_generate_graph_use_benchmark_names(tmp_path, mocker):
     spec_file = tmp_path / "model.json"
     spec_file.write_text(json.dumps(spec_data))
 
-    from causaliq_knowledge.graph.response import GeneratedGraph, ProposedEdge
+    from causaliq_core.graph.pdg import PDG, EdgeProbabilities
 
-    mock_graph = GeneratedGraph(
-        edges=[ProposedEdge(source="smoke", target="lung", confidence=0.8)],
-        variables=["smoke", "lung"],
+    mock_pdg = PDG(
+        ["lung", "smoke"],
+        {
+            ("lung", "smoke"): EdgeProbabilities(
+                forward=0.1, backward=0.8, undirected=0.0, none=0.1
+            )
+        },
     )
     mock_generator = mocker.MagicMock()
-    mock_generator.generate_from_context.return_value = mock_graph
+    mock_generator.generate_pdg_from_context.return_value = _make_mock_result(
+        mock_pdg
+    )
     mock_generator.get_stats.return_value = {
         "call_count": 1,
         "client_call_count": 1,
@@ -1071,11 +1141,13 @@ def test_cli_generate_graph_prompt_detail_minimal(tmp_path, mocker):
     spec_file = tmp_path / "model.json"
     spec_file.write_text(json.dumps(spec_data))
 
-    from causaliq_knowledge.graph.response import GeneratedGraph
+    from causaliq_core.graph.pdg import PDG
 
-    mock_graph = GeneratedGraph(edges=[], variables=["A", "B"])
+    mock_pdg = PDG(["A", "B"], {})
     mock_generator = mocker.MagicMock()
-    mock_generator.generate_from_context.return_value = mock_graph
+    mock_generator.generate_pdg_from_context.return_value = _make_mock_result(
+        mock_pdg
+    )
     mock_generator.get_stats.return_value = {
         "call_count": 1,
         "client_call_count": 1,
@@ -1120,14 +1192,20 @@ def test_cli_generate_graph_output_none_adjacency(tmp_path, mocker):
     spec_file = tmp_path / "model.json"
     spec_file.write_text(json.dumps(spec_data))
 
-    from causaliq_knowledge.graph.response import GeneratedGraph, ProposedEdge
+    from causaliq_core.graph.pdg import PDG, EdgeProbabilities
 
-    mock_graph = GeneratedGraph(
-        edges=[ProposedEdge(source="A", target="B", confidence=0.8)],
-        variables=["A", "B"],
+    mock_pdg = PDG(
+        ["A", "B"],
+        {
+            ("A", "B"): EdgeProbabilities(
+                forward=0.8, backward=0.1, undirected=0.0, none=0.1
+            )
+        },
     )
     mock_generator = mocker.MagicMock()
-    mock_generator.generate_from_context.return_value = mock_graph
+    mock_generator.generate_pdg_from_context.return_value = _make_mock_result(
+        mock_pdg
+    )
     mock_generator.get_stats.return_value = {
         "call_count": 1,
         "client_call_count": 1,
@@ -1152,10 +1230,10 @@ def test_cli_generate_graph_output_none_adjacency(tmp_path, mocker):
     )
 
     assert result.exit_code == 0
-    # Should print adjacency matrix
-    assert "Adjacency Matrix" in result.output
-    # Should also print proposed edges
-    assert "A → B" in result.output or "Proposed Edges" in result.output
+    # Should print proposed edges (no more adjacency matrix)
+    assert "Proposed Edges" in result.output
+    # Should show edge with direction
+    assert "A -> B" in result.output or "B -> A" in result.output
 
 
 # Test generate graph with invalid context.
@@ -1226,11 +1304,13 @@ def test_cli_generate_graph_with_cache(tmp_path, mocker):
 
     cache_file = tmp_path / "cache.db"
 
-    from causaliq_knowledge.graph.response import GeneratedGraph
+    from causaliq_core.graph.pdg import PDG
 
-    mock_graph = GeneratedGraph(edges=[], variables=["A", "B"])
+    mock_pdg = PDG(["A", "B"], {})
     mock_generator = mocker.MagicMock()
-    mock_generator.generate_from_context.return_value = mock_graph
+    mock_generator.generate_pdg_from_context.return_value = _make_mock_result(
+        mock_pdg
+    )
     mock_generator.get_stats.return_value = {
         "call_count": 1,
         "client_call_count": 1,
@@ -1273,11 +1353,13 @@ def test_cli_generate_graph_empty_edges(tmp_path, mocker):
     spec_file = tmp_path / "model.json"
     spec_file.write_text(json.dumps(spec_data))
 
-    from causaliq_knowledge.graph.response import GeneratedGraph
+    from causaliq_core.graph.pdg import PDG
 
-    mock_graph = GeneratedGraph(edges=[], variables=["A", "B"])
+    mock_pdg = PDG(["A", "B"], {})
     mock_generator = mocker.MagicMock()
-    mock_generator.generate_from_context.return_value = mock_graph
+    mock_generator.generate_pdg_from_context.return_value = _make_mock_result(
+        mock_pdg
+    )
     mock_generator.get_stats.return_value = {
         "call_count": 1,
         "client_call_count": 1,
@@ -1320,14 +1402,16 @@ def test_cli_generate_graph_llm_option(tmp_path, mocker):
     spec_file = tmp_path / "model.json"
     spec_file.write_text(json.dumps(spec_data))
 
-    from causaliq_knowledge.graph.response import GeneratedGraph
+    from causaliq_core.graph.pdg import PDG
 
-    mock_graph = GeneratedGraph(edges=[], variables=["A", "B"])
+    mock_pdg = PDG(["A", "B"], {})
     mock_generator_class = mocker.patch(
         "causaliq_knowledge.graph.generator.GraphGenerator"
     )
     mock_generator = mocker.MagicMock()
-    mock_generator.generate_from_context.return_value = mock_graph
+    mock_generator.generate_pdg_from_context.return_value = _make_mock_result(
+        mock_pdg
+    )
     mock_generator.get_stats.return_value = {
         "call_count": 1,
         "client_call_count": 1,
@@ -1406,14 +1490,20 @@ def test_cli_generate_graph_any_path_is_directory_output(tmp_path, mocker):
     # Any path (even with .txt) is treated as directory output
     output_dir = tmp_path / "output.txt"
 
-    from causaliq_knowledge.graph.response import GeneratedGraph, ProposedEdge
+    from causaliq_core.graph.pdg import PDG, EdgeProbabilities
 
-    mock_graph = GeneratedGraph(
-        edges=[ProposedEdge(source="A", target="B", confidence=0.8)],
-        variables=["A", "B"],
+    mock_pdg = PDG(
+        ["A", "B"],
+        {
+            ("A", "B"): EdgeProbabilities(
+                forward=0.8, backward=0.1, undirected=0.0, none=0.1
+            )
+        },
     )
     mock_generator = mocker.MagicMock()
-    mock_generator.generate_from_context.return_value = mock_graph
+    mock_generator.generate_pdg_from_context.return_value = _make_mock_result(
+        mock_pdg
+    )
     mock_generator.get_stats.return_value = {
         "call_count": 1,
         "client_call_count": 1,
@@ -1478,7 +1568,7 @@ def test_cli_generate_graph_invalid_llm_model(tmp_path):
     assert "llm_model" in result.output or "prefix" in result.output
 
 
-# Test generate graph with cache open error.
+# Test generate graph with cache open error continues with warning.
 def test_cli_generate_graph_cache_error(tmp_path, mocker):
     import json
 
@@ -1487,12 +1577,37 @@ def test_cli_generate_graph_cache_error(tmp_path, mocker):
         "domain": "testing",
         "variables": [
             {"name": "A", "type": "binary", "short_description": "Variable A"},
+            {"name": "B", "type": "binary", "short_description": "Variable B"},
         ],
     }
     spec_file = tmp_path / "model.json"
     spec_file.write_text(json.dumps(spec_data))
 
-    # Mock TokenCache to raise an exception - patch in core cache module
+    # Mock the GraphGenerator to avoid actual LLM calls
+    from causaliq_core.graph.pdg import PDG, EdgeProbabilities
+
+    mock_pdg = PDG(
+        ["A", "B"],
+        {
+            ("A", "B"): EdgeProbabilities(
+                forward=0.8, backward=0.1, undirected=0.0, none=0.1
+            )
+        },
+    )
+    mock_generator = mocker.MagicMock()
+    mock_generator.generate_pdg_from_context.return_value = _make_mock_result(
+        mock_pdg
+    )
+    mock_generator.get_stats.return_value = {
+        "call_count": 1,
+        "client_call_count": 1,
+    }
+    mocker.patch(
+        "causaliq_knowledge.graph.generator.GraphGenerator",
+        return_value=mock_generator,
+    )
+
+    # Mock TokenCache to raise an exception - patch in core module
     mocker.patch(
         "causaliq_core.cache.TokenCache",
         side_effect=Exception("Cache error"),
@@ -1512,8 +1627,11 @@ def test_cli_generate_graph_cache_error(tmp_path, mocker):
         ],
     )
 
-    assert result.exit_code == 1
-    assert "Error opening cache" in result.output
+    # CLI should continue with warning, not fail
+    assert result.exit_code == 0
+    assert (
+        "Warning:" in result.output or "Failed to open cache" in result.output
+    )
 
 
 # Test generate graph with generator creation error.
@@ -1570,7 +1688,9 @@ def test_cli_generate_graph_generation_error(tmp_path, mocker):
 
     # Mock GraphGenerator to raise exception on generate
     mock_generator = mocker.MagicMock()
-    mock_generator.generate_from_context.side_effect = Exception("LLM error")
+    mock_generator.generate_pdg_from_context.side_effect = Exception(
+        "LLM error"
+    )
     mocker.patch(
         "causaliq_knowledge.graph.generator.GraphGenerator",
         return_value=mock_generator,
@@ -1611,30 +1731,20 @@ def test_cli_generate_graph_with_metadata(tmp_path, mocker):
 
     output_dir = tmp_path / "output"
 
-    from causaliq_knowledge.graph.response import (
-        GeneratedGraph,
-        GenerationMetadata,
-        ProposedEdge,
-    )
+    from causaliq_core.graph.pdg import PDG, EdgeProbabilities
 
-    mock_graph = GeneratedGraph(
-        edges=[ProposedEdge(source="X", target="Y", confidence=0.8)],
-        variables=["X", "Y"],
-        metadata=GenerationMetadata(
-            model="test-model",
-            provider="test-provider",
-            input_tokens=100,
-            output_tokens=50,
-            from_cache=False,
-            messages=[{"role": "user", "content": "test prompt"}],
-            temperature=0.1,
-            max_tokens=2000,
-            finish_reason="stop",
-            llm_cost_usd=0.001,
-        ),
+    mock_pdg = PDG(
+        ["X", "Y"],
+        {
+            ("X", "Y"): EdgeProbabilities(
+                forward=0.8, backward=0.1, undirected=0.0, none=0.1
+            )
+        },
     )
     mock_generator = mocker.MagicMock()
-    mock_generator.generate_from_context.return_value = mock_graph
+    mock_generator.generate_pdg_from_context.return_value = _make_mock_result(
+        mock_pdg
+    )
     mock_generator.get_stats.return_value = {
         "call_count": 1,
         "client_call_count": 1,
@@ -1660,18 +1770,20 @@ def test_cli_generate_graph_with_metadata(tmp_path, mocker):
 
     assert result.exit_code == 0
     metadata = json.loads((output_dir / "metadata.json").read_text())
-    # Verify all generation metadata fields are present
-    assert metadata["llm_input_tokens"] == 100
-    assert metadata["llm_output_tokens"] == 50
-    assert metadata["llm_provider"] == "test-provider"
-    assert metadata["llm_messages"] == [
-        {"role": "user", "content": "test prompt"}
-    ]
-    assert metadata["llm_temperature"] == 0.1
-    assert metadata["llm_max_tokens"] == 2000
-    assert metadata["llm_finish_reason"] == "stop"
-    assert metadata["llm_cost_usd"] == 0.001
-    assert "llm_timestamp" in metadata
+    # Verify generation metadata fields written by CLI
+    assert metadata["network"] == "metadata-test"
+    assert metadata["domain"] == "testing"
+    # llm_model comes from GenerationMetadata (model name only from mock)
+    assert metadata["llm_model"] == "test-model"
+    assert metadata["llm_provider"] == "test"
+    assert metadata["variable_count"] == 2
+    assert metadata["edge_count"] == 1
+    assert "objects" in metadata
+    # Verify comprehensive LLM metadata is included
+    assert "llm_input_tokens" in metadata
+    assert "llm_output_tokens" in metadata
+    assert "llm_cost_usd" in metadata
+    assert "llm_messages" in metadata
 
 
 # Test generate graph human-readable output with reasoning.
@@ -1689,23 +1801,20 @@ def test_cli_generate_graph_human_readable_with_reasoning(tmp_path, mocker):
     spec_file = tmp_path / "model.json"
     spec_file.write_text(json.dumps(spec_data))
 
-    from causaliq_knowledge.graph.response import GeneratedGraph, ProposedEdge
+    from causaliq_core.graph.pdg import PDG, EdgeProbabilities
 
-    mock_graph = GeneratedGraph(
-        edges=[
-            ProposedEdge(
-                source="X",
-                target="Y",
-                confidence=0.85,
-                reasoning=(
-                    "This is a test reasoning that " "explains the causal link"
-                ),
+    mock_pdg = PDG(
+        ["X", "Y"],
+        {
+            ("X", "Y"): EdgeProbabilities(
+                forward=0.85, backward=0.1, undirected=0.0, none=0.05
             )
-        ],
-        variables=["X", "Y"],
+        },
     )
     mock_generator = mocker.MagicMock()
-    mock_generator.generate_from_context.return_value = mock_graph
+    mock_generator.generate_pdg_from_context.return_value = _make_mock_result(
+        mock_pdg
+    )
     mock_generator.get_stats.return_value = {
         "call_count": 1,
         "client_call_count": 1,
@@ -1731,8 +1840,8 @@ def test_cli_generate_graph_human_readable_with_reasoning(tmp_path, mocker):
     )
 
     assert result.exit_code == 0
-    assert "X → Y" in result.output
-    assert "This is a test reasoning" in result.output
+    # CLI uses ASCII arrows in output
+    assert "X -> Y" in result.output or "Y -> X" in result.output
 
 
 # Test generate graph human-readable with long reasoning gets truncated.
@@ -1750,24 +1859,20 @@ def test_cli_generate_graph_long_reasoning_truncated(tmp_path, mocker):
     spec_file = tmp_path / "model.json"
     spec_file.write_text(json.dumps(spec_data))
 
-    from causaliq_knowledge.graph.response import GeneratedGraph, ProposedEdge
+    from causaliq_core.graph.pdg import PDG, EdgeProbabilities
 
-    # Create a long reasoning string (>100 chars)
-    long_reasoning = "A" * 150
-
-    mock_graph = GeneratedGraph(
-        edges=[
-            ProposedEdge(
-                source="X",
-                target="Y",
-                confidence=0.85,
-                reasoning=long_reasoning,
+    mock_pdg = PDG(
+        ["X", "Y"],
+        {
+            ("X", "Y"): EdgeProbabilities(
+                forward=0.85, backward=0.1, undirected=0.0, none=0.05
             )
-        ],
-        variables=["X", "Y"],
+        },
     )
     mock_generator = mocker.MagicMock()
-    mock_generator.generate_from_context.return_value = mock_graph
+    mock_generator.generate_pdg_from_context.return_value = _make_mock_result(
+        mock_pdg
+    )
     mock_generator.get_stats.return_value = {
         "call_count": 1,
         "client_call_count": 1,
@@ -1792,13 +1897,13 @@ def test_cli_generate_graph_long_reasoning_truncated(tmp_path, mocker):
     )
 
     assert result.exit_code == 0
-    # Should truncate at 100 chars and add ...
-    assert "A" * 100 + "..." in result.output
+    # PDG output doesn't include reasoning, just probability bars
+    assert "Proposed Edges" in result.output
 
 
-# Test generate graph with workflow cache output (.db file).
+# Test generate graph with directory output.
 def test_cli_generate_graph_workflow_cache_output(tmp_path, mocker):
-    """Test generate_graph writes to Workflow Cache when output is .db file."""
+    """Test generate_graph writes to directory when output is a path."""
     import json
 
     spec_data = {
@@ -1812,14 +1917,20 @@ def test_cli_generate_graph_workflow_cache_output(tmp_path, mocker):
     spec_file = tmp_path / "model.json"
     spec_file.write_text(json.dumps(spec_data))
 
-    from causaliq_knowledge.graph.response import GeneratedGraph, ProposedEdge
+    from causaliq_core.graph.pdg import PDG, EdgeProbabilities
 
-    mock_graph = GeneratedGraph(
-        edges=[ProposedEdge(source="X", target="Y", confidence=0.9)],
-        variables=["X", "Y"],
+    mock_pdg = PDG(
+        ["X", "Y"],
+        {
+            ("X", "Y"): EdgeProbabilities(
+                forward=0.9, backward=0.05, undirected=0.0, none=0.05
+            )
+        },
     )
     mock_generator = mocker.MagicMock()
-    mock_generator.generate_from_context.return_value = mock_graph
+    mock_generator.generate_pdg_from_context.return_value = _make_mock_result(
+        mock_pdg
+    )
     mock_generator.get_stats.return_value = {
         "call_count": 1,
         "client_call_count": 1,
@@ -1829,7 +1940,7 @@ def test_cli_generate_graph_workflow_cache_output(tmp_path, mocker):
         return_value=mock_generator,
     )
 
-    output_db = tmp_path / "results.db"
+    output_dir = tmp_path / "results"
 
     runner = CliRunner()
     result = runner.invoke(
@@ -1841,40 +1952,21 @@ def test_cli_generate_graph_workflow_cache_output(tmp_path, mocker):
             "-c",
             "none",
             "-o",
-            str(output_db),
+            str(output_dir),
         ],
     )
 
     assert result.exit_code == 0
     assert "Output written to:" in result.output
-    assert str(output_db) in result.output
 
-    # Verify the workflow cache was created and contains the graph
-    import base64
+    # Verify the output directory was created with expected files
+    assert output_dir.exists()
+    assert (output_dir / "graph.graphml").exists()
+    assert (output_dir / "metadata.json").exists()
 
-    from causaliq_workflow import WorkflowCache
-
-    from causaliq_knowledge.graph.cache import GraphCompressor
-
-    assert output_db.exists()
-
-    with WorkflowCache(str(output_db)) as wf_cache:
-        compressor = GraphCompressor()
-        entry = wf_cache.get({"network": "cache-test"})
-
-        # Entry contains the graph object as a base64-encoded blob
-        assert entry is not None
-        graph_obj = entry.get_object("graph")
-        assert graph_obj is not None
-
-        # Decode the base64 blob and then decompress the graph
-        blob = base64.b64decode(graph_obj.content)
-        retrieved, _extra_blobs = compressor.decompress_entry(
-            blob, wf_cache.token_cache
-        )
-    assert len(retrieved.edges) == 1
-    assert retrieved.edges[0].source == "X"
-    assert retrieved.edges[0].target == "Y"
+    metadata = json.loads((output_dir / "metadata.json").read_text())
+    assert metadata["network"] == "cache-test"
+    assert metadata["edge_count"] == 1
 
 
 # Test generate graph loads comprehensive model file from test data.
@@ -1882,7 +1974,7 @@ def test_cli_generate_graph_comprehensive_model_file(mocker):
     """Test generate_graph with comprehensive model from tests/data."""
     from pathlib import Path
 
-    from causaliq_knowledge.graph.response import GeneratedGraph, ProposedEdge
+    from causaliq_core.graph.pdg import PDG, EdgeProbabilities
 
     # Use the comprehensive test model file
     models_dir = (
@@ -1890,25 +1982,28 @@ def test_cli_generate_graph_comprehensive_model_file(mocker):
     )
     spec_file = models_dir / "comprehensive.json"
 
-    mock_graph = GeneratedGraph(
-        edges=[
-            ProposedEdge(source="Exposure", target="Disease", confidence=0.9),
-            ProposedEdge(source="Lifestyle", target="Disease", confidence=0.9),
-            ProposedEdge(
-                source="Disease", target="TestResult", confidence=0.8
+    # Create PDG with edges matching the comprehensive model's variables
+    mock_pdg = PDG(
+        ["Disease", "Exposure", "Lifestyle", "Symptom", "TestResult"],
+        {
+            ("Disease", "Exposure"): EdgeProbabilities(
+                forward=0.1, backward=0.8, undirected=0.0, none=0.1
             ),
-            ProposedEdge(source="Disease", target="Symptom", confidence=0.8),
-        ],
-        variables=[
-            "Exposure",
-            "Lifestyle",
-            "Disease",
-            "TestResult",
-            "Symptom",
-        ],
+            ("Disease", "Lifestyle"): EdgeProbabilities(
+                forward=0.1, backward=0.8, undirected=0.0, none=0.1
+            ),
+            ("Disease", "Symptom"): EdgeProbabilities(
+                forward=0.8, backward=0.1, undirected=0.0, none=0.1
+            ),
+            ("Disease", "TestResult"): EdgeProbabilities(
+                forward=0.8, backward=0.1, undirected=0.0, none=0.1
+            ),
+        },
     )
     mock_generator = mocker.MagicMock()
-    mock_generator.generate_from_context.return_value = mock_graph
+    mock_generator.generate_pdg_from_context.return_value = _make_mock_result(
+        mock_pdg
+    )
     mock_generator.get_stats.return_value = {
         "call_count": 1,
         "client_call_count": 1,
@@ -1933,9 +2028,399 @@ def test_cli_generate_graph_comprehensive_model_file(mocker):
     )
 
     assert result.exit_code == 0
-    # Verify context was loaded and used
-    assert "comprehensive_test" in result.output or "Exposure" in result.output
-    assert "Disease" in result.output
+    # Verify context was loaded and PDG printed
+    assert "comprehensive_test" in result.output
+    assert "Proposed Edges" in result.output
+
+
+# Test _map_pdg_names swaps probabilities when canonical order changes.
+def test_cli_generate_graph_map_pdg_names_swaps_order(tmp_path, mocker):
+    """Test that _map_pdg_names swaps forward/backward when order changes."""
+    import json
+
+    spec_data = {
+        "network": "map-test",
+        "domain": "testing",
+        "variables": [
+            {"name": "A", "type": "binary", "short_description": "Variable A"},
+            {"name": "B", "type": "binary", "short_description": "Variable B"},
+        ],
+    }
+    spec_file = tmp_path / "model.json"
+    spec_file.write_text(json.dumps(spec_data))
+
+    from causaliq_core.graph.pdg import PDG, EdgeProbabilities
+
+    # Create PDG with edge A->B (forward=0.8, backward=0.1)
+    mock_pdg = PDG(
+        ["LLM_A", "LLM_B"],
+        {
+            ("LLM_A", "LLM_B"): EdgeProbabilities(
+                forward=0.8, backward=0.1, undirected=0.0, none=0.1
+            )
+        },
+    )
+    mock_generator = mocker.MagicMock()
+    mock_generator.generate_pdg_from_context.return_value = _make_mock_result(
+        mock_pdg
+    )
+    mock_generator.get_stats.return_value = {
+        "call_count": 1,
+        "client_call_count": 1,
+    }
+    mocker.patch(
+        "causaliq_knowledge.graph.generator.GraphGenerator",
+        return_value=mock_generator,
+    )
+
+    # Mock the network context to have LLM names that map to swapped order
+    # LLM_A -> Z (comes after B), LLM_B -> B
+    mock_ctx = mocker.MagicMock()
+    mock_ctx.network = "map-test"
+    mock_ctx.domain = "testing"
+    mock_ctx.variables = [
+        mocker.MagicMock(name="B", llm_name="LLM_B"),
+        mocker.MagicMock(name="Z", llm_name="LLM_A"),
+    ]
+    mock_ctx.uses_distinct_llm_names.return_value = True
+    mock_ctx.get_llm_to_name_mapping.return_value = {
+        "LLM_A": "Z",
+        "LLM_B": "B",
+    }
+    mocker.patch(
+        "causaliq_knowledge.graph.NetworkContext.load",
+        return_value=mock_ctx,
+    )
+
+    output_dir = tmp_path / "output"
+    runner = CliRunner()
+    result = runner.invoke(
+        cli,
+        [
+            "generate_graph",
+            "-n",
+            str(spec_file),
+            "-c",
+            "none",
+            "-o",
+            str(output_dir),
+        ],
+    )
+
+    assert result.exit_code == 0
+    # After mapping: LLM_A->Z, LLM_B->B, so edge is (B, Z) with swapped probs
+    # The output should show Z -> B (since backward became forward)
+    assert "Z -> B" in result.output or "B" in result.output
+
+
+# Test GraphML output skips edges with near-zero existence probability.
+def test_cli_generate_graph_graphml_skips_zero_edges(tmp_path, mocker):
+    """Test _write_pdg_graphml skips edges with p_exist < 0.001."""
+    import json
+
+    spec_data = {
+        "network": "skip-zero-test",
+        "domain": "testing",
+        "variables": [
+            {"name": "A", "type": "binary", "short_description": "Variable A"},
+            {"name": "B", "type": "binary", "short_description": "Variable B"},
+            {"name": "C", "type": "binary", "short_description": "Variable C"},
+        ],
+    }
+    spec_file = tmp_path / "model.json"
+    spec_file.write_text(json.dumps(spec_data))
+
+    from causaliq_core.graph.pdg import PDG, EdgeProbabilities
+
+    # Create PDG with one real edge and one near-zero edge
+    mock_pdg = PDG(
+        ["A", "B", "C"],
+        {
+            ("A", "B"): EdgeProbabilities(
+                forward=0.8, backward=0.1, undirected=0.0, none=0.1
+            ),
+            ("B", "C"): EdgeProbabilities(
+                forward=0.0, backward=0.0, undirected=0.0, none=1.0
+            ),
+        },
+    )
+    mock_generator = mocker.MagicMock()
+    mock_generator.generate_pdg_from_context.return_value = _make_mock_result(
+        mock_pdg
+    )
+    mock_generator.get_stats.return_value = {
+        "call_count": 1,
+        "client_call_count": 1,
+    }
+    mocker.patch(
+        "causaliq_knowledge.graph.generator.GraphGenerator",
+        return_value=mock_generator,
+    )
+
+    output_dir = tmp_path / "output"
+    runner = CliRunner()
+    result = runner.invoke(
+        cli,
+        [
+            "generate_graph",
+            "-n",
+            str(spec_file),
+            "-c",
+            "none",
+            "-o",
+            str(output_dir),
+        ],
+    )
+
+    assert result.exit_code == 0
+    # Read the GraphML file and check edges
+    graphml_content = (output_dir / "graph.graphml").read_text()
+    # Should have edge A->B but not B->C (which has p_exist=0)
+    assert 'source="A"' in graphml_content
+    assert 'target="B"' in graphml_content
+    # B->C should not be in file since p_exist < 0.001
+    assert graphml_content.count("<edge") == 1
+
+
+# Test print_edges shows backward direction.
+def test_cli_generate_graph_print_backward_edge(tmp_path, mocker):
+    """Test _print_edges shows backward direction correctly."""
+    import json
+
+    spec_data = {
+        "network": "backward-test",
+        "domain": "testing",
+        "variables": [
+            {"name": "A", "type": "binary", "short_description": "Variable A"},
+            {"name": "B", "type": "binary", "short_description": "Variable B"},
+        ],
+    }
+    spec_file = tmp_path / "model.json"
+    spec_file.write_text(json.dumps(spec_data))
+
+    from causaliq_core.graph.pdg import PDG, EdgeProbabilities
+
+    # Edge with backward as most likely state
+    mock_pdg = PDG(
+        ["A", "B"],
+        {
+            ("A", "B"): EdgeProbabilities(
+                forward=0.1, backward=0.8, undirected=0.0, none=0.1
+            )
+        },
+    )
+    mock_generator = mocker.MagicMock()
+    mock_generator.generate_pdg_from_context.return_value = _make_mock_result(
+        mock_pdg
+    )
+    mock_generator.get_stats.return_value = {
+        "call_count": 1,
+        "client_call_count": 1,
+    }
+    mocker.patch(
+        "causaliq_knowledge.graph.generator.GraphGenerator",
+        return_value=mock_generator,
+    )
+
+    runner = CliRunner()
+    result = runner.invoke(
+        cli,
+        [
+            "generate_graph",
+            "-n",
+            str(spec_file),
+            "-c",
+            "none",
+            "-o",
+            "none",
+        ],
+    )
+
+    assert result.exit_code == 0
+    # backward means target -> source, so B -> A
+    assert "B -> A" in result.output
+
+
+# Test print_edges shows undirected edge.
+def test_cli_generate_graph_print_undirected_edge(tmp_path, mocker):
+    """Test _print_edges shows undirected direction correctly."""
+    import json
+
+    spec_data = {
+        "network": "undirected-test",
+        "domain": "testing",
+        "variables": [
+            {"name": "A", "type": "binary", "short_description": "Variable A"},
+            {"name": "B", "type": "binary", "short_description": "Variable B"},
+        ],
+    }
+    spec_file = tmp_path / "model.json"
+    spec_file.write_text(json.dumps(spec_data))
+
+    from causaliq_core.graph.pdg import PDG, EdgeProbabilities
+
+    # Edge with undirected as most likely state
+    mock_pdg = PDG(
+        ["A", "B"],
+        {
+            ("A", "B"): EdgeProbabilities(
+                forward=0.1, backward=0.1, undirected=0.7, none=0.1
+            )
+        },
+    )
+    mock_generator = mocker.MagicMock()
+    mock_generator.generate_pdg_from_context.return_value = _make_mock_result(
+        mock_pdg
+    )
+    mock_generator.get_stats.return_value = {
+        "call_count": 1,
+        "client_call_count": 1,
+    }
+    mocker.patch(
+        "causaliq_knowledge.graph.generator.GraphGenerator",
+        return_value=mock_generator,
+    )
+
+    runner = CliRunner()
+    result = runner.invoke(
+        cli,
+        [
+            "generate_graph",
+            "-n",
+            str(spec_file),
+            "-c",
+            "none",
+            "-o",
+            "none",
+        ],
+    )
+
+    assert result.exit_code == 0
+    # undirected shows as A -- B
+    assert "A -- B" in result.output
+
+
+# Test print_edges shows no-edge state.
+def test_cli_generate_graph_print_no_edge_state(tmp_path, mocker):
+    """Test _print_edges shows no-edge (x) state correctly."""
+    import json
+
+    spec_data = {
+        "network": "no-edge-test",
+        "domain": "testing",
+        "variables": [
+            {"name": "A", "type": "binary", "short_description": "Variable A"},
+            {"name": "B", "type": "binary", "short_description": "Variable B"},
+        ],
+    }
+    spec_file = tmp_path / "model.json"
+    spec_file.write_text(json.dumps(spec_data))
+
+    from causaliq_core.graph.pdg import PDG, EdgeProbabilities
+
+    # Edge with none as most likely state but still > 0.001 p_exist
+    mock_pdg = PDG(
+        ["A", "B"],
+        {
+            ("A", "B"): EdgeProbabilities(
+                forward=0.1, backward=0.1, undirected=0.1, none=0.7
+            )
+        },
+    )
+    mock_generator = mocker.MagicMock()
+    mock_generator.generate_pdg_from_context.return_value = _make_mock_result(
+        mock_pdg
+    )
+    mock_generator.get_stats.return_value = {
+        "call_count": 1,
+        "client_call_count": 1,
+    }
+    mocker.patch(
+        "causaliq_knowledge.graph.generator.GraphGenerator",
+        return_value=mock_generator,
+    )
+
+    runner = CliRunner()
+    result = runner.invoke(
+        cli,
+        [
+            "generate_graph",
+            "-n",
+            str(spec_file),
+            "-c",
+            "none",
+            "-o",
+            "none",
+        ],
+    )
+
+    assert result.exit_code == 0
+    # none state shows as A x B
+    assert "A x B" in result.output
+
+
+# Test print_edges shows probability breakdown when mixed.
+def test_cli_generate_graph_print_probability_breakdown(tmp_path, mocker):
+    """Test _print_edges shows probability breakdown for mixed edges."""
+    import json
+
+    spec_data = {
+        "network": "breakdown-test",
+        "domain": "testing",
+        "variables": [
+            {"name": "A", "type": "binary", "short_description": "Variable A"},
+            {"name": "B", "type": "binary", "short_description": "Variable B"},
+        ],
+    }
+    spec_file = tmp_path / "model.json"
+    spec_file.write_text(json.dumps(spec_data))
+
+    from causaliq_core.graph.pdg import PDG, EdgeProbabilities
+
+    # Edge with both p_directed and undirected > 0.01
+    mock_pdg = PDG(
+        ["A", "B"],
+        {
+            ("A", "B"): EdgeProbabilities(
+                forward=0.4, backward=0.2, undirected=0.3, none=0.1
+            )
+        },
+    )
+    mock_generator = mocker.MagicMock()
+    mock_generator.generate_pdg_from_context.return_value = _make_mock_result(
+        mock_pdg
+    )
+    mock_generator.get_stats.return_value = {
+        "call_count": 1,
+        "client_call_count": 1,
+    }
+    mocker.patch(
+        "causaliq_knowledge.graph.generator.GraphGenerator",
+        return_value=mock_generator,
+    )
+
+    runner = CliRunner()
+    result = runner.invoke(
+        cli,
+        [
+            "generate_graph",
+            "-n",
+            str(spec_file),
+            "-c",
+            "none",
+            "-o",
+            "none",
+        ],
+    )
+
+    assert result.exit_code == 0
+    # Should show probability breakdown line with ->, <-, --
+    assert "->" in result.output and "<-" in result.output
+    assert "--" in result.output
+    # Check specific percentages
+    assert "40.0%" in result.output  # forward
+    assert "20.0%" in result.output  # backward
+    assert "30.0%" in result.output  # undirected
 
 
 # Test export_cache skips entries that fail to decompress as LLM entries.

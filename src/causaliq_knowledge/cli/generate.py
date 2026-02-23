@@ -1,15 +1,17 @@
 """Graph generation CLI commands.
 
 This module provides commands for generating causal graphs from
-network context using LLMs.
+network context using LLMs. Output is a PDG (Probabilistic Dependency
+Graph) with edge probabilities.
 """
 
 from __future__ import annotations
 
 import json
 import sys
+import xml.etree.ElementTree as ET
 from pathlib import Path
-from typing import TYPE_CHECKING, Any, Optional
+from typing import TYPE_CHECKING, Any, Dict, Optional
 
 import click
 from pydantic import ValidationError
@@ -18,42 +20,49 @@ from causaliq_knowledge.graph.params import GenerateGraphParams
 from causaliq_knowledge.graph.view_filter import PromptDetail
 
 if TYPE_CHECKING:  # pragma: no cover
+    from causaliq_core.graph.pdg import PDG
+
     from causaliq_knowledge.graph.models import NetworkContext
-    from causaliq_knowledge.graph.response import GeneratedGraph
+    from causaliq_knowledge.graph.response import GenerationMetadata
 
 
-def _map_graph_names(
-    graph: "GeneratedGraph", mapping: dict[str, str]
-) -> "GeneratedGraph":
-    """Map variable names in a graph using a mapping dictionary.
+def _map_pdg_names(pdg: "PDG", mapping: Dict[str, str]) -> "PDG":
+    """Map variable names in a PDG using a mapping dictionary.
 
     Args:
-        graph: The generated graph with edges to map.
+        pdg: The generated PDG with edges to map.
         mapping: Dictionary mapping old names to new names.
 
     Returns:
-        New GeneratedGraph with mapped variable names.
+        New PDG with mapped variable names.
     """
-    from causaliq_knowledge.graph.response import GeneratedGraph, ProposedEdge
+    from causaliq_core.graph.pdg import PDG, EdgeProbabilities
 
-    new_edges = []
-    for edge in graph.edges:
-        new_edge = ProposedEdge(
-            source=mapping.get(edge.source, edge.source),
-            target=mapping.get(edge.target, edge.target),
-            confidence=edge.confidence,
-        )
-        new_edges.append(new_edge)
+    # Map node names
+    new_nodes = [mapping.get(n, n) for n in pdg.nodes]
 
-    # Map variable names too
-    new_variables = [mapping.get(v, v) for v in graph.variables]
+    # Map edge keys and maintain probability values
+    new_edges: Dict[tuple[str, str], EdgeProbabilities] = {}
+    for (src, tgt), probs in pdg.edges.items():
+        new_src = mapping.get(src, src)
+        new_tgt = mapping.get(tgt, tgt)
 
-    return GeneratedGraph(
-        edges=new_edges,
-        variables=new_variables,
-        reasoning=graph.reasoning,
-        metadata=graph.metadata,
-    )
+        # Maintain canonical order (alphabetical)
+        if new_src < new_tgt:
+            key = (new_src, new_tgt)
+            new_probs = probs
+        else:
+            key = (new_tgt, new_src)
+            # Swap forward/backward for canonical order
+            new_probs = EdgeProbabilities(
+                forward=probs.backward,
+                backward=probs.forward,
+                undirected=probs.undirected,
+                none=probs.none,
+            )
+        new_edges[key] = new_probs
+
+    return PDG(new_nodes, new_edges)
 
 
 @click.command("generate_graph")
@@ -90,7 +99,7 @@ def _map_graph_names(
     "--output",
     "-o",
     required=True,
-    help="Output: directory path, Workflow Cache .db file, or 'none'.",
+    help="Output: directory path for GraphML/JSON, or 'none'.",
 )
 @click.option(
     "--llm-cache",
@@ -118,7 +127,8 @@ def generate_graph(
     """Generate a causal graph from a network context.
 
     Reads variable definitions from a JSON network context file and
-    uses an LLM to propose causal relationships between variables.
+    uses an LLM to propose causal relationships between variables
+    with probability distributions.
 
     By default, LLM names are used in prompts to prevent memorisation.
     Use --use-benchmark-names to test with original benchmark names.
@@ -126,20 +136,17 @@ def generate_graph(
     Output behaviour:
 
     \b
-    - If output ends with .db: writes to Workflow Cache database
-    - If output is a directory: writes graph.graphml, metadata.json,
-      and confidences.json to that directory
-    - If output is 'none': prints adjacency matrix to stdout
+    - If output is a directory: writes graph.graphml (with edge
+      probabilities as attributes) and metadata.json
+    - If output is 'none': prints edge probabilities to stderr
 
     Examples:
 
-        cqknow generate_graph -s asia.json -c cache.db -o workflow.db
+        cqknow generate_graph -n asia.json -c cache.db -o results/
 
-        cqknow generate_graph -s asia.json -c cache.db -o results/
+        cqknow generate_graph -n asia.json -c none -o none
 
-        cqknow generate_graph -s asia.json -c cache.db -o none
-
-        cqknow generate_graph -s asia.json -c none -o none --use-benchmark
+        cqknow generate_graph -n asia.json -c cache.db -o . --use-benchmark
     """
     # Import here to avoid slow startup for --help
     from causaliq_core.cache import TokenCache
@@ -149,7 +156,6 @@ def generate_graph(
         GraphGenerator,
         GraphGeneratorConfig,
     )
-    from causaliq_knowledge.graph.prompts import OutputFormat
 
     # Validate all parameters using shared model
     try:
@@ -186,13 +192,16 @@ def generate_graph(
         sys.exit(1)
 
     # Track mapping for converting LLM output back to benchmark names
-    llm_to_benchmark_mapping: dict[str, str] = {}
+    llm_to_benchmark_mapping: Dict[str, str] = {}
 
     # Determine naming mode
     use_llm_names = not params.use_benchmark_names
     if use_llm_names and ctx.uses_distinct_llm_names():
         llm_to_benchmark_mapping = ctx.get_llm_to_name_mapping()
-        click.echo("Using LLM names (prevents memorisation)", err=True)
+        click.echo(
+            f"Using LLM names ({len(llm_to_benchmark_mapping)} mappings)",
+            err=True,
+        )
     elif params.use_benchmark_names:
         click.echo("Using benchmark names (memorisation test)", err=True)
 
@@ -205,22 +214,21 @@ def generate_graph(
             cache.open()
             click.echo(f"Using cache: {cache_path}", err=True)
         except Exception as e:
-            click.echo(f"Error opening cache: {e}", err=True)
-            sys.exit(1)
+            click.echo(f"Warning: Failed to open cache: {e}", err=True)
+            cache = None
     else:
         click.echo("Cache disabled", err=True)
 
-    # Create generator - use edge_list format for structured output
+    # Create generator
     try:
         # Derive request_id from output filename stem
         if params.output.lower() == "none":
-            request_id = "none"
+            request_id = "cli-none"
         else:
-            request_id = Path(params.output).stem
+            request_id = Path(params.output).stem or "cli-output"
 
         config = GraphGeneratorConfig(
             temperature=params.llm_temperature,
-            output_format=OutputFormat.EDGE_LIST,
             prompt_detail=params.prompt_detail,
             use_llm_names=use_llm_names,
             request_id=request_id,
@@ -232,43 +240,34 @@ def generate_graph(
         click.echo(f"Error creating generator: {e}", err=True)
         sys.exit(1)
 
-    # Generate graph
+    # Generate PDG
     click.echo(f"Generating graph using {params.llm_model}...", err=True)
     click.echo(f"View level: {params.prompt_detail.value}", err=True)
 
     try:
-        graph = generator.generate_from_context(
+        result = generator.generate_pdg_from_context(
             ctx, level=params.prompt_detail
         )
+        pdg = result.pdg
+        generation_metadata = result.metadata
     except Exception as e:
         click.echo(f"Error generating graph: {e}", err=True)
         sys.exit(1)
 
     # Map LLM names back to benchmark names
     if llm_to_benchmark_mapping:
-        graph = _map_graph_names(graph, llm_to_benchmark_mapping)
+        pdg = _map_pdg_names(pdg, llm_to_benchmark_mapping)
         click.echo("Mapped LLM names back to benchmark names", err=True)
 
     # Output results - always print edges summary to stderr
-    _print_edges(graph)
-    _print_summary(graph, err=True)
+    _print_edges(pdg)
+    _print_summary(pdg, err=True)
 
     if params.is_directory_output():
-        # Write to directory: graph.graphml, metadata.json, confidences.json
-        assert output_path is not None  # Guaranteed by is_directory_output()
-        _write_to_directory(
-            output_path, graph, ctx, params.llm_model, params.prompt_detail
-        )
-        click.echo(f"\nOutput written to: {output_path}/", err=True)
-    elif params.is_workflow_cache_output():
-        # Write to Workflow Cache database
+        # Write to directory: graph.graphml and metadata.json
         assert output_path is not None
-        _write_to_workflow_cache(output_path, graph, ctx)
-        click.echo(f"\nOutput written to: {output_path}", err=True)
-    else:
-        # Print adjacency matrix to stdout
-        click.echo()
-        _print_adjacency_matrix(graph, ctx)
+        _write_to_directory(output_path, pdg, ctx, generation_metadata)
+        click.echo(f"\nOutput written to: {output_path}/", err=True)
 
     # Show stats
     stats = generator.get_stats()
@@ -284,206 +283,197 @@ def generate_graph(
         cache.close()
 
 
-def _write_to_workflow_cache(
-    output_path: Path,
-    graph: "GeneratedGraph",
-    context: "NetworkContext",
-) -> None:
-    """Write generated graph to Workflow Cache database.
-
-    Creates a Workflow Cache database at the specified path and stores
-    the generated graph using the network identifier as the cache key.
-
-    Args:
-        output_path: Path to the Workflow Cache .db file.
-        graph: The GeneratedGraph result.
-        context: The NetworkContext used (for cache key generation).
-    """
-    import base64
-
-    from causaliq_workflow import WorkflowCache
-    from causaliq_workflow.cache import CacheEntry
-
-    from causaliq_knowledge.graph.cache import GraphCompressor
-
-    # Create parent directories if needed
-    output_path.parent.mkdir(parents=True, exist_ok=True)
-
-    # Build cache key from network context
-    key_data = {"network": context.network}
-
-    with WorkflowCache(str(output_path)) as wf_cache:
-        compressor = GraphCompressor()
-        blob = compressor.compress_entry(graph, wf_cache.token_cache)
-        # Base64-encode for JSON-safe storage in CacheEntry
-        blob_b64 = base64.b64encode(blob).decode("ascii")
-        entry = CacheEntry(metadata={"network": context.network})
-        entry.add_object("graph", "graphml", blob_b64)
-        wf_cache.put(key_data, entry)
-
-
 def _write_to_directory(
     output_dir: Path,
-    graph: "GeneratedGraph",
+    pdg: "PDG",
     context: "NetworkContext",
-    llm_model: str,
-    prompt_detail: PromptDetail,
+    generation_metadata: "GenerationMetadata",
 ) -> None:
-    """Write graph output files to a directory.
+    """Write PDG output files to a directory.
 
-    Creates three files:
-    - graph.graphml: The graph structure in GraphML format
-    - metadata.json: Dataset info, variables, reasoning, generation params
-    - confidences.json: Edge confidences as {"source->target": confidence}
+    Creates two files:
+    - graph.graphml: The graph structure with edge probabilities
+    - metadata.json: Comprehensive generation metadata
 
     Args:
         output_dir: Directory to write files to.
-        graph: The GeneratedGraph result.
+        pdg: The generated PDG result.
         context: The NetworkContext used.
-        llm_model: LLM model identifier.
-        prompt_detail: Prompt detail level used.
+        generation_metadata: Comprehensive LLM generation metadata.
     """
-    from causaliq_core.graph import SDG
-    from causaliq_core.graph.io import graphml
-
     # Create directory
     output_dir.mkdir(parents=True, exist_ok=True)
 
-    # Build SDG from edges - SDG requires nodes list and edges as tuples
-    nodes = [v.name for v in context.variables]
-    edges = [(e.source, "->", e.target) for e in graph.edges]
-    sdg = SDG(nodes, edges)
-
-    # Write GraphML
+    # Write GraphML with edge probabilities
     graphml_path = output_dir / "graph.graphml"
-    graphml.write(sdg, str(graphml_path))
+    _write_pdg_graphml(pdg, graphml_path)
 
-    # Build metadata dict with all fields at top level
-    metadata: dict[str, Any] = {
+    # Count edges with significant existence probability
+    edge_count = sum(1 for probs in pdg.edges.values() if probs.p_exist > 0.01)
+
+    # Build comprehensive metadata dict using GenerationMetadata.to_dict()
+    llm_metadata = generation_metadata.to_dict()
+
+    metadata: Dict[str, Any] = {
+        # Network context info
         "network": context.network,
         "domain": context.domain,
-        "llm_reasoning": graph.reasoning,
+        "variable_count": len(pdg.nodes),
+        "edge_count": edge_count,
+        # LLM generation metadata (from GenerationMetadata)
+        **llm_metadata,
+        # Output objects
         "objects": [
             {
                 "type": "graphml",
                 "name": "graph",
-            },
-            {
-                "type": "json",
-                "name": "confidences",
+                "description": "PDG with edge probability attributes",
             },
         ],
     }
-
-    # Add generation metadata (flattened at top level)
-    if graph.metadata:
-        metadata.update(graph.metadata.to_dict())
-    else:
-        metadata["llm_model"] = llm_model
-    # Add CLI-specific field not in GenerationMetadata
-    metadata["llm_prompt_detail"] = prompt_detail.value
 
     # Write metadata.json
     metadata_path = output_dir / "metadata.json"
     metadata_path.write_text(json.dumps(metadata, indent=2), encoding="utf-8")
 
-    # Build confidences
-    confidences = {
-        f"{e.source}->{e.target}": e.confidence for e in graph.edges
-    }
 
-    # Write confidences.json
-    confidences_path = output_dir / "confidences.json"
-    confidences_path.write_text(
-        json.dumps(confidences, indent=2), encoding="utf-8"
-    )
+def _write_pdg_graphml(pdg: "PDG", path: Path) -> None:
+    """Write PDG to GraphML file with edge probability attributes.
 
-
-def _print_edges(graph: "GeneratedGraph") -> None:
-    """Print proposed edges with confidence bars.
+    Creates a GraphML file where each edge has data attributes for
+    the four probability values: p_forward, p_backward, p_undirected,
+    p_none.
 
     Args:
-        graph: The GeneratedGraph result.
+        pdg: The PDG to write.
+        path: Output file path.
     """
-    if not graph.edges:
+    graphml_ns = "http://graphml.graphdrawing.org/xmlns"
+
+    # Build XML document
+    root = ET.Element("graphml", xmlns=graphml_ns)
+
+    # Add key definitions for edge probability attributes
+    for prob_name in ["p_forward", "p_backward", "p_undirected", "p_none"]:
+        key = ET.SubElement(root, "key", id=prob_name)
+        key.set("for", "edge")
+        key.set("attr.name", prob_name)
+        key.set("attr.type", "double")
+
+    # Create graph element
+    graph_elem = ET.SubElement(root, "graph", id="G", edgedefault="directed")
+
+    # Add nodes in order
+    for node in pdg.nodes:
+        ET.SubElement(graph_elem, "node", id=node)
+
+    # Add edges with probability attributes
+    edge_id = 0
+    for (source, target), probs in pdg.edges.items():
+        # Only include edges with non-zero existence probability
+        if probs.p_exist < 0.001:
+            continue
+
+        edge_id += 1
+        edge_elem = ET.SubElement(
+            graph_elem,
+            "edge",
+            id=f"e{edge_id}",
+            source=source,
+            target=target,
+        )
+
+        # Add probability data attributes
+        for attr_name, value in [
+            ("p_forward", probs.forward),
+            ("p_backward", probs.backward),
+            ("p_undirected", probs.undirected),
+            ("p_none", probs.none),
+        ]:
+            data = ET.SubElement(edge_elem, "data", key=attr_name)
+            data.text = f"{value:.4f}"
+
+    # Write to file with XML declaration
+    tree = ET.ElementTree(root)
+    ET.indent(tree, space="  ")
+    tree.write(str(path), encoding="unicode", xml_declaration=True)
+
+
+def _print_edges(pdg: "PDG") -> None:
+    """Print proposed edges with probability bars.
+
+    Args:
+        pdg: The PDG result.
+    """
+    # Get edges with non-zero existence probability
+    existing = list(pdg.existing_edges())
+
+    if not existing:
         click.echo("\nNo edges proposed by the LLM.", err=True)
         return
 
-    click.echo(f"\nProposed Edges ({len(graph.edges)}):\n", err=True)
+    click.echo(f"\nProposed Edges ({len(existing)}):\n", err=True)
 
-    # Sort by confidence descending
-    sorted_edges = sorted(
-        graph.edges, key=lambda e: e.confidence, reverse=True
-    )
+    # Sort by existence probability descending
+    sorted_edges = sorted(existing, key=lambda e: e[2].p_exist, reverse=True)
 
-    for i, edge in enumerate(sorted_edges, 1):
-        conf_pct = edge.confidence * 100
-        conf_bar = "█" * int(edge.confidence * 10) + "░" * (
-            10 - int(edge.confidence * 10)
+    for i, (source, target, probs) in enumerate(sorted_edges, 1):
+        exist_pct = probs.p_exist * 100
+        exist_bar = "█" * int(probs.p_exist * 10) + "░" * (
+            10 - int(probs.p_exist * 10)
         )
+
+        # Determine most likely direction
+        state = probs.most_likely_state()
+        if state == "forward":
+            direction = f"{source} -> {target}"
+        elif state == "backward":
+            direction = f"{target} -> {source}"
+        elif state == "undirected":
+            direction = f"{source} -- {target}"
+        else:
+            direction = f"{source} x {target}"
+
         click.echo(
-            f"  {i:2d}. {edge.source} → {edge.target}  "
-            f"[{conf_bar}] {conf_pct:5.1f}%",
+            f"  {i:2d}. {direction}  "
+            f"[{exist_bar}] {exist_pct:5.1f}% exists",
             err=True,
         )
-        if edge.reasoning:
-            # Wrap reasoning text
-            reasoning = edge.reasoning[:100]
-            if len(edge.reasoning) > 100:
-                reasoning += "..."
-            click.echo(f"      {reasoning}", err=True)
+
+        # Show probability breakdown for non-trivial cases
+        if probs.p_directed > 0.01 and probs.undirected > 0.01:
+            click.echo(
+                f"      -> {probs.forward*100:4.1f}%  "
+                f"<- {probs.backward*100:4.1f}%  "
+                f"-- {probs.undirected*100:4.1f}%",
+                err=True,
+            )
 
 
-def _print_summary(graph: "GeneratedGraph", err: bool = False) -> None:
-    """Print a brief summary of the generated graph.
+def _print_summary(pdg: "PDG", err: bool = False) -> None:
+    """Print a brief summary of the generated PDG.
 
     Args:
-        graph: The GeneratedGraph result.
+        pdg: The PDG result.
         err: Whether to print to stderr.
     """
-    edge_count = len(graph.edges)
-    high_conf = sum(1 for e in graph.edges if e.confidence >= 0.7)
-    med_conf = sum(1 for e in graph.edges if 0.4 <= e.confidence < 0.7)
-    low_conf = sum(1 for e in graph.edges if e.confidence < 0.4)
+    # Count edges by existence probability
+    existing = list(pdg.existing_edges())
+    edge_count = len(existing)
 
-    click.echo(f"\nEdge Confidence Summary ({edge_count} edges):", err=err)
-    click.echo(f"  High confidence (>=0.7): {high_conf}", err=err)
-    click.echo(f"  Medium confidence (0.4-0.7): {med_conf}", err=err)
-    click.echo(f"  Low confidence (<0.4): {low_conf}", err=err)
+    high_exist = sum(1 for _, _, p in existing if p.p_exist >= 0.7)
+    med_exist = sum(1 for _, _, p in existing if 0.3 <= p.p_exist < 0.7)
+    low_exist = sum(1 for _, _, p in existing if p.p_exist < 0.3)
 
+    click.echo(f"\nEdge Existence Summary ({edge_count} edges):", err=err)
+    click.echo(f"  High probability (>=0.7): {high_exist}", err=err)
+    click.echo(f"  Medium probability (0.3-0.7): {med_exist}", err=err)
+    click.echo(f"  Low probability (<0.3): {low_exist}", err=err)
 
-def _print_adjacency_matrix(
-    graph: "GeneratedGraph", context: "NetworkContext"
-) -> None:
-    """Print adjacency matrix representation of the graph.
+    # Count directed vs undirected
+    directed = sum(1 for _, _, p in existing if p.p_directed > p.undirected)
+    undirected = edge_count - directed
 
-    Args:
-        graph: The GeneratedGraph result.
-        context: The NetworkContext used for variable names.
-    """
-    # Get variable names in order
-    var_names = [v.name for v in context.variables]
-
-    # Build edge lookup (source, target) -> confidence
-    edge_lookup = {(e.source, e.target): e.confidence for e in graph.edges}
-
-    click.echo("Adjacency Matrix:")
-    click.echo()
-
-    # Header row
-    max_name_len = max(len(name) for name in var_names)
-    header = " " * (max_name_len + 2)
-    for name in var_names:
-        header += f"{name[:3]:>4}"
-    click.echo(header)
-
-    # Data rows
-    for i, row_name in enumerate(var_names):
-        row = f"{row_name:<{max_name_len}}  "
-        for j, col_name in enumerate(var_names):
-            if (row_name, col_name) in edge_lookup:
-                conf = edge_lookup[(row_name, col_name)]
-                row += f"{conf:4.1f}"
-            else:
-                row += "   ."
-        click.echo(row)
+    click.echo("\nEdge Direction Summary:", err=err)
+    click.echo(f"  Mostly directed: {directed}", err=err)
+    click.echo(f"  Mostly undirected: {undirected}", err=err)

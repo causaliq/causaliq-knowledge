@@ -14,6 +14,55 @@ from unittest.mock import MagicMock, patch
 import pytest
 
 
+def _make_mock_result(pdg):
+    """Create a mock PDGGenerationResult for testing.
+
+    Args:
+        pdg: The PDG to wrap.
+
+    Returns:
+        A mock result with PDG and metadata.
+    """
+    from datetime import datetime, timezone
+
+    mock_metadata = MagicMock()
+    mock_metadata.model = "test-model"
+    mock_metadata.provider = "test"
+    mock_metadata.timestamp = datetime.now(timezone.utc)
+    mock_metadata.llm_timestamp = datetime.now(timezone.utc)
+    mock_metadata.llm_latency_ms = 100
+    mock_metadata.input_tokens = 500
+    mock_metadata.output_tokens = 200
+    mock_metadata.from_cache = False
+    mock_metadata.messages = [{"role": "user", "content": "test"}]
+    mock_metadata.temperature = 0.1
+    mock_metadata.max_tokens = 2000
+    mock_metadata.finish_reason = "stop"
+    mock_metadata.llm_cost_usd = 0.001
+    mock_metadata.to_dict.return_value = {
+        "llm_model": "test-model",
+        "llm_provider": "test",
+        "timestamp": mock_metadata.timestamp.isoformat(),
+        "llm_timestamp": mock_metadata.llm_timestamp.isoformat(),
+        "llm_latency_ms": 100,
+        "llm_input_tokens": 500,
+        "llm_output_tokens": 200,
+        "from_cache": False,
+        "llm_messages": [{"role": "user", "content": "test"}],
+        "llm_temperature": 0.1,
+        "llm_max_tokens": 2000,
+        "llm_finish_reason": "stop",
+        "llm_cost_usd": 0.001,
+    }
+
+    mock_result = MagicMock()
+    mock_result.pdg = pdg
+    mock_result.metadata = mock_metadata
+    mock_result.raw_response = '{"edges": []}'
+
+    return mock_result
+
+
 # Test entry point discovery finds causaliq-knowledge action.
 def test_workflow_discovers_causaliq_knowledge_action() -> None:
     """Test that causaliq-workflow discovers causaliq-knowledge via entry."""
@@ -127,8 +176,6 @@ def test_workflow_run_execution_with_mocked_llm(tmp_path: Path) -> None:
     """Test run mode executes graph generation via workflow."""
     from causaliq_workflow.workflow import WorkflowExecutor
 
-    from causaliq_knowledge.graph.response import GeneratedGraph, ProposedEdge
-
     # Create a minimal model spec
     context_file = tmp_path / "model.json"
     context_file.write_text(
@@ -157,20 +204,25 @@ steps:
 """
     )
 
-    # Mock the graph generator
-    mock_graph = GeneratedGraph(
-        edges=[
-            ProposedEdge(source="smoking", target="cancer", confidence=0.9)
-        ],
-        variables=["smoking", "cancer"],
-        reasoning="Smoking causes cancer.",
+    # Mock the graph generator to return PDG
+    from causaliq_core.graph.pdg import PDG, EdgeProbabilities
+
+    mock_pdg = PDG(
+        ["smoking", "cancer"],
+        {
+            ("cancer", "smoking"): EdgeProbabilities(
+                forward=0.1, backward=0.8, undirected=0.0, none=0.1
+            )
+        },
     )
 
     with patch(
         "causaliq_knowledge.graph.generator.GraphGenerator"
     ) as mock_generator_class:
         mock_generator = MagicMock()
-        mock_generator.generate_from_context.return_value = mock_graph
+        mock_generator.generate_pdg_from_context.return_value = (
+            _make_mock_result(mock_pdg)
+        )
         mock_generator.get_stats.return_value = {"cache_hits": 0}
         mock_generator_class.return_value = mock_generator
 
@@ -191,9 +243,8 @@ steps:
 # Test workflow with output directory via causaliq-workflow.
 def test_workflow_writes_output_file(tmp_path: Path) -> None:
     """Test workflow writes output files to directory when specified."""
+    from causaliq_core.graph.pdg import PDG, EdgeProbabilities
     from causaliq_workflow.workflow import WorkflowExecutor
-
-    from causaliq_knowledge.graph.response import GeneratedGraph, ProposedEdge
 
     # Create a minimal model spec
     context_file = tmp_path / "model.json"
@@ -224,18 +275,23 @@ steps:
 """
     )
 
-    # Mock the graph generator
-    mock_graph = GeneratedGraph(
-        edges=[ProposedEdge(source="x", target="y", confidence=0.8)],
-        variables=["x", "y"],
-        reasoning="Test.",
+    # Mock the graph generator to return PDG
+    mock_pdg = PDG(
+        ["x", "y"],
+        {
+            ("x", "y"): EdgeProbabilities(
+                forward=0.8, backward=0.1, undirected=0.0, none=0.1
+            )
+        },
     )
 
     with patch(
         "causaliq_knowledge.graph.generator.GraphGenerator"
     ) as mock_generator_class:
         mock_generator = MagicMock()
-        mock_generator.generate_from_context.return_value = mock_graph
+        mock_generator.generate_pdg_from_context.return_value = (
+            _make_mock_result(mock_pdg)
+        )
         mock_generator.get_stats.return_value = {"cache_hits": 0}
         mock_generator_class.return_value = mock_generator
 
@@ -243,23 +299,15 @@ steps:
         workflow = executor.parse_workflow(str(workflow_yaml))
         results = executor.execute_workflow(workflow, mode="run")
 
-    # Action now returns serialised objects rather than writing files
-    # File writing is handled by workflow, not action
+    # Action now returns GraphML string for workflow cache compression
     step_results = results[0]["steps"]
     assert step_results["Generate graph"]["status"] == "success"
-    # Check serialised objects are returned
+    # Check PDG returned as GraphML string for interchange
     objects = step_results["Generate graph"]["objects"]
-    assert len(objects) == 2
-    graphml_obj = next(o for o in objects if o["type"] == "graphml")
-    assert "<graphml" in graphml_obj["content"]
-
-    # Verify JSON object contains edge data
-    import json
-
-    json_obj = next(o for o in objects if o["type"] == "json")
-    graph_data = json.loads(json_obj["content"])
-    assert len(graph_data["edges"]) == 1
-    assert graph_data["edges"][0]["source"] == "x"
+    assert len(objects) == 1
+    pdg_obj = next(o for o in objects if o["type"] == "pdg")
+    assert isinstance(pdg_obj["content"], str)
+    assert "graphml" in pdg_obj["content"]
 
 
 # Test workflow rejects invalid action parameter.
