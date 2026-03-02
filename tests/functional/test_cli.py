@@ -104,11 +104,13 @@ def test_cli_list_models_lists_providers(monkeypatch):
 
 # Test version flag shows version.
 def test_cli_version():
+    from causaliq_knowledge import __version__
+
     runner = CliRunner()
     result = runner.invoke(cli, ["--version"])
 
     assert result.exit_code == 0
-    assert "0.5.0" in result.output
+    assert __version__ in result.output
 
 
 # ============================================================================

@@ -4,7 +4,7 @@ causaliq-knowledge: LLM and human knowledge for causal discovery.
 
 from causaliq_knowledge.action import ActionProvider
 
-__version__ = "0.5.0"
+__version__ = "0.6.0.dev1"
 __author__ = "CausalIQ"
 __email__ = "info@causaliq.com"
 
