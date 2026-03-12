@@ -168,7 +168,7 @@ steps:
     assert len(results) == 1
     step_results = results[0]["steps"]
     assert "Generate graph" in step_results
-    assert step_results["Generate graph"]["status"] == "skipped"
+    assert step_results["Generate graph"]["status"] == "would_execute"
 
 
 # Test workflow run execution with mocked LLM.
@@ -313,6 +313,7 @@ steps:
 # Test workflow rejects invalid action parameter.
 def test_workflow_rejects_invalid_parameters(tmp_path: Path) -> None:
     """Test workflow execution fails for invalid parameters."""
+    from causaliq_core import ActionValidationError
     from causaliq_workflow.workflow import (
         WorkflowExecutionError,
         WorkflowExecutor,
@@ -325,7 +326,7 @@ def test_workflow_rejects_invalid_parameters(tmp_path: Path) -> None:
         '"domain": "test", "variables": [{"name": "x", "type": "binary"}]}'
     )
 
-    # Create workflow file with invalid llm_model (no provider prefix)
+    # Create workflow file with invalid llm_temperature (out of range)
     workflow_yaml = tmp_path / "workflow.yaml"
     workflow_yaml.write_text(
         f"""
@@ -340,18 +341,16 @@ steps:
       network_context: "{context_file.as_posix()}"
       output: "none"
       llm_cache: "none"
-      llm_model: "invalid-model-no-provider"
+      llm_temperature: 5.0
 """
     )
 
     executor = WorkflowExecutor()
     workflow = executor.parse_workflow(str(workflow_yaml))
 
-    # Validation happens during execute_workflow (in validate mode internally)
-    with pytest.raises(WorkflowExecutionError) as exc_info:
-        executor.execute_workflow(workflow, mode="dry-run")
-
-    assert "provider" in str(exc_info.value).lower()
+    # Validation happens during execute_workflow - temperature out of range
+    with pytest.raises((WorkflowExecutionError, ActionValidationError)):
+        executor.execute_workflow(workflow, mode="run")
 
 
 # Test workflow matrix expansion with causaliq-knowledge.

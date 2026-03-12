@@ -171,7 +171,7 @@ class KnowledgeActionProvider(CausalIQActionProvider):
         """Initialise action with empty execution metadata."""
         super().__init__()
 
-    def _validate_parameters(
+    def validate_parameters(
         self, action: str, parameters: Dict[str, Any]
     ) -> None:
         """Validate action and parameters.
@@ -183,12 +183,8 @@ class KnowledgeActionProvider(CausalIQActionProvider):
         Raises:
             ActionValidationError: If validation fails.
         """
-        # Check action is supported
-        if action not in SUPPORTED_ACTIONS:
-            raise ActionValidationError(
-                f"Unknown action: '{action}'. "
-                f"Supported actions: {SUPPORTED_ACTIONS}"
-            )
+        # Check action is supported via base class
+        super().validate_parameters(action, parameters)
 
         # For generate_graph, validate using GenerateGraphParams
         if action == "generate_graph":
@@ -207,35 +203,56 @@ class KnowledgeActionProvider(CausalIQActionProvider):
                     f"Invalid parameters for generate_graph: {e}"
                 )
 
-    def run(
+    def _dry_run_result(
+        self, action: str, parameters: Dict[str, Any]
+    ) -> ActionResult:
+        """Return dry-run result without executing.
+
+        Args:
+            action: Action name.
+            parameters: Validated parameters.
+
+        Returns:
+            ActionResult tuple for dry-run (skipped status, no objects).
+        """
+        params = GenerateGraphParams.from_dict(parameters)
+        metadata = {
+            "dry_run": True,
+            "action": action,
+            "message": "Dry-run mode: would generate graph",
+            "network_context": str(params.network_context),
+            "llm_model": params.llm_model,
+            "llm_prompt_detail": params.prompt_detail.value,
+            "output": params.output,
+        }
+        return ("skipped", metadata, [])
+
+    def _execute(
         self,
         action: str,
         parameters: Dict[str, Any],
-        mode: str = "dry-run",
-        context: Optional[Any] = None,
-        logger: Optional[Any] = None,
+        mode: str,
+        context: Optional[Any],
+        logger: Optional[Any],
     ) -> ActionResult:
         """Execute the action with validated parameters.
 
         Args:
             action: Action to perform (e.g., 'generate_graph').
-            parameters: Dictionary of parameter values.
-            mode: Execution mode ('dry-run', 'run', 'compare').
+            parameters: Validated parameter values.
+            mode: Execution mode ('run', 'force', 'compare').
             context: Workflow context for optimisation.
             logger: Optional logger for task execution reporting.
 
         Returns:
             Tuple of (status, metadata, objects) where:
-            - status: 'success' or 'skipped' (for dry-run)
+            - status: 'success' or 'error'
             - metadata: Dict with edge_count, variable_count, model_used, etc.
             - objects: List of serialised objects (graphml, json)
 
         Raises:
             ActionExecutionError: If action execution fails.
         """
-        # Validate parameters first
-        self._validate_parameters(action, parameters)
-
         if action == "generate_graph":
             return self._run_generate_graph(parameters, mode, context, logger)
         else:  # pragma: no cover
@@ -271,30 +288,8 @@ class KnowledgeActionProvider(CausalIQActionProvider):
                 f"Network context not found: {params.network_context}"
             )
 
-        # Dry-run mode: validate only, don't execute
-        if mode == "dry-run":
-            return self._dry_run_result(params)
-
         # Run mode: execute graph generation
         return self._execute_generate_graph(params, context)
-
-    def _dry_run_result(self, params: GenerateGraphParams) -> ActionResult:
-        """Return dry-run result without executing.
-
-        Args:
-            params: Validated parameters.
-
-        Returns:
-            ActionResult tuple for dry-run (skipped status, no objects).
-        """
-        metadata = {
-            "message": "Dry-run mode: would generate graph",
-            "network_context": str(params.network_context),
-            "llm_model": params.llm_model,
-            "llm_prompt_detail": params.prompt_detail.value,
-            "output": params.output,
-        }
-        return ("skipped", metadata, [])
 
     def _build_execution_metadata(
         self,

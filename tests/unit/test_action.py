@@ -134,7 +134,7 @@ def test_run_rejects_unknown_action() -> None:
             mode="dry-run",
         )
 
-    assert "unknown action" in str(exc_info.value).lower()
+    assert "does not support action" in str(exc_info.value).lower()
 
 
 # Test run rejects missing context for generate_graph.
