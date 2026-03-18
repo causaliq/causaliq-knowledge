@@ -106,9 +106,6 @@ def test_workflow_validates_causaliq_knowledge_step(tmp_path: Path) -> None:
     workflow_yaml = tmp_path / "workflow.yaml"
     workflow_yaml.write_text(
         f"""
-description: "Test workflow"
-id: "test-workflow"
-
 steps:
   - name: "Generate graph"
     uses: "causaliq-knowledge"
@@ -124,7 +121,6 @@ steps:
 
     # Should parse and validate without error
     workflow = executor.parse_workflow(str(workflow_yaml))
-    assert workflow["id"] == "test-workflow"
     assert len(workflow["steps"]) == 1
 
 
@@ -144,9 +140,6 @@ def test_workflow_dry_run_execution(tmp_path: Path) -> None:
     workflow_yaml = tmp_path / "workflow.yaml"
     workflow_yaml.write_text(
         f"""
-description: "Test workflow"
-id: "test-workflow"
-
 steps:
   - name: "Generate graph"
     uses: "causaliq-knowledge"
@@ -187,18 +180,16 @@ def test_workflow_run_execution_with_mocked_llm(tmp_path: Path) -> None:
 
     # Create workflow file
     workflow_yaml = tmp_path / "workflow.yaml"
+    cache_file = tmp_path / "cache.db"
     workflow_yaml.write_text(
         f"""
-description: "Test workflow"
-id: "test-workflow"
-
 steps:
   - name: "Generate graph"
     uses: "causaliq-knowledge"
     with:
       action: "generate_graph"
       network_context: "{context_file.as_posix()}"
-      output: "none"
+      output: "{cache_file.as_posix()}"
       llm_cache: "none"
       llm_model: "groq/llama-3.1-8b-instant"
 """
@@ -256,21 +247,20 @@ def test_workflow_writes_output_file(tmp_path: Path) -> None:
     )
 
     output_dir = tmp_path / "output"
+    output_dir.mkdir()
+    cache_file = output_dir / "cache.db"
 
     # Create workflow file
     workflow_yaml = tmp_path / "workflow.yaml"
     workflow_yaml.write_text(
         f"""
-description: "Test workflow"
-id: "test-workflow"
-
 steps:
   - name: "Generate graph"
     uses: "causaliq-knowledge"
     with:
       action: "generate_graph"
       network_context: "{context_file.as_posix()}"
-      output: "{output_dir.as_posix()}"
+      output: "{cache_file.as_posix()}"
       llm_cache: "none"
 """
     )
@@ -299,15 +289,24 @@ steps:
         workflow = executor.parse_workflow(str(workflow_yaml))
         results = executor.execute_workflow(workflow, mode="run")
 
-    # Action now returns GraphML string for workflow cache compression
+    # Workflow cache stores objects - verify via cache file
     step_results = results[0]["steps"]
     assert step_results["Generate graph"]["status"] == "success"
-    # Check PDG returned as GraphML string for interchange
-    objects = step_results["Generate graph"]["objects"]
-    assert len(objects) == 1
-    pdg_obj = next(o for o in objects if o["type"] == "pdg")
-    assert isinstance(pdg_obj["content"], str)
-    assert "graphml" in pdg_obj["content"]
+    # Verify cache file was created and contains the PDG
+    assert cache_file.exists()
+    from causaliq_workflow.cache import WorkflowCache
+
+    with WorkflowCache(str(cache_file)) as cache:
+        entries = cache.list_entries()
+        assert len(entries) == 1
+        # Verify entry contains PDG object
+        entry = cache.get({})
+        assert entry is not None
+        # CacheEntry.objects is a dict keyed by type
+        assert "pdg" in entry.objects
+        pdg_obj = entry.objects["pdg"]
+        assert pdg_obj.format == "graphml"
+        assert "graphml" in pdg_obj.content
 
 
 # Test workflow rejects invalid action parameter.
@@ -330,9 +329,6 @@ def test_workflow_rejects_invalid_parameters(tmp_path: Path) -> None:
     workflow_yaml = tmp_path / "workflow.yaml"
     workflow_yaml.write_text(
         f"""
-description: "Test workflow"
-id: "test-workflow"
-
 steps:
   - name: "Generate graph"
     uses: "causaliq-knowledge"
@@ -374,9 +370,6 @@ def test_workflow_matrix_expansion(tmp_path: Path) -> None:
     workflow_yaml = tmp_path / "workflow.yaml"
     workflow_yaml.write_text(
         f"""
-description: "Matrix workflow"
-id: "matrix-test"
-
 matrix:
   model:
     - "{model1.as_posix()}"

@@ -65,7 +65,7 @@ def _map_pdg_names(pdg: "PDG", mapping: Dict[str, str]) -> "PDG":
     return PDG(new_nodes, new_edges)
 
 
-@click.command("generate_graph")
+@click.command("generate-graph")
 @click.option(
     "--network-context",
     "-n",
@@ -84,6 +84,7 @@ def _map_pdg_names(pdg: "PDG", mapping: Dict[str, str]) -> "PDG":
 )
 @click.option(
     "--use-benchmark-names/--use-llm-names",
+    "-b/-B",
     "use_benchmark_names",
     default=False,
     help="Use benchmark names instead of LLM names (test memorisation).",
@@ -113,7 +114,7 @@ def _map_pdg_names(pdg: "PDG", mapping: Dict[str, str]) -> "PDG":
     "-t",
     type=float,
     default=0.1,
-    help="LLM temperature (0.0-1.0). Lower = more deterministic.",
+    help="LLM temperature (0.0-2.0). Lower = more deterministic.",
 )
 def generate_graph(
     network_context: Path,
@@ -142,11 +143,11 @@ def generate_graph(
 
     Examples:
 
-        cqknow generate_graph -n asia.json -c cache.db -o results/
+        cqknow generate-graph -n asia.json -c cache.db -o results/
 
-        cqknow generate_graph -n asia.json -c none -o none
+        cqknow generate-graph -n asia.json -c none -o none
 
-        cqknow generate_graph -n asia.json -c cache.db -o . --use-benchmark
+        cqknow generate-graph -n asia.json -c cache.db -o . --use-benchmark
     """
     # Import here to avoid slow startup for --help
     from causaliq_core.cache import TokenCache

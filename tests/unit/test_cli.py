@@ -55,11 +55,11 @@ def test_cli_help():
 
     assert result.exit_code == 0
     assert "CausalIQ Knowledge" in result.output
-    assert "generate_graph" in result.output
-    assert "list_models" in result.output
-    assert "cache_stats" in result.output
-    assert "export_cache" in result.output
-    assert "import_cache" in result.output
+    assert "generate-graph" in result.output
+    assert "list-models" in result.output
+    assert "cache-stats" in result.output
+    assert "export-cache" in result.output
+    assert "import-cache" in result.output
 
 
 # Test list_models command lists models.
@@ -87,7 +87,7 @@ def test_cli_list_models(monkeypatch):
     monkeypatch.setattr("httpx.Client", mock_client)
 
     runner = CliRunner()
-    result = runner.invoke(cli, ["list_models"])
+    result = runner.invoke(cli, ["list-models"])
 
     assert result.exit_code == 0
     assert "Groq" in result.output
@@ -125,7 +125,7 @@ def test_cli_models_groq_not_available(monkeypatch):
     monkeypatch.setattr("causaliq_knowledge.llm.GroqClient", MockGroqClient)
 
     runner = CliRunner()
-    result = runner.invoke(cli, ["list_models", "-p", "groq"])
+    result = runner.invoke(cli, ["list-models", "-p", "groq"])
 
     assert result.exit_code == 0
     assert "GROQ_API_KEY not set" in result.output
@@ -160,7 +160,7 @@ def test_cli_models_gemini_not_available(monkeypatch):
     )
 
     runner = CliRunner()
-    result = runner.invoke(cli, ["list_models", "-p", "gemini"])
+    result = runner.invoke(cli, ["list-models", "-p", "gemini"])
 
     assert result.exit_code == 0
     assert "GEMINI_API_KEY not set" in result.output
@@ -197,7 +197,7 @@ def test_cli_models_anthropic_not_available(monkeypatch):
     )
 
     runner = CliRunner()
-    result = runner.invoke(cli, ["list_models", "-p", "anthropic"])
+    result = runner.invoke(cli, ["list-models", "-p", "anthropic"])
 
     assert result.exit_code == 0
     assert "ANTHROPIC_API_KEY not set" in result.output
@@ -222,7 +222,7 @@ def test_cli_models_anthropic_config_error(monkeypatch):
     )
 
     runner = CliRunner()
-    result = runner.invoke(cli, ["list_models", "-p", "anthropic"])
+    result = runner.invoke(cli, ["list-models", "-p", "anthropic"])
 
     assert result.exit_code == 0
     assert (
@@ -259,7 +259,7 @@ def test_cli_models_openai_not_available(monkeypatch):
     )
 
     runner = CliRunner()
-    result = runner.invoke(cli, ["list_models", "-p", "openai"])
+    result = runner.invoke(cli, ["list-models", "-p", "openai"])
 
     assert result.exit_code == 0
     assert "OPENAI_API_KEY not set" in result.output
@@ -284,7 +284,7 @@ def test_cli_models_ollama_no_models(monkeypatch):
     )
 
     runner = CliRunner()
-    result = runner.invoke(cli, ["list_models", "-p", "ollama"])
+    result = runner.invoke(cli, ["list-models", "-p", "ollama"])
 
     assert result.exit_code == 0
     assert "No models installed" in result.output
@@ -319,7 +319,7 @@ def test_cli_models_groq_success(monkeypatch):
     monkeypatch.setattr("causaliq_knowledge.llm.GroqClient", MockGroqClient)
 
     runner = CliRunner()
-    result = runner.invoke(cli, ["list_models", "-p", "groq"])
+    result = runner.invoke(cli, ["list-models", "-p", "groq"])
 
     assert result.exit_code == 0
     assert "groq/llama-3.1-8b-instant" in result.output
@@ -361,7 +361,7 @@ def test_cli_models_gemini_success(monkeypatch):
     )
 
     runner = CliRunner()
-    result = runner.invoke(cli, ["list_models", "-p", "gemini"])
+    result = runner.invoke(cli, ["list-models", "-p", "gemini"])
 
     assert result.exit_code == 0
     assert "gemini/gemini-2.5-flash" in result.output
@@ -388,7 +388,7 @@ def test_cli_models_ollama_success(monkeypatch):
     )
 
     runner = CliRunner()
-    result = runner.invoke(cli, ["list_models", "-p", "ollama"])
+    result = runner.invoke(cli, ["list-models", "-p", "ollama"])
 
     assert result.exit_code == 0
     assert "ollama/llama3.2:1b" in result.output
@@ -430,7 +430,7 @@ def test_cli_models_anthropic_success(monkeypatch):
     )
 
     runner = CliRunner()
-    result = runner.invoke(cli, ["list_models", "-p", "anthropic"])
+    result = runner.invoke(cli, ["list-models", "-p", "anthropic"])
 
     assert result.exit_code == 0
     assert "anthropic/claude-sonnet-4-20250514" in result.output
@@ -474,7 +474,7 @@ def test_cli_models_openai_success(monkeypatch):
     )
 
     runner = CliRunner()
-    result = runner.invoke(cli, ["list_models", "-p", "openai"])
+    result = runner.invoke(cli, ["list-models", "-p", "openai"])
 
     assert result.exit_code == 0
     assert "openai/gpt-4o" in result.output
@@ -487,7 +487,7 @@ def test_cli_models_openai_success(monkeypatch):
 # Test list_models command with invalid provider name
 def test_cli_list_models_invalid_provider():
     runner = CliRunner()
-    result = runner.invoke(cli, ["list_models", "-p", "invalid_provider"])
+    result = runner.invoke(cli, ["list-models", "-p", "invalid_provider"])
 
     # Click validates the choice and returns exit code 2 for usage errors
     assert result.exit_code == 2
@@ -514,7 +514,7 @@ def test_cli_models_deepseek_config_error(monkeypatch):
     )
 
     runner = CliRunner()
-    result = runner.invoke(cli, ["list_models", "-p", "deepseek"])
+    result = runner.invoke(cli, ["list-models", "-p", "deepseek"])
 
     assert result.exit_code == 0
     assert "DEEPSEEK_API_KEY environment variable is required" in result.output
@@ -548,7 +548,7 @@ def test_cli_models_deepseek_not_available(monkeypatch):
     )
 
     runner = CliRunner()
-    result = runner.invoke(cli, ["list_models", "-p", "deepseek"])
+    result = runner.invoke(cli, ["list-models", "-p", "deepseek"])
 
     assert result.exit_code == 0
     assert "DEEPSEEK_API_KEY not set" in result.output
@@ -585,7 +585,7 @@ def test_cli_models_deepseek_success(monkeypatch):
     )
 
     runner = CliRunner()
-    result = runner.invoke(cli, ["list_models", "-p", "deepseek"])
+    result = runner.invoke(cli, ["list-models", "-p", "deepseek"])
 
     assert result.exit_code == 0
     assert "deepseek/deepseek-chat" in result.output
@@ -612,7 +612,7 @@ def test_cli_models_mistral_config_error(monkeypatch):
     )
 
     runner = CliRunner()
-    result = runner.invoke(cli, ["list_models", "-p", "mistral"])
+    result = runner.invoke(cli, ["list-models", "-p", "mistral"])
 
     assert result.exit_code == 0
     assert "MISTRAL_API_KEY environment variable is required" in result.output
@@ -646,7 +646,7 @@ def test_cli_models_mistral_not_available(monkeypatch):
     )
 
     runner = CliRunner()
-    result = runner.invoke(cli, ["list_models", "-p", "mistral"])
+    result = runner.invoke(cli, ["list-models", "-p", "mistral"])
 
     assert result.exit_code == 0
     assert "MISTRAL_API_KEY not set" in result.output
@@ -683,7 +683,7 @@ def test_cli_models_mistral_success(monkeypatch):
     )
 
     runner = CliRunner()
-    result = runner.invoke(cli, ["list_models", "-p", "mistral"])
+    result = runner.invoke(cli, ["list-models", "-p", "mistral"])
 
     assert result.exit_code == 0
     assert "mistral/mistral-small-latest" in result.output

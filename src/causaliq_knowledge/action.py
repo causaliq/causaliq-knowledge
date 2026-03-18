@@ -213,7 +213,7 @@ class KnowledgeActionProvider(CausalIQActionProvider):
             parameters: Validated parameters.
 
         Returns:
-            ActionResult tuple for dry-run (skipped status, no objects).
+            ActionResult tuple for dry-run (would_execute status, no objects).
         """
         params = GenerateGraphParams.from_dict(parameters)
         metadata = {
@@ -225,7 +225,7 @@ class KnowledgeActionProvider(CausalIQActionProvider):
             "llm_prompt_detail": params.prompt_detail.value,
             "output": params.output,
         }
-        return ("skipped", metadata, [])
+        return ("would_execute", metadata, [])
 
     def _execute(
         self,
@@ -429,6 +429,7 @@ class KnowledgeActionProvider(CausalIQActionProvider):
             objects: List[Dict[str, Any]] = [
                 {
                     "type": "pdg",
+                    "format": "graphml",
                     "name": "graph",
                     "content": graphml_content,
                 },

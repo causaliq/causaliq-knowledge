@@ -172,9 +172,9 @@ def test_run_rejects_invalid_llm_provider() -> None:
     assert "provider" in str(exc_info.value).lower()
 
 
-# Test dry-run mode returns skipped status.
+# Test dry-run mode returns would_execute status.
 def test_run_dry_run_mode(tmp_path: Path) -> None:
-    """Test dry-run mode returns skipped status without executing."""
+    """Test dry-run mode returns would_execute status without executing."""
     # Create a minimal context file
     context_file = tmp_path / "model.json"
     context_file.write_text(
@@ -194,7 +194,7 @@ def test_run_dry_run_mode(tmp_path: Path) -> None:
         mode="dry-run",
     )
 
-    assert status == "skipped"
+    assert status == "would_execute"
     assert "dry-run" in metadata.get("message", "").lower()
     assert metadata["llm_model"] == "groq/llama-3.1-8b-instant"
     assert metadata["llm_prompt_detail"] == "standard"

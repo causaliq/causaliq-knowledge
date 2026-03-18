@@ -218,7 +218,7 @@ VALID_PROVIDER_NAMES = [
 ]
 
 
-@click.command("list_models")
+@click.command("list-models")
 @click.option(
     "--provider",
     "-p",
@@ -237,11 +237,11 @@ def list_models(provider: Optional[str]) -> None:
 
     Examples:
 
-        cqknow list_models
+        cqknow list-models
 
-        cqknow list_models -p groq
+        cqknow list-models -p groq
 
-        cqknow list_models --provider mistral
+        cqknow list-models --provider mistral
     """
     providers = get_all_providers()
 

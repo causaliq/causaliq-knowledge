@@ -16,14 +16,14 @@ from causaliq_knowledge import __version__
 def cli() -> None:
     """CausalIQ Knowledge - LLM knowledge for causal discovery.
 
-    Use 'cqknow generate_graph' to generate causal graphs.
-    Use 'cqknow list_models' to list available LLM models.
+    Use 'cqknow generate-graph' to generate causal graphs.
+    Use 'cqknow list-models' to list available LLM models.
 
     LLM Cache Management (for caching LLM API responses):
 
-    Use 'cqknow cache_stats' to view LLM cache statistics.
-    Use 'cqknow export_cache' to export LLM cache entries.
-    Use 'cqknow import_cache' to import LLM cache entries.
+    Use 'cqknow cache-stats' to view LLM cache statistics.
+    Use 'cqknow export-cache' to export LLM cache entries.
+    Use 'cqknow import-cache' to import LLM cache entries.
     """
     pass
 

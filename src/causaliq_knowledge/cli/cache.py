@@ -15,22 +15,16 @@ from typing import Any
 import click
 
 
-@click.command("cache_stats")
+@click.command("cache-stats")
 @click.option(
-    "--cache",
-    "-c",
-    "cache_path",
+    "--input",
+    "-i",
+    "input_path",
     required=True,
     type=click.Path(exists=True),
-    help="Path to the SQLite cache database.",
+    help="Path to the LLM cache database.",
 )
-@click.option(
-    "--json",
-    "output_json",
-    is_flag=True,
-    help="Output result as JSON.",
-)
-def cache_stats(cache_path: str, output_json: bool) -> None:
+def cache_stats(input_path: str) -> None:
     """Show LLM cache statistics.
 
     Shows entry counts, token dictionary size, cache hit statistics,
@@ -39,18 +33,16 @@ def cache_stats(cache_path: str, output_json: bool) -> None:
     The LLM cache stores responses from LLM API calls to avoid
     redundant queries and reduce costs.
 
-    Examples:
+    Example:
 
-        cqknow cache_stats -c ./llm_cache.db
-
-        cqknow cache_stats -c ./llm_cache.db --json
+        cqknow cache-stats -i ./llm_cache.db
     """
     from causaliq_core.cache import TokenCache
 
     from causaliq_knowledge.llm.cache import LLMCacheEntry, LLMCompressor
 
     try:
-        with TokenCache(cache_path) as cache:
+        with TokenCache(input_path) as cache:
             entry_count = cache.entry_count()
             token_count = cache.token_count()
             total_hits = cache.total_hits()
@@ -123,87 +115,73 @@ def cache_stats(cache_path: str, output_json: bool) -> None:
             else:
                 savings = 0.0
 
-            if output_json:
-                output: dict[str, Any] = {
-                    "cache_path": cache_path,
-                    "summary": {
-                        "entry_count": entry_count,
-                        "token_count": token_count,
-                        "total_hits": total_hits,
-                        "total_cost_usd": round(total_cost, 6),
-                        "estimated_savings_usd": round(savings, 6),
-                        "total_input_tokens": total_input_tokens,
-                        "total_output_tokens": total_output_tokens,
-                    },
-                    "by_model": model_stats,
-                }
-                click.echo(json.dumps(output, indent=2))
-            else:
-                click.echo(f"\nCache: {cache_path}")
-                click.echo("=" * 60)
-                click.echo(f"Entries:          {entry_count:,}")
-                click.echo(f"Token dictionary: {token_count:,}")
-                click.echo(f"Total cache hits: {total_hits:,}")
+            lines: list[str] = []
+            lines.append(f"\nCache: {input_path}")
+            lines.append("=" * 60)
+            lines.append(f"Entries:          {entry_count:,}")
+            lines.append(f"Token dictionary: {token_count:,}")
+            lines.append(f"Total cache hits: {total_hits:,}")
 
-                if model_stats:
-                    click.echo(f"\nTotal cost:       ${total_cost:.4f}")
-                    click.echo(f"Est. savings:     ${savings:.4f}")
-                    click.echo(
-                        f"Total tokens:     {total_input_tokens:,} in / "
-                        f"{total_output_tokens:,} out"
+            if model_stats:
+                lines.append(f"\nTotal cost:       ${total_cost:.4f}")
+                lines.append(f"Est. savings:     ${savings:.4f}")
+                lines.append(
+                    f"Total tokens:     {total_input_tokens:,} in / "
+                    f"{total_output_tokens:,} out"
+                )
+
+                # Table header
+                lines.append("")
+                lines.append(
+                    f"{'Model':<32}  {'Entries':>8}  {'Hits':>8}  "
+                    f"{'Hit Rate':>8}  {'Tokens In':>12}  "
+                    f"{'Tokens Out':>12}  "
+                    f"{'Cost':>10}  {'Latency':>10}"
+                )
+                lines.append("-" * 114)
+
+                for model, stats in sorted(model_stats.items()):
+                    hit_rate = (
+                        stats["hits"]
+                        / (stats["entries"] + stats["hits"])
+                        * 100
+                        if (stats["entries"] + stats["hits"]) > 0
+                        else 0
+                    )
+                    # Truncate model name if too long
+                    model_display = (
+                        model[:29] + "..." if len(model) > 32 else model
+                    )
+                    cost_str = f"${stats['cost_usd']:.4f}"
+                    latency_str = f"{stats['avg_latency_ms']:,} ms"
+                    lines.append(
+                        f"{model_display:<32}  {stats['entries']:>8,}  "
+                        f"{stats['hits']:>8,}  {hit_rate:>7.1f}%  "
+                        f"{stats['input_tokens']:>12,}  "
+                        f"{stats['output_tokens']:>12,}  "
+                        f"{cost_str:>10}  {latency_str:>10}"
                     )
 
-                    # Table header
-                    click.echo()
-                    click.echo(
-                        f"{'Model':<32}  {'Entries':>8}  {'Hits':>8}  "
-                        f"{'Hit Rate':>8}  {'Tokens In':>12}  "
-                        f"{'Tokens Out':>12}  "
-                        f"{'Cost':>10}  {'Latency':>10}"
-                    )
-                    click.echo("-" * 114)
-
-                    for model, stats in sorted(model_stats.items()):
-                        hit_rate = (
-                            stats["hits"]
-                            / (stats["entries"] + stats["hits"])
-                            * 100
-                            if (stats["entries"] + stats["hits"]) > 0
-                            else 0
-                        )
-                        # Truncate model name if too long
-                        model_display = (
-                            model[:29] + "..." if len(model) > 32 else model
-                        )
-                        cost_str = f"${stats['cost_usd']:.4f}"
-                        latency_str = f"{stats['avg_latency_ms']:,} ms"
-                        click.echo(
-                            f"{model_display:<32}  {stats['entries']:>8,}  "
-                            f"{stats['hits']:>8,}  {hit_rate:>7.1f}%  "
-                            f"{stats['input_tokens']:>12,}  "
-                            f"{stats['output_tokens']:>12,}  "
-                            f"{cost_str:>10}  {latency_str:>10}"
-                        )
-
-                click.echo()
+            lines.append("")
+            click.echo("\n".join(lines))
     except Exception as e:
         click.echo(f"Error opening cache: {e}", err=True)
         sys.exit(1)
 
 
-@click.command("export_cache")
+@click.command("export-cache")
 @click.option(
-    "--cache",
-    "-c",
-    "cache_path",
+    "--input",
+    "-i",
+    "input_path",
     required=True,
     type=click.Path(exists=True),
-    help="Path to the SQLite cache database to export from.",
+    help="Path to the LLM cache database to export from.",
 )
 @click.option(
     "--output",
     "-o",
-    "output_dir",
+    "output_path",
     required=True,
     type=click.Path(),
     help="Output directory or .zip file path for exported entries.",
@@ -214,7 +192,7 @@ def cache_stats(cache_path: str, output_json: bool) -> None:
     is_flag=True,
     help="Output result as JSON.",
 )
-def export_cache(cache_path: str, output_dir: str, output_json: bool) -> None:
+def export_cache(input_path: str, output_path: str, output_json: bool) -> None:
     """Export LLM cache entries to human-readable files.
 
     Exports cached LLM API responses to JSON files for backup,
@@ -226,11 +204,11 @@ def export_cache(cache_path: str, output_dir: str, output_json: bool) -> None:
 
     Examples:
 
-        cqknow export_cache -c ./llm_cache.db -o ./export_dir
+        cqknow export-cache -i ./llm_cache.db -o ./export_dir
 
-        cqknow export_cache -c ./llm_cache.db -o ./export.zip
+        cqknow export-cache -i ./llm_cache.db -o ./export.zip
 
-        cqknow export_cache -c ./llm_cache.db -o ./export_dir --json
+        cqknow export-cache -i ./llm_cache.db -o ./export_dir --json
     """
     import tempfile
     import zipfile
@@ -240,11 +218,11 @@ def export_cache(cache_path: str, output_dir: str, output_json: bool) -> None:
 
     from causaliq_knowledge.llm.cache import LLMCacheEntry, LLMCompressor
 
-    output_path = Path(output_dir)
-    is_zip = output_path.suffix.lower() == ".zip"
+    dest_path = Path(output_path)
+    is_zip = dest_path.suffix.lower() == ".zip"
 
     try:
-        with TokenCache(cache_path) as cache:
+        with TokenCache(input_path) as cache:
             # Use LLMCompressor for decompression
             compressor = LLMCompressor()
             cache.set_compressor(compressor)
@@ -265,7 +243,7 @@ def export_cache(cache_path: str, output_dir: str, output_json: bool) -> None:
                 temp_dir = tempfile.mkdtemp()
                 export_dir = Path(temp_dir)
             else:
-                export_dir = output_path
+                export_dir = dest_path
                 export_dir.mkdir(parents=True, exist_ok=True)
 
             # Export entries
@@ -287,9 +265,9 @@ def export_cache(cache_path: str, output_dir: str, output_json: bool) -> None:
 
             # Create zip archive if requested
             if is_zip:
-                output_path.parent.mkdir(parents=True, exist_ok=True)
+                dest_path.parent.mkdir(parents=True, exist_ok=True)
                 with zipfile.ZipFile(
-                    output_path, "w", zipfile.ZIP_DEFLATED
+                    dest_path, "w", zipfile.ZIP_DEFLATED
                 ) as zf:
                     for file_path in export_dir.iterdir():
                         if file_path.is_file():
@@ -301,13 +279,13 @@ def export_cache(cache_path: str, output_dir: str, output_json: bool) -> None:
 
             # Output results
             if output_json:
-                output = {
-                    "cache_path": cache_path,
-                    "output_path": str(output_path),
+                result = {
+                    "input_path": input_path,
+                    "output_path": output_path,
                     "format": "zip" if is_zip else "directory",
                     "exported": exported,
                 }
-                click.echo(json.dumps(output, indent=2))
+                click.echo(json.dumps(result, indent=2))
             else:
                 fmt = "zip archive" if is_zip else "directory"
                 click.echo(
@@ -352,15 +330,7 @@ def _is_graph_entry(data: Any) -> bool:
     )
 
 
-@click.command("import_cache")
-@click.option(
-    "--cache",
-    "-c",
-    "cache_path",
-    required=True,
-    type=click.Path(),
-    help="Path to SQLite cache database (created if needed).",
-)
+@click.command("import-cache")
 @click.option(
     "--input",
     "-i",
@@ -370,12 +340,20 @@ def _is_graph_entry(data: Any) -> bool:
     help="Directory or .zip file containing JSON files to import.",
 )
 @click.option(
+    "--output",
+    "-o",
+    "output_path",
+    required=True,
+    type=click.Path(),
+    help="Path to cache database (created if needed).",
+)
+@click.option(
     "--json",
     "output_json",
     is_flag=True,
     help="Output result as JSON.",
 )
-def import_cache(cache_path: str, input_path: str, output_json: bool) -> None:
+def import_cache(input_path: str, output_path: str, output_json: bool) -> None:
     """Import LLM cache entries from files.
 
     Imports previously exported LLM API responses back into a cache.
@@ -386,11 +364,11 @@ def import_cache(cache_path: str, input_path: str, output_json: bool) -> None:
 
     Examples:
 
-        cqknow import_cache -c ./llm_cache.db -i ./import_dir
+        cqknow import-cache -i ./import_dir -o ./llm_cache.db
 
-        cqknow import_cache -c ./llm_cache.db -i ./export.zip
+        cqknow import-cache -i ./export.zip -o ./llm_cache.db
 
-        cqknow import_cache -c ./llm_cache.db -i ./import_dir --json
+        cqknow import-cache -i ./import_dir -o ./llm_cache.db --json
     """
     import hashlib
     import tempfile
@@ -405,7 +383,7 @@ def import_cache(cache_path: str, input_path: str, output_json: bool) -> None:
     is_zip = input_file.suffix.lower() == ".zip"
 
     try:
-        with TokenCache(cache_path) as cache:
+        with TokenCache(output_path) as cache:
             # Use LLMCompressor for compression
             compressor = LLMCompressor()
             cache.set_compressor(compressor)
@@ -458,18 +436,18 @@ def import_cache(cache_path: str, input_path: str, output_json: bool) -> None:
 
             # Output results
             if output_json:
-                output = {
-                    "cache_path": cache_path,
-                    "input_path": str(input_file),
+                result = {
+                    "input_path": input_path,
+                    "output_path": output_path,
                     "format": "zip" if is_zip else "directory",
                     "imported": imported,
                     "skipped": skipped,
                 }
-                click.echo(json.dumps(output, indent=2))
+                click.echo(json.dumps(result, indent=2))
             else:
                 fmt = "zip archive" if is_zip else "directory"
                 click.echo(
-                    f"\nImported {imported} entries from {fmt}: {input_file}"
+                    f"\nImported {imported} entries from {fmt}: {input_path}"
                 )
                 if skipped:
                     click.echo(f"  Skipped: {skipped}")

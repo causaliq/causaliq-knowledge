@@ -69,8 +69,8 @@ def test_cli_no_args_shows_usage():
 
     # Click shows usage info when no command provided
     assert "Usage:" in result.output
-    assert "list_models" in result.output
-    assert "generate_graph" in result.output
+    assert "list-models" in result.output
+    assert "generate-graph" in result.output
 
 
 # Test list_models command lists supported LLMs.
@@ -93,7 +93,7 @@ def test_cli_list_models_lists_providers(monkeypatch):
     monkeypatch.setattr("causaliq_knowledge.llm.OllamaClient", mock_ollama)
 
     runner = CliRunner()
-    result = runner.invoke(cli, ["list_models"])
+    result = runner.invoke(cli, ["list-models"])
 
     assert result.exit_code == 0
     # Check that all provider names are listed (even without API keys)
@@ -123,15 +123,15 @@ def test_cli_main_help_shows_cache_commands():
     runner = CliRunner()
     result = runner.invoke(cli, [])
 
-    assert "cache_stats" in result.output
-    assert "export_cache" in result.output
-    assert "import_cache" in result.output
+    assert "cache-stats" in result.output
+    assert "export-cache" in result.output
+    assert "import-cache" in result.output
 
 
-# Test cache_stats requires cache argument.
-def test_cli_cache_stats_requires_cache():
+# Test cache_stats requires input argument.
+def test_cli_cache_stats_requires_input():
     runner = CliRunner()
-    result = runner.invoke(cli, ["cache_stats"])
+    result = runner.invoke(cli, ["cache-stats"])
 
     assert result.exit_code != 0
     assert "Missing option" in result.output
@@ -150,7 +150,7 @@ def test_cli_cache_stats_shows_counts(tmp_path):
         cache.put_data("hash2", {"key": "value2"})
 
     runner = CliRunner()
-    result = runner.invoke(cli, ["cache_stats", "-c", str(cache_path)])
+    result = runner.invoke(cli, ["cache-stats", "-i", str(cache_path)])
 
     assert result.exit_code == 0
     assert "Entries:" in result.output
@@ -158,34 +158,10 @@ def test_cli_cache_stats_shows_counts(tmp_path):
     assert "Token dictionary:" in result.output
 
 
-# Test cache stats JSON output.
-def test_cli_cache_stats_json_output(tmp_path):
-    import json
-
-    from causaliq_core.cache import TokenCache
-    from causaliq_core.cache.compressors import JsonCompressor
-
-    cache_path = tmp_path / "test_cache.db"
-    with TokenCache(str(cache_path)) as cache:
-        cache.set_compressor(JsonCompressor())
-        cache.put_data("hash1", {"test": "data"})
-
-    runner = CliRunner()
-    result = runner.invoke(
-        cli, ["cache_stats", "-c", str(cache_path), "--json"]
-    )
-
-    assert result.exit_code == 0
-    output = json.loads(result.output)
-    assert output["summary"]["entry_count"] == 1
-    assert "token_count" in output["summary"]
-    assert "cache_path" in output
-
-
 # Test cache_stats with non-existent file.
 def test_cli_cache_stats_missing_file():
     runner = CliRunner()
-    result = runner.invoke(cli, ["cache_stats", "-c", "nonexistent.db"])
+    result = runner.invoke(cli, ["cache-stats", "-i", "nonexistent.db"])
 
     assert result.exit_code != 0
 
@@ -197,7 +173,7 @@ def test_cli_cache_stats_invalid_db(tmp_path):
     invalid_db.write_text("this is not a valid sqlite database")
 
     runner = CliRunner()
-    result = runner.invoke(cli, ["cache_stats", "-c", str(invalid_db)])
+    result = runner.invoke(cli, ["cache-stats", "-i", str(invalid_db)])
 
     assert result.exit_code == 1
     assert "Error opening cache" in result.output
@@ -211,7 +187,7 @@ def test_cli_cache_stats_invalid_db(tmp_path):
 # Test export_cache command help.
 def test_cli_export_cache_help():
     runner = CliRunner()
-    result = runner.invoke(cli, ["export_cache", "--help"])
+    result = runner.invoke(cli, ["export-cache", "--help"])
 
     assert result.exit_code == 0
     assert "export" in result.output.lower()
@@ -241,7 +217,7 @@ def test_cli_cache_export_creates_files(tmp_path):
     export_dir = tmp_path / "export"
     runner = CliRunner()
     result = runner.invoke(
-        cli, ["export_cache", "-c", str(cache_path), "-o", str(export_dir)]
+        cli, ["export-cache", "-i", str(cache_path), "-o", str(export_dir)]
     )
 
     assert result.exit_code == 0
@@ -280,8 +256,8 @@ def test_cli_cache_export_json_output(tmp_path):
     result = runner.invoke(
         cli,
         [
-            "export_cache",
-            "-c",
+            "export-cache",
+            "-i",
             str(cache_path),
             "-o",
             str(export_dir),
@@ -305,7 +281,7 @@ def test_cli_cache_export_empty_cache(tmp_path):
     export_dir = tmp_path / "export"
     runner = CliRunner()
     result = runner.invoke(
-        cli, ["export_cache", "-c", str(cache_path), "-o", str(export_dir)]
+        cli, ["export-cache", "-i", str(cache_path), "-o", str(export_dir)]
     )
 
     assert result.exit_code == 0
@@ -327,8 +303,8 @@ def test_cli_cache_export_empty_cache_json(tmp_path):
     result = runner.invoke(
         cli,
         [
-            "export_cache",
-            "-c",
+            "export-cache",
+            "-i",
             str(cache_path),
             "-o",
             str(export_dir),
@@ -355,7 +331,7 @@ def test_cli_cache_export_non_llm_type(tmp_path):
     export_dir = tmp_path / "export"
     runner = CliRunner()
     result = runner.invoke(
-        cli, ["export_cache", "-c", str(cache_path), "-o", str(export_dir)]
+        cli, ["export-cache", "-i", str(cache_path), "-o", str(export_dir)]
     )
 
     assert result.exit_code == 0
@@ -373,7 +349,7 @@ def test_cli_export_cache_invalid_db(tmp_path):
     export_dir = tmp_path / "export"
     runner = CliRunner()
     result = runner.invoke(
-        cli, ["export_cache", "-c", str(invalid_db), "-o", str(export_dir)]
+        cli, ["export-cache", "-i", str(invalid_db), "-o", str(export_dir)]
     )
 
     assert result.exit_code == 1
@@ -411,7 +387,7 @@ def test_cli_cache_export_to_zip(tmp_path):
     zip_path = tmp_path / "export.zip"
     runner = CliRunner()
     result = runner.invoke(
-        cli, ["export_cache", "-c", str(cache_path), "-o", str(zip_path)]
+        cli, ["export-cache", "-i", str(cache_path), "-o", str(zip_path)]
     )
 
     assert result.exit_code == 0
@@ -451,7 +427,7 @@ def test_cli_cache_export_to_zip_json_output(tmp_path):
     runner = CliRunner()
     result = runner.invoke(
         cli,
-        ["export_cache", "-c", str(cache_path), "-o", str(zip_path), "--json"],
+        ["export-cache", "-i", str(cache_path), "-o", str(zip_path), "--json"],
     )
 
     assert result.exit_code == 0
@@ -482,7 +458,7 @@ def test_cli_cache_export_to_zip_creates_parent_dirs(tmp_path):
     zip_path = tmp_path / "nested" / "dir" / "export.zip"
     runner = CliRunner()
     result = runner.invoke(
-        cli, ["export_cache", "-c", str(cache_path), "-o", str(zip_path)]
+        cli, ["export-cache", "-i", str(cache_path), "-o", str(zip_path)]
     )
 
     assert result.exit_code == 0
@@ -497,7 +473,7 @@ def test_cli_cache_export_to_zip_creates_parent_dirs(tmp_path):
 # Test import_cache command help.
 def test_cli_import_cache_help():
     runner = CliRunner()
-    result = runner.invoke(cli, ["import_cache", "--help"])
+    result = runner.invoke(cli, ["import-cache", "--help"])
 
     assert result.exit_code == 0
     assert "import" in result.output.lower()
@@ -531,7 +507,7 @@ def test_cli_cache_import_from_directory(tmp_path):
     cache_path = tmp_path / "new_cache.db"
     runner = CliRunner()
     result = runner.invoke(
-        cli, ["import_cache", "-c", str(cache_path), "-i", str(import_dir)]
+        cli, ["import-cache", "-i", str(import_dir), "-o", str(cache_path)]
     )
 
     assert result.exit_code == 0
@@ -571,7 +547,7 @@ def test_cli_cache_import_from_zip(tmp_path):
     cache_path = tmp_path / "cache.db"
     runner = CliRunner()
     result = runner.invoke(
-        cli, ["import_cache", "-c", str(cache_path), "-i", str(zip_path)]
+        cli, ["import-cache", "-i", str(zip_path), "-o", str(cache_path)]
     )
 
     assert result.exit_code == 0
@@ -600,7 +576,7 @@ def test_cli_cache_import_skips_generic_json(tmp_path):
     cache_path = tmp_path / "cache.db"
     runner = CliRunner()
     result = runner.invoke(
-        cli, ["import_cache", "-c", str(cache_path), "-i", str(import_dir)]
+        cli, ["import-cache", "-i", str(import_dir), "-o", str(cache_path)]
     )
 
     assert result.exit_code == 0
@@ -632,11 +608,11 @@ def test_cli_cache_import_json_output(tmp_path):
     result = runner.invoke(
         cli,
         [
-            "import_cache",
-            "-c",
-            str(cache_path),
+            "import-cache",
             "-i",
             str(import_dir),
+            "-o",
+            str(cache_path),
             "--json",
         ],
     )
@@ -669,7 +645,7 @@ def test_cli_cache_import_skips_invalid_files(tmp_path):
     cache_path = tmp_path / "cache.db"
     runner = CliRunner()
     result = runner.invoke(
-        cli, ["import_cache", "-c", str(cache_path), "-i", str(import_dir)]
+        cli, ["import-cache", "-i", str(import_dir), "-o", str(cache_path)]
     )
 
     assert result.exit_code == 0
@@ -685,7 +661,7 @@ def test_cli_import_cache_empty_directory(tmp_path):
     cache_path = tmp_path / "cache.db"
     runner = CliRunner()
     result = runner.invoke(
-        cli, ["import_cache", "-c", str(cache_path), "-i", str(import_dir)]
+        cli, ["import-cache", "-i", str(import_dir), "-o", str(cache_path)]
     )
 
     assert result.exit_code == 0
@@ -715,14 +691,14 @@ def test_cli_cache_import_export_roundtrip(tmp_path):
     zip_path = tmp_path / "export.zip"
     runner = CliRunner()
     result = runner.invoke(
-        cli, ["export_cache", "-c", str(original_cache), "-o", str(zip_path)]
+        cli, ["export-cache", "-i", str(original_cache), "-o", str(zip_path)]
     )
     assert result.exit_code == 0
 
     # Import into new cache
     new_cache = tmp_path / "new.db"
     result = runner.invoke(
-        cli, ["import_cache", "-c", str(new_cache), "-i", str(zip_path)]
+        cli, ["import-cache", "-i", str(zip_path), "-o", str(new_cache)]
     )
     assert result.exit_code == 0
     assert "Imported 1 entries" in result.output
@@ -746,7 +722,7 @@ def test_cli_cache_import_skips_json_array(tmp_path):
     cache_path = tmp_path / "cache.db"
     runner = CliRunner()
     result = runner.invoke(
-        cli, ["import_cache", "-c", str(cache_path), "-i", str(import_dir)]
+        cli, ["import-cache", "-i", str(import_dir), "-o", str(cache_path)]
     )
 
     assert result.exit_code == 0
@@ -776,7 +752,7 @@ def test_cli_cache_import_skips_graph_entry(tmp_path):
     cache_path = tmp_path / "cache.db"
     runner = CliRunner()
     result = runner.invoke(
-        cli, ["import_cache", "-c", str(cache_path), "-i", str(import_dir)]
+        cli, ["import-cache", "-i", str(import_dir), "-o", str(cache_path)]
     )
 
     assert result.exit_code == 0
@@ -803,11 +779,11 @@ def test_cli_import_cache_error_invalid_cache(tmp_path):
     result = runner.invoke(
         cli,
         [
-            "import_cache",
-            "-c",
-            str(invalid_cache / "subdir"),
+            "import-cache",
             "-i",
             str(import_dir),
+            "-o",
+            str(invalid_cache / "subdir"),
         ],
     )
 
@@ -823,7 +799,7 @@ def test_cli_import_cache_error_invalid_cache(tmp_path):
 # Test generate_graph command shows help.
 def test_cli_generate_graph_shows_help():
     runner = CliRunner()
-    result = runner.invoke(cli, ["generate_graph", "--help"])
+    result = runner.invoke(cli, ["generate-graph", "--help"])
 
     assert result.exit_code == 0
     assert "generate" in result.output.lower()
@@ -835,13 +811,13 @@ def test_cli_main_help_shows_generate_graph():
     runner = CliRunner()
     result = runner.invoke(cli, [])
 
-    assert "generate_graph" in result.output
+    assert "generate-graph" in result.output
 
 
 # Test generate_graph command shows options in help.
 def test_cli_generate_graph_shows_options():
     runner = CliRunner()
-    result = runner.invoke(cli, ["generate_graph", "--help"])
+    result = runner.invoke(cli, ["generate-graph", "--help"])
 
     assert result.exit_code == 0
     assert "--network-context" in result.output
@@ -854,7 +830,7 @@ def test_cli_generate_graph_shows_options():
 # Test generate graph requires context.
 def test_cli_generate_graph_requires_context():
     runner = CliRunner()
-    result = runner.invoke(cli, ["generate_graph"])
+    result = runner.invoke(cli, ["generate-graph"])
 
     assert result.exit_code != 0
     assert "Missing option" in result.output or "required" in result.output
@@ -863,7 +839,7 @@ def test_cli_generate_graph_requires_context():
 # Test generate graph with non-existent file.
 def test_cli_generate_graph_missing_file():
     runner = CliRunner()
-    result = runner.invoke(cli, ["generate_graph", "-n", "nonexistent.json"])
+    result = runner.invoke(cli, ["generate-graph", "-n", "nonexistent.json"])
 
     assert result.exit_code != 0
 
@@ -912,7 +888,7 @@ def test_cli_generate_graph_loads_spec(tmp_path, mocker):
     result = runner.invoke(
         cli,
         [
-            "generate_graph",
+            "generate-graph",
             "-n",
             str(spec_file),
             "-c",
@@ -973,7 +949,7 @@ def test_cli_generate_graph_json_output(tmp_path, mocker):
     result = runner.invoke(
         cli,
         [
-            "generate_graph",
+            "generate-graph",
             "-n",
             str(spec_file),
             "-c",
@@ -1040,7 +1016,7 @@ def test_cli_generate_graph_output_file(tmp_path, mocker):
     result = runner.invoke(
         cli,
         [
-            "generate_graph",
+            "generate-graph",
             "-n",
             str(spec_file),
             "-c",
@@ -1113,7 +1089,7 @@ def test_cli_generate_graph_use_benchmark_names(tmp_path, mocker):
     result = runner.invoke(
         cli,
         [
-            "generate_graph",
+            "generate-graph",
             "-n",
             str(spec_file),
             "-c",
@@ -1163,7 +1139,7 @@ def test_cli_generate_graph_prompt_detail_minimal(tmp_path, mocker):
     result = runner.invoke(
         cli,
         [
-            "generate_graph",
+            "generate-graph",
             "-n",
             str(spec_file),
             "-c",
@@ -1221,7 +1197,7 @@ def test_cli_generate_graph_output_none_adjacency(tmp_path, mocker):
     result = runner.invoke(
         cli,
         [
-            "generate_graph",
+            "generate-graph",
             "-n",
             str(spec_file),
             "-c",
@@ -1248,7 +1224,7 @@ def test_cli_generate_graph_invalid_spec(tmp_path):
     result = runner.invoke(
         cli,
         [
-            "generate_graph",
+            "generate-graph",
             "-n",
             str(spec_file),
             "-c",
@@ -1275,7 +1251,7 @@ def test_cli_generate_graph_incomplete_spec(tmp_path):
     result = runner.invoke(
         cli,
         [
-            "generate_graph",
+            "generate-graph",
             "-n",
             str(spec_file),
             "-c",
@@ -1326,7 +1302,7 @@ def test_cli_generate_graph_with_cache(tmp_path, mocker):
     result = runner.invoke(
         cli,
         [
-            "generate_graph",
+            "generate-graph",
             "-n",
             str(spec_file),
             "-c",
@@ -1375,7 +1351,7 @@ def test_cli_generate_graph_empty_edges(tmp_path, mocker):
     result = runner.invoke(
         cli,
         [
-            "generate_graph",
+            "generate-graph",
             "-n",
             str(spec_file),
             "-c",
@@ -1424,7 +1400,7 @@ def test_cli_generate_graph_llm_option(tmp_path, mocker):
     result = runner.invoke(
         cli,
         [
-            "generate_graph",
+            "generate-graph",
             "-n",
             str(spec_file),
             "-c",
@@ -1461,7 +1437,7 @@ def test_cli_generate_graph_invalid_prompt_detail_level(tmp_path):
     result = runner.invoke(
         cli,
         [
-            "generate_graph",
+            "generate-graph",
             "-n",
             str(spec_file),
             "--prompt-detail",
@@ -1519,7 +1495,7 @@ def test_cli_generate_graph_any_path_is_directory_output(tmp_path, mocker):
     result = runner.invoke(
         cli,
         [
-            "generate_graph",
+            "generate-graph",
             "-n",
             str(spec_file),
             "-c",
@@ -1553,7 +1529,7 @@ def test_cli_generate_graph_invalid_llm_model(tmp_path):
     result = runner.invoke(
         cli,
         [
-            "generate_graph",
+            "generate-graph",
             "-n",
             str(spec_file),
             "-c",
@@ -1619,7 +1595,7 @@ def test_cli_generate_graph_cache_error(tmp_path, mocker):
     result = runner.invoke(
         cli,
         [
-            "generate_graph",
+            "generate-graph",
             "-n",
             str(spec_file),
             "-c",
@@ -1660,7 +1636,7 @@ def test_cli_generate_graph_generator_error(tmp_path, mocker):
     result = runner.invoke(
         cli,
         [
-            "generate_graph",
+            "generate-graph",
             "-n",
             str(spec_file),
             "-c",
@@ -1702,7 +1678,7 @@ def test_cli_generate_graph_generation_error(tmp_path, mocker):
     result = runner.invoke(
         cli,
         [
-            "generate_graph",
+            "generate-graph",
             "-n",
             str(spec_file),
             "-c",
@@ -1760,7 +1736,7 @@ def test_cli_generate_graph_with_metadata(tmp_path, mocker):
     result = runner.invoke(
         cli,
         [
-            "generate_graph",
+            "generate-graph",
             "-n",
             str(spec_file),
             "-c",
@@ -1831,7 +1807,7 @@ def test_cli_generate_graph_human_readable_with_reasoning(tmp_path, mocker):
     result = runner.invoke(
         cli,
         [
-            "generate_graph",
+            "generate-graph",
             "-n",
             str(spec_file),
             "-c",
@@ -1888,7 +1864,7 @@ def test_cli_generate_graph_long_reasoning_truncated(tmp_path, mocker):
     result = runner.invoke(
         cli,
         [
-            "generate_graph",
+            "generate-graph",
             "-n",
             str(spec_file),
             "-c",
@@ -1948,7 +1924,7 @@ def test_cli_generate_graph_workflow_cache_output(tmp_path, mocker):
     result = runner.invoke(
         cli,
         [
-            "generate_graph",
+            "generate-graph",
             "-n",
             str(spec_file),
             "-c",
@@ -2019,7 +1995,7 @@ def test_cli_generate_graph_comprehensive_model_file(mocker):
     result = runner.invoke(
         cli,
         [
-            "generate_graph",
+            "generate-graph",
             "-n",
             str(spec_file),
             "-c",
@@ -2099,7 +2075,7 @@ def test_cli_generate_graph_map_pdg_names_swaps_order(tmp_path, mocker):
     result = runner.invoke(
         cli,
         [
-            "generate_graph",
+            "generate-graph",
             "-n",
             str(spec_file),
             "-c",
@@ -2164,7 +2140,7 @@ def test_cli_generate_graph_graphml_skips_zero_edges(tmp_path, mocker):
     result = runner.invoke(
         cli,
         [
-            "generate_graph",
+            "generate-graph",
             "-n",
             str(spec_file),
             "-c",
@@ -2228,7 +2204,7 @@ def test_cli_generate_graph_print_backward_edge(tmp_path, mocker):
     result = runner.invoke(
         cli,
         [
-            "generate_graph",
+            "generate-graph",
             "-n",
             str(spec_file),
             "-c",
@@ -2287,7 +2263,7 @@ def test_cli_generate_graph_print_undirected_edge(tmp_path, mocker):
     result = runner.invoke(
         cli,
         [
-            "generate_graph",
+            "generate-graph",
             "-n",
             str(spec_file),
             "-c",
@@ -2346,7 +2322,7 @@ def test_cli_generate_graph_print_no_edge_state(tmp_path, mocker):
     result = runner.invoke(
         cli,
         [
-            "generate_graph",
+            "generate-graph",
             "-n",
             str(spec_file),
             "-c",
@@ -2405,7 +2381,7 @@ def test_cli_generate_graph_print_probability_breakdown(tmp_path, mocker):
     result = runner.invoke(
         cli,
         [
-            "generate_graph",
+            "generate-graph",
             "-n",
             str(spec_file),
             "-c",
@@ -2468,7 +2444,7 @@ def test_cli_export_cache_skips_invalid_entries(tmp_path):
     export_dir = tmp_path / "export"
     runner = CliRunner()
     result = runner.invoke(
-        cli, ["export_cache", "-c", str(cache_path), "-o", str(export_dir)]
+        cli, ["export-cache", "-i", str(cache_path), "-o", str(export_dir)]
     )
 
     # Should succeed and export 1 valid entry (skip the invalid one)

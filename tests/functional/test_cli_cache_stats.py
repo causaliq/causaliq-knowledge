@@ -34,7 +34,7 @@ def test_cli_cache_stats_llm_model_breakdown(tmp_path):
         cache.put_data("hash1", entry.to_dict())
 
     runner = CliRunner()
-    result = runner.invoke(cli, ["cache_stats", "-c", str(cache_path)])
+    result = runner.invoke(cli, ["cache-stats", "-i", str(cache_path)])
 
     assert result.exit_code == 0
     # Check table header
@@ -77,7 +77,7 @@ def test_cli_cache_stats_multiple_models(tmp_path):
             cache.put_data(f"hash_{model}", entry.to_dict())
 
     runner = CliRunner()
-    result = runner.invoke(cli, ["cache_stats", "-c", str(cache_path)])
+    result = runner.invoke(cli, ["cache-stats", "-i", str(cache_path)])
 
     assert result.exit_code == 0
     assert "gpt-4" in result.output
@@ -110,7 +110,7 @@ def test_cli_cache_stats_token_totals(tmp_path):
         cache.put_data("hash1", entry.to_dict())
 
     runner = CliRunner()
-    result = runner.invoke(cli, ["cache_stats", "-c", str(cache_path)])
+    result = runner.invoke(cli, ["cache-stats", "-i", str(cache_path)])
 
     assert result.exit_code == 0
     assert "Total tokens:" in result.output
@@ -146,7 +146,7 @@ def test_cli_cache_stats_estimated_savings(tmp_path):
         cache.get_data("hash1")
 
     runner = CliRunner()
-    result = runner.invoke(cli, ["cache_stats", "-c", str(cache_path)])
+    result = runner.invoke(cli, ["cache-stats", "-i", str(cache_path)])
 
     assert result.exit_code == 0
     assert "Est. savings:" in result.output
@@ -180,7 +180,7 @@ def test_cli_cache_stats_average_latency(tmp_path):
             cache.put_data(f"hash{i}", entry.to_dict())
 
     runner = CliRunner()
-    result = runner.invoke(cli, ["cache_stats", "-c", str(cache_path)])
+    result = runner.invoke(cli, ["cache-stats", "-i", str(cache_path)])
 
     assert result.exit_code == 0
     # Average latency should be (200 + 400) / 2 = 300
@@ -213,7 +213,7 @@ def test_cli_cache_stats_aggregates_by_model(tmp_path):
             cache.put_data(f"hash{i}", entry.to_dict())
 
     runner = CliRunner()
-    result = runner.invoke(cli, ["cache_stats", "-c", str(cache_path)])
+    result = runner.invoke(cli, ["cache-stats", "-i", str(cache_path)])
 
     assert result.exit_code == 0
     # Should show 3 entries for gpt-4
@@ -248,50 +248,11 @@ def test_cli_cache_stats_hit_rate(tmp_path):
         cache.get_data("hash1")
 
     runner = CliRunner()
-    result = runner.invoke(cli, ["cache_stats", "-c", str(cache_path)])
+    result = runner.invoke(cli, ["cache-stats", "-i", str(cache_path)])
 
     assert result.exit_code == 0
     # Hit rate should be 50%
     assert "50.0%" in result.output
-
-
-# Test cache stats JSON output includes model breakdown.
-def test_cli_cache_stats_json_includes_models(tmp_path):
-    import json
-
-    from causaliq_core.cache import TokenCache
-
-    from causaliq_knowledge.llm.cache import LLMCacheEntry, LLMCompressor
-
-    cache_path = tmp_path / "llm_cache.db"
-    with TokenCache(str(cache_path)) as cache:
-        compressor = LLMCompressor()
-        cache.set_compressor(compressor)
-
-        entry = LLMCacheEntry.create(
-            model="gpt-4",
-            messages=[{"role": "user", "content": "Test"}],
-            content="Response",
-            provider="openai",
-            latency_ms=100,
-            input_tokens=50,
-            output_tokens=25,
-            cost_usd=0.001,
-        )
-        cache.put_data("hash1", entry.to_dict())
-
-    runner = CliRunner()
-    result = runner.invoke(
-        cli, ["cache_stats", "-c", str(cache_path), "--json"]
-    )
-
-    assert result.exit_code == 0
-    output = json.loads(result.output)
-    assert "by_model" in output
-    assert "gpt-4" in output["by_model"]
-    assert output["by_model"]["gpt-4"]["entries"] == 1
-    assert output["by_model"]["gpt-4"]["input_tokens"] == 50
-    assert output["by_model"]["gpt-4"]["output_tokens"] == 25
 
 
 # Test cache stats truncates long model names.
@@ -319,7 +280,7 @@ def test_cli_cache_stats_truncates_long_model_name(tmp_path):
         cache.put_data("hash1", entry.to_dict())
 
     runner = CliRunner()
-    result = runner.invoke(cli, ["cache_stats", "-c", str(cache_path)])
+    result = runner.invoke(cli, ["cache-stats", "-i", str(cache_path)])
 
     assert result.exit_code == 0
     # Long name should be truncated with "..."
@@ -337,7 +298,7 @@ def test_cli_cache_stats_empty_llm_cache(tmp_path):
         pass  # Create empty cache
 
     runner = CliRunner()
-    result = runner.invoke(cli, ["cache_stats", "-c", str(cache_path)])
+    result = runner.invoke(cli, ["cache-stats", "-i", str(cache_path)])
 
     assert result.exit_code == 0
     assert "Entries:" in result.output
@@ -390,7 +351,7 @@ def test_cli_cache_stats_skips_invalid_entries(tmp_path):
         cache.conn.commit()
 
     runner = CliRunner()
-    result = runner.invoke(cli, ["cache_stats", "-c", str(cache_path)])
+    result = runner.invoke(cli, ["cache-stats", "-i", str(cache_path)])
 
     # Should still succeed, just skipping the invalid entry
     assert result.exit_code == 0
