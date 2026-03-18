@@ -106,6 +106,9 @@ def test_workflow_validates_causaliq_knowledge_step(tmp_path: Path) -> None:
     workflow_yaml = tmp_path / "workflow.yaml"
     workflow_yaml.write_text(
         f"""
+matrix:
+  run: [1]
+
 steps:
   - name: "Generate graph"
     uses: "causaliq-knowledge"
@@ -140,6 +143,9 @@ def test_workflow_dry_run_execution(tmp_path: Path) -> None:
     workflow_yaml = tmp_path / "workflow.yaml"
     workflow_yaml.write_text(
         f"""
+matrix:
+  run: [1]
+
 steps:
   - name: "Generate graph"
     uses: "causaliq-knowledge"
@@ -183,6 +189,9 @@ def test_workflow_run_execution_with_mocked_llm(tmp_path: Path) -> None:
     cache_file = tmp_path / "cache.db"
     workflow_yaml.write_text(
         f"""
+matrix:
+  run: [1]
+
 steps:
   - name: "Generate graph"
     uses: "causaliq-knowledge"
@@ -254,6 +263,9 @@ def test_workflow_writes_output_file(tmp_path: Path) -> None:
     workflow_yaml = tmp_path / "workflow.yaml"
     workflow_yaml.write_text(
         f"""
+matrix:
+  run: [1]
+
 steps:
   - name: "Generate graph"
     uses: "causaliq-knowledge"
@@ -299,8 +311,8 @@ steps:
     with WorkflowCache(str(cache_file)) as cache:
         entries = cache.list_entries()
         assert len(entries) == 1
-        # Verify entry contains PDG object
-        entry = cache.get({})
+        # Verify entry contains PDG object (query with matrix values)
+        entry = cache.get({"run": 1})
         assert entry is not None
         # CacheEntry.objects is a dict keyed by type
         assert "pdg" in entry.objects
@@ -329,6 +341,9 @@ def test_workflow_rejects_invalid_parameters(tmp_path: Path) -> None:
     workflow_yaml = tmp_path / "workflow.yaml"
     workflow_yaml.write_text(
         f"""
+matrix:
+  run: [1]
+
 steps:
   - name: "Generate graph"
     uses: "causaliq-knowledge"
