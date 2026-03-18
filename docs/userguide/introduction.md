@@ -1,68 +1,67 @@
 # CausalIQ Knowledge User Guide
 
-## What is CausalIQ Knowledge?
+## Overview
 
-CausalIQ Knowledge is a Python package that provides **LLM-based graph
-generation** for causal discovery workflows. It enables you to generate
-complete causal graphs from network context specifications using Large Language
-Models (LLMs), providing prior knowledge structures that can be compared
-against data-driven discoveries.
+The causaliq-knowledge package is part of the
+[CausalIQ ecosystem](https://causaliq.org/) for intelligent causal discovery
+and inference. CausalIQ Knowledge provides the following capabilities for
+integrating LLM knowledge into causal discovery workflows:
 
-## Primary Use Case
+| Capability | Pattern | Description |
+|------------|---------|-------------|
+| **[`generate-graph`](generate_graph.md)** | Create | Generate causal graphs from network context using LLMs |
 
-CausalIQ Knowledge generates causal graphs from network context files that
-describe variables, their types, and domain context. This is useful for:
+### CLI-Only Utilities
 
-1. Creating prior knowledge graphs for causal discovery algorithms
-2. Comparing LLM-generated graphs against ground truth benchmarks
-3. Exploring how different LLMs reason about causal relationships
+The following commands are available only through the CLI and are not
+accessible as workflow actions:
 
-## Quick Start
+| Command | Description |
+|---------|-------------|
+| **[`list-models`](list_models.md)** | List available LLM models from configured providers |
+| **[`cache-stats`](llm_cache.md#cache-statistics)** | View LLM cache statistics and costs |
+| **[`export-cache`](llm_cache.md#exporting-cache-entries)** | Export LLM cache entries to files |
+| **[`import-cache`](llm_cache.md#importing-cache-entries)** | Import LLM cache entries from files |
 
-### Installation
+## Command Line, Workflow or Programmatic Access
 
-```bash
-pip install causaliq-knowledge
-```
+As with all CausalIQ packages, users may access the capabilities of CausalIQ
+Knowledge in three ways:
 
-### Command Line Usage
+- **Command Line Interface (CLI)** provides an easy introduction to generating
+  graphs from the command line. This is primarily orientated to generating a
+  single graph and thus gaining an initial understanding of how to use the
+  capability.
 
-Generate a causal graph from a network context file:
+- **CausalIQ Workflows** allows users to include CausalIQ Knowledge steps
+  within workflows which can combine learning graphs from data or LLMs,
+  performing inference, analysing results, through to generating publication
+  tables and charts.
 
-```bash
-# Generate graph with caching
-cqknow generate_graph -s context.json -o results/ -c cache.db
+- **Programmatic Access** using the [Python API](../api/overview.md) for
+  complete flexibility over the processing logic.
 
-# Use a specific LLM model
-cqknow generate_graph -s context.json -o results/ -c cache.db -m gemini/gemini-2.5-flash
+The CLI and workflow routes use the same command or action name respectively,
+which in turn matches the capability name in the table above. Parameters are
+named identically, and as far as practical, the capability behaviour is the
+same in the CLI and workflow interfaces.
 
-# Rich context for detailed prompts
-cqknow generate_graph -s context.json -o results/ -c cache.db -p rich
-```
+## Workflow Concepts
 
-### Python API Usage
+For common workflow concepts that apply across all CausalIQ packages, see the
+[CausalIQ Workflow User Guide](https://workflow.causaliq.org/userguide/):
 
-```python
-from causaliq_knowledge.graph import GraphGenerator, GraphGeneratorConfig
-from causaliq_knowledge.graph import NetworkContext
+- [**Action patterns**](https://workflow.causaliq.org/userguide/action_patterns/)
+  — Create, update, and aggregate patterns
+- [**Common parameters**](https://workflow.causaliq.org/userguide/common_parameters/)
+  — `input`, `output`, `filter` parameters
+- [**Workflow caching**](https://workflow.causaliq.org/userguide/caching/)
+  — Result storage and conservative execution
+- [**CLI usage**](https://workflow.causaliq.org/userguide/cli/)
+  — Execution modes (`run`, `dry-run`, `force`)
 
-# Load network context
-context = NetworkContext.load("context.json")
-
-# Configure generator
-config = GraphGeneratorConfig(
-    temperature=0.1,
-    prompt_detail="standard",
-)
-
-# Generate graph
-generator = GraphGenerator(model="groq/llama-3.1-8b-instant", config=config)
-result = generator.generate_from_context(context)
-
-print(f"Generated {len(result.edges)} edges")
-for edge in result.edges:
-    print(f"  {edge.source} -> {edge.target} ({edge.confidence})")
-```
+The individual action guides in this section document **knowledge-specific
+parameters and behaviour** for each capability.
 
 ## LLM Provider Setup
 
@@ -70,30 +69,50 @@ CausalIQ Knowledge uses **direct vendor-specific API clients** (not wrapper
 libraries) to communicate with LLM providers. This approach provides
 reliability and minimal dependencies. Currently supported:
 
-- **Groq**: Free tier with fast inference
-- **Google Gemini**: Generous free tier
-- **OpenAI**: GPT-4o and other models
-- **Anthropic**: Claude models
-- **DeepSeek**: DeepSeek-V3 and R1 models
-- **Mistral**: Mistral AI models
-- **Ollama**: Local LLMs (free, runs locally)
+| Provider | Environment Variable | Free Tier | Console URL |
+|----------|---------------------|-----------|-------------|
+| Groq | `GROQ_API_KEY` | Yes (fast) | [console.groq.com](https://console.groq.com) |
+| Google Gemini | `GEMINI_API_KEY` | Yes | [aistudio.google.com](https://aistudio.google.com) |
+| OpenAI | `OPENAI_API_KEY` | No | [platform.openai.com](https://platform.openai.com) |
+| Anthropic | `ANTHROPIC_API_KEY` | No | [console.anthropic.com](https://console.anthropic.com) |
+| DeepSeek | `DEEPSEEK_API_KEY` | No | [platform.deepseek.com](https://platform.deepseek.com) |
+| Mistral | `MISTRAL_API_KEY` | No | [console.mistral.ai](https://console.mistral.ai) |
+| Ollama | (local) | Yes | [ollama.ai](https://ollama.ai) |
+
+Use [`cqknow list_models`](list_models.md) to see which providers are
+configured and what models are available.
+
+### Storing API Keys
+
+Set environment variables for your chosen providers:
+
+```powershell
+# PowerShell
+$env:GROQ_API_KEY = "your-api-key"
+$env:GEMINI_API_KEY = "your-api-key"
+```
+
+```bash
+# Bash
+export GROQ_API_KEY="your-api-key"
+export GEMINI_API_KEY="your-api-key"
+```
 
 ### Free Options
 
-#### Groq (Free Tier - Very Fast)
+#### Groq (Recommended for Testing)
 
 Groq offers a generous free tier with extremely fast inference:
 
 1. Sign up at [console.groq.com](https://console.groq.com)
 2. Create an API key
-3. Set the environment variable (see [Storing API Keys](#storing-api-keys))
+3. Set the environment variable
 4. Use in code:
 
 ```bash
-cqknow generate_graph -n context.json -o results/ -c cache.db -m groq/llama-3.1-8b-instant
+cqknow generate_graph -n context.json -o results/ -c cache.db \
+    -m groq/llama-3.1-8b-instant
 ```
-
-Available Groq models: `groq/llama-3.1-8b-instant`, `groq/llama-3.1-70b-versatile`, `groq/mixtral-8x7b-32768`
 
 #### Google Gemini (Free Tier)
 
@@ -105,55 +124,8 @@ Google offers free access to Gemini models:
 4. Use in code:
 
 ```bash
-cqknow generate_graph -n context.json -o results/ -c cache.db -m gemini/gemini-2.5-flash
-```
-
-#### OpenAI
-
-OpenAI provides GPT-4o and other models:
-
-1. Sign up at [platform.openai.com](https://platform.openai.com)
-2. Create an API key
-3. Set `OPENAI_API_KEY` environment variable
-
-```bash
-cqknow generate_graph -n context.json -o results/ -c cache.db -m openai/gpt-4o-mini
-```
-
-#### Anthropic
-
-Anthropic provides Claude models:
-
-1. Sign up at [console.anthropic.com](https://console.anthropic.com)
-2. Create an API key
-3. Set `ANTHROPIC_API_KEY` environment variable
-
-```bash
-cqknow generate_graph -n context.json -o results/ -c cache.db -m anthropic/claude-sonnet-4-20250514
-```
-
-#### DeepSeek
-
-DeepSeek offers high-quality models at competitive prices:
-
-1. Sign up at [platform.deepseek.com](https://platform.deepseek.com)
-2. Create an API key
-3. Set `DEEPSEEK_API_KEY` environment variable
-
-```bash
-cqknow generate_graph -n context.json -o results/ -c cache.db -m deepseek/deepseek-chat
-```
-
-#### Mistral
-
-Mistral AI provides models with EU data sovereignty:
-
-1. Sign up at [console.mistral.ai](https://console.mistral.ai)
-2. Create an API key
-3. Set `MISTRAL_API_KEY` environment variable
-
-```bash
-cqknow generate_graph -n context.json -o results/ -c cache.db -m mistral/mistral-small-latest
+cqknow generate_graph -n context.json -o results/ -c cache.db \
+    -m gemini/gemini-2.5-flash
 ```
 
 #### Ollama (Local)
@@ -162,303 +134,15 @@ Run models locally with Ollama (no API key needed):
 
 1. Install Ollama from [ollama.ai](https://ollama.ai)
 2. Pull a model: `ollama pull llama3`
-3. Use in code:
-
-```bash
-cqknow generate_graph -n context.json -o results/ -c cache.db -m ollama/llama3
-```
-
-### Storing API Keys
-
-#### Option 1: User Environment Variables (Recommended)
-
-Set permanently for your user account on Windows:
-
-```powershell
-[Environment]::SetEnvironmentVariable("GROQ_API_KEY", "your-key", "User")
-[Environment]::SetEnvironmentVariable("GEMINI_API_KEY", "your-key", "User")
-```
-
-On Linux/macOS, add to your `~/.bashrc` or `~/.zshrc`:
-
-```bash
-export GROQ_API_KEY="your-key"
-export GEMINI_API_KEY="your-key"
-```
-
-Restart your terminal for changes to take effect.
-
-#### Option 2: Project `.env` File
-
-Create a `.env` file in your project root:
-
-```
-GROQ_API_KEY=your-key-here
-GEMINI_API_KEY=your-key-here
-```
-
-**Important:** Add `.env` to your `.gitignore` so keys aren't committed to version control!
-
-#### Option 3: Password Manager
-
-Store API keys in a password manager (LastPass, 1Password, Bitwarden, etc.) as a Secure Note. This provides:
-
-- Encrypted backup of your keys
-- Access from any machine
-- Secure sharing with team members if needed
-
-Copy keys from your password manager when setting environment variables.
-
-### Verifying Your Setup
-
-Test your configuration with the CLI:
-
-```bash
-# Generate a test graph (requires a network context file)
-cqknow generate_graph -n context.json -o none -c none -m groq/llama-3.1-8b-instant
-
-# Or view cache statistics
-cqknow cache stats ./cache.db
-```
-
-## Graph Generation
-
-CausalIQ Knowledge can generate complete causal graphs from network context
-files using LLMs. This is useful for creating prior knowledge structures
-or comparing LLM-generated graphs against ground truth.
-
-### Command Line Interface
-
-```bash
-cqknow generate_graph -n <context.json> -o <output> -c <cache> [options]
-```
-
-### Basic Examples
-
-```bash
-# Generate a graph, save to Workflow Cache with LLM caching
-cqknow generate_graph -n context.json -o workflow.db -c cache.db
-
-# Generate to a directory (GraphML + JSON files)
-cqknow generate_graph -n context.json -o results/ -c cache.db
-
-# Generate without caching, print adjacency matrix to stdout
-cqknow generate_graph -n context.json -o none -c none
-
-# Use a specific LLM model
-cqknow generate_graph -n context.json -o workflow.db -c cache.db -m gemini/gemini-2.5-flash
-
-# Use rich context level for more detailed prompts
-cqknow generate_graph -n context.json -o workflow.db -c cache.db -p rich
-
-# Test benchmark memorisation with original variable names
-cqknow generate_graph -n context.json -o workflow.db -c cache.db --use-benchmark-names
-```
-
-### CLI Options
-
-| Option | Short | Default | Description |
-|--------|-------|---------|-------------|
-| `--network-context` | `-n` | (required) | Path to network context JSON file |
-| `--output` | `-o` | (required) | Output: Workflow Cache `.db`, directory, or `none` |
-| `--llm-cache` | `-c` | (required) | Cache: `.db` file path or `none` to disable |
-| `--prompt-detail` | `-p` | `standard` | Detail level: `minimal`, `standard`, or `rich` |
-| `--llm-model` | `-m` | `groq/llama-3.1-8b-instant` | LLM model with provider prefix |
-| `--llm-temperature` | `-t` | `0.1` | Temperature (0.0-2.0), lower = deterministic |
-| `--use-benchmark-names` | | `False` | Use benchmark names (test memorisation) |
-
-### Prompt Detail Levels
-
-The `--prompt-detail` option controls how much context is provided to the LLM:
-
-- **minimal**: Variable names only - tests LLM's general knowledge
-- **standard**: Names with types, states, and short descriptions
-- **rich**: Full context including extended descriptions and sensitivity hints
-
-### Output Behaviour
-
-- **With `-o workflow.db`**: Writes graph to Workflow Cache database
-- **With `-o results/`**: Writes `graph.graphml`, `metadata.json`, and
-  `confidences.json` to the directory
-- **With `-o none`**: Prints adjacency matrix to stdout
-
-### Caching
-
-LLM responses are cached to avoid redundant API calls. The cache stores
-request/response pairs keyed by model, prompt, and parameters.
-
-```bash
-# Enable caching (recommended for development)
-cqknow generate_graph -n context.json -o graph.json -c cache.db
-
-# Disable caching (for fresh responses)
-cqknow generate_graph -n context.json -o graph.json -c none
-```
-
----
-
-## Using with CausalIQ Workflows
-
-CausalIQ Knowledge integrates with [causaliq-workflow](https://github.com/causaliq/causaliq-workflow)
-for reproducible, automated causal discovery experiments.
-
-### Installation
-
-Ensure both packages are installed:
-
-```bash
-pip install causaliq-knowledge causaliq-workflow
-```
-
-### Basic Workflow Example
-
-Create a workflow file `generate_graph.yaml`:
-
-```yaml
-description: "Generate causal graph using LLM"
-id: "llm-graph-generation"
-
-steps:
-  - name: "Generate Graph"
-    uses: "causaliq-knowledge"
-    with:
-      action: "generate_graph"
-      network_context: "models/cancer.json"
-      output: "results/cancer_graph.json"
-      llm_cache: "cache/cancer.db"
-      llm_model: "groq/llama-3.1-8b-instant"
-      prompt_detail: "standard"
-```
-
-Run the workflow:
-
-```bash
-# Dry-run (validate without executing)
-causaliq-workflow generate_graph.yaml --mode dry-run
-
-# Execute the workflow
-causaliq-workflow generate_graph.yaml --mode run
-```
-
-### Workflow Action Parameters
-
-| Parameter | Required | Default | Description |
-|-----------|----------|---------|-------------|
-| `action` | Yes | - | Must be `generate_graph` |
-| `network_context` | Yes | - | Path to network context JSON |
-| `output` | Yes | - | Output `.json` file path or `none` |
-| `llm_cache` | Yes | - | Cache `.db` file path or `none` |
-| `llm_model` | No | `groq/llama-3.1-8b-instant` | LLM model identifier |
-| `prompt_detail` | No | `standard` | `minimal`, `standard`, or `rich` |
-| `use_benchmark_names` | No | `false` | Use original benchmark names |
-| `llm_temperature` | No | `0.1` | LLM temperature (0.0-2.0) |
-
-### Matrix Expansion Example
-
-Run the same analysis across multiple models and prompt detail levels:
-
-```yaml
-description: \"Compare LLM graph generation across models\"
-id: \"llm-comparison\"
-workflow_cache: \"results/{{id}}_cache.db\"
-
-matrix:
-  model:
-    - \"groq/llama-3.1-8b-instant\"
-    - \"gemini/gemini-2.5-flash\"
-  detail:
-    - \"minimal\"
-    - \"standard\"
-    - \"rich\"
-
-steps:
-  - name: \"Generate Graph\"
-    uses: "causaliq-knowledge"
-    with:
-      action: "generate_graph"
-      network_context: "models/cancer.json"
-      llm_cache: "cache/llm_cache.db"
-      llm_model: "{{model}}"
-      prompt_detail: "{{detail}}"
-```
-
-This generates 6 graphs (2 models × 3 detail levels), all stored in the
-Workflow Cache with matrix values as keys.
-
-### Multi-Network Comparison
-
-Compare graph generation across different causal networks:
-
-```yaml
-description: "Generate graphs for multiple networks"
-id: "multi-network"
-workflow_cache: "results/{{id}}_cache.db"
-
-matrix:
-  network:
-    - "asia"
-    - "cancer"
-    - "earthquake"
-
-steps:
-  - name: "Generate Graph"
-    uses: "causaliq-knowledge"
-    with:
-      action: "generate_graph"
-      network_context: "models/{{network}}/{{network}}.json"
-      llm_cache: "cache/{{network}}_llm.db"
-      llm_model: "groq/llama-3.1-8b-instant"
-```
-
-### Workflow Output
-
-When a workflow step completes, the action returns:
-
-```json
-{
-  "status": "success",
-  "edges_count": 5,
-  "variables_count": 8,
-  "output_file": "results/cancer_graph.json",
-  "cache_stats": {
-    "cache_hits": 2,
-    "cache_misses": 6
-  }
-}
-```
-
-For more information on model specification format, see
-[Model Specification Format](model_specification.md).
-
-## Cache Management
-
-CausalIQ Knowledge includes a caching system that stores LLM responses to avoid redundant API calls. You can inspect, export, and import your cache using the CLI:
-
-```bash
-# View cache statistics
-cqknow cache stats ./llm_cache.db
-
-# Export cache entries to human-readable JSON files
-cqknow cache export ./llm_cache.db ./export_dir
-
-# Export to a zip archive for sharing
-cqknow cache export ./llm_cache.db ./export.zip
-
-# Import cache entries (auto-detects entry types)
-cqknow cache import ./new_cache.db ./export.zip
-```
-
-Exported files use the naming format `{id}_{timestamp}_{provider}.json`, for
-example `cli_2026-01-29-143052_groq.json`. The `id` comes from the `--id`
-option when generating graphs (default: "cli").
-
-The cache stores:
-
-- **Entry count**: Number of cached LLM responses
-- **Token count**: Total tokens across all cached entries
+3. Use in commands with `-m ollama/llama3`
 
 ## What's Next?
 
-- [Architecture Overview](../architecture/overview.md) - Understand how the package works
-- [LLM Integration Design](../architecture/llm_integration.md) - Detailed design documentation
-- [API Reference](../api/overview.md) - Full API documentation
+- [**Generate Graph**](generate_graph.md) — Generate causal graphs from
+  network context using LLMs
+- [**Network Context Format**](model_specification.md) — Detailed specification
+  for network context JSON files
+- [**List Models**](list_models.md) — View available LLM models from configured
+  providers
+- [**LLM Cache Management**](llm_cache.md) — View, export, and import cached
+  LLM responses

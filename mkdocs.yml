@@ -46,8 +46,13 @@ nav:
   - Roadmap: roadmap.md
   - User Guide:
     - User Guide Introduction: userguide/introduction.md
-    - Workflow Integration: userguide/workflow_integration.md
-    - Network Context Format: userguide/model_specification.md
+    - Actions:
+      - Generate Graph: userguide/generate_graph.md
+    - References:
+      - Network Context Format: userguide/model_specification.md
+    - CLI Utilities:
+      - List Models: userguide/list_models.md
+      - LLM Cache Management: userguide/llm_cache.md
   - Architecture: 
     - Architectural Overview: architecture/overview.md
     - Design Notes: 
