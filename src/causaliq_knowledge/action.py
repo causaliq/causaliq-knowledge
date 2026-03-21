@@ -114,6 +114,13 @@ def _create_action_inputs() -> Dict[str, Any]:
             default=0.1,
             type_hint="float",
         ),
+        "llm_max_tokens": ActionInput(
+            name="llm_max_tokens",
+            description="Maximum tokens in LLM response",
+            required=False,
+            default=4000,
+            type_hint="int",
+        ),
     }
 
 
@@ -396,6 +403,7 @@ class KnowledgeActionProvider(CausalIQActionProvider):
 
             config = GraphGeneratorConfig(
                 temperature=params.llm_temperature,
+                max_tokens=params.llm_max_tokens,
                 prompt_detail=params.prompt_detail,
                 use_llm_names=use_llm_names,
                 request_id=request_id,
@@ -424,6 +432,14 @@ class KnowledgeActionProvider(CausalIQActionProvider):
             metadata["cached"] = generation_metadata.from_cache
             metadata["model_used"] = params.llm_model
 
+            # Include raw LLM response (split by newlines for readability)
+            if result.raw_response:
+                response_text = result.raw_response
+                if "\n" in response_text:
+                    metadata["llm_response"] = response_text.split("\n")
+                else:
+                    metadata["llm_response"] = response_text
+
             # Convert PDG to GraphML string for interchange
             graphml_buffer = StringIO()
             graphml.write_pdg(pdg, graphml_buffer)
@@ -434,6 +450,7 @@ class KnowledgeActionProvider(CausalIQActionProvider):
                 {
                     "type": "pdg",
                     "format": "graphml",
+                    "action": "generate_graph",
                     "name": "graph",
                     "content": graphml_content,
                 },

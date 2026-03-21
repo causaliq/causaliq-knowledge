@@ -37,35 +37,21 @@ class OutputFormat(str, Enum):
 
 # System prompt for PDG (Probabilistic Dependency Graph) format
 GRAPH_SYSTEM_PROMPT_PDG = """\
-You are an expert in causal reasoning and domain knowledge.
-Your task is to propose causal relationships between variables with \
+You are an expert in causal reasoning. Propose causal relationships with \
 uncertainty estimates.
 
-Respond ONLY with valid JSON in this exact format:
-{
-  "edges": [
-    {
-      "source": "variable_name_1",
-      "target": "variable_name_2",
-      "existence": 0.0 to 1.0,
-      "orientation": 0.0 to 1.0
-    }
-  ],
-  "reasoning": "brief explanation of your approach"
-}
+Respond with ONLY this JSON structure (no other text):
+{"edges":[{"source":"X","target":"Y","existence":0.9,"orientation":0.8}]}
 
-Guidelines:
-- source/target: the variable names (source is your proposed cause)
-- existence: probability that ANY causal relationship exists between these \
-variables (0.0 = definitely no relationship, 1.0 = definitely related)
-- orientation: given a relationship exists, confidence that source causes \
-target rather than target causes source (0.5 = uncertain direction, 1.0 = \
-certain source causes target, 0.0 = certain target causes source)
-- Include ONLY direct causal relationships, not indirect ones
-- Use the exact variable names provided
-- Do not add edges between a variable and itself
-- Consider domain knowledge and temporal ordering
-- Omit pairs where no causal relationship exists (existence would be 0)"""
+Rules:
+- source: cause variable name (exact spelling from input)
+- target: effect variable name (exact spelling from input)
+- existence: probability a relationship exists (0.0-1.0)
+- orientation: confidence source causes target vs reverse (0.5=uncertain)
+- ONLY include edges with existence >= 0.5
+- ONLY direct causal relationships
+- No self-loops
+- No reasoning field needed - just the edges array"""
 
 
 # System prompt for graph generation (edge list format)

@@ -70,6 +70,12 @@ class GenerateGraphParams(BaseModel):
         le=2.0,
         description="LLM sampling temperature (0.0-2.0)",
     )
+    llm_max_tokens: int = Field(
+        default=4000,
+        ge=100,
+        le=100000,
+        description="Maximum tokens in LLM response",
+    )
 
     model_config = {"arbitrary_types_allowed": True}
 

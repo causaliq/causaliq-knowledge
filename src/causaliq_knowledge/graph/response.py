@@ -19,6 +19,57 @@ from pydantic import BaseModel, Field, field_validator
 logger = logging.getLogger(__name__)
 
 
+def _sanitise_json_text(text: str) -> str:
+    """Sanitise JSON text by escaping control characters inside strings.
+
+    LLMs sometimes include unescaped control characters (especially
+    newlines) inside JSON string values. This function escapes them
+    while preserving valid JSON structure.
+
+    Args:
+        text: Raw JSON text potentially containing invalid characters.
+
+    Returns:
+        Sanitised JSON text with control characters inside strings escaped.
+    """
+
+    def is_escaped(pos: int) -> bool:
+        """Check if char at pos is escaped by counting backslashes."""
+        num_backslashes = 0
+        j = pos - 1
+        while j >= 0 and text[j] == "\\":
+            num_backslashes += 1
+            j -= 1
+        return num_backslashes % 2 == 1
+
+    result = []
+    in_string = False
+    i = 0
+    while i < len(text):
+        char = text[i]
+
+        if char == '"' and not is_escaped(i):
+            # Toggle string state on unescaped quote
+            in_string = not in_string
+            result.append(char)
+        elif in_string and ord(char) < 0x20:
+            # Control character inside string - must escape
+            escape_map = {
+                "\n": "\\n",
+                "\r": "\\r",
+                "\t": "\\t",
+            }
+            if char in escape_map:
+                result.append(escape_map[char])
+            else:
+                result.append(f"\\u{ord(char):04x}")
+        else:
+            result.append(char)
+        i += 1
+
+    return "".join(result)
+
+
 class ProposedEdge(BaseModel):
     """A proposed causal edge from LLM graph generation.
 
@@ -475,7 +526,29 @@ def parse_graph_response(
     try:
         response = json.loads(text)
     except json.JSONDecodeError as e:
-        raise ValueError(f"Failed to parse JSON response: {e}")
+        # Try sanitising control characters that LLMs sometimes include
+        try:
+            sanitised = _sanitise_json_text(text)
+            response = json.loads(sanitised)
+        except json.JSONDecodeError:
+            # Log diagnostic info about the problematic character
+            pos = e.pos if hasattr(e, "pos") else 0
+            context_start = max(0, pos - 50)
+            context_end = min(len(text), pos + 50)
+            context = text[context_start:context_end]
+            if pos < len(text):
+                char_at_pos = text[pos]
+                char_info = (
+                    f"Char: {repr(char_at_pos)} (0x{ord(char_at_pos):02x})"
+                )
+            else:
+                char_info = "Char: EOF"
+            logger.error(
+                f"JSON parse error at position {pos}. "
+                f"{char_info}. "
+                f"Context: {repr(context)}"
+            )
+            raise ValueError(f"Failed to parse JSON response: {e}") from e
 
     if output_format == "adjacency_matrix":
         return parse_adjacency_matrix_response(response, variables)
@@ -533,7 +606,29 @@ def parse_pdg_response(
     try:
         response = json.loads(text)
     except json.JSONDecodeError as e:
-        raise ValueError(f"Failed to parse JSON response: {e}")
+        # Try sanitising control characters that LLMs sometimes include
+        try:
+            sanitised = _sanitise_json_text(text)
+            response = json.loads(sanitised)
+        except json.JSONDecodeError:
+            # Log diagnostic info about the problematic character
+            pos = e.pos if hasattr(e, "pos") else 0
+            context_start = max(0, pos - 50)
+            context_end = min(len(text), pos + 50)
+            context = text[context_start:context_end]
+            if pos < len(text):
+                char_at_pos = text[pos]
+                char_info = (
+                    f"Char: {repr(char_at_pos)} (0x{ord(char_at_pos):02x})"
+                )
+            else:
+                char_info = "Char: EOF"
+            logger.error(
+                f"JSON parse error at position {pos}. "
+                f"{char_info}. "
+                f"Context: {repr(context)}"
+            )
+            raise ValueError(f"Failed to parse JSON response: {e}") from e
 
     if not isinstance(response, dict):
         raise ValueError(f"Expected dict response, got {type(response)}")

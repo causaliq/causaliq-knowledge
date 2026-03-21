@@ -10,6 +10,7 @@ from causaliq_knowledge.graph.response import (
     GeneratedGraph,
     GenerationMetadata,
     ProposedEdge,
+    _sanitise_json_text,
     parse_adjacency_matrix_response,
     parse_edge_list_response,
     parse_graph_response,
@@ -844,3 +845,101 @@ def test_parse_pdg_response_plain_markdown() -> None:
     assert len(pdg.edges) == 1
     probs = pdg.edges[("a", "b")]
     assert abs(probs.p_exist - 0.8) < 0.001
+
+
+# --- _sanitise_json_text tests ---
+
+
+# Test sanitise with escaped quotes preserves backslash counting.
+def test_sanitise_json_text_escaped_quotes() -> None:
+    """Test that escaped quotes are preserved (backslash counting)."""
+    # A string with escaped quote inside: {"key": "value \"quoted\" end"}
+    text = '{"key": "value \\"quoted\\" end"}'
+    result = _sanitise_json_text(text)
+    # Escaped quotes should remain unchanged
+    assert result == text
+
+
+# Test sanitise with multiple backslashes before quote.
+def test_sanitise_json_text_multiple_backslashes() -> None:
+    """Test backslash counting with multiple backslashes."""
+    # Two backslashes followed by quote = unescaped quote (even count)
+    # The string: {"key": "path\\"}
+    text = '{"key": "path\\\\"}'
+    result = _sanitise_json_text(text)
+    assert result == text
+
+
+# Test sanitise with carriage return control character.
+def test_sanitise_json_text_carriage_return() -> None:
+    """Test that carriage return inside string is escaped."""
+    # JSON with actual \r (carriage return) inside string
+    text = '{"key": "line1\rline2"}'
+    result = _sanitise_json_text(text)
+    # \r should be escaped to \\r
+    assert result == '{"key": "line1\\rline2"}'
+
+
+# Test sanitise with tab control character.
+def test_sanitise_json_text_tab() -> None:
+    """Test that tab inside string is escaped."""
+    # JSON with actual \t (tab) inside string
+    text = '{"key": "col1\tcol2"}'
+    result = _sanitise_json_text(text)
+    # \t should be escaped to \\t
+    assert result == '{"key": "col1\\tcol2"}'
+
+
+# Test sanitise with other control characters uses unicode escape.
+def test_sanitise_json_text_unicode_escape() -> None:
+    """Test that other control chars use unicode escape."""
+    # JSON with form feed (0x0C) inside string
+    text = '{"key": "before\x0cafter"}'
+    result = _sanitise_json_text(text)
+    # Form feed should be escaped as \u000c
+    assert result == '{"key": "before\\u000cafter"}'
+
+
+# Test sanitise preserves newlines outside strings.
+def test_sanitise_json_text_newline_outside_string() -> None:
+    """Test that newlines outside strings are preserved."""
+    text = '{\n    "key": "value"\n}'
+    result = _sanitise_json_text(text)
+    # Newlines outside strings should remain unchanged
+    assert result == text
+
+
+# Test parse_graph_response with truncated JSON reports EOF.
+def test_parse_graph_response_truncated_json() -> None:
+    """Test that truncated JSON triggers parse error."""
+    # Truncated JSON - ends expecting more content
+    response_text = '{"edges": ['
+    with pytest.raises(ValueError, match="Failed to parse JSON"):
+        parse_graph_response(response_text, ["a", "b"])
+
+
+# Test parse_graph_response with minimal truncation triggers EOF diagnostic.
+def test_parse_graph_response_eof_position() -> None:
+    """Test truncated JSON where error position is at EOF."""
+    # Single opening brace - error position will be at len(text)
+    response_text = "{"
+    with pytest.raises(ValueError, match="Failed to parse JSON"):
+        parse_graph_response(response_text, ["a", "b"])
+
+
+# Test parse_pdg_response with truncated JSON reports EOF.
+def test_parse_pdg_response_truncated_json() -> None:
+    """Test that truncated JSON triggers parse error."""
+    # Truncated JSON - ends expecting more content
+    response_text = '{"edges": ['
+    with pytest.raises(ValueError, match="Failed to parse JSON"):
+        parse_pdg_response(response_text, ["a", "b"])
+
+
+# Test parse_pdg_response with minimal truncation triggers EOF diagnostic.
+def test_parse_pdg_response_eof_position() -> None:
+    """Test truncated JSON where error position is at EOF."""
+    # Single opening brace - error position will be at len(text)
+    response_text = "{"
+    with pytest.raises(ValueError, match="Failed to parse JSON"):
+        parse_pdg_response(response_text, ["a", "b"])

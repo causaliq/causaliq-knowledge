@@ -110,7 +110,7 @@ matrix:
   run: [1]
 
 steps:
-  - name: "Generate graph"
+  - name: "Generate graph run {{{{run}}}}"
     uses: "causaliq-knowledge"
     with:
       action: "generate_graph"
@@ -147,7 +147,7 @@ matrix:
   run: [1]
 
 steps:
-  - name: "Generate graph"
+  - name: "Generate graph run {{{{run}}}}"
     uses: "causaliq-knowledge"
     with:
       action: "generate_graph"
@@ -166,8 +166,10 @@ steps:
 
     assert len(results) == 1
     step_results = results[0]["steps"]
-    assert "Generate graph" in step_results
-    assert step_results["Generate graph"]["status"] == "would_execute"
+    assert "Generate graph run {{run}}" in step_results
+    assert (
+        step_results["Generate graph run {{run}}"]["status"] == "would_execute"
+    )
 
 
 # Test workflow run execution with mocked LLM.
@@ -193,7 +195,7 @@ matrix:
   run: [1]
 
 steps:
-  - name: "Generate graph"
+  - name: "Generate graph run {{{{run}}}}"
     uses: "causaliq-knowledge"
     with:
       action: "generate_graph"
@@ -234,10 +236,10 @@ steps:
 
     assert len(results) == 1
     step_results = results[0]["steps"]
-    assert "Generate graph" in step_results
-    assert step_results["Generate graph"]["status"] == "success"
+    assert "Generate graph run {{run}}" in step_results
+    assert step_results["Generate graph run {{run}}"]["status"] == "success"
     # Metadata is flattened directly into result
-    assert step_results["Generate graph"]["edge_count"] == 1
+    assert step_results["Generate graph run {{run}}"]["edge_count"] == 1
 
 
 # Test workflow with output directory via causaliq-workflow.
@@ -267,7 +269,7 @@ matrix:
   run: [1]
 
 steps:
-  - name: "Generate graph"
+  - name: "Generate graph run {{{{run}}}}"
     uses: "causaliq-knowledge"
     with:
       action: "generate_graph"
@@ -303,7 +305,7 @@ steps:
 
     # Workflow cache stores objects - verify via cache file
     step_results = results[0]["steps"]
-    assert step_results["Generate graph"]["status"] == "success"
+    assert step_results["Generate graph run {{run}}"]["status"] == "success"
     # Verify cache file was created and contains the PDG
     assert cache_file.exists()
     from causaliq_workflow.cache import WorkflowCache
@@ -345,7 +347,7 @@ matrix:
   run: [1]
 
 steps:
-  - name: "Generate graph"
+  - name: "Generate graph run {{{{run}}}}"
     uses: "causaliq-knowledge"
     with:
       action: "generate_graph"

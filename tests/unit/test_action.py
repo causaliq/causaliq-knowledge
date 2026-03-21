@@ -744,3 +744,79 @@ def test_supported_types_attribute() -> None:
 
     # PDG compression is handled by causaliq-core, not this provider
     assert action.supported_types == set()
+
+
+# Test run with multi-line llm response stores list not string.
+def test_run_multiline_llm_response(tmp_path: Path) -> None:
+    """Test that multi-line LLM response stored as list, not string."""
+    from causaliq_core.graph.pdg import PDG, EdgeProbabilities
+
+    # Create a minimal context file
+    context_file = tmp_path / "model.json"
+    context_file.write_text(
+        '{"schema_version": "2.0", "network": "test", '
+        '"domain": "test", "variables": ['
+        '{"name": "x", "type": "binary"}, '
+        '{"name": "y", "type": "binary"}]}'
+    )
+
+    # Create PDG with edge probabilities
+    mock_pdg = PDG(
+        ["x", "y"],
+        {
+            ("x", "y"): EdgeProbabilities(
+                forward=0.8, backward=0.1, undirected=0.0, none=0.1
+            )
+        },
+    )
+
+    # Create mock result with MULTI-LINE response (has newlines)
+    mock_metadata = MagicMock()
+    mock_metadata.model = "test-model"
+    mock_metadata.provider = "test"
+    mock_metadata.timestamp = MagicMock()
+    mock_metadata.timestamp.isoformat.return_value = "2024-01-01T00:00:00Z"
+    mock_metadata.llm_timestamp = MagicMock()
+    mock_metadata.llm_timestamp.isoformat.return_value = "2024-01-01T00:00:00Z"
+    mock_metadata.llm_latency_ms = 100
+    mock_metadata.input_tokens = 500
+    mock_metadata.output_tokens = 200
+    mock_metadata.from_cache = False
+    mock_metadata.messages = []
+    mock_metadata.temperature = 0.1
+    mock_metadata.max_tokens = 2000
+    mock_metadata.finish_reason = "stop"
+    mock_metadata.llm_cost_usd = 0.001
+    mock_metadata.to_dict.return_value = {}
+
+    mock_result = MagicMock()
+    mock_result.pdg = mock_pdg
+    mock_result.metadata = mock_metadata
+    # Multi-line response - HAS newlines
+    mock_result.raw_response = '{\n  "edges": [\n    {"source": "x"}\n  ]\n}'
+
+    with patch(
+        "causaliq_knowledge.graph.generator.GraphGenerator"
+    ) as mock_generator_class:
+        mock_generator = MagicMock()
+        mock_generator.generate_pdg_from_context.return_value = mock_result
+        mock_generator.get_stats.return_value = {"cache_hits": 0}
+        mock_generator_class.return_value = mock_generator
+
+        action = KnowledgeActionProvider()
+
+        status, metadata, objects = action.run(
+            "generate_graph",
+            {
+                "network_context": str(context_file),
+                "output": "none",
+                "llm_cache": "none",
+            },
+            mode="run",
+        )
+
+    assert status == "success"
+    # Multi-line response should be stored as list
+    assert "llm_response" in metadata
+    assert isinstance(metadata["llm_response"], list)
+    assert len(metadata["llm_response"]) == 5
