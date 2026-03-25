@@ -211,7 +211,7 @@ class GraphGenerator:
                     model=model_name,
                     temperature=config.temperature,
                     max_tokens=config.max_tokens,
-                    timeout=config.timeout,
+                    timeout=600.0,  # Local inference needs longer timeout
                 )
             )
         elif model.startswith("openai/"):

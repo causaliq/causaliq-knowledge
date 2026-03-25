@@ -11,12 +11,79 @@ import json
 import logging
 from dataclasses import dataclass, field
 from datetime import datetime, timezone
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List, Optional, Tuple
 
 from causaliq_core.graph.pdg import PDG, EdgeProbabilities
 from pydantic import BaseModel, Field, field_validator
 
 logger = logging.getLogger(__name__)
+
+
+def _try_parse_json(text: str) -> Tuple[Any, Optional[str]]:
+    """Attempt to parse JSON with fallback for trailing garbage.
+
+    LLMs sometimes append extra characters after valid JSON (e.g., extra
+    closing braces). This function uses raw_decode to extract just the
+    valid JSON portion.
+
+    Args:
+        text: JSON text to parse.
+
+    Returns:
+        Tuple of (parsed_object, error_message). error_message is None
+        on success.
+    """
+    # First try normal parsing
+    try:
+        return json.loads(text), None
+    except json.JSONDecodeError as e:
+        # Check if it's an "Extra data" error - valid JSON followed by junk
+        if "Extra data" in str(e):
+            try:
+                decoder = json.JSONDecoder()
+                obj, _ = decoder.raw_decode(text)
+                logger.warning(
+                    "Recovered from trailing garbage in JSON response"
+                )
+                return obj, None
+            except json.JSONDecodeError:
+                pass  # Fall through to sanitise attempt
+
+        # Try sanitising control characters
+        try:
+            sanitised = _sanitise_json_text(text)
+            return json.loads(sanitised), None
+        except json.JSONDecodeError:
+            pass
+
+        # Try raw_decode on sanitised text for Extra data errors
+        try:
+            sanitised = _sanitise_json_text(text)
+            decoder = json.JSONDecoder()
+            obj, _ = decoder.raw_decode(sanitised)
+            logger.warning(
+                "Recovered from trailing garbage in sanitised JSON response"
+            )
+            return obj, None
+        except json.JSONDecodeError:
+            pass
+
+        # All recovery attempts failed - return diagnostic error
+        pos = e.pos if hasattr(e, "pos") else 0
+        context_start = max(0, pos - 50)
+        context_end = min(len(text), pos + 50)
+        context = text[context_start:context_end]
+        if pos < len(text):
+            char_at_pos = text[pos]
+            char_info = f"Char: {repr(char_at_pos)} (0x{ord(char_at_pos):02x})"
+        else:
+            char_info = "Char: EOF"
+        error_msg = (
+            f"JSON parse error at position {pos}. "
+            f"{char_info}. "
+            f"Context: {repr(context)}"
+        )
+        return None, f"{error_msg}\nOriginal error: {e}"
 
 
 def _sanitise_json_text(text: str) -> str:
@@ -523,32 +590,10 @@ def parse_graph_response(
         text = text[:-3]
     text = text.strip()
 
-    try:
-        response = json.loads(text)
-    except json.JSONDecodeError as e:
-        # Try sanitising control characters that LLMs sometimes include
-        try:
-            sanitised = _sanitise_json_text(text)
-            response = json.loads(sanitised)
-        except json.JSONDecodeError:
-            # Log diagnostic info about the problematic character
-            pos = e.pos if hasattr(e, "pos") else 0
-            context_start = max(0, pos - 50)
-            context_end = min(len(text), pos + 50)
-            context = text[context_start:context_end]
-            if pos < len(text):
-                char_at_pos = text[pos]
-                char_info = (
-                    f"Char: {repr(char_at_pos)} (0x{ord(char_at_pos):02x})"
-                )
-            else:
-                char_info = "Char: EOF"
-            logger.error(
-                f"JSON parse error at position {pos}. "
-                f"{char_info}. "
-                f"Context: {repr(context)}"
-            )
-            raise ValueError(f"Failed to parse JSON response: {e}") from e
+    response, error = _try_parse_json(text)
+    if error:
+        logger.error(error)
+        raise ValueError(f"Failed to parse JSON response: {error}")
 
     if output_format == "adjacency_matrix":
         return parse_adjacency_matrix_response(response, variables)
@@ -603,32 +648,10 @@ def parse_pdg_response(
         text = text[:-3]
     text = text.strip()
 
-    try:
-        response = json.loads(text)
-    except json.JSONDecodeError as e:
-        # Try sanitising control characters that LLMs sometimes include
-        try:
-            sanitised = _sanitise_json_text(text)
-            response = json.loads(sanitised)
-        except json.JSONDecodeError:
-            # Log diagnostic info about the problematic character
-            pos = e.pos if hasattr(e, "pos") else 0
-            context_start = max(0, pos - 50)
-            context_end = min(len(text), pos + 50)
-            context = text[context_start:context_end]
-            if pos < len(text):
-                char_at_pos = text[pos]
-                char_info = (
-                    f"Char: {repr(char_at_pos)} (0x{ord(char_at_pos):02x})"
-                )
-            else:
-                char_info = "Char: EOF"
-            logger.error(
-                f"JSON parse error at position {pos}. "
-                f"{char_info}. "
-                f"Context: {repr(context)}"
-            )
-            raise ValueError(f"Failed to parse JSON response: {e}") from e
+    response, error = _try_parse_json(text)
+    if error:
+        logger.error(error)
+        raise ValueError(f"Failed to parse JSON response: {error}")
 
     if not isinstance(response, dict):
         raise ValueError(f"Expected dict response, got {type(response)}")

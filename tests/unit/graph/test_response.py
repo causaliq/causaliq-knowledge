@@ -943,3 +943,31 @@ def test_parse_pdg_response_eof_position() -> None:
     response_text = "{"
     with pytest.raises(ValueError, match="Failed to parse JSON"):
         parse_pdg_response(response_text, ["a", "b"])
+
+
+# --- _try_parse_json trailing garbage recovery tests ---
+
+
+# Test parse_pdg_response recovers from trailing extra braces.
+def test_parse_pdg_response_trailing_brace() -> None:
+    """Test that trailing garbage (extra braces) is handled gracefully."""
+    # JSON with extra closing brace - simulates LLM output error
+    response_text = (
+        '{"edges":[{"source":"a","target":"b",'
+        '"existence":0.9,"orientation":0.8}]}}'
+    )
+    pdg = parse_pdg_response(response_text, ["a", "b"])
+    assert ("a", "b") in pdg.edges
+
+
+# Test parse_graph_response recovers from trailing extra braces.
+def test_parse_graph_response_trailing_brace() -> None:
+    """Test that trailing garbage (extra braces) is handled gracefully."""
+    # JSON with extra closing brace - simulates LLM output error
+    response_text = (
+        '{"edges":[{"source":"a","target":"b","confidence":0.9}],'
+        '"reasoning":"test"}}'
+    )
+    result = parse_graph_response(response_text, ["a", "b"])
+    assert len(result.edges) == 1
+    assert result.edges[0].source == "a"
