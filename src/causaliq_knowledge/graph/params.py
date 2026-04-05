@@ -76,6 +76,13 @@ class GenerateGraphParams(BaseModel):
         le=100000,
         description="Maximum tokens in LLM response",
     )
+    llm_seed: Optional[int] = Field(
+        default=None,
+        description=(
+            "Seed index for multi-sampling. Included in cache key "
+            "to allow multiple samples with the same parameters."
+        ),
+    )
 
     model_config = {"arbitrary_types_allowed": True}
 

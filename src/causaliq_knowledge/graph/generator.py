@@ -78,6 +78,7 @@ class GraphGeneratorConfig:
     prompt_detail: PromptDetail = PromptDetail.STANDARD
     use_llm_names: bool = True
     request_id: str = ""
+    sample_index: Optional[int] = None
 
 
 class GraphGenerator:
@@ -286,7 +287,7 @@ class GraphGenerator:
         Returns:
             16-character hex string cache key with graph prefix.
         """
-        key_data = {
+        key_data: dict[str, Any] = {
             "type": "graph_generation",
             "model": self._model,
             "output_format": self._config.output_format.value,
@@ -295,6 +296,8 @@ class GraphGenerator:
             "user_prompt": user_prompt,
             "temperature": self._config.temperature,
         }
+        if self._config.sample_index is not None:
+            key_data["sample_index"] = self._config.sample_index
         key_json = json.dumps(key_data, sort_keys=True, separators=(",", ":"))
         return "graph_" + hashlib.sha256(key_json.encode()).hexdigest()[:12]
 
@@ -456,13 +459,19 @@ class GraphGenerator:
 
         if self._cache is not None and self._client.use_cache:
             response = self._client.cached_completion(
-                messages, request_id=self._config.request_id
+                messages,
+                request_id=self._config.request_id,
+                sample_index=self._config.sample_index,
+                max_tokens=self._config.max_tokens,
             )
             # Check if response was from cache by comparing timing
             latency_ms = int((time.perf_counter() - start_time) * 1000)
             from_cache = latency_ms < 50
         else:
-            response = self._client.completion(messages)
+            response = self._client.completion(
+                messages,
+                max_tokens=self._config.max_tokens,
+            )
 
         latency_ms = int((time.perf_counter() - start_time) * 1000)
         logger.debug(f"PDG generation completed in {latency_ms}ms")
@@ -534,14 +543,20 @@ class GraphGenerator:
 
         if self._cache is not None and self._client.use_cache:
             response = self._client.cached_completion(
-                messages, request_id=self._config.request_id
+                messages,
+                request_id=self._config.request_id,
+                sample_index=self._config.sample_index,
+                max_tokens=self._config.max_tokens,
             )
             # Check if response was from cache by comparing timing
             latency_ms = int((time.perf_counter() - start_time) * 1000)
             # If latency is very low, likely from cache
             from_cache = latency_ms < 50
         else:
-            response = self._client.completion(messages)
+            response = self._client.completion(
+                messages,
+                max_tokens=self._config.max_tokens,
+            )
 
         latency_ms = int((time.perf_counter() - start_time) * 1000)
 

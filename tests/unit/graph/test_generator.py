@@ -438,6 +438,32 @@ def test_cache_key_differs_for_different_prompts(mocker) -> None:
     assert key1 != key2
 
 
+# Test cache key includes sample_index when set.
+def test_cache_key_includes_sample_index(mocker) -> None:
+    mock_groq = mocker.patch("causaliq_knowledge.graph.generator.GroqClient")
+    mock_groq.return_value = mocker.MagicMock()
+    config = GraphGeneratorConfig(sample_index=3)
+    generator = GraphGenerator(model="groq/test-model", config=config)
+
+    from causaliq_knowledge.graph.prompts import GraphQueryPrompt
+
+    prompt = GraphQueryPrompt(
+        variables=[{"name": "a"}],
+        level=PromptDetail.MINIMAL,
+    )
+    system, user = prompt.build()
+
+    key_with_index = generator._build_cache_key(prompt, system, user)
+
+    # Same generator without sample_index should differ.
+    config_none = GraphGeneratorConfig(sample_index=None)
+    gen_none = GraphGenerator(model="groq/test-model", config=config_none)
+    key_without_index = gen_none._build_cache_key(prompt, system, user)
+
+    assert key_with_index != key_without_index
+    assert key_with_index.startswith("graph_")
+
+
 # --- GraphGenerator generate_from_context tests ---
 
 

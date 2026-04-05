@@ -238,6 +238,7 @@ class BaseLLMClient(ABC):
         messages: List[Dict[str, str]],
         temperature: Optional[float] = None,
         max_tokens: Optional[int] = None,
+        sample_index: Optional[int] = None,
     ) -> str:
         """Build a deterministic cache key for the request.
 
@@ -248,12 +249,13 @@ class BaseLLMClient(ABC):
             messages: List of message dicts with "role" and "content" keys.
             temperature: Sampling temperature (defaults to config value).
             max_tokens: Maximum tokens (defaults to config value).
+            sample_index: Optional index for multi-sampling cache busting.
 
         Returns:
             16-character hex string cache key.
         """
         config = getattr(self, "config", LLMConfig(model="unknown"))
-        key_data = {
+        key_data: dict[str, Any] = {
             "model": config.model,
             "messages": messages,
             "temperature": (
@@ -263,6 +265,8 @@ class BaseLLMClient(ABC):
                 max_tokens if max_tokens is not None else config.max_tokens
             ),
         }
+        if sample_index is not None:
+            key_data["sample_index"] = sample_index
         key_json = json.dumps(key_data, sort_keys=True, separators=(",", ":"))
         return hashlib.sha256(key_json.encode()).hexdigest()[:16]
 
@@ -318,10 +322,15 @@ class BaseLLMClient(ABC):
         # Extract request_id (not part of cache key)
         request_id = kwargs.pop("request_id", "")
 
+        # Extract sample_index (IS part of cache key)
+        sample_index = kwargs.pop("sample_index", None)
+
         # Build cache key
         temperature = kwargs.get("temperature")
         max_tokens = kwargs.get("max_tokens")
-        cache_key = self._build_cache_key(messages, temperature, max_tokens)
+        cache_key = self._build_cache_key(
+            messages, temperature, max_tokens, sample_index
+        )
 
         # Check cache
         if use_cache and cache is not None:

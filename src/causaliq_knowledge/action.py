@@ -121,6 +121,13 @@ def _create_action_inputs() -> Dict[str, Any]:
             default=4000,
             type_hint="int",
         ),
+        "llm_seed": ActionInput(
+            name="llm_seed",
+            description="Seed index for multi-sampling (busts cache)",
+            required=False,
+            default=None,
+            type_hint="int",
+        ),
     }
 
 
@@ -407,6 +414,7 @@ class KnowledgeActionProvider(CausalIQActionProvider):
                 prompt_detail=params.prompt_detail,
                 use_llm_names=use_llm_names,
                 request_id=request_id,
+                sample_index=params.llm_seed,
             )
             generator = GraphGenerator(
                 model=params.llm_model, config=config, cache=llm_cache

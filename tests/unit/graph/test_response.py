@@ -11,6 +11,7 @@ from causaliq_knowledge.graph.response import (
     GenerationMetadata,
     ProposedEdge,
     _sanitise_json_text,
+    _try_parse_json,
     parse_adjacency_matrix_response,
     parse_edge_list_response,
     parse_graph_response,
@@ -943,6 +944,58 @@ def test_parse_pdg_response_eof_position() -> None:
     response_text = "{"
     with pytest.raises(ValueError, match="Failed to parse JSON"):
         parse_pdg_response(response_text, ["a", "b"])
+
+
+# --- _try_parse_json sanitise fallback tests ---
+
+
+# Test _try_parse_json falls through when raw_decode also fails.
+def test_try_parse_json_raw_decode_fallthrough(monkeypatch) -> None:
+    """Test Extra data path falls through to sanitise when raw_decode fails."""
+    import json as _json
+
+    original_raw_decode = _json.JSONDecoder.raw_decode
+    call_count = 0
+
+    def _failing_on_second(self, s, idx=0):
+        nonlocal call_count
+        call_count += 1
+        # Let the first call (inside json.loads) succeed normally
+        # so json.loads raises "Extra data". Fail on explicit call.
+        if call_count <= 1:
+            return original_raw_decode(self, s, idx)
+        raise _json.JSONDecodeError("Unexpected", s, 0)
+
+    monkeypatch.setattr(_json.JSONDecoder, "raw_decode", _failing_on_second)
+
+    # Text with trailing garbage triggers "Extra data"
+    text = '{"a": 1}  extra'
+    obj, err = _try_parse_json(text)
+    # The explicit raw_decode call should fail, falling through
+    # to the sanitise path. Sanitise won't help either, so we
+    # expect the error diagnostic.
+    assert obj is None
+    assert err is not None
+
+
+# Test _try_parse_json recovers via sanitise for control chars.
+def test_try_parse_json_sanitise_fallback() -> None:
+    """Test sanitise fallback when control chars break parsing."""
+    # JSON with a raw tab inside a string value — invalid JSON
+    text = '{"key": "val\tue"}'
+    obj, err = _try_parse_json(text)
+    assert err is None
+    assert obj == {"key": "val\tue"}
+
+
+# Test _try_parse_json recovers via sanitise + raw_decode.
+def test_try_parse_json_sanitise_raw_decode_fallback() -> None:
+    """Test sanitise then raw_decode for control chars + trailing garbage."""
+    # JSON with raw tab inside string AND trailing extra brace
+    text = '{"key": "val\tue"}}'
+    obj, err = _try_parse_json(text)
+    assert err is None
+    assert obj == {"key": "val\tue"}
 
 
 # --- _try_parse_json trailing garbage recovery tests ---

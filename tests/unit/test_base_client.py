@@ -400,6 +400,21 @@ def test_build_cache_key_empty_messages():
     assert all(c in "0123456789abcdef" for c in key)
 
 
+# Test _build_cache_key includes sample_index when provided.
+def test_build_cache_key_with_sample_index():
+    MockClient = _create_mock_client_class()
+    config = LLMConfig(model="test-model")
+    client = MockClient(config)
+
+    msgs = [{"role": "user", "content": "Hello"}]
+    key_none = client._build_cache_key(msgs)
+    key_with = client._build_cache_key(msgs, sample_index=2)
+
+    assert key_none != key_with
+    assert len(key_with) == 16
+    assert all(c in "0123456789abcdef" for c in key_with)
+
+
 # --- Cache Integration Tests ---
 
 
