@@ -30,6 +30,8 @@ class AnthropicConfig(LLMConfig):
         api_key: Anthropic API key (falls back to ANTHROPIC_API_KEY env var).
     """
 
+    MAX_OUTPUT_TOKENS: int = 16384
+
     model: str = "claude-sonnet-4-20250514"
     temperature: float = 0.1
     max_tokens: int = 500
@@ -44,6 +46,8 @@ class AnthropicConfig(LLMConfig):
             raise ValueError(
                 "ANTHROPIC_API_KEY environment variable is required"
             )
+        if self.max_tokens > self.MAX_OUTPUT_TOKENS:
+            self.max_tokens = self.MAX_OUTPUT_TOKENS
 
 
 class AnthropicClient(BaseLLMClient):

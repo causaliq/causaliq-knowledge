@@ -30,6 +30,8 @@ class GeminiConfig(LLMConfig):
         api_key: Gemini API key (falls back to GEMINI_API_KEY env var).
     """
 
+    MAX_OUTPUT_TOKENS: int = 65536
+
     model: str = "gemini-2.5-flash"
     temperature: float = 0.1
     max_tokens: int = 500
@@ -42,6 +44,8 @@ class GeminiConfig(LLMConfig):
             self.api_key = os.getenv("GEMINI_API_KEY")
         if not self.api_key:
             raise ValueError("GEMINI_API_KEY environment variable is required")
+        if self.max_tokens > self.MAX_OUTPUT_TOKENS:
+            self.max_tokens = self.MAX_OUTPUT_TOKENS
 
 
 class GeminiClient(BaseLLMClient):

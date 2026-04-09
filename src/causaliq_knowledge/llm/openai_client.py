@@ -27,6 +27,8 @@ class OpenAIConfig(OpenAICompatConfig):
         api_key: OpenAI API key (falls back to OPENAI_API_KEY env var).
     """
 
+    MAX_OUTPUT_TOKENS: int = 32768
+
     model: str = "gpt-4o-mini"
     temperature: float = 0.1
     max_tokens: int = 500
@@ -39,6 +41,8 @@ class OpenAIConfig(OpenAICompatConfig):
             self.api_key = os.getenv("OPENAI_API_KEY")
         if not self.api_key:
             raise ValueError("OPENAI_API_KEY environment variable is required")
+        if self.max_tokens > self.MAX_OUTPUT_TOKENS:
+            self.max_tokens = self.MAX_OUTPUT_TOKENS
 
 
 class OpenAIClient(OpenAICompatClient):

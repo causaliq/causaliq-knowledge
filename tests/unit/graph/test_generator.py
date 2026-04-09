@@ -34,7 +34,7 @@ def test_generator_config_defaults() -> None:
     config = GraphGeneratorConfig()
     assert config.temperature == 0.1
     assert config.max_tokens == 2000
-    assert config.timeout == 60.0
+    assert config.timeout == 120.0
     assert config.output_format == OutputFormat.EDGE_LIST
     assert config.prompt_detail == PromptDetail.STANDARD
 

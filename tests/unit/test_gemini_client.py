@@ -746,3 +746,13 @@ def test_gemini_client_list_models_generic_exception(monkeypatch):
 
     with pytest.raises(ValueError, match="Failed to list Gemini models"):
         client.list_models()
+
+
+# Test GeminiConfig clamps max_tokens to MAX_OUTPUT_TOKENS.
+def test_gemini_config_clamps_max_tokens():
+    config = GeminiConfig(
+        api_key="test-key",
+        max_tokens=999999,
+    )
+
+    assert config.max_tokens == GeminiConfig.MAX_OUTPUT_TOKENS

@@ -76,6 +76,12 @@ class GenerateGraphParams(BaseModel):
         le=100000,
         description="Maximum tokens in LLM response",
     )
+    llm_timeout: float = Field(
+        default=120.0,
+        ge=10.0,
+        le=600.0,
+        description="LLM request timeout in seconds (10-600)",
+    )
     llm_seed: Optional[int] = Field(
         default=None,
         description=(

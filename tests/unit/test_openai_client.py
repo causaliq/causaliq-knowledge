@@ -601,3 +601,13 @@ def test_openai_compat_base_filter_models_default(monkeypatch):
     result = OpenAICompatClient._filter_models(client, models)
 
     assert result == models
+
+
+# Test OpenAIConfig clamps max_tokens to MAX_OUTPUT_TOKENS.
+def test_openai_config_clamps_max_tokens():
+    config = OpenAIConfig(
+        api_key="test-key",
+        max_tokens=999999,
+    )
+
+    assert config.max_tokens == OpenAIConfig.MAX_OUTPUT_TOKENS

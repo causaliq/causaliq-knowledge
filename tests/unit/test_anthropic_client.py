@@ -466,3 +466,13 @@ def test_anthropic_list_models_generic_error(mocker):
     models = client.list_models()
 
     assert models == []
+
+
+# Test AnthropicConfig clamps max_tokens to MAX_OUTPUT_TOKENS.
+def test_anthropic_config_clamps_max_tokens():
+    config = AnthropicConfig(
+        api_key="test-key",
+        max_tokens=999999,
+    )
+
+    assert config.max_tokens == AnthropicConfig.MAX_OUTPUT_TOKENS

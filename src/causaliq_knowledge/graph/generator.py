@@ -73,7 +73,7 @@ class GraphGeneratorConfig:
 
     temperature: float = 0.1
     max_tokens: int = 2000
-    timeout: float = 60.0
+    timeout: float = 120.0
     output_format: OutputFormat = OutputFormat.EDGE_LIST
     prompt_detail: PromptDetail = PromptDetail.STANDARD
     use_llm_names: bool = True
@@ -462,7 +462,6 @@ class GraphGenerator:
                 messages,
                 request_id=self._config.request_id,
                 sample_index=self._config.sample_index,
-                max_tokens=self._config.max_tokens,
             )
             # Check if response was from cache by comparing timing
             latency_ms = int((time.perf_counter() - start_time) * 1000)
@@ -470,7 +469,6 @@ class GraphGenerator:
         else:
             response = self._client.completion(
                 messages,
-                max_tokens=self._config.max_tokens,
             )
 
         latency_ms = int((time.perf_counter() - start_time) * 1000)
@@ -546,7 +544,6 @@ class GraphGenerator:
                 messages,
                 request_id=self._config.request_id,
                 sample_index=self._config.sample_index,
-                max_tokens=self._config.max_tokens,
             )
             # Check if response was from cache by comparing timing
             latency_ms = int((time.perf_counter() - start_time) * 1000)
@@ -555,7 +552,6 @@ class GraphGenerator:
         else:
             response = self._client.completion(
                 messages,
-                max_tokens=self._config.max_tokens,
             )
 
         latency_ms = int((time.perf_counter() - start_time) * 1000)

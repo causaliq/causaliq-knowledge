@@ -411,6 +411,7 @@ class KnowledgeActionProvider(CausalIQActionProvider):
             config = GraphGeneratorConfig(
                 temperature=params.llm_temperature,
                 max_tokens=params.llm_max_tokens,
+                timeout=params.llm_timeout,
                 prompt_detail=params.prompt_detail,
                 use_llm_names=use_llm_names,
                 request_id=request_id,
