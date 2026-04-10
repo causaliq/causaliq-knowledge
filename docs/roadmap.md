@@ -1,6 +1,6 @@
 # CausalIQ Knowledge - Development Roadmap
 
-**Last updated**: February 20, 2026  
+**Last updated**: April 10, 2026  
 
 This project roadmap fits into the [overall ecosystem roadmap](https://causaliq.org/projects/ecosystem_roadmap/)
 
@@ -23,17 +23,9 @@ generation.
 
 - **v0.5.0 - Workflow Integration** [February 2026]: Integration into CausalIQ Workflows including writing results to cache.
 
+- **v0.6.0 - Statistical Fusion** [April 2026]: PDG output with separate existence and orientation probabilities, multi-sampling support, and improved LLM response handling.
+
 ## 🛣️ Upcoming Releases (speculative)
-
-### Release v0.6.0 - Statistical Fusion
-
-Support knowledge requirements for fusing LLM knowledge and statistical graph averaging.
-
-**Scope**:
-
-- graph generation returns separate existence and orientation probabilities
-- integrate with latest infrastructure to record graph ede probabilities
-
 
 ### Release v0.7.0 - LLM Provider Cost Tracking
 

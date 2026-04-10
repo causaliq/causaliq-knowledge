@@ -44,9 +44,9 @@ generation.
 
 - **v0.5.0 - Workflow Integration** [February 2026]: Integration into CausalIQ Workflows including writing results to cache.
 
-## 🛣️ Upcoming Releases (speculative)
+- **v0.6.0 - PDG Generation** [April 2026]: PDG output with separate existence and orientation probabilities, multi-sampling support, and improved LLM response handling.
 
-- **Release v0.6.0 - Statistical Fusion**: Support knowledge requirements for fusing LLM knowledge and statistical graph averaging.
+## 🛣️ Upcoming Releases (speculative)
 
 - **Release v0.7.0 - LLM Provider Cost Tracking**: Query LLM provider APIs for usage and cost statistics.
 

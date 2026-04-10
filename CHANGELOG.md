@@ -31,6 +31,44 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Nothing yet
 
+## [0.6.0] - PDG Generation - 2026-04-10
+
+PDG output with separate existence and orientation probabilities,
+multi-sampling support, and improved LLM response handling.
+
+### Added
+
+- **PDG Output Format**: Graph generation now returns a Probabilistic
+  Dependency Graph (PDG) with separate existence and orientation
+  probabilities for each proposed edge, replacing the previous
+  edge-list format
+- **Multi-Sampling**: `llm_seed` parameter for generating multiple
+  samples with the same parameters using per-sample cache keys
+- **Provider-Specific Limits**: Automatic timeout and token limit
+  adjustment based on LLM provider capabilities
+- **`llm_max_tokens` Parameter**: Configurable maximum tokens in LLM
+  response (default 4000, range 100-100000)
+- **`llm_timeout` Parameter**: Configurable request timeout in seconds
+  (default 120, range 10-600)
+- **Malformed Response Handling**: Recovery from trailing garbage,
+  control characters, and other common LLM response issues
+
+### Changed
+
+- **Action Pattern**: `generate_graph` now conforms to CREATE action
+  pattern, generating new PDG entries in the workflow cache
+- **Template Method Pattern**: `CausalIQActionProvider` migrated to
+  template method pattern with `validate_parameters` hook
+- **Command Naming**: CLI commands and parameters follow CausalIQ
+  hyphenated conventions (e.g., `generate-graph`, `--llm-model`)
+- **Dependencies**: Updated to `causaliq-workflow>=0.5.0` and
+  `causaliq-core>=0.7.0`
+
+### Fixed
+
+- Corrected OpenAI cost calculations
+- Improved error messages when action parameters are missing
+
 ## [0.5.0] - Workflow Integration - 2026-02-20
 
 Integration into CausalIQ Workflows including writing results to cache.

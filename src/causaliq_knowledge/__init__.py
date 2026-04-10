@@ -4,7 +4,7 @@ causaliq-knowledge: LLM and human knowledge for causal discovery.
 
 from causaliq_knowledge.action import ActionProvider
 
-__version__ = "0.6.0.dev2"
+__version__ = "0.6.0"
 __author__ = "CausalIQ"
 __email__ = "info@causaliq.com"
 
@@ -16,7 +16,7 @@ __url__ = "https://github.com/causaliq/causaliq-knowledge"
 __license__ = "MIT"
 
 # Version tuple for programmatic access (major, minor, patch)
-VERSION = (0, 4, 0)
+VERSION = (0, 6, 0)
 
 __all__ = [
     "__version__",
