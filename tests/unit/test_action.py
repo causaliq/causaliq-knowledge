@@ -12,6 +12,7 @@ from unittest.mock import MagicMock, patch
 import pytest
 from causaliq_core.graph.io import graphml
 
+from causaliq_knowledge import __version__
 from causaliq_knowledge.action import (
     SUPPORTED_ACTIONS,
     ActionProvider,
@@ -84,10 +85,11 @@ def test_supported_actions() -> None:
 # Test action class attributes.
 def test_action_class_attributes() -> None:
     """Test action class has required metadata attributes."""
-    assert KnowledgeActionProvider.name == "causaliq-knowledge"
-    assert KnowledgeActionProvider.version == "0.5.0"
-    assert KnowledgeActionProvider.description != ""
-    assert KnowledgeActionProvider.author == "CausalIQ"
+    action = KnowledgeActionProvider()
+    assert action.name == "causaliq-knowledge"
+    assert action.version == __version__
+    assert action.description != ""
+    assert action.author == "CausalIQ"
 
 
 # Test action has inputs specification.

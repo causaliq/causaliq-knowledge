@@ -166,7 +166,7 @@ class KnowledgeActionProvider(CausalIQActionProvider):
     """
 
     name: str = "causaliq-knowledge"
-    version: str = "0.5.0"
+    version: str = ""  # Set from package __version__ in __init__
     description: str = "Generate causal graphs using LLM knowledge"
     author: str = "CausalIQ"
 
@@ -187,6 +187,9 @@ class KnowledgeActionProvider(CausalIQActionProvider):
 
     def __init__(self) -> None:
         """Initialise action with empty execution metadata."""
+        import causaliq_knowledge
+
+        self.version = causaliq_knowledge.__version__
         super().__init__()
 
     def validate_parameters(
