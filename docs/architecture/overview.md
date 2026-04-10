@@ -40,14 +40,20 @@ This package provides **knowledge services** to other CausalIQ packages, enablin
 ```
 causaliq_knowledge/
 ├── __init__.py              # Package exports
-├── cli.py                   # Command-line interface
 ├── base.py                  # Abstract KnowledgeProvider interface
 ├── models.py                # Pydantic models (EdgeKnowledge, etc.)
 └── llm/
     ├── __init__.py          # LLM module exports
+    ├── base_client.py       # BaseLLMClient abstract interface
     ├── groq_client.py       # Direct Groq API client
     ├── gemini_client.py     # Direct Google Gemini API client
-    ├── prompts.py           # Prompt templates for edge queries
+    ├── openai_client.py     # OpenAI API client
+    ├── anthropic_client.py  # Anthropic API client
+    ├── deepseek_client.py   # DeepSeek API client
+    ├── mistral_client.py    # Mistral API client
+    ├── ollama_client.py     # Local Ollama client
+    ├── openai_compat_client.py  # OpenAI-compatible base
+    ├── cache.py             # LLM cache models
     └── provider.py          # LLMKnowledge implementation
 ```
 
@@ -186,13 +192,19 @@ We use **direct vendor-specific API clients** rather than wrapper libraries like
 
 - **GroqClient**: Direct Groq API via httpx (free tier, fast inference)
 - **GeminiClient**: Direct Google Gemini API via httpx (generous free tier)
+- **OpenAIClient**: Direct OpenAI API via httpx
+- **AnthropicClient**: Direct Anthropic API via httpx
+- **DeepSeekClient**: Direct DeepSeek API via httpx (OpenAI-compatible)
+- **MistralClient**: Direct Mistral API via httpx (OpenAI-compatible)
+- **OllamaClient**: Local Ollama API via httpx
 
 ### Key Dependencies
 
 - **httpx**: HTTP client for API calls
 - **pydantic**: Structured response validation
 - **click**: Command-line interface
-- **diskcache** (v0.3.0): Persistent query caching
+- **causaliq-core**: Cache infrastructure (TokenCache, compressors)
+- **causaliq-workflow**: Workflow action integration
 
 ## Integration Points
 

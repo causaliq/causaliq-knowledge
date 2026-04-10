@@ -93,6 +93,7 @@ LLM-based causal graph generation from network context specifications:
   - GraphQueryPrompt, OutputFormat
 - **[Response Models](graph/response.md)** - Response parsing
   - ProposedEdge, GeneratedGraph, GenerationMetadata
+  - PDG output with existence and orientation probabilities
 
 ### [LLM Client Interface](base_client.md)
 

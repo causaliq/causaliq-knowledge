@@ -7,7 +7,7 @@ These can be used to support, or be compared with, statistical structure
 learning algorithms which will be provided in the `causaliq-discovery` package.
 
 This is a `create` action (see
-[workflow patterns](introduction.md#workflow-action-patterns)) meaning it
+[workflow action patterns](https://workflow.causaliq.org/userguide/action_patterns/)) meaning it
 creates new output entries from each matched input entry.
 
 ## Parameters
@@ -19,6 +19,9 @@ creates new output entries from each matched input entry.
 | `llm_cache` | `-c` | None | LLM cache: `.db` file path or `none` to disable |
 | `llm_model` | `-m` | `groq/llama-3.1-8b-instant` | LLM model identifier |
 | `llm_temperature` | `-t` | 0.1 | LLM temperature (0.0-2.0) |
+| `llm_max_tokens` | | 4000 | Maximum tokens in LLM response (100-100000) |
+| `llm_timeout` | | 120.0 | LLM request timeout in seconds (10-600) |
+| `llm_seed` | | None | Seed index for multi-sampling (busts cache) |
 | `prompt_detail` | `-p` | `standard` | Detail level: `minimal`, `standard`, `rich` |
 | `use_benchmark_names` | `-b` | `false` | Use benchmark names instead of LLM names |
 
@@ -317,23 +320,22 @@ In dry-run mode, it returns validation results without executing:
 
 ## Output File Format
 
-The generated graph JSON file contains:
+The generated graph is saved as a PDG (Probabilistic Dependency Graph) in
+GraphML format. Each edge carries separate existence and orientation
+probabilities:
 
-```json
-{
-    "edges": [
-        {"source": "smoking", "target": "lung_cancer", "confidence": 0.95},
-        {"source": "genetics", "target": "lung_cancer", "confidence": 0.8}
-    ],
-    "variables": ["smoking", "lung_cancer", "genetics"],
-    "reasoning": "Based on epidemiological evidence...",
-    "metadata": {
-        "model": "groq/llama-3.1-8b-instant",
-        "prompt_detail": "standard",
-        "timestamp": "2026-02-04T10:30:00Z"
-    }
-}
+```xml
+<edge source="smoking" target="lung_cancer">
+  <data key="existence">0.95</data>
+  <data key="orientation">0.85</data>
+</edge>
 ```
+
+Where:
+
+- **existence**: Probability that a causal relationship exists (0.0-1.0)
+- **orientation**: Confidence that the direction is source→target vs
+  reverse (0.5 = uncertain, >0.5 = forward, <0.5 = reverse)
 
 ## Environment Setup
 
@@ -438,5 +440,5 @@ llm_cache: "none"
 ## Next Steps
 
 - [Network Context Format](model_specification.md) - Define variables
-- [CLI Reference](introduction.md#graph-generation) - Command-line usage
+- [User Guide](introduction.md) - Getting started and CLI usage
 - [API Reference](../api/overview.md) - Programmatic access

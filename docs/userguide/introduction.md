@@ -79,7 +79,7 @@ reliability and minimal dependencies. Currently supported:
 | Mistral | `MISTRAL_API_KEY` | No | [console.mistral.ai](https://console.mistral.ai) |
 | Ollama | (local) | Yes | [ollama.ai](https://ollama.ai) |
 
-Use [`cqknow list_models`](list_models.md) to see which providers are
+Use [`cqknow list-models`](list_models.md) to see which providers are
 configured and what models are available.
 
 ### Storing API Keys
@@ -110,7 +110,7 @@ Groq offers a generous free tier with extremely fast inference:
 4. Use in code:
 
 ```bash
-cqknow generate_graph -n context.json -o results/ -c cache.db \
+cqknow generate-graph -n context.json -o results/ -c cache.db \
     -m groq/llama-3.1-8b-instant
 ```
 
@@ -124,7 +124,7 @@ Google offers free access to Gemini models:
 4. Use in code:
 
 ```bash
-cqknow generate_graph -n context.json -o results/ -c cache.db \
+cqknow generate-graph -n context.json -o results/ -c cache.db \
     -m gemini/gemini-2.5-flash
 ```
 

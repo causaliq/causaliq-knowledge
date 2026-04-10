@@ -263,20 +263,25 @@ for _, row in uncertain_edges.iterrows():
 - Cached query: <10ms
 - 1000 unique edges: ~20-30 minutes (sequential), ~5 min (parallel)
 
-## Future Extensions
+## Implemented Extensions
 
-### v0.3.0: Caching
+### v0.3.0: Caching ✅
 
-- Disk-based cache keyed by (node_a, node_b, context_hash)
-- Semantic similarity cache for similar variable names
+- SQLite-based cache via TokenCache in causaliq-core
+- Cache keyed by model, prompt, and parameters
 
-### v0.4.0: Rich Context
+### v0.4.0: Rich Context ✅
 
-- Variable descriptions and roles
-- Domain-specific literature retrieval (RAG)
-- Conversation history for follow-up queries
+- Variable descriptions, types, and roles via NetworkContext
+- ViewFilter for minimal/standard/rich context levels
 
-### v0.5.0: Algorithm Integration
+### v0.5.0: Workflow Integration ✅
 
-- Direct integration with structure learning search
-- Knowledge-guided constraint generation
+- GraphCompressor for Workflow Cache storage
+- ActionProvider for workflow step registration
+
+### v0.6.0: Statistical Fusion ✅
+
+- PDG output with separate existence and orientation probabilities
+- Multi-sampling via `llm_seed` parameter
+- Provider-specific timeouts and token limits
