@@ -9,10 +9,10 @@ description = "Incorporating LLM and human knowledge into causal discovery"
 readme = "README.md"
 license = "MIT"
 authors = [
-    {name = "CausalIQ", email = "info@causaliq.com"},
+    {name = "CausalIQ", email = "info@causaliq.org"},
 ]
 maintainers = [
-    {name = "CausalIQ", email = "info@causaliq.com"},
+    {name = "CausalIQ", email = "info@causaliq.org"},
 ]
 classifiers = [
     "Development Status :: 3 - Alpha",

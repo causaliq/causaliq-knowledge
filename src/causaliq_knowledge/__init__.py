@@ -6,7 +6,7 @@ from causaliq_knowledge.action import ActionProvider
 
 __version__ = "0.6.0"
 __author__ = "CausalIQ"
-__email__ = "info@causaliq.com"
+__email__ = "info@causaliq.org"
 
 # Package metadata
 __title__ = "causaliq-knowledge"
