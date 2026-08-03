@@ -161,7 +161,7 @@ line_length = 79
 known_first_party = ["causaliq_knowledge"]
 
 [tool.mypy]
-python_version = "3.9"
+python_version = "3.12"
 warn_return_any = true
 warn_unused_configs = true
 disallow_untyped_defs = true
