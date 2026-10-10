@@ -38,12 +38,12 @@ dependencies = [
 
 [project.optional-dependencies]
 dev = [
-    "causaliq-core>=0.7.0",
+    "causaliq-core>=0.8.0.dev4",
     "pytest>=7.0.0",
     "pytest-cov>=4.0.0",
     "pytest-mock>=3.10.0",
     "black>=25.0.0,<26.0.0",
-    "isort>=5.10.0",
+    "isort>=5.10.0,<9.0.0",
     "flake8>=5.0.0",
     "mypy>=1.0.0",
     "types-requests>=2.32.0",
@@ -52,7 +52,7 @@ dev = [
     "twine>=4.0.0",
 ]
 test = [
-    "causaliq-core>=0.7.0",
+    "causaliq-core>=0.8.0.dev4",
     "causaliq-workflow>=0.5.0",
     "pytest>=7.0.0",
     "pytest-cov>=4.0.0",
@@ -140,17 +140,28 @@ exclude_lines = [
 line-length = 79
 target-version = ['py39']
 include = '\.pyi?$'
-extend-exclude = '''
+# 'dist' is intentionally omitted so package directories named dist are
+# formatted; build artefacts contain no .py files.
+exclude = '''
 /(
-  # directories
-  \.eggs
+  \.direnv
+  | \.eggs
   | \.git
   | \.hg
+  | \.ipynb_checkpoints
   | \.mypy_cache
+  | \.nox
+  | \.pytest_cache
+  | \.ruff_cache
+  | \.svn
   | \.tox
   | \.venv
+  | \.vscode
+  | __pypackages__
+  | _build
+  | buck-out
   | build
-  | dist
+  | venv
 )/
 '''
 
