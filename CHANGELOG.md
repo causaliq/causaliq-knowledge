@@ -13,7 +13,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
-- Nothing yet
+- **Dependency minimums** - require `causaliq-core>=0.8.0.dev7` and
+  `causaliq-workflow>=0.6.0.dev8` for the shared version 2 metadata
+  envelope
 
 ### Deprecated
 
