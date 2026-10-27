@@ -30,8 +30,8 @@ classifiers = [
 keywords = ["causaliq"]
 requires-python = ">=3.9"
 dependencies = [
-    "causaliq-core>=0.8.0.dev7",
-    "causaliq-workflow>=0.6.0.dev8",
+    "causaliq-core>=0.8.0.dev9",
+    "causaliq-workflow>=0.6.0.dev12",
     "click>=8.0.0",
     "httpx>=0.24.0",
     "pydantic>=2.0.0",
@@ -39,8 +39,8 @@ dependencies = [
 
 [project.optional-dependencies]
 dev = [
-    "causaliq-core>=0.8.0.dev7",
-    "causaliq-workflow>=0.6.0.dev8",
+    "causaliq-core>=0.8.0.dev9",
+    "causaliq-workflow>=0.6.0.dev12",
     "pytest>=7.0.0",
     "pytest-cov>=4.0.0",
     "pytest-mock>=3.10.0",
@@ -54,8 +54,8 @@ dev = [
     "twine>=4.0.0",
 ]
 test = [
-    "causaliq-core>=0.8.0.dev7",
-    "causaliq-workflow>=0.6.0.dev8",
+    "causaliq-core>=0.8.0.dev9",
+    "causaliq-workflow>=0.6.0.dev12",
     "pytest>=7.0.0",
     "pytest-cov>=4.0.0",
     "pytest-mock>=3.10.0",

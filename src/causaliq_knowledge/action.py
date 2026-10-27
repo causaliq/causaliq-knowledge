@@ -123,9 +123,11 @@ def _create_action_inputs() -> Dict[str, Any]:
         ),
         "llm_seed": ActionInput(
             name="llm_seed",
-            description="Seed index for multi-sampling (busts cache)",
+            description=(
+                "Seed index for multi-sampling (busts cache). Omit to use "
+                "the provider's single-sample behaviour."
+            ),
             required=False,
-            default=None,
             type_hint="int",
         ),
     }

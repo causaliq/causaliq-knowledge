@@ -68,7 +68,7 @@ def test_generate_graph_metadata_contract(tmp_path: Path) -> None:
     )
 
     assert status == "success"
-    assert envelope["inputs"] == {}
+    assert envelope["parameters"] == {}
     assert envelope["result"]["edge_count"] == 1
     assert envelope["result"]["variable_count"] == 2
     assert envelope["provenance"]["provider"] == "causaliq-knowledge"
