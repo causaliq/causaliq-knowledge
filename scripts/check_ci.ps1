@@ -81,6 +81,12 @@ $allPassed = $allPassed -and $isortResult
 $flake8Result = Test-Command "python -m flake8 src/ tests/" "Flake8 style checking"
 $allPassed = $allPassed -and $flake8Result
 
+# 3b. Code rules report (advisory: nesting depth and statement counts)
+Write-Host ""
+Write-Host "Checking: Code rules report (advisory)..." -ForegroundColor Cyan
+Write-Host "Running: python scripts/check_code_rules.py" -ForegroundColor Gray
+python scripts/check_code_rules.py
+
 # 4. Type checking (unless Fast)
 $mypyResult = $true  # Default to true for Fast mode
 if (-not $Fast) {

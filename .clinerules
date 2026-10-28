@@ -1,0 +1,11 @@
+# CausalIQ Governance Rules
+
+Before planning, coding, writing tests or documentation, or running tests in this package, read and strictly follow the policy files located in the umbrella repository:
+- Planning: `../causaliq/docs/development_policy/00-plan.md`
+- Coding: `../causaliq/docs/development_policy/01-code.md`
+- Writing Tests: `../causaliq/docs/development_policy/02-test-write.md`
+- Running: `../causaliq/docs/development_policy/03-test-run.md`
+- Writing Documentation: `../causaliq/docs/development_policy/04-docs.md`
+
+## Primary Guardrail
+Never mix Feature/Fix Implementation (Hat 1) with Refactoring (Hat 2) in a single task.
