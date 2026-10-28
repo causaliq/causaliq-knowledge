@@ -17,7 +17,7 @@
       
       
       <link rel="icon" href="../../assets/images/favicon.png">
-      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.7.3">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.7.6">
     
     
       
@@ -228,17 +228,18 @@
   
   
   
-    <li class="md-tabs__item">
-      <a href="../../roadmap/" class="md-tabs__link">
-        
-  
-  
     
+    
+      <li class="md-tabs__item">
+        <a href="../../roadmap/" class="md-tabs__link">
+          
+  
   
   Roadmap
 
-      </a>
-    </li>
+        </a>
+      </li>
+    
   
 
       
@@ -376,6 +377,60 @@
   
   
   
+    
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+          
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_2" >
+        
+          
+          <label class="md-nav__link" for="__nav_2" id="__nav_2_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Roadmap
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_2_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_2">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Roadmap
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
     <li class="md-nav__item">
       <a href="../../roadmap/" class="md-nav__link">
         
@@ -393,6 +448,42 @@
   
 
       </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../current_task/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Current Task
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
     </li>
   
 
@@ -2526,7 +2617,9 @@ filenames with the format <code>{id}_{timestamp}_{provider}.json</code>.</p>
 <ul>
 <li>main: Core CLI entry point</li>
 <li>cache: Cache management commands (stats, export, import)</li>
+<li>cache_helpers: Reporting and transfer helpers for the cache commands</li>
 <li>generate: Graph generation commands</li>
+<li>generate_output: GraphML and metadata output writers</li>
 <li>models: Model listing command</li>
 </ul>
 
@@ -2546,10 +2639,24 @@ filenames with the format <code>{id}_{timestamp}_{provider}.json</code>.</p>
           </div>
         </li>
         <li class="doc-section-item field-body">
+          <b><code><span title="causaliq_knowledge.cli.cache_helpers">cache_helpers</span></code></b>
+          –
+          <div class="doc-md-description">
+            <p>Helper functions for the cache management CLI commands.</p>
+          </div>
+        </li>
+        <li class="doc-section-item field-body">
           <b><code><span title="causaliq_knowledge.cli.generate">generate</span></code></b>
           –
           <div class="doc-md-description">
             <p>Graph generation CLI commands.</p>
+          </div>
+        </li>
+        <li class="doc-section-item field-body">
+          <b><code><span title="causaliq_knowledge.cli.generate_output">generate_output</span></code></b>
+          –
+          <div class="doc-md-description">
+            <p>Output writers for the graph generation CLI command.</p>
           </div>
         </li>
         <li class="doc-section-item field-body">
