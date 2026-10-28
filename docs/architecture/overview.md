@@ -101,7 +101,9 @@ causaliq_knowledge/
 ├── cli/                     # Command-line interface
 │   ├── main.py              # Core CLI entry point
 │   ├── cache.py             # Cache management commands
+│   ├── cache_helpers.py     # Cache reporting and transfer helpers
 │   ├── generate.py          # Graph generation commands
+│   ├── generate_output.py   # GraphML and metadata writers
 │   └── models.py            # Model listing command
 └── graph/
     ├── __init__.py          # Module exports
@@ -109,8 +111,12 @@ causaliq_knowledge/
     ├── generator.py         # GraphGenerator class
     ├── view_filter.py       # ViewFilter for context levels
     ├── prompts.py           # GraphQueryPrompt builder
-    ├── response.py          # GeneratedGraph, ProposedEdge
+    ├── response.py          # Response models and parsing (re-exports)
+    ├── response_models.py   # GeneratedGraph, ProposedEdge, metadata
+    ├── response_parsing.py  # Edge list, matrix and PDG parsers
+    ├── json_repair.py       # JSON extraction and repair helpers
     ├── params.py            # GenerateGraphParams
+    ├── cache_metadata.py    # Cached metadata conversion
     └── cache.py             # GraphCompressor for workflow cache
 ```
 

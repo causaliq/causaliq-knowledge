@@ -4,6 +4,17 @@ The `response` module provides data models and parsing functions for LLM graph
 generation responses. It handles both edge list and adjacency matrix formats
 with robust JSON extraction.
 
+The implementation is split across three sibling modules, all re-exported by
+`causaliq_knowledge.graph.response` so existing imports keep working:
+
+- `response_models`: `ProposedEdge`, `GeneratedGraph`, `GenerationMetadata`
+  and `PDGGenerationResult`.
+
+- `response_parsing`: the `parse_*` functions for each response format.
+
+- `json_repair`: JSON extraction, control-character repair and parse
+  diagnostics.
+
 ## Import Pattern
 
 ```python
@@ -173,3 +184,12 @@ position `[i][j]` indicates an edge from `variables[i]` to `variables[j]`.
         - GenerationMetadata
         - GeneratedGraph
         - parse_graph_response
+
+::: causaliq_knowledge.graph.response_parsing
+    options:
+      show_root_heading: false
+      members:
+        - parse_edge_list_response
+        - parse_adjacency_matrix_response
+        - parse_graph_response
+        - parse_pdg_response
