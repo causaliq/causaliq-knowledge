@@ -3,7 +3,7 @@
 import logging
 import os
 from dataclasses import dataclass
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List, NoReturn, Optional
 
 import httpx
 
@@ -48,6 +48,16 @@ class AnthropicConfig(LLMConfig):
             )
         if self.max_tokens > self.MAX_OUTPUT_TOKENS:
             self.max_tokens = self.MAX_OUTPUT_TOKENS
+
+
+def _sorted_model_ids(data: Dict[str, Any]) -> List[str]:
+    """Return the sorted model identifiers of an Anthropic models payload."""
+    models = []
+    for model_info in data.get("data", []):
+        model_id = model_info.get("id")
+        if model_id:
+            models.append(model_id)
+    return sorted(models)
 
 
 class AnthropicClient(BaseLLMClient):
@@ -97,6 +107,33 @@ class AnthropicClient(BaseLLMClient):
         Raises:
             ValueError: If the API request fails.
         """
+        payload = self._build_payload(messages, **kwargs)
+        headers = self._build_headers()
+
+        logger.debug(f"Calling Anthropic API with model: {self.config.model}")
+
+        try:
+            with httpx.Client(timeout=self.config.timeout) as client:
+                response = client.post(
+                    f"{self.BASE_URL}/messages",
+                    json=payload,
+                    headers=headers,
+                )
+                response.raise_for_status()
+                return self._parse_response(response.json())
+
+        except httpx.HTTPStatusError as e:
+            self._raise_http_error(e)
+        except httpx.TimeoutException:
+            raise ValueError("Anthropic API request timed out")
+        except Exception as e:
+            logger.error(f"Anthropic API unexpected error: {e}")
+            raise ValueError(f"Anthropic API error: {str(e)}")
+
+    def _build_payload(
+        self, messages: List[Dict[str, str]], **kwargs: Any
+    ) -> Dict[str, Any]:
+        """Build the Anthropic request payload from chat messages."""
         # Anthropic uses separate system parameter, not in messages
         system_content = None
         filtered_messages = []
@@ -119,78 +156,66 @@ class AnthropicClient(BaseLLMClient):
         if system_content:
             payload["system"] = system_content
 
+        return payload
+
+    def _build_headers(self) -> dict[str, str]:
+        """Build the Anthropic request headers."""
         # api_key is guaranteed non-None after __post_init__ validation
-        headers: dict[str, str] = {
+        return {
             "x-api-key": self.config.api_key,  # type: ignore[dict-item]
             "anthropic-version": self.API_VERSION,
             "Content-Type": "application/json",
         }
 
-        logger.debug(f"Calling Anthropic API with model: {self.config.model}")
+    def _parse_response(self, data: Dict[str, Any]) -> LLMResponse:
+        """Build an LLMResponse from an Anthropic response payload."""
+        # Extract response content from Anthropic format
+        content_blocks = data.get("content", [])
+        content = ""
+        for block in content_blocks:
+            if block.get("type") == "text":
+                content += block.get("text", "")
 
+        # Extract usage info and stop reason
+        usage = data.get("usage", {})
+        input_tokens = usage.get("input_tokens", 0)
+        output_tokens = usage.get("output_tokens", 0)
+        # Anthropic uses stop_reason instead of finish_reason
+        finish_reason = data.get("stop_reason", "end_turn") or "stop"
+
+        self._total_calls += 1
+
+        logger.debug(
+            f"Anthropic response: {input_tokens} in, " f"{output_tokens} out"
+        )
+
+        return LLMResponse(
+            content=content,
+            model=data.get("model", self.config.model),
+            input_tokens=input_tokens,
+            output_tokens=output_tokens,
+            cost=0.0,  # Cost calculation not implemented
+            finish_reason=finish_reason,
+            raw_response=data,
+        )
+
+    def _raise_http_error(self, error: httpx.HTTPStatusError) -> NoReturn:
+        """Raise the ValueError that matches an Anthropic HTTP error."""
         try:
-            with httpx.Client(timeout=self.config.timeout) as client:
-                response = client.post(
-                    f"{self.BASE_URL}/messages",
-                    json=payload,
-                    headers=headers,
-                )
-                response.raise_for_status()
-
-                data = response.json()
-
-                # Extract response content from Anthropic format
-                content_blocks = data.get("content", [])
-                content = ""
-                for block in content_blocks:
-                    if block.get("type") == "text":
-                        content += block.get("text", "")
-
-                # Extract usage info and stop reason
-                usage = data.get("usage", {})
-                input_tokens = usage.get("input_tokens", 0)
-                output_tokens = usage.get("output_tokens", 0)
-                # Anthropic uses stop_reason instead of finish_reason
-                finish_reason = data.get("stop_reason", "end_turn") or "stop"
-
-                self._total_calls += 1
-
-                logger.debug(
-                    f"Anthropic response: {input_tokens} in, "
-                    f"{output_tokens} out"
-                )
-
-                return LLMResponse(
-                    content=content,
-                    model=data.get("model", self.config.model),
-                    input_tokens=input_tokens,
-                    output_tokens=output_tokens,
-                    cost=0.0,  # Cost calculation not implemented
-                    finish_reason=finish_reason,
-                    raw_response=data,
-                )
-
-        except httpx.HTTPStatusError as e:
-            try:
-                error_data = e.response.json()
-                error_msg = error_data.get("error", {}).get(
-                    "message", e.response.text
-                )
-            except Exception:
-                error_msg = e.response.text
-
-            logger.error(
-                f"Anthropic API HTTP error: {e.response.status_code} - "
-                f"{error_msg}"
+            error_data = error.response.json()
+            error_msg = error_data.get("error", {}).get(
+                "message", error.response.text
             )
-            raise ValueError(
-                f"Anthropic API error: {e.response.status_code} - {error_msg}"
-            )
-        except httpx.TimeoutException:
-            raise ValueError("Anthropic API request timed out")
-        except Exception as e:
-            logger.error(f"Anthropic API unexpected error: {e}")
-            raise ValueError(f"Anthropic API error: {str(e)}")
+        except Exception:
+            error_msg = error.response.text
+
+        logger.error(
+            f"Anthropic API HTTP error: {error.response.status_code} - "
+            f"{error_msg}"
+        )
+        raise ValueError(
+            f"Anthropic API error: {error.response.status_code} - {error_msg}"
+        )
 
     def complete_json(
         self, messages: List[Dict[str, str]], **kwargs: Any
@@ -245,15 +270,7 @@ class AnthropicClient(BaseLLMClient):
                     headers=headers,
                 )
                 response.raise_for_status()
-
-                data = response.json()
-                models = []
-                for model_info in data.get("data", []):
-                    model_id = model_info.get("id")
-                    if model_id:
-                        models.append(model_id)
-
-                return sorted(models)
+                return _sorted_model_ids(response.json())
 
         except httpx.HTTPStatusError as e:
             logger.warning(f"Anthropic API error listing models: {e}")

@@ -177,6 +177,87 @@ Consider:
 Identify which variables directly cause others."""
 
 
+# Labels used when formatting variables at the standard and rich levels
+_STANDARD_LABELS = (
+    ("type", "Type"),
+    ("short_description", "Description"),
+)
+
+_RICH_SCALAR_LABELS = (
+    ("type", "Type"),
+    ("role", "Role"),
+    ("category", "Category"),
+    ("short_description", "Description"),
+    ("extended_description", "Extended"),
+)
+
+# Default system prompt per output format
+_SYSTEM_PROMPTS = {
+    OutputFormat.EDGE_LIST: GRAPH_SYSTEM_PROMPT_EDGE_LIST,
+    OutputFormat.ADJACENCY_MATRIX: GRAPH_SYSTEM_PROMPT_ADJACENCY,
+    OutputFormat.PDG: GRAPH_SYSTEM_PROMPT_PDG,
+}
+
+
+def _format_standard_variable(var: dict[str, Any]) -> str:
+    """Format one variable at the standard view level."""
+    parts = [f"- {var.get('name', 'unknown')}"]
+
+    for field_name, label in _STANDARD_LABELS:
+        value = var.get(field_name, "")
+        if value:
+            parts.append(f"  {label}: {value}")
+
+    states = var.get("states", [])
+    if states:
+        parts.append(f"  States: {', '.join(str(s) for s in states)}")
+
+    return "\n".join(parts)
+
+
+def _format_rich_context(var: dict[str, Any]) -> list[str]:
+    """Format the states, hints and knowledge lines of a rich variable."""
+    parts = []
+
+    states = var.get("states", [])
+    if states:
+        parts.append(f"  States: {', '.join(str(s) for s in states)}")
+
+    hints = var.get("sensitivity_hints", "")
+    if hints:
+        parts.append(f"  Causal hints: {hints}")
+
+    knowledge = var.get("related_domain_knowledge", [])
+    if knowledge:
+        knowledge_str = "; ".join(str(k) for k in knowledge)
+        parts.append(f"  Domain knowledge: {knowledge_str}")
+
+    return parts
+
+
+def _format_rich_variable(var: dict[str, Any]) -> str:
+    """Format one variable at the rich view level."""
+    parts = [f"- {var.get('name', 'unknown')}"]
+
+    for field_name, label in _RICH_SCALAR_LABELS:
+        value = var.get(field_name, "")
+        if value:
+            parts.append(f"  {label}: {value}")
+
+    parts.extend(_format_rich_context(var))
+
+    return "\n".join(parts)
+
+
+def _format_variable(var: dict[str, Any], level: PromptDetail) -> str:
+    """Format one variable according to the requested view level."""
+    if level == PromptDetail.MINIMAL:
+        return f"- {var.get('name', 'unknown')}"
+    if level == PromptDetail.STANDARD:
+        return _format_standard_variable(var)
+    return _format_rich_variable(var)
+
+
 def _format_variable_details(
     variables: list[dict[str, Any]],
     level: PromptDetail,
@@ -193,52 +274,7 @@ def _format_variable_details(
     lines = []
 
     for var in variables:
-        name = var.get("name", "unknown")
-
-        if level == PromptDetail.MINIMAL:
-            lines.append(f"- {name}")
-        elif level == PromptDetail.STANDARD:
-            var_type = var.get("type", "")
-            desc = var.get("short_description", "")
-            states = var.get("states", [])
-
-            parts = [f"- {name}"]
-            if var_type:
-                parts.append(f"  Type: {var_type}")
-            if desc:
-                parts.append(f"  Description: {desc}")
-            if states:
-                parts.append(f"  States: {', '.join(str(s) for s in states)}")
-            lines.append("\n".join(parts))
-        else:  # RICH
-            var_type = var.get("type", "")
-            role = var.get("role", "")
-            category = var.get("category", "")
-            short_desc = var.get("short_description", "")
-            extended_desc = var.get("extended_description", "")
-            states = var.get("states", [])
-            hints = var.get("sensitivity_hints", "")
-            knowledge = var.get("related_domain_knowledge", [])
-
-            parts = [f"- {name}"]
-            if var_type:
-                parts.append(f"  Type: {var_type}")
-            if role:
-                parts.append(f"  Role: {role}")
-            if category:
-                parts.append(f"  Category: {category}")
-            if short_desc:
-                parts.append(f"  Description: {short_desc}")
-            if extended_desc:
-                parts.append(f"  Extended: {extended_desc}")
-            if states:
-                parts.append(f"  States: {', '.join(str(s) for s in states)}")
-            if hints:
-                parts.append(f"  Causal hints: {hints}")
-            if knowledge:
-                knowledge_str = "; ".join(str(k) for k in knowledge)
-                parts.append(f"  Domain knowledge: {knowledge_str}")
-            lines.append("\n".join(parts))
+        lines.append(_format_variable(var, level))
 
     return "\n\n".join(lines)
 
@@ -296,19 +332,20 @@ class GraphQueryPrompt:
             >>> # user contains the variable query
         """
         # Select system prompt based on output format
-        if self.system_prompt:
-            system = self.system_prompt
-        elif self.output_format == OutputFormat.ADJACENCY_MATRIX:
-            system = GRAPH_SYSTEM_PROMPT_ADJACENCY
-        elif self.output_format == OutputFormat.PDG:
-            system = GRAPH_SYSTEM_PROMPT_PDG
-        else:
-            system = GRAPH_SYSTEM_PROMPT_EDGE_LIST
+        system = self._select_system_prompt()
 
         # Build user prompt based on view level
         user = self._build_user_prompt()
 
         return system, user
+
+    def _select_system_prompt(self) -> str:
+        """Return the system prompt configured for this query."""
+        if self.system_prompt:
+            return self.system_prompt
+        return _SYSTEM_PROMPTS.get(
+            self.output_format, GRAPH_SYSTEM_PROMPT_EDGE_LIST
+        )
 
     def _build_user_prompt(self) -> str:
         """Build the user prompt based on view level and domain.

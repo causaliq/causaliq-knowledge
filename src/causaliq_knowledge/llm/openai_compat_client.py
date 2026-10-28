@@ -7,7 +7,7 @@ the OpenAI API format (OpenAI, DeepSeek, Mistral, etc.).
 import logging
 from abc import abstractmethod
 from dataclasses import dataclass
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List, NoReturn, Optional
 
 import httpx
 
@@ -99,19 +99,7 @@ class OpenAICompatClient(BaseLLMClient):
         Raises:
             ValueError: If the API request fails.
         """
-        # Build request payload
-        payload = {
-            "model": self.config.model,
-            "messages": messages,
-            "temperature": kwargs.get("temperature", self.config.temperature),
-            "max_tokens": kwargs.get("max_tokens", self.config.max_tokens),
-            "stream": False,
-        }
-
-        headers = {
-            "Authorization": f"Bearer {self.config.api_key}",
-            "Content-Type": "application/json",
-        }
+        payload = self._build_payload(messages, **kwargs)
 
         logger.debug(
             f"Calling {self.PROVIDER_NAME} API with model: {payload['model']}"
@@ -122,50 +110,74 @@ class OpenAICompatClient(BaseLLMClient):
                 response = client.post(
                     f"{self.BASE_URL}/chat/completions",
                     json=payload,
-                    headers=headers,
+                    headers=self._build_headers(),
                 )
                 response.raise_for_status()
-
-                data = response.json()
-
-                # Extract response data
-                content = data["choices"][0]["message"]["content"] or ""
-                finish_reason = data["choices"][0].get("finish_reason", "stop")
-                usage = data.get("usage", {})
-                input_tokens = usage.get("prompt_tokens", 0)
-                output_tokens = usage.get("completion_tokens", 0)
-
-                self._total_calls += 1
-
-                logger.debug(
-                    f"{self.PROVIDER_NAME} response: "
-                    f"{input_tokens} in, {output_tokens} out"
-                )
-
-                # Calculate cost
-                cost = self._calculate_cost(
-                    self.config.model, input_tokens, output_tokens
-                )
-
-                return LLMResponse(
-                    content=content,
-                    model=data.get("model", self.config.model),
-                    input_tokens=input_tokens,
-                    output_tokens=output_tokens,
-                    cost=cost,
-                    finish_reason=finish_reason,
-                    raw_response=data,
-                )
+                return self._parse_response(response.json())
 
         except httpx.HTTPStatusError as e:
-            msg = f"{self.PROVIDER_NAME} API error: {e.response.status_code}"
-            logger.error(f"{msg} - {e.response.text}")
-            raise ValueError(f"{msg} - {e.response.text}")
+            self._raise_http_error(e)
         except httpx.TimeoutException:
             raise ValueError(f"{self.PROVIDER_NAME} API request timed out")
         except Exception as e:
             logger.error(f"{self.PROVIDER_NAME} API unexpected error: {e}")
             raise ValueError(f"{self.PROVIDER_NAME} API error: {str(e)}")
+
+    def _raise_http_error(self, error: httpx.HTTPStatusError) -> NoReturn:
+        """Log and raise the ValueError for an API HTTP error."""
+        msg = f"{self.PROVIDER_NAME} API error: {error.response.status_code}"
+        logger.error(f"{msg} - {error.response.text}")
+        raise ValueError(f"{msg} - {error.response.text}")
+
+    def _build_payload(
+        self, messages: List[Dict[str, str]], **kwargs: Any
+    ) -> Dict[str, Any]:
+        """Build the OpenAI-compatible request payload."""
+        return {
+            "model": self.config.model,
+            "messages": messages,
+            "temperature": kwargs.get("temperature", self.config.temperature),
+            "max_tokens": kwargs.get("max_tokens", self.config.max_tokens),
+            "stream": False,
+        }
+
+    def _build_headers(self) -> Dict[str, str]:
+        """Build the OpenAI-compatible request headers."""
+        return {
+            "Authorization": f"Bearer {self.config.api_key}",
+            "Content-Type": "application/json",
+        }
+
+    def _parse_response(self, data: Dict[str, Any]) -> LLMResponse:
+        """Build an LLMResponse from an OpenAI-compatible payload."""
+        # Extract response data
+        content = data["choices"][0]["message"]["content"] or ""
+        finish_reason = data["choices"][0].get("finish_reason", "stop")
+        usage = data.get("usage", {})
+        input_tokens = usage.get("prompt_tokens", 0)
+        output_tokens = usage.get("completion_tokens", 0)
+
+        self._total_calls += 1
+
+        logger.debug(
+            f"{self.PROVIDER_NAME} response: "
+            f"{input_tokens} in, {output_tokens} out"
+        )
+
+        # Calculate cost
+        cost = self._calculate_cost(
+            self.config.model, input_tokens, output_tokens
+        )
+
+        return LLMResponse(
+            content=content,
+            model=data.get("model", self.config.model),
+            input_tokens=input_tokens,
+            output_tokens=output_tokens,
+            cost=cost,
+            finish_reason=finish_reason,
+            raw_response=data,
+        )
 
     def _calculate_cost(
         self, model: str, input_tokens: int, output_tokens: int

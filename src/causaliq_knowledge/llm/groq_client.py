@@ -3,7 +3,7 @@
 import logging
 import os
 from dataclasses import dataclass
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List, NoReturn, Optional
 
 import httpx
 
@@ -42,6 +42,19 @@ class GroqConfig(LLMConfig):
             self.api_key = os.getenv("GROQ_API_KEY")
         if not self.api_key:
             raise ValueError("GROQ_API_KEY environment variable is required")
+
+
+def _filter_groq_models(data: Dict[str, Any]) -> List[str]:
+    """Return the sorted chat model identifiers of a Groq payload."""
+    # Filter and sort models
+    models = []
+    for model in data.get("data", []):
+        model_id = model.get("id", "")
+        # Skip whisper (audio), guard, and safeguard models
+        if any(x in model_id.lower() for x in ["whisper", "guard", "embed"]):
+            continue
+        models.append(model_id)
+    return sorted(models)
 
 
 class GroqClient(BaseLLMClient):
@@ -90,19 +103,8 @@ class GroqClient(BaseLLMClient):
         Raises:
             ValueError: If the API request fails.
         """
-        # Build request payload
-        payload = {
-            "model": self.config.model,
-            "messages": messages,
-            "temperature": kwargs.get("temperature", self.config.temperature),
-            "max_tokens": kwargs.get("max_tokens", self.config.max_tokens),
-            "stream": False,
-        }
-
-        headers = {
-            "Authorization": f"Bearer {self.config.api_key}",
-            "Content-Type": "application/json",
-        }
+        payload = self._build_payload(messages, **kwargs)
+        headers = self._build_headers()
 
         logger.debug(f"Calling Groq API with model: {payload['model']}")
 
@@ -114,44 +116,68 @@ class GroqClient(BaseLLMClient):
                     headers=headers,
                 )
                 response.raise_for_status()
-
-                data = response.json()
-
-                # Extract response data
-                content = data["choices"][0]["message"]["content"] or ""
-                finish_reason = data["choices"][0].get("finish_reason", "stop")
-                usage = data.get("usage", {})
-                input_tokens = usage.get("prompt_tokens", 0)
-                output_tokens = usage.get("completion_tokens", 0)
-
-                self._total_calls += 1
-
-                logger.debug(
-                    f"Groq response: {input_tokens} in, {output_tokens} out"
-                )
-
-                return LLMResponse(
-                    content=content,
-                    model=data.get("model", self.config.model),
-                    input_tokens=input_tokens,
-                    output_tokens=output_tokens,
-                    cost=0.0,  # Free tier
-                    finish_reason=finish_reason,
-                    raw_response=data,
-                )
+                return self._parse_response(response.json())
 
         except httpx.HTTPStatusError as e:
-            logger.error(
-                f"Groq API error: {e.response.status_code} - {e.response.text}"
-            )
-            raise ValueError(
-                f"Groq API error: {e.response.status_code} - {e.response.text}"
-            )
+            self._raise_http_error(e)
         except httpx.TimeoutException:
             raise ValueError("Groq API request timed out")
         except Exception as e:
             logger.error(f"Groq API unexpected error: {e}")
             raise ValueError(f"Groq API error: {str(e)}")
+
+    def _raise_http_error(self, error: httpx.HTTPStatusError) -> NoReturn:
+        """Log and raise the ValueError for a Groq HTTP error."""
+        logger.error(
+            f"Groq API error: {error.response.status_code} - "
+            f"{error.response.text}"
+        )
+        raise ValueError(
+            f"Groq API error: {error.response.status_code} - "
+            f"{error.response.text}"
+        )
+
+    def _build_payload(
+        self, messages: List[Dict[str, str]], **kwargs: Any
+    ) -> Dict[str, Any]:
+        """Build the Groq request payload."""
+        return {
+            "model": self.config.model,
+            "messages": messages,
+            "temperature": kwargs.get("temperature", self.config.temperature),
+            "max_tokens": kwargs.get("max_tokens", self.config.max_tokens),
+            "stream": False,
+        }
+
+    def _build_headers(self) -> Dict[str, str]:
+        """Build the Groq request headers."""
+        return {
+            "Authorization": f"Bearer {self.config.api_key}",
+            "Content-Type": "application/json",
+        }
+
+    def _parse_response(self, data: Dict[str, Any]) -> LLMResponse:
+        """Build an LLMResponse from a Groq response payload."""
+        # Extract response data
+        content = data["choices"][0]["message"]["content"] or ""
+        finish_reason = data["choices"][0].get("finish_reason", "stop")
+        usage = data.get("usage", {})
+        input_tokens = usage.get("prompt_tokens", 0)
+        output_tokens = usage.get("completion_tokens", 0)
+
+        self._total_calls += 1
+
+        logger.debug(f"Groq response: {input_tokens} in, {output_tokens} out")
+
+        return LLMResponse(
+            content=content,
+            model=data.get("model", self.config.model),
+            input_tokens=input_tokens,
+            output_tokens=output_tokens,
+            cost=0.0,  # Free tier
+            finish_reason=finish_reason,
+            raw_response=data,
+        )
 
     def complete_json(
         self, messages: List[Dict[str, str]], **kwargs: Any
@@ -201,21 +227,7 @@ class GroqClient(BaseLLMClient):
                     headers={"Authorization": f"Bearer {self.config.api_key}"},
                 )
                 response.raise_for_status()
-                data = response.json()
-
-                # Filter and sort models
-                models = []
-                for model in data.get("data", []):
-                    model_id = model.get("id", "")
-                    # Skip whisper (audio), guard, and safeguard models
-                    if any(
-                        x in model_id.lower()
-                        for x in ["whisper", "guard", "embed"]
-                    ):
-                        continue
-                    models.append(model_id)
-
-                return sorted(models)
+                return _filter_groq_models(response.json())
 
         except httpx.HTTPStatusError as e:
             raise ValueError(

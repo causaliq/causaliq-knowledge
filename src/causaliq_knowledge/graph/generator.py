@@ -12,7 +12,7 @@ import logging
 import time
 from dataclasses import dataclass
 from datetime import datetime, timezone
-from typing import TYPE_CHECKING, Any, Dict, List, Optional, Union
+from typing import TYPE_CHECKING, Any, Callable, Dict, List, Optional, Union
 
 from causaliq_knowledge.graph.prompts import GraphQueryPrompt, OutputFormat
 from causaliq_knowledge.graph.response import (
@@ -27,6 +27,7 @@ from causaliq_knowledge.llm.anthropic_client import (
     AnthropicClient,
     AnthropicConfig,
 )
+from causaliq_knowledge.llm.base_client import LLMResponse
 from causaliq_knowledge.llm.deepseek_client import (
     DeepSeekClient,
     DeepSeekConfig,
@@ -55,6 +56,23 @@ LLMClientType = Union[
     OllamaClient,
     OpenAIClient,
 ]
+
+# Model prefixes accepted by the generator
+_SUPPORTED_PREFIXES = [
+    "anthropic/",
+    "deepseek/",
+    "gemini/",
+    "groq/",
+    "mistral/",
+    "ollama/",
+    "openai/",
+]
+
+
+def _split_model(model: str) -> tuple[str, str]:
+    """Return the provider prefix and model name of a model identifier."""
+    provider, _, model_name = model.partition("/")
+    return provider, model_name
 
 
 @dataclass
@@ -153,92 +171,14 @@ class GraphGenerator:
         Raises:
             ValueError: If the model prefix is not supported.
         """
-        config = self._config
-
-        if model.startswith("anthropic/"):
-            model_name = model.split("/", 1)[1]
-            return AnthropicClient(
-                config=AnthropicConfig(
-                    model=model_name,
-                    temperature=config.temperature,
-                    max_tokens=config.max_tokens,
-                    timeout=config.timeout,
-                )
-            )
-        elif model.startswith("deepseek/"):
-            model_name = model.split("/", 1)[1]
-            return DeepSeekClient(
-                config=DeepSeekConfig(
-                    model=model_name,
-                    temperature=config.temperature,
-                    max_tokens=config.max_tokens,
-                    timeout=config.timeout,
-                )
-            )
-        elif model.startswith("gemini/"):
-            model_name = model.split("/", 1)[1]
-            return GeminiClient(
-                config=GeminiConfig(
-                    model=model_name,
-                    temperature=config.temperature,
-                    max_tokens=config.max_tokens,
-                    timeout=config.timeout,
-                )
-            )
-        elif model.startswith("groq/"):
-            model_name = model.split("/", 1)[1]
-            return GroqClient(
-                config=GroqConfig(
-                    model=model_name,
-                    temperature=config.temperature,
-                    max_tokens=config.max_tokens,
-                    timeout=config.timeout,
-                )
-            )
-        elif model.startswith("mistral/"):
-            model_name = model.split("/", 1)[1]
-            return MistralClient(
-                config=MistralConfig(
-                    model=model_name,
-                    temperature=config.temperature,
-                    max_tokens=config.max_tokens,
-                    timeout=config.timeout,
-                )
-            )
-        elif model.startswith("ollama/"):
-            model_name = model.split("/", 1)[1]
-            return OllamaClient(
-                config=OllamaConfig(
-                    model=model_name,
-                    temperature=config.temperature,
-                    max_tokens=config.max_tokens,
-                    timeout=600.0,  # Local inference needs longer timeout
-                )
-            )
-        elif model.startswith("openai/"):
-            model_name = model.split("/", 1)[1]
-            return OpenAIClient(
-                config=OpenAIConfig(
-                    model=model_name,
-                    temperature=config.temperature,
-                    max_tokens=config.max_tokens,
-                    timeout=config.timeout,
-                )
-            )
-        else:
-            supported = [
-                "anthropic/",
-                "deepseek/",
-                "gemini/",
-                "groq/",
-                "mistral/",
-                "ollama/",
-                "openai/",
-            ]
+        provider, model_name = _split_model(model)
+        factory = _CLIENT_FACTORIES.get(provider)
+        if factory is None:
             raise ValueError(
                 f"Model '{model}' not supported. "
-                f"Supported prefixes: {supported}."
+                f"Supported prefixes: {_SUPPORTED_PREFIXES}."
             )
+        return factory(self, model_name)
 
     @property
     def model(self) -> str:
@@ -447,31 +387,11 @@ class GraphGenerator:
         variable_names = prompt.get_variable_names()
 
         # Build messages for the LLM
-        messages: List[Dict[str, str]] = []
-        if system_prompt:
-            messages.append({"role": "system", "content": system_prompt})
-        messages.append({"role": "user", "content": user_prompt})
+        messages = self._build_messages(system_prompt, user_prompt)
 
         # Record request timestamp before making the call
         request_timestamp = datetime.now(timezone.utc)
-        start_time = time.perf_counter()
-        from_cache = False
-
-        if self._cache is not None and self._client.use_cache:
-            response = self._client.cached_completion(
-                messages,
-                request_id=self._config.request_id,
-                sample_index=self._config.sample_index,
-            )
-            # Check if response was from cache by comparing timing
-            latency_ms = int((time.perf_counter() - start_time) * 1000)
-            from_cache = latency_ms < 50
-        else:
-            response = self._client.completion(
-                messages,
-            )
-
-        latency_ms = int((time.perf_counter() - start_time) * 1000)
+        response, latency_ms, from_cache = self._invoke_client(messages)
         logger.debug(f"PDG generation completed in {latency_ms}ms")
 
         self._call_count += 1
@@ -480,29 +400,12 @@ class GraphGenerator:
         pdg = parse_pdg_response(response.content, variable_names)
 
         # Build metadata (same as _execute_query)
-        provider = self._model.split("/")[0] if "/" in self._model else ""
-        model_name = (
-            self._model.split("/", 1)[1] if "/" in self._model else self._model
-        )
-
-        # Get original LLM timestamp and latency (from cache or current)
-        llm_timestamp = response.llm_timestamp or request_timestamp
-        llm_latency = response.llm_latency_ms or latency_ms
-
-        metadata = GenerationMetadata(
-            model=model_name,
-            provider=provider,
-            timestamp=request_timestamp,
-            llm_timestamp=llm_timestamp,
-            llm_latency_ms=llm_latency,
-            input_tokens=response.input_tokens,
-            output_tokens=response.output_tokens,
-            from_cache=from_cache,
+        metadata = self._build_generation_metadata(
             messages=messages,
-            temperature=self._config.temperature,
-            max_tokens=self._config.max_tokens,
-            finish_reason=response.finish_reason,
-            llm_cost_usd=response.cost,
+            response=response,
+            request_timestamp=request_timestamp,
+            latency_ms=latency_ms,
+            from_cache=from_cache,
         )
 
         return PDGGenerationResult(
@@ -527,34 +430,13 @@ class GraphGenerator:
         variable_names = prompt.get_variable_names()
 
         # Build messages for the LLM
-        messages: List[Dict[str, str]] = []
-        if system_prompt:
-            messages.append({"role": "system", "content": system_prompt})
-        messages.append({"role": "user", "content": user_prompt})
+        messages = self._build_messages(system_prompt, user_prompt)
 
         # Record request timestamp before making the call
         request_timestamp = datetime.now(timezone.utc)
 
         # Make the request (using cached_completion if cache is set)
-        start_time = time.perf_counter()
-        from_cache = False
-
-        if self._cache is not None and self._client.use_cache:
-            response = self._client.cached_completion(
-                messages,
-                request_id=self._config.request_id,
-                sample_index=self._config.sample_index,
-            )
-            # Check if response was from cache by comparing timing
-            latency_ms = int((time.perf_counter() - start_time) * 1000)
-            # If latency is very low, likely from cache
-            from_cache = latency_ms < 50
-        else:
-            response = self._client.completion(
-                messages,
-            )
-
-        latency_ms = int((time.perf_counter() - start_time) * 1000)
+        response, latency_ms, from_cache = self._invoke_client(messages)
 
         self._call_count += 1
 
@@ -567,10 +449,71 @@ class GraphGenerator:
         )
 
         # Add metadata
+        graph.metadata = self._build_generation_metadata(
+            messages=messages,
+            response=response,
+            request_timestamp=request_timestamp,
+            latency_ms=latency_ms,
+            from_cache=from_cache,
+        )
+
+        return graph
+
+    def _build_messages(
+        self,
+        system_prompt: str,
+        user_prompt: str,
+    ) -> List[Dict[str, str]]:
+        """Build the chat message list for a prompt."""
+        messages: List[Dict[str, str]] = []
+        if system_prompt:
+            messages.append({"role": "system", "content": system_prompt})
+        messages.append({"role": "user", "content": user_prompt})
+        return messages
+
+    def _invoke_client(
+        self,
+        messages: List[Dict[str, str]],
+    ) -> tuple[LLMResponse, int, bool]:
+        """Call the configured client, reporting latency and cache use."""
+        start_time = time.perf_counter()
+        from_cache = False
+
+        if self._cache is not None and self._client.use_cache:
+            response = self._client.cached_completion(
+                messages,
+                request_id=self._config.request_id,
+                sample_index=self._config.sample_index,
+            )
+            # Check if response was from cache by comparing timing
+            latency_ms = int((time.perf_counter() - start_time) * 1000)
+            from_cache = latency_ms < 50
+        else:
+            response = self._client.completion(
+                messages,
+            )
+
+        latency_ms = int((time.perf_counter() - start_time) * 1000)
+        return response, latency_ms, from_cache
+
+    def _model_and_provider(self) -> tuple[str, str]:
+        """Return the model name and provider prefix of this generator."""
         provider = self._model.split("/")[0] if "/" in self._model else ""
         model_name = (
             self._model.split("/", 1)[1] if "/" in self._model else self._model
         )
+        return model_name, provider
+
+    def _build_generation_metadata(
+        self,
+        messages: List[Dict[str, str]],
+        response: LLMResponse,
+        request_timestamp: datetime,
+        latency_ms: int,
+        from_cache: bool,
+    ) -> GenerationMetadata:
+        """Build generation metadata from a completed request."""
+        model_name, provider = self._model_and_provider()
 
         # Get original LLM timestamp and latency (from cache or current)
         # response.llm_timestamp and llm_latency_ms are set by cached
@@ -578,7 +521,7 @@ class GraphGenerator:
         llm_timestamp = response.llm_timestamp or request_timestamp
         llm_latency = response.llm_latency_ms or latency_ms
 
-        graph.metadata = GenerationMetadata(
+        return GenerationMetadata(
             model=model_name,
             provider=provider,
             timestamp=request_timestamp,
@@ -594,8 +537,6 @@ class GraphGenerator:
             llm_cost_usd=response.cost,
         )
 
-        return graph
-
     def get_stats(self) -> Dict[str, Any]:
         """Get statistics about generation calls.
 
@@ -607,3 +548,130 @@ class GraphGenerator:
             "call_count": self._call_count,
             "client_call_count": self._client.call_count,
         }
+
+
+def _create_anthropic_client(
+    generator: GraphGenerator,
+    model_name: str,
+) -> LLMClientType:
+    """Create an Anthropic client from the generator configuration."""
+    config = generator.config
+    return AnthropicClient(
+        config=AnthropicConfig(
+            model=model_name,
+            temperature=config.temperature,
+            max_tokens=config.max_tokens,
+            timeout=config.timeout,
+        )
+    )
+
+
+def _create_deepseek_client(
+    generator: GraphGenerator,
+    model_name: str,
+) -> LLMClientType:
+    """Create a DeepSeek client from the generator configuration."""
+    config = generator.config
+    return DeepSeekClient(
+        config=DeepSeekConfig(
+            model=model_name,
+            temperature=config.temperature,
+            max_tokens=config.max_tokens,
+            timeout=config.timeout,
+        )
+    )
+
+
+def _create_gemini_client(
+    generator: GraphGenerator,
+    model_name: str,
+) -> LLMClientType:
+    """Create a Gemini client from the generator configuration."""
+    config = generator.config
+    return GeminiClient(
+        config=GeminiConfig(
+            model=model_name,
+            temperature=config.temperature,
+            max_tokens=config.max_tokens,
+            timeout=config.timeout,
+        )
+    )
+
+
+def _create_groq_client(
+    generator: GraphGenerator,
+    model_name: str,
+) -> LLMClientType:
+    """Create a Groq client from the generator configuration."""
+    config = generator.config
+    return GroqClient(
+        config=GroqConfig(
+            model=model_name,
+            temperature=config.temperature,
+            max_tokens=config.max_tokens,
+            timeout=config.timeout,
+        )
+    )
+
+
+def _create_mistral_client(
+    generator: GraphGenerator,
+    model_name: str,
+) -> LLMClientType:
+    """Create a Mistral client from the generator configuration."""
+    config = generator.config
+    return MistralClient(
+        config=MistralConfig(
+            model=model_name,
+            temperature=config.temperature,
+            max_tokens=config.max_tokens,
+            timeout=config.timeout,
+        )
+    )
+
+
+def _create_ollama_client(
+    generator: GraphGenerator,
+    model_name: str,
+) -> LLMClientType:
+    """Create an Ollama client with the local-inference timeout."""
+    config = generator.config
+    return OllamaClient(
+        config=OllamaConfig(
+            model=model_name,
+            temperature=config.temperature,
+            max_tokens=config.max_tokens,
+            timeout=600.0,  # Local inference needs longer timeout
+        )
+    )
+
+
+def _create_openai_client(
+    generator: GraphGenerator,
+    model_name: str,
+) -> LLMClientType:
+    """Create an OpenAI client from the generator configuration."""
+    config = generator.config
+    return OpenAIClient(
+        config=OpenAIConfig(
+            model=model_name,
+            temperature=config.temperature,
+            max_tokens=config.max_tokens,
+            timeout=config.timeout,
+        )
+    )
+
+
+# Client factory per supported provider prefix
+_CLIENT_FACTORIES: Dict[
+    str,
+    Callable[[GraphGenerator, str], LLMClientType],
+] = {
+    "anthropic": _create_anthropic_client,
+    "deepseek": _create_deepseek_client,
+    "gemini": _create_gemini_client,
+    "groq": _create_groq_client,
+    "mistral": _create_mistral_client,
+    "ollama": _create_ollama_client,
+    "openai": _create_openai_client,
+}

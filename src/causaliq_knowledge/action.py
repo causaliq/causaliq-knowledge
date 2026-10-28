@@ -31,7 +31,7 @@ from pydantic import ValidationError
 from causaliq_knowledge.graph.params import GenerateGraphParams
 
 if TYPE_CHECKING:  # pragma: no cover
-    pass
+    from causaliq_knowledge.graph.models import NetworkContext
 
 logger = logging.getLogger(__name__)
 
@@ -211,20 +211,26 @@ class KnowledgeActionProvider(CausalIQActionProvider):
 
         # For generate_graph, validate using GenerateGraphParams
         if action == "generate_graph":
-            # Check required network_context
-            if "network_context" not in parameters:
-                raise ActionValidationError(
-                    "Missing required input: 'network_context' for "
-                    "generate_graph"
-                )
+            self._validate_generate_graph_parameters(parameters)
 
-            try:
-                # Validate using Pydantic model
-                GenerateGraphParams.from_dict(parameters)
-            except (ValidationError, ValueError) as e:
-                raise ActionValidationError(
-                    f"Invalid parameters for generate_graph: {e}"
-                )
+    def _validate_generate_graph_parameters(
+        self, parameters: Dict[str, Any]
+    ) -> None:
+        """Validate generate_graph parameters using GenerateGraphParams."""
+        # Check required network_context
+        if "network_context" not in parameters:
+            raise ActionValidationError(
+                "Missing required input: 'network_context' for "
+                "generate_graph"
+            )
+
+        try:
+            # Validate using Pydantic model
+            GenerateGraphParams.from_dict(parameters)
+        except (ValidationError, ValueError) as e:
+            raise ActionValidationError(
+                f"Invalid parameters for generate_graph: {e}"
+            )
 
     def _dry_run_result(
         self, action: str, parameters: Dict[str, Any]
@@ -369,14 +375,22 @@ class KnowledgeActionProvider(CausalIQActionProvider):
         Returns:
             ActionResult tuple (status, metadata, objects).
         """
-        # Import here to avoid slow startup and circular imports
-        from causaliq_core.cache import TokenCache
+        network_ctx = self._load_network_context(params)
+        llm_cache = self._open_llm_cache(params)
 
+        try:
+            return self._run_generation(params, network_ctx, llm_cache)
+        except Exception as e:
+            raise ActionExecutionError(f"Graph generation failed: {e}")
+        finally:
+            if llm_cache:
+                llm_cache.close()
+
+    def _load_network_context(
+        self, params: GenerateGraphParams
+    ) -> "NetworkContext":
+        """Load the network context referenced by the parameters."""
         from causaliq_knowledge.graph import NetworkContext
-        from causaliq_knowledge.graph.generator import (
-            GraphGenerator,
-            GraphGeneratorConfig,
-        )
 
         try:
             # Load network context
@@ -385,98 +399,137 @@ class KnowledgeActionProvider(CausalIQActionProvider):
                 f"Loaded network context: {network_ctx.network} "
                 f"({len(network_ctx.variables)} variables)"
             )
+            return network_ctx
         except Exception as e:
             raise ActionExecutionError(f"Failed to load network context: {e}")
 
-        # Track mapping for name conversion
-        llm_to_benchmark_mapping: Dict[str, str] = {}
+    def _open_llm_cache(self, params: GenerateGraphParams) -> Any:
+        """Open the LLM response cache when caching is enabled."""
+        from causaliq_core.cache import TokenCache
 
+        # Set up LLM response cache (not workflow cache)
+        cache_path = params.get_effective_cache_path()
+        if cache_path is None:
+            return None
+
+        try:
+            llm_cache = TokenCache(str(cache_path))
+            llm_cache.open()
+            return llm_cache
+        except Exception as e:
+            raise ActionExecutionError(f"Failed to open LLM cache: {e}")
+
+    def _name_mapping(
+        self,
+        params: GenerateGraphParams,
+        network_ctx: "NetworkContext",
+    ) -> Dict[str, str]:
+        """Return the LLM-to-benchmark name mapping when needed."""
         # Determine naming mode
         use_llm_names = not params.use_benchmark_names
         if use_llm_names and network_ctx.uses_distinct_llm_names():
-            llm_to_benchmark_mapping = network_ctx.get_llm_to_name_mapping()
+            return network_ctx.get_llm_to_name_mapping()
+        return {}
 
-        # Set up LLM response cache (not workflow cache)
-        llm_cache: Optional[TokenCache] = None
-        cache_path = params.get_effective_cache_path()
-        if cache_path is not None:
-            try:
-                llm_cache = TokenCache(str(cache_path))
-                llm_cache.open()
-            except Exception as e:
-                raise ActionExecutionError(f"Failed to open LLM cache: {e}")
+    def _create_generator(
+        self,
+        params: GenerateGraphParams,
+        llm_cache: Any,
+    ) -> Any:
+        """Create the graph generator for the requested model."""
+        from causaliq_knowledge.graph.generator import (
+            GraphGenerator,
+            GraphGeneratorConfig,
+        )
 
-        try:
-            # Derive request_id from output filename stem
-            if params.output.lower() == "none":
-                request_id = "none"
-            else:
-                request_id = Path(params.output).stem
+        # Derive request_id from output filename stem
+        if params.output.lower() == "none":
+            request_id = "none"
+        else:
+            request_id = Path(params.output).stem
 
-            config = GraphGeneratorConfig(
-                temperature=params.llm_temperature,
-                max_tokens=params.llm_max_tokens,
-                timeout=params.llm_timeout,
-                prompt_detail=params.prompt_detail,
-                use_llm_names=use_llm_names,
-                request_id=request_id,
-                sample_index=params.llm_seed,
-            )
-            generator = GraphGenerator(
-                model=params.llm_model, config=config, cache=llm_cache
-            )
+        config = GraphGeneratorConfig(
+            temperature=params.llm_temperature,
+            max_tokens=params.llm_max_tokens,
+            timeout=params.llm_timeout,
+            prompt_detail=params.prompt_detail,
+            use_llm_names=not params.use_benchmark_names,
+            request_id=request_id,
+            sample_index=params.llm_seed,
+        )
+        return GraphGenerator(
+            model=params.llm_model, config=config, cache=llm_cache
+        )
 
-            # Generate PDG with edge probabilities
-            result = generator.generate_pdg_from_context(
-                network_ctx, level=params.prompt_detail
-            )
-            pdg = result.pdg
-            generation_metadata = result.metadata
+    def _run_generation(
+        self,
+        params: GenerateGraphParams,
+        network_ctx: "NetworkContext",
+        llm_cache: Any,
+    ) -> ActionResult:
+        """Generate the PDG and build the action result."""
+        generator = self._create_generator(params, llm_cache)
 
-            # Map LLM names back to benchmark names if needed
-            if llm_to_benchmark_mapping:
-                pdg = self._map_pdg_names(pdg, llm_to_benchmark_mapping)
+        # Generate PDG with edge probabilities
+        result = generator.generate_pdg_from_context(
+            network_ctx, level=params.prompt_detail
+        )
 
-            # Build execution metadata with comprehensive LLM info
-            metadata = self._build_execution_metadata(
-                pdg, params, generation_metadata
-            )
+        # Map LLM names back to benchmark names if needed
+        pdg = self._map_result_names(result.pdg, params, network_ctx)
 
-            # Add cached flag for convenience
-            metadata["cached"] = generation_metadata.from_cache
-            metadata["model_used"] = params.llm_model
+        # Build execution metadata with comprehensive LLM info
+        metadata = self._build_execution_metadata(pdg, params, result.metadata)
 
-            # Include raw LLM response (split by newlines for readability)
-            if result.raw_response:
-                response_text = result.raw_response
-                if "\n" in response_text:
-                    metadata["llm_response"] = response_text.split("\n")
-                else:
-                    metadata["llm_response"] = response_text
+        # Add cached flag for convenience
+        metadata["cached"] = result.metadata.from_cache
+        metadata["model_used"] = params.llm_model
 
-            # Convert PDG to GraphML string for interchange
-            graphml_buffer = StringIO()
-            graphml.write_pdg(pdg, graphml_buffer)
-            graphml_content = graphml_buffer.getvalue()
+        # Include raw LLM response (split by newlines for readability)
+        self._add_raw_response(metadata, result.raw_response)
 
-            # Return GraphML string for workflow cache compression
-            objects: List[Dict[str, Any]] = [
-                {
-                    "type": "pdg",
-                    "format": "graphml",
-                    "action": "generate_graph",
-                    "name": "graph",
-                    "content": graphml_content,
-                },
-            ]
+        # Return GraphML string for workflow cache compression
+        objects: List[Dict[str, Any]] = [
+            {
+                "type": "pdg",
+                "format": "graphml",
+                "action": "generate_graph",
+                "name": "graph",
+                "content": self._pdg_to_graphml(pdg),
+            },
+        ]
 
-            return ("success", metadata, objects)
+        return ("success", metadata, objects)
 
-        except Exception as e:
-            raise ActionExecutionError(f"Graph generation failed: {e}")
-        finally:
-            if llm_cache:
-                llm_cache.close()
+    def _map_result_names(
+        self,
+        pdg: PDG,
+        params: GenerateGraphParams,
+        network_ctx: "NetworkContext",
+    ) -> PDG:
+        """Map LLM names back to benchmark names when needed."""
+        mapping = self._name_mapping(params, network_ctx)
+        if not mapping:
+            return pdg
+        return self._map_pdg_names(pdg, mapping)
+
+    def _add_raw_response(
+        self,
+        metadata: Dict[str, Any],
+        raw_response: Optional[str],
+    ) -> None:
+        """Record the raw LLM response, split for readability."""
+        if raw_response:
+            llm_response: Any = raw_response
+            if "\n" in raw_response:
+                llm_response = raw_response.split("\n")
+            metadata["llm_response"] = llm_response
+
+    def _pdg_to_graphml(self, pdg: PDG) -> str:
+        """Convert a PDG to a GraphML string for interchange."""
+        graphml_buffer = StringIO()
+        graphml.write_pdg(pdg, graphml_buffer)
+        return graphml_buffer.getvalue()
 
     def _map_pdg_names(self, pdg: PDG, mapping: Dict[str, str]) -> PDG:
         """Map variable names in a PDG using a mapping dictionary.

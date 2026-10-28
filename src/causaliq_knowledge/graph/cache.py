@@ -30,13 +30,13 @@ from __future__ import annotations
 
 import json
 import struct
-from datetime import datetime, timezone
 from pathlib import Path
 from typing import TYPE_CHECKING, Any, Dict, List, Optional
 
 from causaliq_core.cache.compressors import JsonCompressor
 from causaliq_core.graph import SDG
 
+from causaliq_knowledge.graph.cache_metadata import metadata_from_dict
 from causaliq_knowledge.graph.response import (
     GeneratedGraph,
     GenerationMetadata,
@@ -54,6 +54,72 @@ _FORMAT_VERSION = 0x01
 BLOB_TYPE_GRAPH = "graph"
 BLOB_TYPE_CONFIDENCES = "confidences"
 BLOB_TYPE_TRACE = "trace"
+
+
+def _read_blob_header(blob: bytes) -> tuple[int, int]:
+    """Return the offset after the header and the number of blobs."""
+    version = blob[0]
+    if version != _FORMAT_VERSION:
+        raise ValueError(
+            f"Unsupported format version: {version} "
+            f"(expected {_FORMAT_VERSION})"
+        )
+    blob_count = struct.unpack(">H", blob[1:3])[0]
+    return 3, blob_count
+
+
+def _read_blob(
+    blob: bytes,
+    offset: int,
+    cache: "TokenCache",
+) -> tuple[str, bytes, int]:
+    """Return one blob's type, data, and the offset of the next blob."""
+    type_token_id = struct.unpack(">H", blob[offset : offset + 2])[0]
+    offset += 2
+
+    blob_len = struct.unpack(">I", blob[offset : offset + 4])[0]
+    offset += 4
+
+    blob_data = blob[offset : offset + blob_len]
+    offset += blob_len
+
+    # Look up blob type from token
+    blob_type = cache.get_token(type_token_id)
+    if blob_type is None:
+        raise ValueError(f"Unknown blob type token ID: {type_token_id}")
+
+    return blob_type, blob_data, offset
+
+
+def _extract_sdg(blobs: Dict[str, bytes]) -> SDG:
+    """Pop and decompress the graph blob."""
+    if BLOB_TYPE_GRAPH not in blobs:
+        raise ValueError("No graph blob found in compressed data")
+    return SDG.decompress(blobs.pop(BLOB_TYPE_GRAPH))
+
+
+def _proposed_edge_from_data(edge_data: Any) -> ProposedEdge:
+    """Convert one cached edge payload to a ProposedEdge."""
+    if isinstance(edge_data, ProposedEdge):
+        return edge_data
+    return ProposedEdge(
+        source=edge_data.get("source", ""),
+        target=edge_data.get("target", ""),
+        confidence=edge_data.get("confidence", 0.5),
+        reasoning=edge_data.get("llm_reasoning", edge_data.get("reasoning")),
+    )
+
+
+def _read_cached_metadata(
+    data: Dict[str, Any],
+) -> Optional[GenerationMetadata]:
+    """Return the metadata recorded in a cached graph payload."""
+    if "metadata" not in data or not data["metadata"]:
+        return None
+    meta = data["metadata"]
+    if isinstance(meta, GenerationMetadata):
+        return meta
+    return metadata_from_dict(meta)
 
 
 class GraphCompressor(JsonCompressor):
@@ -174,40 +240,12 @@ class GraphCompressor(JsonCompressor):
             >>> graph_bytes = blobs.get("graph")
             >>> trace_bytes = blobs.get("trace")
         """
-        offset = 0
-
-        # Read header
-        version = blob[offset]
-        offset += 1
-
-        if version != _FORMAT_VERSION:
-            raise ValueError(
-                f"Unsupported format version: {version} "
-                f"(expected {_FORMAT_VERSION})"
-            )
-
-        blob_count = struct.unpack(">H", blob[offset : offset + 2])[0]
-        offset += 2
+        offset, blob_count = _read_blob_header(blob)
 
         # Read each blob
         blobs_dict: Dict[str, bytes] = {}
         for _ in range(blob_count):
-            type_token_id = struct.unpack(">H", blob[offset : offset + 2])[0]
-            offset += 2
-
-            blob_len = struct.unpack(">I", blob[offset : offset + 4])[0]
-            offset += 4
-
-            blob_data = blob[offset : offset + blob_len]
-            offset += blob_len
-
-            # Look up blob type from token
-            blob_type = cache.get_token(type_token_id)
-            if blob_type is None:
-                raise ValueError(
-                    f"Unknown blob type token ID: {type_token_id}"
-                )
-
+            blob_type, blob_data, offset = _read_blob(blob, offset, cache)
             blobs_dict[blob_type] = blob_data
 
         # Decode metadata from remaining bytes
@@ -400,17 +438,10 @@ class GraphCompressor(JsonCompressor):
         blobs, meta_dict = self.decompress_multi(blob, cache)
 
         # Extract graph blob
-        if BLOB_TYPE_GRAPH not in blobs:
-            raise ValueError("No graph blob found in compressed data")
-
-        graph_blob = blobs.pop(BLOB_TYPE_GRAPH)
-        sdg = SDG.decompress(graph_blob)
+        sdg = _extract_sdg(blobs)
 
         # Extract confidences from blob (if present)
-        confidence_map: Dict[str, float] = {}
-        if BLOB_TYPE_CONFIDENCES in blobs:
-            conf_blob = blobs.pop(BLOB_TYPE_CONFIDENCES)
-            confidence_map = super().decompress(conf_blob, cache)
+        confidence_map = self._extract_confidences(blobs, cache)
 
         # Extract reasoning from metadata
         reasoning_map = meta_dict.get("edge_reasoning", {})
@@ -421,53 +452,7 @@ class GraphCompressor(JsonCompressor):
         # Build generation metadata
         gen_meta = None
         if "generation" in meta_dict:
-            gen = meta_dict["generation"]
-            # Parse llm_timestamp - fall back to timestamp for compatibility
-            llm_ts_str = gen.get("llm_timestamp") or gen.get("timestamp")
-            llm_ts = (
-                datetime.fromisoformat(llm_ts_str)
-                if llm_ts_str
-                else datetime.now(timezone.utc)
-            )
-            # Parse current request timestamp
-            ts_str = gen.get("timestamp")
-            ts = (
-                datetime.fromisoformat(ts_str)
-                if ts_str
-                else llm_ts  # Fall back to llm_timestamp
-            )
-            # Parse cost - prefer llm_cost_usd, fall back to initial_cost_usd
-            llm_cost = gen.get(
-                "llm_cost_usd", gen.get("initial_cost_usd", 0.0)
-            )
-            # Parse latency - prefer llm_latency_ms, fall back to latency_ms
-            llm_latency = gen.get("llm_latency_ms", gen.get("latency_ms", 0))
-
-            gen_meta = GenerationMetadata(
-                model=gen.get("llm_model", gen.get("model", "")),
-                provider=gen.get("llm_provider", gen.get("provider", "")),
-                timestamp=ts,
-                llm_timestamp=llm_ts,
-                llm_latency_ms=llm_latency,
-                input_tokens=gen.get(
-                    "llm_input_tokens", gen.get("input_tokens", 0)
-                ),
-                output_tokens=gen.get(
-                    "llm_output_tokens", gen.get("output_tokens", 0)
-                ),
-                from_cache=gen.get("from_cache", False),
-                messages=gen.get("llm_messages", gen.get("messages", [])),
-                temperature=gen.get(
-                    "llm_temperature", gen.get("temperature", 0.1)
-                ),
-                max_tokens=gen.get(
-                    "llm_max_tokens", gen.get("max_tokens", 2000)
-                ),
-                finish_reason=gen.get(
-                    "llm_finish_reason", gen.get("finish_reason", "stop")
-                ),
-                llm_cost_usd=llm_cost,
-            )
+            gen_meta = metadata_from_dict(meta_dict["generation"])
 
         graph = GeneratedGraph(
             edges=edges,
@@ -480,6 +465,18 @@ class GraphCompressor(JsonCompressor):
 
         # Return graph and any extra blobs (graph + confidences already popped)
         return graph, blobs
+
+    def _extract_confidences(
+        self,
+        blobs: Dict[str, bytes],
+        cache: "TokenCache",
+    ) -> Dict[str, float]:
+        """Pop and decompress the confidences blob when present."""
+        if BLOB_TYPE_CONFIDENCES not in blobs:
+            return {}
+        conf_blob = blobs.pop(BLOB_TYPE_CONFIDENCES)
+        confidence_map: Dict[str, float] = super().decompress(conf_blob, cache)
+        return confidence_map
 
     def compress(self, data: Any, cache: "TokenCache") -> bytes:
         """Compress data to binary format.
@@ -521,79 +518,9 @@ class GraphCompressor(JsonCompressor):
         Returns:
             GeneratedGraph instance.
         """
-        edges = []
-        for edge_data in data.get("edges", []):
-            if isinstance(edge_data, ProposedEdge):
-                edges.append(edge_data)
-            else:
-                edges.append(
-                    ProposedEdge(
-                        source=edge_data.get("source", ""),
-                        target=edge_data.get("target", ""),
-                        confidence=edge_data.get("confidence", 0.5),
-                        reasoning=edge_data.get(
-                            "llm_reasoning", edge_data.get("reasoning")
-                        ),
-                    )
-                )
+        edges = [_proposed_edge_from_data(e) for e in data.get("edges", [])]
 
-        metadata = None
-        if "metadata" in data and data["metadata"]:
-            meta = data["metadata"]
-            if isinstance(meta, GenerationMetadata):
-                metadata = meta
-            else:
-                # Parse llm_timestamp (fallback to timestamp for compatibility)
-                llm_ts_str = meta.get("llm_timestamp") or meta.get("timestamp")
-                llm_ts = (
-                    datetime.fromisoformat(llm_ts_str)
-                    if llm_ts_str
-                    else datetime.now(timezone.utc)
-                )
-                # Parse current request timestamp
-                ts_str = meta.get("timestamp")
-                ts = (
-                    datetime.fromisoformat(ts_str)
-                    if ts_str
-                    else llm_ts  # Fall back to llm_timestamp
-                )
-                # Parse cost (prefer llm_cost_usd, fallback initial_cost_usd)
-                llm_cost = meta.get(
-                    "llm_cost_usd", meta.get("initial_cost_usd", 0.0)
-                )
-                # Parse latency (prefer llm_latency_ms, fallback latency_ms)
-                llm_latency = meta.get(
-                    "llm_latency_ms", meta.get("latency_ms", 0)
-                )
-                metadata = GenerationMetadata(
-                    model=meta.get("llm_model", meta.get("model", "")),
-                    provider=meta.get(
-                        "llm_provider", meta.get("provider", "")
-                    ),
-                    timestamp=ts,
-                    llm_timestamp=llm_ts,
-                    llm_latency_ms=llm_latency,
-                    input_tokens=meta.get(
-                        "llm_input_tokens", meta.get("input_tokens", 0)
-                    ),
-                    output_tokens=meta.get(
-                        "llm_output_tokens", meta.get("output_tokens", 0)
-                    ),
-                    from_cache=meta.get("from_cache", False),
-                    messages=meta.get(
-                        "llm_messages", meta.get("messages", [])
-                    ),
-                    temperature=meta.get(
-                        "llm_temperature", meta.get("temperature", 0.1)
-                    ),
-                    max_tokens=meta.get(
-                        "llm_max_tokens", meta.get("max_tokens", 2000)
-                    ),
-                    finish_reason=meta.get(
-                        "llm_finish_reason", meta.get("finish_reason", "stop")
-                    ),
-                    llm_cost_usd=llm_cost,
-                )
+        metadata = _read_cached_metadata(data)
 
         return GeneratedGraph(
             edges=edges,

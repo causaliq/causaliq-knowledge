@@ -7,21 +7,22 @@ Graph) with edge probabilities.
 
 from __future__ import annotations
 
-import json
 import sys
-import xml.etree.ElementTree as ET
 from pathlib import Path
-from typing import TYPE_CHECKING, Any, Dict, Optional
+from typing import TYPE_CHECKING, Any, Dict, NoReturn, Optional
 
 import click
 from pydantic import ValidationError
 
+from causaliq_knowledge.cli.generate_output import write_to_directory
 from causaliq_knowledge.graph.params import GenerateGraphParams
 from causaliq_knowledge.graph.view_filter import PromptDetail
 
 if TYPE_CHECKING:  # pragma: no cover
+    from causaliq_core.cache import TokenCache
     from causaliq_core.graph.pdg import PDG
 
+    from causaliq_knowledge.graph.generator import GraphGenerator
     from causaliq_knowledge.graph.models import NetworkContext
     from causaliq_knowledge.graph.response import GenerationMetadata
 
@@ -149,18 +150,54 @@ def generate_graph(
 
         cqknow generate-graph -n asia.json -c cache.db -o . --use-benchmark
     """
-    # Import here to avoid slow startup for --help
-    from causaliq_core.cache import TokenCache
-
-    from causaliq_knowledge.graph import NetworkContext
-    from causaliq_knowledge.graph.generator import (
-        GraphGenerator,
-        GraphGeneratorConfig,
+    params = _validate_params(
+        network_context,
+        prompt_detail,
+        use_benchmark_names,
+        llm_model,
+        output,
+        llm_cache,
+        llm_temperature,
     )
+    ctx = _load_context(params)
+    use_llm_names, llm_to_benchmark_mapping = _resolve_name_mode(params, ctx)
+    cache = _open_cache(params)
+    generator = _create_generator(params, use_llm_names, cache)
 
+    result = _generate_pdg(generator, ctx, params)
+    pdg = _apply_name_mapping(result.pdg, llm_to_benchmark_mapping)
+
+    _emit_output(params, pdg, result.metadata, ctx)
+    _print_call_stats(generator)
+
+    # Close cache if opened
+    if cache:
+        cache.close()
+
+
+def _report_validation_errors(error: ValidationError) -> NoReturn:
+    """Print Pydantic validation errors and exit the CLI."""
+    # Format Pydantic errors for CLI
+    for item in error.errors():
+        field = item.get("loc", ["unknown"])[0]
+        msg = item.get("msg", "validation error")
+        click.echo(f"Error: --{field}: {msg}", err=True)
+    sys.exit(1)
+
+
+def _validate_params(
+    network_context: Path,
+    prompt_detail: str,
+    use_benchmark_names: bool,
+    llm_model: str,
+    output: str,
+    llm_cache: str,
+    llm_temperature: float,
+) -> GenerateGraphParams:
+    """Validate the command options into a GenerateGraphParams model."""
     # Validate all parameters using shared model
     try:
-        params = GenerateGraphParams(
+        return GenerateGraphParams(
             network_context=network_context,
             prompt_detail=PromptDetail(prompt_detail.lower()),
             use_benchmark_names=use_benchmark_names,
@@ -170,15 +207,12 @@ def generate_graph(
             llm_temperature=llm_temperature,
         )
     except ValidationError as e:
-        # Format Pydantic errors for CLI
-        for error in e.errors():
-            field = error.get("loc", ["unknown"])[0]
-            msg = error.get("msg", "validation error")
-            click.echo(f"Error: --{field}: {msg}", err=True)
-        sys.exit(1)
+        _report_validation_errors(e)
 
-    # Get effective paths from validated params
-    output_path = params.get_effective_output_path()
+
+def _load_context(params: GenerateGraphParams) -> "NetworkContext":
+    """Load the network context referenced by the parameters."""
+    from causaliq_knowledge.graph import NetworkContext
 
     # Load network context
     try:
@@ -188,46 +222,64 @@ def generate_graph(
             f"({len(ctx.variables)} variables)",
             err=True,
         )
+        return ctx
     except Exception as e:
         click.echo(f"Error loading network context: {e}", err=True)
         sys.exit(1)
 
-    # Track mapping for converting LLM output back to benchmark names
-    llm_to_benchmark_mapping: Dict[str, str] = {}
 
+def _resolve_name_mode(
+    params: GenerateGraphParams,
+    ctx: "NetworkContext",
+) -> tuple[bool, Dict[str, str]]:
+    """Return the naming mode and the LLM-to-benchmark name mapping."""
     # Determine naming mode
     use_llm_names = not params.use_benchmark_names
     if use_llm_names and ctx.uses_distinct_llm_names():
-        llm_to_benchmark_mapping = ctx.get_llm_to_name_mapping()
-        click.echo(
-            f"Using LLM names ({len(llm_to_benchmark_mapping)} mappings)",
-            err=True,
-        )
-    elif params.use_benchmark_names:
+        mapping = ctx.get_llm_to_name_mapping()
+        click.echo(f"Using LLM names ({len(mapping)} mappings)", err=True)
+        return use_llm_names, mapping
+    if params.use_benchmark_names:
         click.echo("Using benchmark names (memorisation test)", err=True)
+    return use_llm_names, {}
 
-    # Set up cache
-    cache: Optional[TokenCache] = None
+
+def _open_cache(params: GenerateGraphParams) -> Optional["TokenCache"]:
+    """Open the LLM response cache when caching is enabled."""
+    from causaliq_core.cache import TokenCache
+
     cache_path = params.get_effective_cache_path()
-    if cache_path is not None:
-        try:
-            cache = TokenCache(str(cache_path))
-            cache.open()
-            click.echo(f"Using cache: {cache_path}", err=True)
-        except Exception as e:
-            click.echo(f"Warning: Failed to open cache: {e}", err=True)
-            cache = None
-    else:
+    if cache_path is None:
         click.echo("Cache disabled", err=True)
-
-    # Create generator
+        return None
     try:
-        # Derive request_id from output filename stem
-        if params.output.lower() == "none":
-            request_id = "cli-none"
-        else:
-            request_id = Path(params.output).stem or "cli-output"
+        cache = TokenCache(str(cache_path))
+        cache.open()
+        click.echo(f"Using cache: {cache_path}", err=True)
+        return cache
+    except Exception as e:
+        click.echo(f"Warning: Failed to open cache: {e}", err=True)
+        return None
 
+
+def _create_generator(
+    params: GenerateGraphParams,
+    use_llm_names: bool,
+    cache: Optional["TokenCache"],
+) -> "GraphGenerator":
+    """Create the graph generator for the requested model."""
+    from causaliq_knowledge.graph.generator import (
+        GraphGenerator,
+        GraphGeneratorConfig,
+    )
+
+    # Derive request_id from output filename stem
+    if params.output.lower() == "none":
+        request_id = "cli-none"
+    else:
+        request_id = Path(params.output).stem or "cli-output"
+
+    try:
         config = GraphGeneratorConfig(
             temperature=params.llm_temperature,
             timeout=params.llm_timeout,
@@ -235,42 +287,64 @@ def generate_graph(
             use_llm_names=use_llm_names,
             request_id=request_id,
         )
-        generator = GraphGenerator(
+        return GraphGenerator(
             model=params.llm_model, config=config, cache=cache
         )
     except ValueError as e:
         click.echo(f"Error creating generator: {e}", err=True)
         sys.exit(1)
 
+
+def _generate_pdg(
+    generator: "GraphGenerator",
+    ctx: "NetworkContext",
+    params: GenerateGraphParams,
+) -> Any:
+    """Generate the PDG, reporting progress to stderr."""
     # Generate PDG
     click.echo(f"Generating graph using {params.llm_model}...", err=True)
     click.echo(f"View level: {params.prompt_detail.value}", err=True)
 
     try:
-        result = generator.generate_pdg_from_context(
+        return generator.generate_pdg_from_context(
             ctx, level=params.prompt_detail
         )
-        pdg = result.pdg
-        generation_metadata = result.metadata
     except Exception as e:
         click.echo(f"Error generating graph: {e}", err=True)
         sys.exit(1)
 
-    # Map LLM names back to benchmark names
-    if llm_to_benchmark_mapping:
-        pdg = _map_pdg_names(pdg, llm_to_benchmark_mapping)
-        click.echo("Mapped LLM names back to benchmark names", err=True)
 
+def _apply_name_mapping(pdg: "PDG", mapping: Dict[str, str]) -> "PDG":
+    """Map LLM names back to benchmark names when needed."""
+    if not mapping:
+        return pdg
+    click.echo("Mapped LLM names back to benchmark names", err=True)
+    return _map_pdg_names(pdg, mapping)
+
+
+def _emit_output(
+    params: GenerateGraphParams,
+    pdg: "PDG",
+    generation_metadata: "GenerationMetadata",
+    ctx: "NetworkContext",
+) -> None:
+    """Print the edge summary and write the output files."""
     # Output results - always print edges summary to stderr
     _print_edges(pdg)
     _print_summary(pdg, err=True)
 
-    if params.is_directory_output():
-        # Write to directory: graph.graphml and metadata.json
-        assert output_path is not None
-        _write_to_directory(output_path, pdg, ctx, generation_metadata)
-        click.echo(f"\nOutput written to: {output_path}/", err=True)
+    if not params.is_directory_output():
+        return
 
+    # Write to directory: graph.graphml and metadata.json
+    output_path = params.get_effective_output_path()
+    assert output_path is not None
+    write_to_directory(output_path, pdg, ctx, generation_metadata)
+    click.echo(f"\nOutput written to: {output_path}/", err=True)
+
+
+def _print_call_stats(generator: "GraphGenerator") -> None:
+    """Print the LLM call statistics when any calls were made."""
     # Show stats
     stats = generator.get_stats()
     if stats.get("client_call_count", 0) > 0:
@@ -280,125 +354,49 @@ def generate_graph(
             err=True,
         )
 
-    # Close cache if opened
-    if cache:
-        cache.close()
+
+def _format_direction(state: str, source: str, target: str) -> str:
+    """Return the arrow notation for the most likely edge direction."""
+    if state == "forward":
+        return f"{source} -> {target}"
+    if state == "backward":
+        return f"{target} -> {source}"
+    if state == "undirected":
+        return f"{source} -- {target}"
+    return f"{source} x {target}"
 
 
-def _write_to_directory(
-    output_dir: Path,
-    pdg: "PDG",
-    context: "NetworkContext",
-    generation_metadata: "GenerationMetadata",
-) -> None:
-    """Write PDG output files to a directory.
-
-    Creates two files:
-    - graph.graphml: The graph structure with edge probabilities
-    - metadata.json: Comprehensive generation metadata
-
-    Args:
-        output_dir: Directory to write files to.
-        pdg: The generated PDG result.
-        context: The NetworkContext used.
-        generation_metadata: Comprehensive LLM generation metadata.
-    """
-    # Create directory
-    output_dir.mkdir(parents=True, exist_ok=True)
-
-    # Write GraphML with edge probabilities
-    graphml_path = output_dir / "graph.graphml"
-    _write_pdg_graphml(pdg, graphml_path)
-
-    # Count edges with significant existence probability
-    edge_count = sum(1 for probs in pdg.edges.values() if probs.p_exist > 0.01)
-
-    # Build comprehensive metadata dict using GenerationMetadata.to_dict()
-    llm_metadata = generation_metadata.to_dict()
-
-    metadata: Dict[str, Any] = {
-        # Network context info
-        "network": context.network,
-        "domain": context.domain,
-        "variable_count": len(pdg.nodes),
-        "edge_count": edge_count,
-        # LLM generation metadata (from GenerationMetadata)
-        **llm_metadata,
-        # Output objects
-        "objects": [
-            {
-                "type": "graphml",
-                "name": "graph",
-                "description": "PDG with edge probability attributes",
-            },
-        ],
-    }
-
-    # Write metadata.json
-    metadata_path = output_dir / "metadata.json"
-    metadata_path.write_text(json.dumps(metadata, indent=2), encoding="utf-8")
+def _format_existence_bar(p_exist: float) -> str:
+    """Return the unicode bar showing the existence probability."""
+    filled = int(p_exist * 10)
+    return "█" * filled + "░" * (10 - filled)
 
 
-def _write_pdg_graphml(pdg: "PDG", path: Path) -> None:
-    """Write PDG to GraphML file with edge probability attributes.
-
-    Creates a GraphML file where each edge has data attributes for
-    the four probability values: p_forward, p_backward, p_undirected,
-    p_none.
-
-    Args:
-        pdg: The PDG to write.
-        path: Output file path.
-    """
-    graphml_ns = "http://graphml.graphdrawing.org/xmlns"
-
-    # Build XML document
-    root = ET.Element("graphml", xmlns=graphml_ns)
-
-    # Add key definitions for edge probability attributes
-    for prob_name in ["p_forward", "p_backward", "p_undirected", "p_none"]:
-        key = ET.SubElement(root, "key", id=prob_name)
-        key.set("for", "edge")
-        key.set("attr.name", prob_name)
-        key.set("attr.type", "double")
-
-    # Create graph element
-    graph_elem = ET.SubElement(root, "graph", id="G", edgedefault="directed")
-
-    # Add nodes in order
-    for node in pdg.nodes:
-        ET.SubElement(graph_elem, "node", id=node)
-
-    # Add edges with probability attributes
-    edge_id = 0
-    for (source, target), probs in pdg.edges.items():
-        # Only include edges with non-zero existence probability
-        if probs.p_exist < 0.001:
-            continue
-
-        edge_id += 1
-        edge_elem = ET.SubElement(
-            graph_elem,
-            "edge",
-            id=f"e{edge_id}",
-            source=source,
-            target=target,
+def _print_edge_breakdown(probs: Any) -> None:
+    """Print the probability breakdown for mixed edges."""
+    if probs.p_directed > 0.01 and probs.undirected > 0.01:
+        click.echo(
+            f"      -> {probs.forward*100:4.1f}%  "
+            f"<- {probs.backward*100:4.1f}%  "
+            f"-- {probs.undirected*100:4.1f}%",
+            err=True,
         )
 
-        # Add probability data attributes
-        for attr_name, value in [
-            ("p_forward", probs.forward),
-            ("p_backward", probs.backward),
-            ("p_undirected", probs.undirected),
-            ("p_none", probs.none),
-        ]:
-            data = ET.SubElement(edge_elem, "data", key=attr_name)
-            data.text = f"{value:.4f}"
 
-    # Write to file with XML declaration
-    tree = ET.ElementTree(root)
-    ET.indent(tree, space="  ")
-    tree.write(str(path), encoding="unicode", xml_declaration=True)
+def _print_edge(index: int, source: str, target: str, probs: Any) -> None:
+    """Print one proposed edge with its existence probability."""
+    exist_pct = probs.p_exist * 100
+    exist_bar = _format_existence_bar(probs.p_exist)
+    direction = _format_direction(probs.most_likely_state(), source, target)
+
+    click.echo(
+        f"  {index:2d}. {direction}  "
+        f"[{exist_bar}] {exist_pct:5.1f}% exists",
+        err=True,
+    )
+
+    # Show probability breakdown for non-trivial cases
+    _print_edge_breakdown(probs)
 
 
 def _print_edges(pdg: "PDG") -> None:
@@ -420,36 +418,7 @@ def _print_edges(pdg: "PDG") -> None:
     sorted_edges = sorted(existing, key=lambda e: e[2].p_exist, reverse=True)
 
     for i, (source, target, probs) in enumerate(sorted_edges, 1):
-        exist_pct = probs.p_exist * 100
-        exist_bar = "█" * int(probs.p_exist * 10) + "░" * (
-            10 - int(probs.p_exist * 10)
-        )
-
-        # Determine most likely direction
-        state = probs.most_likely_state()
-        if state == "forward":
-            direction = f"{source} -> {target}"
-        elif state == "backward":
-            direction = f"{target} -> {source}"
-        elif state == "undirected":
-            direction = f"{source} -- {target}"
-        else:
-            direction = f"{source} x {target}"
-
-        click.echo(
-            f"  {i:2d}. {direction}  "
-            f"[{exist_bar}] {exist_pct:5.1f}% exists",
-            err=True,
-        )
-
-        # Show probability breakdown for non-trivial cases
-        if probs.p_directed > 0.01 and probs.undirected > 0.01:
-            click.echo(
-                f"      -> {probs.forward*100:4.1f}%  "
-                f"<- {probs.backward*100:4.1f}%  "
-                f"-- {probs.undirected*100:4.1f}%",
-                err=True,
-            )
+        _print_edge(i, source, target, probs)
 
 
 def _print_summary(pdg: "PDG", err: bool = False) -> None:

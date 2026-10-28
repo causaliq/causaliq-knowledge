@@ -11,15 +11,43 @@ The base cache infrastructure will migrate to causaliq-core.
 from __future__ import annotations
 
 import json
+import re
 from dataclasses import asdict, dataclass, field
 from datetime import datetime, timezone
 from pathlib import Path
-from typing import TYPE_CHECKING, Any
+from typing import TYPE_CHECKING, Any, Optional
 
 from causaliq_core.cache.compressors import JsonCompressor
 
 if TYPE_CHECKING:  # pragma: no cover
     from causaliq_core.cache.token_cache import TokenCache
+
+
+def _sanitise_request_id(request_id: Optional[str], cache_key: str) -> str:
+    """Sanitise a request id, falling back to the cache key prefix."""
+    cleaned = re.sub(r"[^a-zA-Z0-9_-]", "", request_id or cache_key[:8])
+    if cleaned:
+        return cleaned
+    return cache_key[:8] if cache_key else "unknown"
+
+
+def _format_export_timestamp(timestamp: Optional[str]) -> str:
+    """Format a cached ISO timestamp for use in a filename."""
+    if not timestamp:
+        return "unknown"
+    try:
+        dt = datetime.fromisoformat(timestamp.replace("Z", "+00:00"))
+        return dt.strftime("%Y-%m-%d-%H%M%S")
+    except ValueError:
+        return "unknown"
+
+
+def _sanitise_provider(provider: Optional[str]) -> str:
+    """Sanitise a provider name for use in a filename."""
+    cleaned = re.sub(r"[^a-z0-9]", "", (provider or "unknown").lower())
+    if cleaned:
+        return cleaned
+    return "unknown"
 
 
 @dataclass
@@ -388,35 +416,14 @@ class LLMCompressor(JsonCompressor):
             ... )
             >>> # Returns something like: expt23_2026-01-29-143052_openai.json
         """
-        import re
-        from datetime import datetime
-
         # Get request_id or use hash prefix as fallback
-        request_id = entry.metadata.request_id or cache_key[:8]
-        # Sanitise request_id (alphanumeric, hyphens, underscores only)
-        request_id = re.sub(r"[^a-zA-Z0-9_-]", "", request_id)
-        if not request_id:
-            request_id = cache_key[:8] if cache_key else "unknown"
+        request_id = _sanitise_request_id(entry.metadata.request_id, cache_key)
 
         # Parse timestamp and format as yyyy-mm-dd-hhmmss
-        timestamp_str = entry.metadata.timestamp
-        if timestamp_str:
-            try:
-                # Parse ISO format timestamp
-                dt = datetime.fromisoformat(
-                    timestamp_str.replace("Z", "+00:00")
-                )
-                formatted_ts = dt.strftime("%Y-%m-%d-%H%M%S")
-            except ValueError:
-                formatted_ts = "unknown"
-        else:
-            formatted_ts = "unknown"
+        formatted_ts = _format_export_timestamp(entry.metadata.timestamp)
 
         # Get provider, sanitised
-        provider = entry.metadata.provider or "unknown"
-        provider = re.sub(r"[^a-z0-9]", "", provider.lower())
-        if not provider:
-            provider = "unknown"
+        provider = _sanitise_provider(entry.metadata.provider)
 
         # Build filename: id_timestamp_provider.json
         return f"{request_id}_{formatted_ts}_{provider}.json"

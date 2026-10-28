@@ -22,6 +22,35 @@ if TYPE_CHECKING:  # pragma: no cover
 logger = logging.getLogger(__name__)
 
 
+def _strip_code_fence(text: str) -> str:
+    """Strip surrounding whitespace and markdown code fences from text."""
+    text = text.strip()
+    if text.startswith("```json"):
+        text = text[7:]
+    elif text.startswith("```"):
+        text = text[3:]
+    if text.endswith("```"):
+        text = text[:-3]
+    return text.strip()
+
+
+def _parse_cached_timestamp(timestamp: Optional[str]) -> Optional[datetime]:
+    """Parse a cached ISO timestamp, returning None when absent or invalid."""
+    try:
+        return datetime.fromisoformat(str(timestamp).replace("Z", "+00:00"))
+    except ValueError:
+        return None
+
+
+def _pop_cache_options(
+    kwargs: Dict[str, Any],
+) -> tuple[str, Optional[int]]:
+    """Remove the cache-control options from the request keyword arguments."""
+    request_id = kwargs.pop("request_id", "")
+    sample_index = kwargs.pop("sample_index", None)
+    return request_id, sample_index
+
+
 @dataclass
 class LLMConfig:
     """Base configuration for all LLM clients.
@@ -85,15 +114,8 @@ class LLMResponse:
         """
         try:
             # Clean up potential markdown code blocks
-            text = self.content.strip()
-            if text.startswith("```json"):
-                text = text[7:]
-            elif text.startswith("```"):
-                text = text[3:]
-            if text.endswith("```"):
-                text = text[:-3]
-
-            return json.loads(text.strip())  # type: ignore[no-any-return]
+            text = _strip_code_fence(self.content)
+            return json.loads(text)  # type: ignore[no-any-return]
         except json.JSONDecodeError as e:
             logger.warning(f"Failed to parse JSON response: {e}")
             return None
@@ -314,16 +336,12 @@ class BaseLLMClient(ABC):
         Returns:
             LLMResponse with the generated content and metadata.
         """
-        from causaliq_knowledge.llm.cache import LLMCacheEntry, LLMCompressor
-
         cache = self.cache
         use_cache = self.use_cache
 
         # Extract request_id (not part of cache key)
-        request_id = kwargs.pop("request_id", "")
-
-        # Extract sample_index (IS part of cache key)
-        sample_index = kwargs.pop("sample_index", None)
+        # and sample_index (IS part of cache key)
+        request_id, sample_index = _pop_cache_options(kwargs)
 
         # Build cache key
         temperature = kwargs.get("temperature")
@@ -334,34 +352,34 @@ class BaseLLMClient(ABC):
 
         # Check cache
         if use_cache and cache is not None:
-            # Ensure compressor is set
-            if not cache.has_compressor():
-                cache.set_compressor(LLMCompressor())
+            cached = self._cached_response(cache, cache_key)
+            if cached is not None:
+                return cached
 
-            if cache.exists(cache_key):
-                cached_data = cache.get_data(cache_key)
-                if cached_data is not None:
-                    entry = LLMCacheEntry.from_dict(cached_data)
-                    # Parse original timestamp from cache
-                    llm_ts: Optional[datetime] = None
-                    if entry.metadata.timestamp:
-                        try:
-                            llm_ts = datetime.fromisoformat(
-                                entry.metadata.timestamp.replace("Z", "+00:00")
-                            )
-                        except ValueError:
-                            pass
-                    return LLMResponse(
-                        content=entry.response.content,
-                        model=entry.model,
-                        input_tokens=entry.metadata.tokens.input,
-                        output_tokens=entry.metadata.tokens.output,
-                        cost=entry.metadata.cost_usd or 0.0,
-                        llm_timestamp=llm_ts,
-                        llm_latency_ms=entry.metadata.latency_ms,
-                    )
+        # Make API call with timing and set original LLM metadata
+        response, _, latency_ms = self._timed_completion(messages, **kwargs)
 
-        # Make API call with timing
+        # Store in cache
+        if use_cache and cache is not None:
+            self._store_cached_entry(
+                cache,
+                cache_key,
+                messages,
+                response,
+                request_id,
+                latency_ms,
+                temperature,
+                max_tokens,
+            )
+
+        return response
+
+    def _timed_completion(
+        self,
+        messages: List[Dict[str, str]],
+        **kwargs: Any,
+    ) -> tuple[LLMResponse, datetime, int]:
+        """Call the provider and record its request time and latency."""
         request_time = datetime.now(timezone.utc)
         start_time = time.perf_counter()
         response = self.completion(messages, **kwargs)
@@ -371,28 +389,71 @@ class BaseLLMClient(ABC):
         response.llm_timestamp = request_time
         response.llm_latency_ms = latency_ms
 
-        # Store in cache
-        if use_cache and cache is not None:
-            config = getattr(self, "config", LLMConfig(model="unknown"))
-            entry = LLMCacheEntry.create(
-                model=config.model,
-                messages=messages,
-                content=response.content,
-                temperature=(
-                    temperature
-                    if temperature is not None
-                    else config.temperature
-                ),
-                max_tokens=(
-                    max_tokens if max_tokens is not None else config.max_tokens
-                ),
-                provider=self.provider_name,
-                latency_ms=latency_ms,
-                input_tokens=response.input_tokens,
-                output_tokens=response.output_tokens,
-                cost_usd=response.cost,
-                request_id=request_id,
-            )
-            cache.put_data(cache_key, entry.to_dict())
+        return response, request_time, latency_ms
 
-        return response
+    def _cached_response(
+        self,
+        cache: "TokenCache",
+        cache_key: str,
+    ) -> Optional[LLMResponse]:
+        """Return the cached response for a key, if one is stored."""
+        from causaliq_knowledge.llm.cache import LLMCacheEntry, LLMCompressor
+
+        # Ensure compressor is set
+        if not cache.has_compressor():
+            cache.set_compressor(LLMCompressor())
+
+        cached_data = (
+            cache.get_data(cache_key) if cache.exists(cache_key) else None
+        )
+        if cached_data is None:
+            return None
+
+        entry = LLMCacheEntry.from_dict(cached_data)
+
+        # Parse original timestamp from cache
+        llm_ts = _parse_cached_timestamp(entry.metadata.timestamp)
+
+        return LLMResponse(
+            content=entry.response.content,
+            model=entry.model,
+            input_tokens=entry.metadata.tokens.input,
+            output_tokens=entry.metadata.tokens.output,
+            cost=entry.metadata.cost_usd or 0.0,
+            llm_timestamp=llm_ts,
+            llm_latency_ms=entry.metadata.latency_ms,
+        )
+
+    def _store_cached_entry(
+        self,
+        cache: "TokenCache",
+        cache_key: str,
+        messages: List[Dict[str, str]],
+        response: LLMResponse,
+        request_id: str,
+        latency_ms: int,
+        temperature: Optional[float],
+        max_tokens: Optional[int],
+    ) -> None:
+        """Store a completed response in the cache."""
+        from causaliq_knowledge.llm.cache import LLMCacheEntry
+
+        config = getattr(self, "config", LLMConfig(model="unknown"))
+        entry = LLMCacheEntry.create(
+            model=config.model,
+            messages=messages,
+            content=response.content,
+            temperature=(
+                temperature if temperature is not None else config.temperature
+            ),
+            max_tokens=(
+                max_tokens if max_tokens is not None else config.max_tokens
+            ),
+            provider=self.provider_name,
+            latency_ms=latency_ms,
+            input_tokens=response.input_tokens,
+            output_tokens=response.output_tokens,
+            cost_usd=response.cost,
+            request_id=request_id,
+        )
+        cache.put_data(cache_key, entry.to_dict())

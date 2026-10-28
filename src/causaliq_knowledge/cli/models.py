@@ -218,6 +218,73 @@ VALID_PROVIDER_NAMES = [
 ]
 
 
+def _filter_providers(
+    providers: List[ProviderInfo],
+    provider: Optional[str],
+) -> List[ProviderInfo]:
+    """Return the providers selected by the --provider option."""
+    if not provider:
+        return providers
+    provider_lower = provider.lower()
+    return [p for p in providers if p["prefix"].rstrip("/") == provider_lower]
+
+
+def _print_provider_models(prov: ProviderInfo) -> bool:
+    """Print the models of one provider, returning True when available."""
+    available, models, error = prov["get_models"]()
+
+    if available and models:
+        status = click.style("[OK]", fg="green")
+        count = len(models)
+        click.echo(f"  {status} {prov['name']} ({count} models):")
+        for m in models:
+            click.echo(f"      {m}")
+        return True
+
+    if available and not models:
+        status = click.style("[!]", fg="yellow")
+    else:
+        status = click.style("[X]", fg="red")
+    click.echo(f"  {status} {prov['name']}:")
+    click.echo(f"      {error}")
+    return False
+
+
+def _print_setup_section(providers: List[ProviderInfo]) -> None:
+    """Print the provider configuration status section."""
+    click.echo("Provider Setup:")
+    for prov in providers:
+        available, _, _ = prov["get_models"]()
+        if prov["env_var"]:
+            status = "configured" if available else "not set"
+            color = "green" if available else "yellow"
+            click.echo(
+                f"  {prov['env_var']}: "
+                f"{click.style(status, fg=color)} - {prov['url']}"
+            )
+        else:
+            status = "running" if available else "not running"
+            color = "green" if available else "yellow"
+            click.echo(
+                f"  Ollama server: "
+                f"{click.style(status, fg=color)} - {prov['url']}"
+            )
+
+
+def _print_footer(any_available: bool) -> None:
+    """Print the closing note and the default model."""
+    click.echo()
+    click.echo(
+        click.style("Note: ", fg="yellow")
+        + "Some models may require a paid plan. "
+        + "Free tier availability varies by provider."
+    )
+    click.echo()
+    if any_available:
+        click.echo("Default model: groq/llama-3.1-8b-instant")
+    click.echo()
+
+
 @click.command("list-models")
 @click.option(
     "--provider",
@@ -243,64 +310,15 @@ def list_models(provider: Optional[str]) -> None:
 
         cqknow list-models --provider mistral
     """
-    providers = get_all_providers()
-
-    # Filter providers if a specific one is requested
-    if provider:
-        provider_lower = provider.lower()
-        providers = [
-            p for p in providers if p["prefix"].rstrip("/") == provider_lower
-        ]
+    providers = _filter_providers(get_all_providers(), provider)
 
     click.echo("\nAvailable LLM Models:\n")
 
     any_available = False
     for prov in providers:
-        available, models, error = prov["get_models"]()
-
-        if available and models:
+        if _print_provider_models(prov):
             any_available = True
-            status = click.style("[OK]", fg="green")
-            count = len(models)
-            click.echo(f"  {status} {prov['name']} ({count} models):")
-            for m in models:
-                click.echo(f"      {m}")
-        elif available and not models:
-            status = click.style("[!]", fg="yellow")
-            click.echo(f"  {status} {prov['name']}:")
-            click.echo(f"      {error}")
-        else:
-            status = click.style("[X]", fg="red")
-            click.echo(f"  {status} {prov['name']}:")
-            click.echo(f"      {error}")
-
         click.echo()
 
-    click.echo("Provider Setup:")
-    for prov in providers:
-        available, _, _ = prov["get_models"]()
-        if prov["env_var"]:
-            status = "configured" if available else "not set"
-            color = "green" if available else "yellow"
-            click.echo(
-                f"  {prov['env_var']}: "
-                f"{click.style(status, fg=color)} - {prov['url']}"
-            )
-        else:
-            status = "running" if available else "not running"
-            color = "green" if available else "yellow"
-            click.echo(
-                f"  Ollama server: "
-                f"{click.style(status, fg=color)} - {prov['url']}"
-            )
-
-    click.echo()
-    click.echo(
-        click.style("Note: ", fg="yellow")
-        + "Some models may require a paid plan. "
-        + "Free tier availability varies by provider."
-    )
-    click.echo()
-    if any_available:
-        click.echo("Default model: groq/llama-3.1-8b-instant")
-    click.echo()
+    _print_setup_section(providers)
+    _print_footer(any_available)

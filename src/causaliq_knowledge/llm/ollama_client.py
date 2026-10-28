@@ -2,7 +2,7 @@
 
 import logging
 from dataclasses import dataclass
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List, NoReturn, Optional
 
 import httpx
 
@@ -86,7 +86,47 @@ class OllamaClient(BaseLLMClient):
             ValueError: If the API request fails or Ollama is not running.
         """
         # Build request payload (Ollama uses similar format to OpenAI)
-        payload: Dict[str, Any] = {
+        payload = self._build_payload(messages, **kwargs)
+
+        logger.debug(f"Calling Ollama API with model: {self.config.model}")
+
+        return self._post_chat(payload)
+
+    def _post_chat(self, payload: Dict[str, Any]) -> LLMResponse:
+        """POST a chat request and translate transport errors."""
+        try:
+            with httpx.Client(timeout=self.config.timeout) as client:
+                response = client.post(
+                    f"{self.config.base_url}/api/chat",
+                    json=payload,
+                    headers={"Content-Type": "application/json"},
+                )
+                response.raise_for_status()
+                return self._parse_response(response.json())
+
+        except httpx.ConnectError:
+            raise ValueError(
+                "Could not connect to Ollama. "
+                "Make sure Ollama is running (run 'ollama serve' or start "
+                "the Ollama app). "
+                f"Tried to connect to: {self.config.base_url}"
+            )
+        except httpx.HTTPStatusError as e:
+            self._raise_http_error(e)
+        except httpx.TimeoutException:
+            raise ValueError(
+                "Ollama API request timed out. Local inference can be slow - "
+                "try increasing the timeout in OllamaConfig."
+            )
+        except Exception as e:
+            logger.error(f"Ollama API unexpected error: {e}")
+            raise ValueError(f"Ollama API error: {str(e)}")
+
+    def _build_payload(
+        self, messages: List[Dict[str, str]], **kwargs: Any
+    ) -> Dict[str, Any]:
+        """Build the Ollama request payload."""
+        return {
             "model": self.config.model,
             "messages": messages,
             "stream": False,
@@ -100,72 +140,48 @@ class OllamaClient(BaseLLMClient):
             },
         }
 
-        url = f"{self.config.base_url}/api/chat"
-        headers = {"Content-Type": "application/json"}
+    def _parse_response(self, data: Dict[str, Any]) -> LLMResponse:
+        """Build an LLMResponse from an Ollama response payload."""
+        # Extract response content
+        content = data.get("message", {}).get("content", "")
 
-        logger.debug(f"Calling Ollama API with model: {self.config.model}")
+        # Extract token counts (Ollama provides these)
+        input_tokens = data.get("prompt_eval_count", 0)
+        output_tokens = data.get("eval_count", 0)
+        # Ollama uses done_reason
+        finish_reason = data.get("done_reason", "stop") or "stop"
 
-        try:
-            with httpx.Client(timeout=self.config.timeout) as client:
-                response = client.post(url, json=payload, headers=headers)
-                response.raise_for_status()
+        self._total_calls += 1
 
-                data = response.json()
+        logger.debug(
+            f"Ollama response: {input_tokens} in, {output_tokens} out"
+        )
 
-                # Extract response content
-                content = data.get("message", {}).get("content", "")
+        return LLMResponse(
+            content=content,
+            model=data.get("model", self.config.model),
+            input_tokens=input_tokens,
+            output_tokens=output_tokens,
+            cost=0.0,  # Local inference is free
+            finish_reason=finish_reason,
+            raw_response=data,
+        )
 
-                # Extract token counts (Ollama provides these)
-                input_tokens = data.get("prompt_eval_count", 0)
-                output_tokens = data.get("eval_count", 0)
-                # Ollama uses done_reason
-                finish_reason = data.get("done_reason", "stop") or "stop"
-
-                self._total_calls += 1
-
-                logger.debug(
-                    f"Ollama response: {input_tokens} in, {output_tokens} out"
-                )
-
-                return LLMResponse(
-                    content=content,
-                    model=data.get("model", self.config.model),
-                    input_tokens=input_tokens,
-                    output_tokens=output_tokens,
-                    cost=0.0,  # Local inference is free
-                    finish_reason=finish_reason,
-                    raw_response=data,
-                )
-
-        except httpx.ConnectError:
+    def _raise_http_error(self, error: httpx.HTTPStatusError) -> NoReturn:
+        """Raise the ValueError that matches an Ollama HTTP error."""
+        if error.response.status_code == 404:
             raise ValueError(
-                "Could not connect to Ollama. "
-                "Make sure Ollama is running (run 'ollama serve' or start "
-                "the Ollama app). "
-                f"Tried to connect to: {self.config.base_url}"
+                f"Model '{self.config.model}' not found. "
+                f"Run 'ollama pull {self.config.model}' to download it."
             )
-        except httpx.HTTPStatusError as e:
-            if e.response.status_code == 404:
-                raise ValueError(
-                    f"Model '{self.config.model}' not found. "
-                    f"Run 'ollama pull {self.config.model}' to download it."
-                )
-            logger.error(
-                f"Ollama API error: {e.response.status_code} - "
-                f"{e.response.text}"
-            )
-            raise ValueError(
-                f"Ollama API error: {e.response.status_code} - "
-                f"{e.response.text}"
-            )
-        except httpx.TimeoutException:
-            raise ValueError(
-                "Ollama API request timed out. Local inference can be slow - "
-                "try increasing the timeout in OllamaConfig."
-            )
-        except Exception as e:
-            logger.error(f"Ollama API unexpected error: {e}")
-            raise ValueError(f"Ollama API error: {str(e)}")
+        logger.error(
+            f"Ollama API error: {error.response.status_code} - "
+            f"{error.response.text}"
+        )
+        raise ValueError(
+            f"Ollama API error: {error.response.status_code} - "
+            f"{error.response.text}"
+        )
 
     def complete_json(
         self, messages: List[Dict[str, str]], **kwargs: Any

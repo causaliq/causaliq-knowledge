@@ -634,6 +634,25 @@ def test_dict_to_graph_with_metadata_object() -> None:
         assert restored.metadata.model == "test-model"
 
 
+# Test _dict_to_graph defaults timestamps when the metadata has none.
+def test_dict_to_graph_metadata_without_timestamps() -> None:
+    """Metadata lacking timestamps falls back to the current time."""
+    with TokenCache(":memory:") as cache:
+        compressor = GraphCompressor()
+
+        data = {
+            "edges": [{"source": "A", "target": "B", "confidence": 0.8}],
+            "variables": ["A", "B"],
+            "metadata": {"llm_model": "test-model"},
+        }
+
+        blob = compressor.compress(data, cache)
+        restored, _ = compressor.decompress(blob, cache)
+
+    assert restored.metadata is not None
+    assert restored.metadata.timestamp == restored.metadata.llm_timestamp
+
+
 # Test export with dict input (not GeneratedGraph).
 def test_export_with_dict_input(tmp_path) -> None:
     """Export handles dict input directly."""
