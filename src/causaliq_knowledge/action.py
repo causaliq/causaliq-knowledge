@@ -175,7 +175,7 @@ class KnowledgeActionProvider(CausalIQActionProvider):
     supported_actions: Set[str] = SUPPORTED_ACTIONS
     supported_types: Set[str] = set()  # PDG compression handled by core
     action_patterns: Dict[str, ActionPattern] = {
-        "generate_graph": ActionPattern.CREATE,
+        "generate_graph": ActionPattern.PRODUCE,
     }
 
     inputs: Dict[str, Any] = _create_action_inputs()

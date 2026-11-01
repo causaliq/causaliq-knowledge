@@ -13,6 +13,14 @@ from unittest.mock import MagicMock, patch
 
 import pytest
 
+EXPANDED_STEP_NAME = "Generate graph run 1"
+"""Step name after the engine expands the ``{{run}}`` template.
+
+The workflows below declare ``matrix: run: [1]`` and name their step
+``"Generate graph run {{run}}"``. A step name is expanded per matrix job,
+so results are recorded under the expanded name rather than the template.
+"""
+
 
 def _make_mock_result(pdg):
     """Create a mock PDGGenerationResult for testing.
@@ -166,10 +174,8 @@ steps:
 
     assert len(results) == 1
     step_results = results[0]["steps"]
-    assert "Generate graph run {{run}}" in step_results
-    assert (
-        step_results["Generate graph run {{run}}"]["status"] == "would_execute"
-    )
+    assert EXPANDED_STEP_NAME in step_results
+    assert step_results[EXPANDED_STEP_NAME]["status"] == "would_execute"
 
 
 # Test workflow run execution with mocked LLM.
@@ -236,10 +242,10 @@ steps:
 
     assert len(results) == 1
     step_results = results[0]["steps"]
-    assert "Generate graph run {{run}}" in step_results
-    assert step_results["Generate graph run {{run}}"]["status"] == "success"
+    assert EXPANDED_STEP_NAME in step_results
+    assert step_results[EXPANDED_STEP_NAME]["status"] == "success"
     # Metadata is flattened directly into result
-    assert step_results["Generate graph run {{run}}"]["edge_count"] == 1
+    assert step_results[EXPANDED_STEP_NAME]["edge_count"] == 1
 
 
 # Test workflow with output directory via causaliq-workflow.
@@ -305,7 +311,7 @@ steps:
 
     # Workflow cache stores objects - verify via cache file
     step_results = results[0]["steps"]
-    assert step_results["Generate graph run {{run}}"]["status"] == "success"
+    assert step_results[EXPANDED_STEP_NAME]["status"] == "success"
     # Verify cache file was created and contains the PDG
     assert cache_file.exists()
     from causaliq_workflow.cache import WorkflowCache
