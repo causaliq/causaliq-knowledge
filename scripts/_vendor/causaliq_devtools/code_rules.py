@@ -1,3 +1,4 @@
+# generated from causaliq@838155024dcf src/causaliq/devtools/code_rules.py - do not edit
 """Report per-function nesting depth and statement counts for source modules.
 
 The limits and their counting rules are defined in the umbrella development
@@ -12,9 +13,8 @@ code.
 
 Usage:
 
-    python scripts/check_code_rules.py
-    python scripts/check_code_rules.py --strict \\
-        src/causaliq_analysis/workflow_action
+    python scripts/check_ci.py --rules
+    python -m causaliq.devtools.code_rules --strict src/
 """
 
 from __future__ import annotations

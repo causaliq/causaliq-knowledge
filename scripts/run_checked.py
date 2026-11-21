@@ -1,0 +1,12 @@
+# generated from causaliq@838155024dcf src/causaliq/devtools/templates.py - do not edit
+"""Run a command and record its exit code."""
+
+import sys
+from pathlib import Path
+
+sys.path.insert(0, str(Path(__file__).resolve().parent / "_vendor"))
+
+from causaliq_devtools.run_checked import main  # noqa: E402
+
+if __name__ == "__main__":
+    sys.exit(main())

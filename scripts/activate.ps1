@@ -1,51 +1,38 @@
-# Activate a specific Python environment
+# generated from causaliq@838155024dcf src/causaliq/devtools/templates.py - do not edit
 # Usage: .\scripts\activate.ps1 [39|310|311|312|313]
-# Defaults to Python 3.11 if no version specified
-
+# Defaults to Python 3.11
 param(
-    [string]$Version = "311"  # Default to Python 3.11
+    [string]$Version = "311"
 )
 
-if ($Version -eq "help" -or $Version -eq "?" -or $Version -eq "-h") {
-    Write-Host "Usage: .\scripts\activate.ps1 [39|310|311|312|313]" -ForegroundColor Yellow
-    Write-Host "Defaults to Python 3.11 if no version specified" -ForegroundColor Cyan
-    Write-Host ""
-    Write-Host "Available environments:" -ForegroundColor Cyan
-    
-    if (Test-Path "venv\py39") { Write-Host "  39  - Python 3.9  (venv\py39)" -ForegroundColor Green }
-    if (Test-Path "venv\py310") { Write-Host "  310 - Python 3.10 (venv\py310)" -ForegroundColor Green }
-    if (Test-Path "venv\py311") { Write-Host "  311 - Python 3.11 (venv\py311) [DEFAULT]" -ForegroundColor Green }
-    if (Test-Path "venv\py312") { Write-Host "  312 - Python 3.12 (venv\py312)" -ForegroundColor Green }
-    if (Test-Path "venv\py313") { Write-Host "  313 - Python 3.13 (venv\py313)" -ForegroundColor Green }
-    
-    Write-Host ""
+$Environments = [ordered]@{
+    "39" = "3.9"
+    "310" = "3.10"
+    "311" = "3.11"
+    "312" = "3.12"
+    "313" = "3.13"
+}
+
+if ($Version -in @("help", "?", "-h")) {
+    Write-Host "Usage: .\scripts\activate.ps1 [39|310|311|312|313]"
+    Write-Host "Defaults to Python 3.11"
+    foreach ($key in $Environments.Keys) {
+        Write-Host ("  {0} - Python {1}" -f $key, $Environments[$key])
+    }
     exit 0
 }
 
-$EnvPath = "venv\py$Version"
-
-if (-not (Test-Path $EnvPath)) {
-    Write-Host "Error: Environment $EnvPath does not exist" -ForegroundColor Red
-    Write-Host "Run .\scripts\setup-env.ps1 first to create environments" -ForegroundColor Yellow
+if (-not $Environments.Contains($Version)) {
+    Write-Host "Error: unknown Python version $Version"
     exit 1
 }
 
-# Convert version number to proper display format
-$DisplayVersion = switch ($Version) {
-    "39" { "3.9" }
-    "310" { "3.10" }
-    "311" { "3.11" }
-    "312" { "3.12" }
-    "313" { "3.13" }
-    default { "3.$Version" }
+$EnvPath = "venv\py$Version"
+if (-not (Test-Path $EnvPath)) {
+    Write-Host "Error: $EnvPath does not exist"
+    Write-Host "Run .\scripts\setup-env.ps1 first"
+    exit 1
 }
 
-Write-Host "Activating Python $DisplayVersion environment..." -ForegroundColor Blue
+Write-Host "Activating Python $($Environments[$Version]) environment..."
 & "$EnvPath\Scripts\Activate.ps1"
-
-if ($Version -eq "311") {
-    Write-Host ""
-    Write-Host "$([char]0x2713) causaliq-knowledge CLI is now available!" -ForegroundColor Green
-    Write-Host "Test it: causaliq-knowledge --help" -ForegroundColor Cyan
-    Write-Host ""
-}

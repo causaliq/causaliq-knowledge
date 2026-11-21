@@ -1,0 +1,22 @@
+{
+  "files": {
+    "scripts/_vendor/causaliq_devtools/__init__.py": "45e22c80dc8d8e0b45d8517aa5e1ff42402c7868624fdbdf052ec2a274885ee7",
+    "scripts/_vendor/causaliq_devtools/code_rules.py": "db6540662220d09fc6afcb36ba877599c91f480172f761ad16f4fbef7a367ffc",
+    "scripts/_vendor/causaliq_devtools/config.py": "4b8a2d5b055eb79a75cf3e26ffc067ec0b7745e64cb56e2ef4af4ca3d147d2a8",
+    "scripts/_vendor/causaliq_devtools/gate.py": "cb2fdb2e9944ffa490e5bc2af2a81da2f7b2dc161073469652328f77130af6f6",
+    "scripts/_vendor/causaliq_devtools/options.py": "378dbe333607ab871a99a39f0345e3be1579db1a76953dd358cf17c72c1b508f",
+    "scripts/_vendor/causaliq_devtools/processes.py": "86241bac98a65c091b8e514709c360a1565a655932055326b41e4ada36008d90",
+    "scripts/_vendor/causaliq_devtools/run_checked.py": "ce63703ba8df1cb01b313b98ee92b2076da0d379a1bf9e38157f091007ef89d8",
+    "scripts/_vendor/causaliq_devtools/steps.py": "8d6f666e9b9750fc021235d4d20426e4de85da3a20c9d867c729edcce9778ae0",
+    "scripts/_vendor/causaliq_devtools/sync.py": "2348fc5cb710b44ccbd4505243d6ec78dfd142ad04dfb4a26309a64b13080c9a",
+    "scripts/_vendor/causaliq_devtools/templates.py": "afb964c8288326d56728cdc1b86bfe0ebbe3927b32e0a666e21f317f1f8d2231",
+    "scripts/activate.ps1": "09a2784a0b37341644b9a561a0873983aec8f51c0c28f59d8e232f52d3cfd348",
+    "scripts/build-and-publish.ps1": "b4d4977c3736d39da14478d71f56a88f753cf4354acab124744d019f7fe15f3d",
+    "scripts/check_ci.ps1": "4f6258588987b03a481a55082c346d9797508a30875ca895e30b1b6fda6ce671",
+    "scripts/check_ci.py": "31db5c9ac7126c3b0f220fc980df3298f8ad13d833636795edc748e882fb0719",
+    "scripts/run_checked.py": "85c6b8c21c32c2dd9f4f7f13975547dd79d4256f378e780462f9d6243b4b8d72",
+    "scripts/setup-env.ps1": "859b11696ca17c4ce796abd9a99af0e1cd4679b49c95ead2f6dfd30ce254eb3e",
+    "scripts/sync.py": "6ce22c688b49bf5ba658e461b696371d315e2d31fa12069b19189d511dc67b2f"
+  },
+  "source": "causaliq@838155024dcf"
+}

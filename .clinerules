@@ -6,6 +6,7 @@ Before planning, coding, writing tests or documentation, or running tests in thi
 - Writing Tests: `../causaliq/docs/development_policy/02-test-write.md`
 - Running: `../causaliq/docs/development_policy/03-test-run.md`
 - Writing Documentation: `../causaliq/docs/development_policy/04-docs.md`
+- Development Scripts: `../causaliq/docs/development_policy/05-scripts.md`
 
 ## Primary Guardrail
 Never mix Feature/Fix Implementation (Hat 1) with Refactoring (Hat 2) in a single task.
