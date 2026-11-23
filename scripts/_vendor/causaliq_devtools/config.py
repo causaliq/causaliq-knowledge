@@ -1,7 +1,7 @@
-# generated from causaliq@838155024dcf src/causaliq/devtools/config.py - do not edit
+# generated from causaliq@27a2f560f378 src/causaliq/devtools/config.py - do not edit
 """Read the ``[tool.causaliq]`` block from a package ``pyproject.toml``.
 
-``devtools`` must stay stdlib-only on Python 3.9, where ``tomllib`` does not
+``devtools`` must stay stdlib-only on Python 3.10, where ``tomllib`` does not
 exist, so the block is read with a deliberately small parser. It understands
 strings, booleans, integers and arrays of those values; anything else is
 reported as a configuration error rather than guessed at.
@@ -14,7 +14,7 @@ from pathlib import Path
 from typing import Dict, List, Mapping, Optional, Tuple
 
 SECTION = "[tool.causaliq]"
-DEFAULT_PYTHONS = ("3.9",)
+DEFAULT_PYTHONS = ("3.10",)
 DEFAULT_EXTRAS = ("dev",)
 DEFAULT_TESTPATHS = ("tests",)
 DEFAULT_FAST_TESTPATHS = ("tests/unit", "tests/functional")

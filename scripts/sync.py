@@ -1,4 +1,4 @@
-# generated from causaliq@838155024dcf src/causaliq/devtools/templates.py - do not edit
+# generated from causaliq@27a2f560f378 src/causaliq/devtools/templates.py - do not edit
 """Verify or refresh generated dev scripts."""
 
 import sys

@@ -1,5 +1,5 @@
 {
-    "python.defaultInterpreterPath": "./venv/py311/Scripts/python.exe",
+    "python.defaultInterpreterPath": "./venv/py312/Scripts/python.exe",
     "python.terminal.activateEnvironment": true,
     "python.terminal.activateEnvInCurrentTerminal": true,
     "terminal.integrated.defaultProfile.windows": "PowerShell",

@@ -1,4 +1,4 @@
-# generated from causaliq@838155024dcf src/causaliq/devtools/steps.py - do not edit
+# generated from causaliq@27a2f560f378 src/causaliq/devtools/steps.py - do not edit
 """Build and execute the individual quality-gate steps."""
 
 from __future__ import annotations

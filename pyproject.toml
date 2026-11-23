@@ -19,16 +19,16 @@ classifiers = [
     "Intended Audience :: Science/Research",
     "Operating System :: OS Independent",
     "Programming Language :: Python :: 3",
-    "Programming Language :: Python :: 3.9",
     "Programming Language :: Python :: 3.10",
     "Programming Language :: Python :: 3.11",
     "Programming Language :: Python :: 3.12",
     "Programming Language :: Python :: 3.13",
+    "Programming Language :: Python :: 3.14",
     "Topic :: Scientific/Engineering",
     "Topic :: Software Development :: Libraries :: Python Modules",
 ]
 keywords = ["causaliq"]
-requires-python = ">=3.9"
+requires-python = ">=3.10"
 dependencies = [
     "causaliq-core>=0.8.0.dev12",
     "causaliq-workflow>=0.6.0.dev18",
@@ -95,8 +95,8 @@ causaliq_knowledge = ["py.typed"]
 [tool.causaliq]
 distribution = "causaliq-knowledge"
 package = "causaliq_knowledge"
-python_versions = ["3.9", "3.10", "3.11", "3.12", "3.13"]
-default_python = "3.11"
+python_versions = ["3.10", "3.11", "3.12", "3.13", "3.14"]
+default_python = "3.12"
 dev_extras = ["dev", "test", "docs"]
 testpaths = ["tests/unit", "tests/functional", "tests/integration"]
 fast_testpaths = ["tests/unit", "tests/functional"]
@@ -151,7 +151,7 @@ exclude_lines = [
 
 [tool.black]
 line-length = 79
-target-version = ['py39']
+target-version = ['py310']
 include = '\.pyi?$'
 # 'dist' is intentionally omitted so package directories named dist are
 # formatted; build artefacts contain no .py files.

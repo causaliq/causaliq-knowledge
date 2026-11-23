@@ -1,4 +1,4 @@
-# generated from causaliq@838155024dcf src/causaliq/devtools/processes.py - do not edit
+# generated from causaliq@27a2f560f378 src/causaliq/devtools/processes.py - do not edit
 """Platform helpers for launching and terminating command trees.
 
 The behaviour differs enough between Windows and POSIX that keeping it in one

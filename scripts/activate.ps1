@@ -1,21 +1,21 @@
-# generated from causaliq@838155024dcf src/causaliq/devtools/templates.py - do not edit
-# Usage: .\scripts\activate.ps1 [39|310|311|312|313]
-# Defaults to Python 3.11
+# generated from causaliq@27a2f560f378 src/causaliq/devtools/templates.py - do not edit
+# Usage: .\scripts\activate.ps1 [310|311|312|313|314]
+# Defaults to Python 3.12
 param(
-    [string]$Version = "311"
+    [string]$Version = "312"
 )
 
 $Environments = [ordered]@{
-    "39" = "3.9"
     "310" = "3.10"
     "311" = "3.11"
     "312" = "3.12"
     "313" = "3.13"
+    "314" = "3.14"
 }
 
 if ($Version -in @("help", "?", "-h")) {
-    Write-Host "Usage: .\scripts\activate.ps1 [39|310|311|312|313]"
-    Write-Host "Defaults to Python 3.11"
+    Write-Host "Usage: .\scripts\activate.ps1 [310|311|312|313|314]"
+    Write-Host "Defaults to Python 3.12"
     foreach ($key in $Environments.Keys) {
         Write-Host ("  {0} - Python {1}" -f $key, $Environments[$key])
     }

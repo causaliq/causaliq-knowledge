@@ -1,4 +1,4 @@
-# generated from causaliq@838155024dcf src/causaliq/devtools/run_checked.py - do not edit
+# generated from causaliq@27a2f560f378 src/causaliq/devtools/run_checked.py - do not edit
 """Launch a long-running command and wait for an exit-code artefact.
 
 Completion is defined by ``<log>.exit``, never by console output: ``run``

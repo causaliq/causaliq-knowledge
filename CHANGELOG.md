@@ -16,6 +16,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **Dependency minimums** - require `causaliq-core>=0.8.0.dev8` and
   `causaliq-workflow>=0.6.0.dev9` for the standardised version 2 metadata
   envelope (`parameters`, `started` and `elapsed`)
+- Python 3.14 is now supported and tested in CI, and the default development
+  interpreter is Python 3.12
 
 ### Deprecated
 
@@ -23,7 +25,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Removed
 
-- Nothing yet
+- Python 3.9 support: `requires-python` is now `>=3.10`, and the development
+  environments, CI matrix and generated scripts cover Python 3.10 to 3.14
 
 ### Fixed
 

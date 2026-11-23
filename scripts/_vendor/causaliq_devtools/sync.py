@@ -1,4 +1,4 @@
-# generated from causaliq@838155024dcf src/causaliq/devtools/sync.py - do not edit
+# generated from causaliq@27a2f560f378 src/causaliq/devtools/sync.py - do not edit
 """Verify or refresh the generated development scripts in a repository.
 
 Packages never import the umbrella: ``update`` copies the devtools modules and
