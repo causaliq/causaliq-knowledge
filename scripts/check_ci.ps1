@@ -1,4 +1,4 @@
-# generated from causaliq@27a2f560f378 src/causaliq/devtools/templates.py - do not edit
+# generated from causaliq@49a27b66b20d src/causaliq/devtools/templates.py - do not edit
 param(
     [Parameter(ValueFromRemainingArguments = $true)][string[]]$Args
 )

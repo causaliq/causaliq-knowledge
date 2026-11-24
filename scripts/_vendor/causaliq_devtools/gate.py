@@ -1,4 +1,4 @@
-# generated from causaliq@27a2f560f378 src/causaliq/devtools/gate.py - do not edit
+# generated from causaliq@49a27b66b20d src/causaliq/devtools/gate.py - do not edit
 """Run the CausalIQ quality gates for the current package."""
 
 from __future__ import annotations

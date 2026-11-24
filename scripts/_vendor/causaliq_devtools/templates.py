@@ -1,4 +1,4 @@
-# generated from causaliq@27a2f560f378 src/causaliq/devtools/templates.py - do not edit
+# generated from causaliq@49a27b66b20d src/causaliq/devtools/templates.py - do not edit
 """Text templates for the generated scripts.
 
 Rendering is a plain placeholder replacement rather than ``str.format`` because
@@ -134,6 +134,29 @@ from causaliq_devtools.@@MODULE@@ import @@FUNCTION@@  # noqa: E402
 if __name__ == "__main__":
     sys.exit(@@FUNCTION@@())
 '''
+
+SETUP_DEV_ENV = '''"""Create and verify the shared CausalIQ environments."""
+
+import sys
+from pathlib import Path
+
+sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "src"))
+
+from causaliq.devtools.devenv import main  # noqa: E402
+
+if __name__ == "__main__":
+    sys.exit(main())
+'''
+
+
+def setup_dev_env_entry_point() -> str:
+    """Return the umbrella entry point that runs ``devenv`` from ``src``.
+
+    The umbrella does not vendor ``devtools``, so this script imports the
+    canonical package from ``src`` rather than the generated
+    ``scripts/_vendor`` copy that a package uses.
+    """
+    return SETUP_DEV_ENV
 
 
 def activate_ps1(config: CausaliqConfig) -> str:

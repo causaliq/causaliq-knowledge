@@ -1,4 +1,4 @@
-# generated from causaliq@27a2f560f378 src/causaliq/devtools/config.py - do not edit
+# generated from causaliq@49a27b66b20d src/causaliq/devtools/config.py - do not edit
 """Read the ``[tool.causaliq]`` block from a package ``pyproject.toml``.
 
 ``devtools`` must stay stdlib-only on Python 3.10, where ``tomllib`` does not
@@ -18,6 +18,8 @@ DEFAULT_PYTHONS = ("3.10",)
 DEFAULT_EXTRAS = ("dev",)
 DEFAULT_TESTPATHS = ("tests",)
 DEFAULT_FAST_TESTPATHS = ("tests/unit", "tests/functional")
+DEFAULT_SHARED_PYTHONS = ("3.12", "3.14")
+DEFAULT_SHARED_EXTRAS = ("dev", "test")
 
 
 class ConfigError(Exception):
@@ -49,10 +51,38 @@ class CausaliqConfig:
         return ",".join(self.dev_extras)
 
 
+@dataclass(frozen=True)
+class SharedConfig:
+    """Settings that describe the umbrella's shared environments.
+
+    These keys are umbrella-only: no package uses them, so they are read
+    through their own accessor rather than widening :class:`CausaliqConfig`.
+    """
+
+    python_versions: Tuple[str, ...]
+    extras: Tuple[str, ...]
+
+
 def load_config(root: Optional[Path] = None) -> CausaliqConfig:
     """Return the configuration declared by the nearest pyproject.toml."""
     path = find_pyproject(root or Path.cwd())
     return build_config(read_section(path))
+
+
+def load_shared(root: Optional[Path] = None) -> SharedConfig:
+    """Return the shared-environment settings of the nearest pyproject."""
+    path = find_pyproject(root or Path.cwd())
+    return build_shared(read_section(path))
+
+
+def build_shared(values: Mapping[str, object]) -> SharedConfig:
+    """Return the shared-environment settings declared by the umbrella."""
+    return SharedConfig(
+        python_versions=_str_tuple(
+            values, "shared_python_versions", DEFAULT_SHARED_PYTHONS
+        ),
+        extras=_str_tuple(values, "shared_extras", DEFAULT_SHARED_EXTRAS),
+    )
 
 
 def find_pyproject(start: Path) -> Path:
