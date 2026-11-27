@@ -9,7 +9,7 @@ from __future__ import annotations
 import json
 from enum import Enum
 from pathlib import Path
-from typing import TYPE_CHECKING, Any, Optional, Union
+from typing import TYPE_CHECKING, Any, Union
 
 from pydantic import BaseModel, Field, field_validator, model_validator
 
@@ -76,7 +76,7 @@ class VariableSpec(BaseModel):
         default="",
         description="Name used for LLM queries (defaults to name)",
     )
-    display_name: Optional[str] = Field(
+    display_name: str | None = Field(
         default=None, description="Human-readable display name"
     )
     aliases: list[str] = Field(
@@ -87,7 +87,7 @@ class VariableSpec(BaseModel):
         default_factory=list,
         description="Possible states for discrete variables",
     )
-    role: Optional[VariableRole] = Field(
+    role: VariableRole | None = Field(
         default=None, description="Causal role in the structure"
     )
 
@@ -99,22 +99,22 @@ class VariableSpec(BaseModel):
             object.__setattr__(self, "llm_name", self.name)
         return self
 
-    category: Optional[str] = Field(
+    category: str | None = Field(
         default=None, description="Domain-specific category"
     )
-    short_description: Optional[str] = Field(
+    short_description: str | None = Field(
         default=None, description="Brief description"
     )
-    extended_description: Optional[str] = Field(
+    extended_description: str | None = Field(
         default=None, description="Detailed description with domain context"
     )
-    base_rate: Optional[dict[str, float]] = Field(
+    base_rate: dict[str, float] | None = Field(
         default=None, description="Prior probabilities for each state"
     )
-    conditional_rates: Optional[dict[str, Any]] = Field(
+    conditional_rates: dict[str, Any] | None = Field(
         default=None, description="Conditional probabilities"
     )
-    sensitivity_hints: Optional[str] = Field(
+    sensitivity_hints: str | None = Field(
         default=None, description="Hints about causal relationships"
     )
     related_domain_knowledge: list[str] = Field(
@@ -157,22 +157,22 @@ class Provenance(BaseModel):
         notes: Additional notes about the source.
     """
 
-    source_network: Optional[str] = Field(
+    source_network: str | None = Field(
         default=None, description="Source benchmark network name"
     )
-    source_reference: Optional[str] = Field(
+    source_reference: str | None = Field(
         default=None, description="Citation for original source"
     )
-    source_url: Optional[str] = Field(
+    source_url: str | None = Field(
         default=None, description="URL to source data"
     )
-    disguise_strategy: Optional[str] = Field(
+    disguise_strategy: str | None = Field(
         default=None, description="Variable name disguising strategy"
     )
-    memorization_risk: Optional[str] = Field(
+    memorization_risk: str | None = Field(
         default=None, description="LLM memorization risk level"
     )
-    notes: Optional[str] = Field(default=None, description="Additional notes")
+    notes: str | None = Field(default=None, description="Additional notes")
 
 
 class LLMGuidance(BaseModel):
@@ -199,7 +199,7 @@ class ViewDefinition(BaseModel):
         include_fields: List of VariableSpec fields to include in this view.
     """
 
-    description: Optional[str] = Field(
+    description: str | None = Field(
         default=None, description="Description of this view"
     )
     include_fields: list[str] = Field(
@@ -268,7 +268,7 @@ class Constraints(BaseModel):
     tiers: dict[str, list[str]] = Field(
         default_factory=dict, description="Variable tier groupings"
     )
-    notes: Optional[str] = Field(
+    notes: str | None = Field(
         default=None, description="Notes about constraints"
     )
 
@@ -306,7 +306,7 @@ class GroundTruth(BaseModel):
     v_structures: list[dict[str, Any]] = Field(
         default_factory=list, description="V-structure definitions"
     )
-    adjacency_matrix: Optional[dict[str, Any]] = Field(
+    adjacency_matrix: dict[str, Any] | None = Field(
         default=None, description="Adjacency matrix representation"
     )
 
@@ -378,13 +378,13 @@ class NetworkContext(BaseModel):
     schema_version: str = Field(default="2.0", description="Schema version")
     network: str = Field(..., description="Network identifier")
     domain: str = Field(..., description="Domain of the causal model")
-    purpose: Optional[str] = Field(
+    purpose: str | None = Field(
         default=None, description="Purpose of this specification"
     )
-    provenance: Optional[Provenance] = Field(
+    provenance: Provenance | None = Field(
         default=None, description="Source and provenance information"
     )
-    llm_guidance: Optional[LLMGuidance] = Field(
+    llm_guidance: LLMGuidance | None = Field(
         default=None, description="Guidance for LLM usage"
     )
     prompt_details: PromptDetails = Field(
@@ -395,13 +395,13 @@ class NetworkContext(BaseModel):
     variables: list[VariableSpec] = Field(
         default_factory=list, description="Variable specifications"
     )
-    constraints: Optional[Constraints] = Field(
+    constraints: Constraints | None = Field(
         default=None, description="Structural constraints"
     )
     causal_principles: list[CausalPrinciple] = Field(
         default_factory=list, description="Domain causal principles"
     )
-    ground_truth: Optional[GroundTruth] = Field(
+    ground_truth: GroundTruth | None = Field(
         default=None, description="Ground truth for evaluation"
     )
 

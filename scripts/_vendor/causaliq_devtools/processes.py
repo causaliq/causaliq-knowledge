@@ -1,11 +1,9 @@
-# generated from causaliq@49a27b66b20d src/causaliq/devtools/processes.py - do not edit
+# generated from causaliq@c7917d9e7fa8466b07548514cdf37d494b861321 src/causaliq/devtools/processes.py - do not edit
 """Platform helpers for launching and terminating command trees.
 
 The behaviour differs enough between Windows and POSIX that keeping it in one
 place makes the run/wait protocol in :mod:`run_checked` easier to follow.
 """
-
-from __future__ import annotations
 
 import os
 import signal

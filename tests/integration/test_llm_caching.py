@@ -4,7 +4,7 @@ These tests verify the caching integration with mock LLM clients,
 testing cache hit/miss scenarios without making real API calls.
 """
 
-from typing import Any, Dict, List
+from typing import Any
 
 from causaliq_core.cache import TokenCache
 
@@ -24,7 +24,7 @@ class MockLLMClient(BaseLLMClient):
     def __init__(self, config: LLMConfig) -> None:
         self.config = config
         self._call_count = 0
-        self._responses: Dict[str, str] = {}
+        self._responses: dict[str, str] = {}
         self._default_response = "Default mock response"
 
     @property
@@ -32,7 +32,7 @@ class MockLLMClient(BaseLLMClient):
         return "mock"
 
     def completion(
-        self, messages: List[Dict[str, str]], **kwargs: Any
+        self, messages: list[dict[str, str]], **kwargs: Any
     ) -> LLMResponse:
         self._call_count += 1
         # Use last user message as key for custom responses
@@ -56,7 +56,7 @@ class MockLLMClient(BaseLLMClient):
     def is_available(self) -> bool:
         return True
 
-    def list_models(self) -> List[str]:
+    def list_models(self) -> list[str]:
         return ["mock-model"]
 
     def set_response(self, user_message: str, response: str) -> None:

@@ -9,7 +9,7 @@ from __future__ import annotations
 
 import sys
 from pathlib import Path
-from typing import TYPE_CHECKING, Any, Dict, NoReturn, Optional
+from typing import TYPE_CHECKING, Any, NoReturn
 
 import click
 from pydantic import ValidationError
@@ -27,7 +27,7 @@ if TYPE_CHECKING:  # pragma: no cover
     from causaliq_knowledge.graph.response import GenerationMetadata
 
 
-def _map_pdg_names(pdg: "PDG", mapping: Dict[str, str]) -> "PDG":
+def _map_pdg_names(pdg: "PDG", mapping: dict[str, str]) -> "PDG":
     """Map variable names in a PDG using a mapping dictionary.
 
     Args:
@@ -43,7 +43,7 @@ def _map_pdg_names(pdg: "PDG", mapping: Dict[str, str]) -> "PDG":
     new_nodes = [mapping.get(n, n) for n in pdg.nodes]
 
     # Map edge keys and maintain probability values
-    new_edges: Dict[tuple[str, str], EdgeProbabilities] = {}
+    new_edges: dict[tuple[str, str], EdgeProbabilities] = {}
     for (src, tgt), probs in pdg.edges.items():
         new_src = mapping.get(src, src)
         new_tgt = mapping.get(tgt, tgt)
@@ -231,7 +231,7 @@ def _load_context(params: GenerateGraphParams) -> "NetworkContext":
 def _resolve_name_mode(
     params: GenerateGraphParams,
     ctx: "NetworkContext",
-) -> tuple[bool, Dict[str, str]]:
+) -> tuple[bool, dict[str, str]]:
     """Return the naming mode and the LLM-to-benchmark name mapping."""
     # Determine naming mode
     use_llm_names = not params.use_benchmark_names
@@ -244,7 +244,7 @@ def _resolve_name_mode(
     return use_llm_names, {}
 
 
-def _open_cache(params: GenerateGraphParams) -> Optional["TokenCache"]:
+def _open_cache(params: GenerateGraphParams) -> TokenCache | None:
     """Open the LLM response cache when caching is enabled."""
     from causaliq_core.cache import TokenCache
 
@@ -265,7 +265,7 @@ def _open_cache(params: GenerateGraphParams) -> Optional["TokenCache"]:
 def _create_generator(
     params: GenerateGraphParams,
     use_llm_names: bool,
-    cache: Optional["TokenCache"],
+    cache: TokenCache | None,
 ) -> "GraphGenerator":
     """Create the graph generator for the requested model."""
     from causaliq_knowledge.graph.generator import (
@@ -314,7 +314,7 @@ def _generate_pdg(
         sys.exit(1)
 
 
-def _apply_name_mapping(pdg: "PDG", mapping: Dict[str, str]) -> "PDG":
+def _apply_name_mapping(pdg: "PDG", mapping: dict[str, str]) -> "PDG":
     """Map LLM names back to benchmark names when needed."""
     if not mapping:
         return pdg

@@ -10,7 +10,7 @@ from __future__ import annotations
 
 import json
 import logging
-from typing import Any, List, Optional, Tuple
+from typing import Any
 
 logger = logging.getLogger(__name__)
 
@@ -39,7 +39,7 @@ def _escape_control_char(char: str) -> str:
 
 
 def _append_sanitised_char(
-    result: List[str],
+    result: list[str],
     text: str,
     index: int,
     char: str,
@@ -71,7 +71,7 @@ def _sanitise_json_text(text: str) -> str:
     Returns:
         Sanitised JSON text with control characters inside strings escaped.
     """
-    result: List[str] = []
+    result: list[str] = []
     in_string = False
     i = 0
     while i < len(text):
@@ -157,7 +157,7 @@ def _format_parse_error(error: json.JSONDecodeError, text: str) -> str:
 
 def _recover_from_error(
     error: json.JSONDecodeError, text: str
-) -> Tuple[Any, Optional[str]]:
+) -> tuple[Any, str | None]:
     """Return a recovered value or a diagnostic error message."""
     recovered = _recover_json(error, text)
     if recovered is _UNRECOVERED:
@@ -165,7 +165,7 @@ def _recover_from_error(
     return recovered, None
 
 
-def _try_parse_json(text: str) -> Tuple[Any, Optional[str]]:
+def _try_parse_json(text: str) -> tuple[Any, str | None]:
     """Attempt to parse JSON with fallback for trailing garbage.
 
     LLMs sometimes append extra characters after valid JSON (e.g., extra

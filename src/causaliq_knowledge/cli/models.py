@@ -6,7 +6,7 @@ from each provider.
 
 from __future__ import annotations
 
-from typing import Callable, List, Optional, Tuple, TypedDict
+from typing import Callable, TypedDict
 
 import click
 
@@ -16,12 +16,12 @@ class ProviderInfo(TypedDict):
 
     name: str
     prefix: str
-    env_var: Optional[str]
+    env_var: str | None
     url: str
-    get_models: Callable[[], Tuple[bool, List[str], Optional[str]]]
+    get_models: Callable[[], tuple[bool, list[str], str | None]]
 
 
-def get_groq_models() -> Tuple[bool, List[str], Optional[str]]:
+def get_groq_models() -> tuple[bool, list[str], str | None]:
     """Get available Groq models.
 
     Returns:
@@ -39,7 +39,7 @@ def get_groq_models() -> Tuple[bool, List[str], Optional[str]]:
         return False, [], str(e)
 
 
-def get_anthropic_models() -> Tuple[bool, List[str], Optional[str]]:
+def get_anthropic_models() -> tuple[bool, list[str], str | None]:
     """Get available Anthropic models.
 
     Returns:
@@ -57,7 +57,7 @@ def get_anthropic_models() -> Tuple[bool, List[str], Optional[str]]:
         return False, [], str(e)
 
 
-def get_gemini_models() -> Tuple[bool, List[str], Optional[str]]:
+def get_gemini_models() -> tuple[bool, list[str], str | None]:
     """Get available Gemini models.
 
     Returns:
@@ -75,7 +75,7 @@ def get_gemini_models() -> Tuple[bool, List[str], Optional[str]]:
         return False, [], str(e)
 
 
-def get_ollama_models() -> Tuple[bool, List[str], Optional[str]]:
+def get_ollama_models() -> tuple[bool, list[str], str | None]:
     """Get available Ollama models.
 
     Returns:
@@ -94,7 +94,7 @@ def get_ollama_models() -> Tuple[bool, List[str], Optional[str]]:
         return False, [], str(e)
 
 
-def get_openai_models() -> Tuple[bool, List[str], Optional[str]]:
+def get_openai_models() -> tuple[bool, list[str], str | None]:
     """Get available OpenAI models.
 
     Returns:
@@ -112,7 +112,7 @@ def get_openai_models() -> Tuple[bool, List[str], Optional[str]]:
         return False, [], str(e)
 
 
-def get_deepseek_models() -> Tuple[bool, List[str], Optional[str]]:
+def get_deepseek_models() -> tuple[bool, list[str], str | None]:
     """Get available DeepSeek models.
 
     Returns:
@@ -130,7 +130,7 @@ def get_deepseek_models() -> Tuple[bool, List[str], Optional[str]]:
         return False, [], str(e)
 
 
-def get_mistral_models() -> Tuple[bool, List[str], Optional[str]]:
+def get_mistral_models() -> tuple[bool, list[str], str | None]:
     """Get available Mistral models.
 
     Returns:
@@ -148,7 +148,7 @@ def get_mistral_models() -> Tuple[bool, List[str], Optional[str]]:
         return False, [], str(e)
 
 
-def get_all_providers() -> List[ProviderInfo]:
+def get_all_providers() -> list[ProviderInfo]:
     """Get list of all provider configurations.
 
     Returns:
@@ -219,9 +219,9 @@ VALID_PROVIDER_NAMES = [
 
 
 def _filter_providers(
-    providers: List[ProviderInfo],
-    provider: Optional[str],
-) -> List[ProviderInfo]:
+    providers: list[ProviderInfo],
+    provider: str | None,
+) -> list[ProviderInfo]:
     """Return the providers selected by the --provider option."""
     if not provider:
         return providers
@@ -250,7 +250,7 @@ def _print_provider_models(prov: ProviderInfo) -> bool:
     return False
 
 
-def _print_setup_section(providers: List[ProviderInfo]) -> None:
+def _print_setup_section(providers: list[ProviderInfo]) -> None:
     """Print the provider configuration status section."""
     click.echo("Provider Setup:")
     for prov in providers:
@@ -295,7 +295,7 @@ def _print_footer(any_available: bool) -> None:
     type=click.Choice(VALID_PROVIDER_NAMES, case_sensitive=False),
     help="Filter to a specific provider.",
 )
-def list_models(provider: Optional[str]) -> None:
+def list_models(provider: str | None) -> None:
     """List available LLM models from each provider.
 
     Queries each provider's API to show models accessible with your

@@ -8,12 +8,12 @@ fall-backs, so the conversion lives here once.
 from __future__ import annotations
 
 from datetime import datetime, timezone
-from typing import Any, Dict
+from typing import Any
 
 from causaliq_knowledge.graph.response import GenerationMetadata
 
 
-def _parse_llm_timestamp(meta: Dict[str, Any]) -> datetime:
+def _parse_llm_timestamp(meta: dict[str, Any]) -> datetime:
     """Return the LLM timestamp, falling back to the request timestamp."""
     llm_ts_str = meta.get("llm_timestamp") or meta.get("timestamp")
     if llm_ts_str:
@@ -22,7 +22,7 @@ def _parse_llm_timestamp(meta: Dict[str, Any]) -> datetime:
 
 
 def _parse_request_timestamp(
-    meta: Dict[str, Any],
+    meta: dict[str, Any],
     llm_ts: datetime,
 ) -> datetime:
     """Return the request timestamp, falling back to the LLM timestamp."""
@@ -32,7 +32,7 @@ def _parse_request_timestamp(
     return llm_ts  # Fall back to llm_timestamp
 
 
-def metadata_from_dict(meta: Dict[str, Any]) -> GenerationMetadata:
+def metadata_from_dict(meta: dict[str, Any]) -> GenerationMetadata:
     """Build GenerationMetadata from a cached metadata dictionary.
 
     Args:

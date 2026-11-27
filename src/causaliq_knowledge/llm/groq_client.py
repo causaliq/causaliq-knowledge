@@ -3,7 +3,7 @@
 import logging
 import os
 from dataclasses import dataclass
-from typing import Any, Dict, List, NoReturn, Optional
+from typing import Any, NoReturn
 
 import httpx
 
@@ -34,7 +34,7 @@ class GroqConfig(LLMConfig):
     temperature: float = 0.1
     max_tokens: int = 500
     timeout: float = 30.0
-    api_key: Optional[str] = None
+    api_key: str | None = None
 
     def __post_init__(self) -> None:
         """Set API key from environment if not provided."""
@@ -44,7 +44,7 @@ class GroqConfig(LLMConfig):
             raise ValueError("GROQ_API_KEY environment variable is required")
 
 
-def _filter_groq_models(data: Dict[str, Any]) -> List[str]:
+def _filter_groq_models(data: dict[str, Any]) -> list[str]:
     """Return the sorted chat model identifiers of a Groq payload."""
     # Filter and sort models
     models = []
@@ -73,7 +73,7 @@ class GroqClient(BaseLLMClient):
 
     BASE_URL = "https://api.groq.com/openai/v1"
 
-    def __init__(self, config: Optional[GroqConfig] = None) -> None:
+    def __init__(self, config: GroqConfig | None = None) -> None:
         """Initialize Groq client.
 
         Args:
@@ -89,7 +89,7 @@ class GroqClient(BaseLLMClient):
         return "groq"
 
     def completion(
-        self, messages: List[Dict[str, str]], **kwargs: Any
+        self, messages: list[dict[str, str]], **kwargs: Any
     ) -> LLMResponse:
         """Make a chat completion request to Groq.
 
@@ -138,8 +138,8 @@ class GroqClient(BaseLLMClient):
         )
 
     def _build_payload(
-        self, messages: List[Dict[str, str]], **kwargs: Any
-    ) -> Dict[str, Any]:
+        self, messages: list[dict[str, str]], **kwargs: Any
+    ) -> dict[str, Any]:
         """Build the Groq request payload."""
         return {
             "model": self.config.model,
@@ -149,14 +149,14 @@ class GroqClient(BaseLLMClient):
             "stream": False,
         }
 
-    def _build_headers(self) -> Dict[str, str]:
+    def _build_headers(self) -> dict[str, str]:
         """Build the Groq request headers."""
         return {
             "Authorization": f"Bearer {self.config.api_key}",
             "Content-Type": "application/json",
         }
 
-    def _parse_response(self, data: Dict[str, Any]) -> LLMResponse:
+    def _parse_response(self, data: dict[str, Any]) -> LLMResponse:
         """Build an LLMResponse from a Groq response payload."""
         # Extract response data
         content = data["choices"][0]["message"]["content"] or ""
@@ -180,8 +180,8 @@ class GroqClient(BaseLLMClient):
         )
 
     def complete_json(
-        self, messages: List[Dict[str, str]], **kwargs: Any
-    ) -> tuple[Optional[Dict[str, Any]], LLMResponse]:
+        self, messages: list[dict[str, str]], **kwargs: Any
+    ) -> tuple[dict[str, Any] | None, LLMResponse]:
         """Make a completion request and parse response as JSON.
 
         Args:
@@ -208,7 +208,7 @@ class GroqClient(BaseLLMClient):
         """
         return bool(self.config.api_key)
 
-    def list_models(self) -> List[str]:
+    def list_models(self) -> list[str]:
         """List available models from Groq API.
 
         Queries the Groq API to get models accessible with the current

@@ -8,7 +8,7 @@ The models themselves live in `causaliq_knowledge.graph.response_models`.
 from __future__ import annotations
 
 import logging
-from typing import Any, Dict, List, Optional, Set, Tuple
+from typing import Any, Set
 
 from causaliq_core.graph.pdg import PDG, EdgeProbabilities
 
@@ -27,7 +27,7 @@ def _require_dict_response(response: Any) -> None:
         raise ValueError(f"Expected dict response, got {type(response)}")
 
 
-def _read_edges_payload(response: Dict[str, Any]) -> List[Any]:
+def _read_edges_payload(response: dict[str, Any]) -> list[Any]:
     """Return the edges list of a response, validating its type."""
     edges_data = response.get("edges", [])
     if not isinstance(edges_data, list):
@@ -37,7 +37,7 @@ def _read_edges_payload(response: Dict[str, Any]) -> List[Any]:
     return edges_data
 
 
-def _read_reasoning(response: Dict[str, Any]) -> str:
+def _read_reasoning(response: dict[str, Any]) -> str:
     """Return the reasoning text of a response as a string."""
     reasoning = response.get("reasoning", "")
     if not isinstance(reasoning, str):
@@ -45,7 +45,7 @@ def _read_reasoning(response: Dict[str, Any]) -> str:
     return reasoning
 
 
-def _read_edge_endpoints(edge_data: Dict[str, Any]) -> Tuple[str, str]:
+def _read_edge_endpoints(edge_data: dict[str, Any]) -> tuple[str, str]:
     """Return the source and target names of an edge payload."""
     return edge_data.get("source", ""), edge_data.get("target", "")
 
@@ -72,7 +72,7 @@ def _edge_from_payload(
     edge_data: Any,
     index: int,
     valid_vars: Set[str],
-) -> Optional[ProposedEdge]:
+) -> ProposedEdge | None:
     """Build a ProposedEdge from one edge list payload entry."""
     if not isinstance(edge_data, dict):
         logger.warning(f"Skipping invalid edge at index {index}: not a dict")
@@ -89,8 +89,8 @@ def _edge_from_payload(
 
 
 def parse_edge_list_response(
-    response: Dict[str, Any],
-    variables: List[str],
+    response: dict[str, Any],
+    variables: list[str],
 ) -> GeneratedGraph:
     """Parse an edge list format response from the LLM.
 
@@ -133,8 +133,8 @@ def parse_edge_list_response(
 
 
 def _read_matrix_payload(
-    response: Dict[str, Any],
-) -> Tuple[List[Any], List[Any]]:
+    response: dict[str, Any],
+) -> tuple[list[Any], list[Any]]:
     """Return the variables and adjacency matrix of a response."""
     variables = response.get("variables", [])
     if not isinstance(variables, list):
@@ -152,8 +152,8 @@ def _read_matrix_payload(
 
 
 def _validate_matrix_shape(
-    variables: List[Any],
-    matrix: List[Any],
+    variables: list[Any],
+    matrix: list[Any],
 ) -> None:
     """Raise when the matrix is not square or mismatches the variables."""
     n = len(variables)
@@ -168,8 +168,8 @@ def _validate_matrix_shape(
 
 
 def _warn_unexpected_variables(
-    variables: List[Any],
-    expected_variables: List[str],
+    variables: list[Any],
+    expected_variables: list[str],
 ) -> None:
     """Log a warning for response variables the caller did not supply."""
     valid_vars = set(expected_variables)
@@ -183,7 +183,7 @@ def _edge_from_cell(
     source: Any,
     target: Any,
     is_diagonal: bool,
-) -> Optional[ProposedEdge]:
+) -> ProposedEdge | None:
     """Build a ProposedEdge from one adjacency matrix cell."""
     try:
         confidence = float(value)
@@ -201,11 +201,11 @@ def _edge_from_cell(
 
 
 def _edges_from_row(
-    variables: List[Any],
-    row: List[Any],
+    variables: list[Any],
+    row: list[Any],
     source: Any,
     row_index: int,
-) -> List[ProposedEdge]:
+) -> list[ProposedEdge]:
     """Extract the non-zero edges of one adjacency matrix row."""
     edges = []
     for j, target in enumerate(variables):
@@ -216,19 +216,19 @@ def _edges_from_row(
 
 
 def _edges_from_matrix(
-    variables: List[Any],
-    matrix: List[Any],
-) -> List[ProposedEdge]:
+    variables: list[Any],
+    matrix: list[Any],
+) -> list[ProposedEdge]:
     """Extract the edges declared by an adjacency matrix."""
-    edges: List[ProposedEdge] = []
+    edges: list[ProposedEdge] = []
     for i, source in enumerate(variables):
         edges.extend(_edges_from_row(variables, matrix[i], source, i))
     return edges
 
 
 def parse_adjacency_matrix_response(
-    response: Dict[str, Any],
-    expected_variables: List[str],
+    response: dict[str, Any],
+    expected_variables: list[str],
 ) -> GeneratedGraph:
     """Parse an adjacency matrix format response from the LLM.
 
@@ -297,7 +297,7 @@ def _parse_json_document(text: str) -> Any:
 
 def parse_graph_response(
     response_text: str,
-    variables: List[str],
+    variables: list[str],
     output_format: str = "edge_list",
 ) -> GeneratedGraph:
     """Parse an LLM response into a GeneratedGraph.
@@ -325,7 +325,7 @@ def parse_graph_response(
 
 
 def _read_edge_probabilities(
-    edge_data: Dict[str, Any],
+    edge_data: dict[str, Any],
     index: int,
 ) -> EdgeProbabilities:
     """Convert existence and orientation scores to EdgeProbabilities."""
@@ -362,7 +362,7 @@ def _canonicalise_edge(
     source: str,
     target: str,
     probs: EdgeProbabilities,
-) -> Tuple[Tuple[str, str], EdgeProbabilities]:
+) -> tuple[tuple[str, str], EdgeProbabilities]:
     """Return an edge key and probabilities in canonical (alphabetic) order."""
     if source < target:
         return (source, target), probs
@@ -380,7 +380,7 @@ def _pdg_edge_from_payload(
     edge_data: Any,
     index: int,
     valid_vars: Set[str],
-) -> Optional[Tuple[Tuple[str, str], EdgeProbabilities]]:
+) -> tuple[tuple[str, str], EdgeProbabilities] | None:
     """Build a canonical PDG edge from one edge payload entry."""
     if not isinstance(edge_data, dict):
         logger.warning(f"Skipping invalid edge at index {index}: not a dict")
@@ -397,8 +397,8 @@ def _pdg_edge_from_payload(
 
 
 def _merge_pdg_edge(
-    pdg_edges: Dict[Tuple[str, str], EdgeProbabilities],
-    edge: Tuple[Tuple[str, str], EdgeProbabilities],
+    pdg_edges: dict[tuple[str, str], EdgeProbabilities],
+    edge: tuple[tuple[str, str], EdgeProbabilities],
 ) -> None:
     """Store an edge, keeping the highest existence probability seen."""
     # If we already have an edge for this pair, keep the one with
@@ -413,7 +413,7 @@ def _merge_pdg_edge(
 
 def parse_pdg_response(
     response_text: str,
-    variables: List[str],
+    variables: list[str],
 ) -> PDG:
     """Parse an LLM response into a PDG (Probabilistic Dependency Graph).
 
@@ -453,7 +453,7 @@ def parse_pdg_response(
     edges_data = _read_edges_payload(response)
 
     valid_vars = set(variables)
-    pdg_edges: Dict[tuple[str, str], EdgeProbabilities] = {}
+    pdg_edges: dict[tuple[str, str], EdgeProbabilities] = {}
 
     for i, edge_data in enumerate(edges_data):
         edge = _pdg_edge_from_payload(edge_data, i, valid_vars)

@@ -12,7 +12,7 @@ from __future__ import annotations
 import logging
 from io import StringIO
 from pathlib import Path
-from typing import TYPE_CHECKING, Any, Dict, List, Optional, Set
+from typing import TYPE_CHECKING, Any, Set
 
 from causaliq_core import (
     ActionExecutionError,
@@ -53,7 +53,7 @@ __all__ = [
 SUPPORTED_ACTIONS = {"generate_graph"}
 
 
-def _create_action_inputs() -> Dict[str, Any]:
+def _create_action_inputs() -> dict[str, Any]:
     """Create action input specifications.
 
     Returns:
@@ -174,12 +174,12 @@ class KnowledgeActionProvider(CausalIQActionProvider):
 
     supported_actions: Set[str] = SUPPORTED_ACTIONS
     supported_types: Set[str] = set()  # PDG compression handled by core
-    action_patterns: Dict[str, ActionPattern] = {
+    action_patterns: dict[str, ActionPattern] = {
         "generate_graph": ActionPattern.PRODUCE,
     }
 
-    inputs: Dict[str, Any] = _create_action_inputs()
-    outputs: Dict[str, str] = {
+    inputs: dict[str, Any] = _create_action_inputs()
+    outputs: dict[str, str] = {
         "graph": "Generated graph structure as JSON",
         "edge_count": "Number of edges in generated graph",
         "variable_count": "Number of variables in the model",
@@ -195,7 +195,7 @@ class KnowledgeActionProvider(CausalIQActionProvider):
         super().__init__()
 
     def validate_parameters(
-        self, action: str, parameters: Dict[str, Any]
+        self, action: str, parameters: dict[str, Any]
     ) -> None:
         """Validate action and parameters.
 
@@ -214,7 +214,7 @@ class KnowledgeActionProvider(CausalIQActionProvider):
             self._validate_generate_graph_parameters(parameters)
 
     def _validate_generate_graph_parameters(
-        self, parameters: Dict[str, Any]
+        self, parameters: dict[str, Any]
     ) -> None:
         """Validate generate_graph parameters using GenerateGraphParams."""
         # Check required network_context
@@ -233,7 +233,7 @@ class KnowledgeActionProvider(CausalIQActionProvider):
             )
 
     def _dry_run_result(
-        self, action: str, parameters: Dict[str, Any]
+        self, action: str, parameters: dict[str, Any]
     ) -> ActionResult:
         """Return dry-run result without executing.
 
@@ -259,10 +259,10 @@ class KnowledgeActionProvider(CausalIQActionProvider):
     def _execute(
         self,
         action: str,
-        parameters: Dict[str, Any],
+        parameters: dict[str, Any],
         mode: str,
-        context: Optional[Any],
-        logger: Optional[Any],
+        context: Any | None,
+        logger: Any | None,
     ) -> ActionResult:
         """Execute the action with validated parameters.
 
@@ -290,10 +290,10 @@ class KnowledgeActionProvider(CausalIQActionProvider):
 
     def _run_generate_graph(
         self,
-        parameters: Dict[str, Any],
+        parameters: dict[str, Any],
         mode: str,
-        context: Optional[Any],
-        logger: Optional[Any],
+        context: Any | None,
+        logger: Any | None,
     ) -> ActionResult:
         """Execute the generate_graph action.
 
@@ -325,7 +325,7 @@ class KnowledgeActionProvider(CausalIQActionProvider):
         pdg: PDG,
         params: GenerateGraphParams,
         generation_metadata: Any,
-    ) -> Dict[str, Any]:
+    ) -> dict[str, Any]:
         """Build execution metadata from PDG generation results.
 
         Combines PDG statistics with comprehensive LLM generation metadata
@@ -350,7 +350,7 @@ class KnowledgeActionProvider(CausalIQActionProvider):
         llm_metadata = generation_metadata.to_dict()
 
         # Build metadata combining parameters and LLM generation info
-        metadata: Dict[str, Any] = {
+        metadata: dict[str, Any] = {
             "network_context": str(params.network_context),
             "use_benchmark_names": params.use_benchmark_names,
             "edge_count": edge_count,
@@ -364,7 +364,7 @@ class KnowledgeActionProvider(CausalIQActionProvider):
     def _execute_generate_graph(
         self,
         params: GenerateGraphParams,
-        context: Optional[Any] = None,
+        context: Any | None = None,
     ) -> ActionResult:
         """Execute graph generation.
 
@@ -423,7 +423,7 @@ class KnowledgeActionProvider(CausalIQActionProvider):
         self,
         params: GenerateGraphParams,
         network_ctx: "NetworkContext",
-    ) -> Dict[str, str]:
+    ) -> dict[str, str]:
         """Return the LLM-to-benchmark name mapping when needed."""
         # Determine naming mode
         use_llm_names = not params.use_benchmark_names
@@ -489,7 +489,7 @@ class KnowledgeActionProvider(CausalIQActionProvider):
         self._add_raw_response(metadata, result.raw_response)
 
         # Return GraphML string for workflow cache compression
-        objects: List[Dict[str, Any]] = [
+        objects: list[dict[str, Any]] = [
             {
                 "type": "pdg",
                 "format": "graphml",
@@ -515,8 +515,8 @@ class KnowledgeActionProvider(CausalIQActionProvider):
 
     def _add_raw_response(
         self,
-        metadata: Dict[str, Any],
-        raw_response: Optional[str],
+        metadata: dict[str, Any],
+        raw_response: str | None,
     ) -> None:
         """Record the raw LLM response, split for readability."""
         if raw_response:
@@ -531,7 +531,7 @@ class KnowledgeActionProvider(CausalIQActionProvider):
         graphml.write_pdg(pdg, graphml_buffer)
         return graphml_buffer.getvalue()
 
-    def _map_pdg_names(self, pdg: PDG, mapping: Dict[str, str]) -> PDG:
+    def _map_pdg_names(self, pdg: PDG, mapping: dict[str, str]) -> PDG:
         """Map variable names in a PDG using a mapping dictionary.
 
         Args:
@@ -547,7 +547,7 @@ class KnowledgeActionProvider(CausalIQActionProvider):
         new_nodes = [mapping.get(n, n) for n in pdg.nodes]
 
         # Map edge keys and maintain probability values
-        new_edges: Dict[tuple[str, str], EdgeProbabilities] = {}
+        new_edges: dict[tuple[str, str], EdgeProbabilities] = {}
         for (src, tgt), probs in pdg.edges.items():
             new_src = mapping.get(src, src)
             new_tgt = mapping.get(tgt, tgt)

@@ -13,7 +13,7 @@ import shutil
 import tempfile
 import zipfile
 from pathlib import Path
-from typing import Any, Dict, List, Tuple
+from typing import Any
 
 
 def is_llm_entry(data: Any) -> bool:
@@ -56,8 +56,8 @@ def count_cache_entries(cache: Any) -> int:
 
 
 def _accumulate_model_stats(
-    model_stats: Dict[str, Dict[str, Any]],
-    totals: Dict[str, float],
+    model_stats: dict[str, dict[str, Any]],
+    totals: dict[str, float],
     entry: Any,
     hit_count: int,
 ) -> None:
@@ -91,8 +91,8 @@ def _accumulate_model_stats(
 def _collect_row(
     cache: Any,
     compressor: Any,
-    model_stats: Dict[str, Dict[str, Any]],
-    totals: Dict[str, float],
+    model_stats: dict[str, dict[str, Any]],
+    totals: dict[str, float],
     row: Any,
 ) -> None:
     """Add one cache row to the aggregates, skipping unusable entries."""
@@ -109,7 +109,7 @@ def _collect_row(
 
 def collect_model_stats(
     cache: Any,
-) -> Tuple[Dict[str, Dict[str, Any]], Dict[str, float]]:
+) -> tuple[dict[str, dict[str, Any]], dict[str, float]]:
     """Aggregate cache statistics per model, and overall totals."""
     from causaliq_knowledge.llm.cache import LLMCompressor
 
@@ -118,7 +118,7 @@ def collect_model_stats(
     cache.set_compressor(compressor)
 
     model_stats: dict[str, dict[str, Any]] = {}
-    totals: Dict[str, float] = {
+    totals: dict[str, float] = {
         "cost": 0.0,
         "input_tokens": 0,
         "output_tokens": 0,
@@ -132,7 +132,7 @@ def collect_model_stats(
     return model_stats, totals
 
 
-def finalise_model_stats(model_stats: Dict[str, Dict[str, Any]]) -> None:
+def finalise_model_stats(model_stats: dict[str, dict[str, Any]]) -> None:
     """Calculate averages and drop the intermediate latency total."""
     # Calculate averages
     for stats in model_stats.values():
@@ -144,7 +144,7 @@ def finalise_model_stats(model_stats: Dict[str, Dict[str, Any]]) -> None:
 
 
 def compute_savings(
-    model_stats: Dict[str, Dict[str, Any]],
+    model_stats: dict[str, dict[str, Any]],
     total_cost: float,
     entry_count: int,
     total_hits: int,
@@ -159,7 +159,7 @@ def compute_savings(
     return 0.0
 
 
-def _hit_rate(stats: Dict[str, Any]) -> float:
+def _hit_rate(stats: dict[str, Any]) -> float:
     """Return the percentage of requests served from the cache."""
     requests = stats["entries"] + stats["hits"]
     rate: float = stats["hits"] / requests * 100 if requests > 0 else 0
@@ -167,8 +167,8 @@ def _hit_rate(stats: Dict[str, Any]) -> float:
 
 
 def _format_model_rows(
-    model_stats: Dict[str, Dict[str, Any]],
-) -> List[str]:
+    model_stats: dict[str, dict[str, Any]],
+) -> list[str]:
     """Format one report row per model."""
     rows = []
     for model, stats in sorted(model_stats.items()):
@@ -192,7 +192,7 @@ def _format_totals_lines(
     total_input_tokens: int,
     total_output_tokens: int,
     savings: float,
-) -> List[str]:
+) -> list[str]:
     """Format the totals section of the statistics report."""
     return [
         f"\nTotal cost:       ${total_cost:.4f}",
@@ -209,10 +209,10 @@ def format_stats_lines(
     entry_count: int,
     token_count: int,
     total_hits: int,
-    model_stats: Dict[str, Dict[str, Any]],
-    totals: Dict[str, float],
+    model_stats: dict[str, dict[str, Any]],
+    totals: dict[str, float],
     savings: float,
-) -> List[str]:
+) -> list[str]:
     """Build the cache statistics report lines."""
     lines: list[str] = []
     lines.append(f"\nCache: {input_path}")
@@ -246,7 +246,7 @@ def format_stats_lines(
     return lines
 
 
-def prepare_export_dir(dest_path: Path, is_zip: bool) -> Tuple[Path, str]:
+def prepare_export_dir(dest_path: Path, is_zip: bool) -> tuple[Path, str]:
     """Return the export directory and any temporary directory to remove."""
     # Determine export directory (temp if zipping)
     if is_zip:
@@ -321,7 +321,7 @@ def export_entries_to_target(
     return exported
 
 
-def prepare_import_dir(input_file: Path, is_zip: bool) -> Tuple[Path, str]:
+def prepare_import_dir(input_file: Path, is_zip: bool) -> tuple[Path, str]:
     """Return the import directory and any temporary directory to remove."""
     # Determine input directory
     if not is_zip:
@@ -333,7 +333,7 @@ def prepare_import_dir(input_file: Path, is_zip: bool) -> Tuple[Path, str]:
     return import_dir, temp_dir
 
 
-def _entry_cache_key(data: Dict[str, Any]) -> str:
+def _entry_cache_key(data: dict[str, Any]) -> str:
     """Return the cache key of an LLM entry payload."""
     cache_key_data = data.get("cache_key", {})
     key_str = json.dumps(cache_key_data, sort_keys=True)
@@ -345,7 +345,7 @@ def _import_file(
     file_path: Path,
     imported: int,
     skipped: int,
-) -> Tuple[int, int]:
+) -> tuple[int, int]:
     """Import one JSON file, returning the updated counters."""
     try:
         data = json.loads(file_path.read_text(encoding="utf-8"))
@@ -359,7 +359,7 @@ def _import_file(
     return imported, skipped + 1
 
 
-def import_entries(cache: Any, import_dir: Path) -> Tuple[int, int]:
+def import_entries(cache: Any, import_dir: Path) -> tuple[int, int]:
     """Import cache entries from a directory, returning counts."""
     imported = 0
     skipped = 0

@@ -3,7 +3,7 @@
 import logging
 import os
 from dataclasses import dataclass
-from typing import Any, Dict, List, NoReturn, Optional
+from typing import Any, NoReturn
 
 import httpx
 
@@ -19,7 +19,7 @@ logger = logging.getLogger(__name__)
 _GEMINI_ROLES = {"user": "user", "assistant": "model"}
 
 
-def _require_gemini_candidate(data: Dict[str, Any]) -> Dict[str, Any]:
+def _require_gemini_candidate(data: dict[str, Any]) -> dict[str, Any]:
     """Return the first candidate of a Gemini payload, validating it first."""
     # Handle Gemini API errors
     if "error" in data:
@@ -31,14 +31,14 @@ def _require_gemini_candidate(data: Dict[str, Any]) -> Dict[str, Any]:
     if not candidates:
         raise ValueError("No candidates returned by Gemini API")
 
-    candidate: Dict[str, Any] = candidates[0]
+    candidate: dict[str, Any] = candidates[0]
     if candidate.get("finishReason") == "SAFETY":
         raise ValueError("Content was blocked by Gemini safety filters")
 
     return candidate
 
 
-def _join_gemini_parts(candidate: Dict[str, Any]) -> str:
+def _join_gemini_parts(candidate: dict[str, Any]) -> str:
     """Concatenate the text parts of a Gemini candidate."""
     # Extract text content
     parts = candidate.get("content", {}).get("parts", [])
@@ -49,7 +49,7 @@ def _join_gemini_parts(candidate: Dict[str, Any]) -> str:
     return content
 
 
-def _filter_gemini_models(data: Dict[str, Any]) -> List[str]:
+def _filter_gemini_models(data: dict[str, Any]) -> list[str]:
     """Return the sorted text-generation model names of a Gemini payload."""
     # Filter to models that support text generation
     models = []
@@ -86,7 +86,7 @@ class GeminiConfig(LLMConfig):
     temperature: float = 0.1
     max_tokens: int = 500
     timeout: float = 30.0
-    api_key: Optional[str] = None
+    api_key: str | None = None
 
     def __post_init__(self) -> None:
         """Set API key from environment if not provided."""
@@ -114,7 +114,7 @@ class GeminiClient(BaseLLMClient):
 
     BASE_URL = "https://generativelanguage.googleapis.com/v1beta/models"
 
-    def __init__(self, config: Optional[GeminiConfig] = None) -> None:
+    def __init__(self, config: GeminiConfig | None = None) -> None:
         """Initialize Gemini client.
 
         Args:
@@ -130,7 +130,7 @@ class GeminiClient(BaseLLMClient):
         return "gemini"
 
     def completion(
-        self, messages: List[Dict[str, str]], **kwargs: Any
+        self, messages: list[dict[str, str]], **kwargs: Any
     ) -> LLMResponse:
         """Make a chat completion request to Gemini.
 
@@ -164,8 +164,8 @@ class GeminiClient(BaseLLMClient):
             raise ValueError(f"Gemini API error: {str(e)}")
 
     def _to_gemini_contents(
-        self, messages: List[Dict[str, str]]
-    ) -> tuple[List[Dict[str, Any]], Optional[Dict[str, Any]]]:
+        self, messages: list[dict[str, str]]
+    ) -> tuple[list[dict[str, Any]], dict[str, Any] | None]:
         """Convert chat messages to Gemini contents and system instruction."""
         contents = []
         system_instruction = None
@@ -189,13 +189,13 @@ class GeminiClient(BaseLLMClient):
 
     def _build_payload(
         self,
-        contents: List[Dict[str, Any]],
-        system_instruction: Optional[Dict[str, Any]],
+        contents: list[dict[str, Any]],
+        system_instruction: dict[str, Any] | None,
         **kwargs: Any,
-    ) -> Dict[str, Any]:
+    ) -> dict[str, Any]:
         """Build the Gemini request payload."""
         # Build request payload in Gemini's format
-        payload: Dict[str, Any] = {
+        payload: dict[str, Any] = {
             "contents": contents,
             "generationConfig": {
                 "temperature": kwargs.get(
@@ -216,7 +216,7 @@ class GeminiClient(BaseLLMClient):
 
     def _build_request(
         self,
-    ) -> tuple[str, Dict[str, Any], Dict[str, str]]:
+    ) -> tuple[str, dict[str, Any], dict[str, str]]:
         """Return the request URL, query parameters, and headers."""
         # API endpoint with model and key
         url = f"{self.BASE_URL}/{self.config.model}:generateContent"
@@ -227,10 +227,10 @@ class GeminiClient(BaseLLMClient):
     def _post(
         self,
         url: str,
-        payload: Dict[str, Any],
-        headers: Dict[str, str],
-        params: Dict[str, Any],
-    ) -> Dict[str, Any]:
+        payload: dict[str, Any],
+        headers: dict[str, str],
+        params: dict[str, Any],
+    ) -> dict[str, Any]:
         """POST a generation request and return the decoded payload."""
         with httpx.Client(timeout=self.config.timeout) as client:
             response = client.post(
@@ -239,7 +239,7 @@ class GeminiClient(BaseLLMClient):
             response.raise_for_status()
             return response.json()  # type: ignore[no-any-return]
 
-    def _parse_response(self, data: Dict[str, Any]) -> LLMResponse:
+    def _parse_response(self, data: dict[str, Any]) -> LLMResponse:
         """Build an LLMResponse from a Gemini response payload."""
         candidate = _require_gemini_candidate(data)
         content = _join_gemini_parts(candidate)
@@ -288,8 +288,8 @@ class GeminiClient(BaseLLMClient):
         )
 
     def complete_json(
-        self, messages: List[Dict[str, str]], **kwargs: Any
-    ) -> tuple[Optional[Dict[str, Any]], LLMResponse]:
+        self, messages: list[dict[str, str]], **kwargs: Any
+    ) -> tuple[dict[str, Any] | None, LLMResponse]:
         """Make a completion request and parse response as JSON.
 
         Args:
@@ -316,7 +316,7 @@ class GeminiClient(BaseLLMClient):
         """
         return bool(self.config.api_key)
 
-    def list_models(self) -> List[str]:
+    def list_models(self) -> list[str]:
         """List available models from Gemini API.
 
         Queries the Gemini API to get models accessible with the current

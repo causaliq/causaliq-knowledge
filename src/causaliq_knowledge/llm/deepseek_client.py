@@ -3,7 +3,6 @@
 import logging
 import os
 from dataclasses import dataclass
-from typing import Dict, List, Optional
 
 from causaliq_knowledge.llm.openai_compat_client import (
     OpenAICompatClient,
@@ -31,7 +30,7 @@ class DeepSeekConfig(OpenAICompatConfig):
     temperature: float = 0.1
     max_tokens: int = 500
     timeout: float = 30.0
-    api_key: Optional[str] = None
+    api_key: str | None = None
 
     def __post_init__(self) -> None:
         """Set API key from environment if not provided."""
@@ -65,7 +64,7 @@ class DeepSeekClient(OpenAICompatClient):
     PROVIDER_NAME = "deepseek"
     ENV_VAR = "DEEPSEEK_API_KEY"
 
-    def __init__(self, config: Optional[DeepSeekConfig] = None) -> None:
+    def __init__(self, config: DeepSeekConfig | None = None) -> None:
         """Initialize DeepSeek client.
 
         Args:
@@ -78,7 +77,7 @@ class DeepSeekClient(OpenAICompatClient):
         """Return default DeepSeek configuration."""
         return DeepSeekConfig()
 
-    def _get_pricing(self) -> Dict[str, Dict[str, float]]:
+    def _get_pricing(self) -> dict[str, dict[str, float]]:
         """Return DeepSeek pricing per 1M tokens.
 
         Returns:
@@ -91,7 +90,7 @@ class DeepSeekClient(OpenAICompatClient):
             "deepseek-chat": {"input": 0.14, "output": 0.28},
         }
 
-    def _filter_models(self, models: List[str]) -> List[str]:
+    def _filter_models(self, models: list[str]) -> list[str]:
         """Filter to DeepSeek chat models only.
 
         Args:

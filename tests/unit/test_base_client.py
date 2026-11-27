@@ -1,6 +1,6 @@
 """Unit tests for BaseLLMClient abstract interface."""
 
-from typing import Any, Dict, List
+from typing import Any
 
 import pytest
 
@@ -141,7 +141,7 @@ def _create_mock_client_class():
             return "mock"
 
         def completion(
-            self, messages: List[Dict[str, str]], **kwargs: Any
+            self, messages: list[dict[str, str]], **kwargs: Any
         ) -> LLMResponse:
             self._calls += 1
             return LLMResponse(
@@ -156,7 +156,7 @@ def _create_mock_client_class():
         def is_available(self) -> bool:
             return self._available
 
-        def list_models(self) -> List[str]:
+        def list_models(self) -> list[str]:
             return self._models
 
     return MockClient

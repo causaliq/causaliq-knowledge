@@ -10,7 +10,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass, field
 from datetime import datetime, timezone
-from typing import Any, Dict, List, Optional
+from typing import Any
 
 from causaliq_core.graph.pdg import PDG
 from pydantic import BaseModel, Field, field_validator
@@ -46,7 +46,7 @@ class ProposedEdge(BaseModel):
         le=1.0,
         description="Confidence score from 0.0 to 1.0",
     )
-    reasoning: Optional[str] = Field(
+    reasoning: str | None = Field(
         default=None,
         description="Optional explanation for this edge",
     )
@@ -96,7 +96,7 @@ class GenerationMetadata:
     input_tokens: int = 0
     output_tokens: int = 0
     from_cache: bool = False
-    messages: List[Dict[str, Any]] = field(default_factory=list)
+    messages: list[dict[str, Any]] = field(default_factory=list)
     temperature: float = 0.1
     max_tokens: int = 2000
     finish_reason: str = "stop"
@@ -115,8 +115,8 @@ class GenerationMetadata:
 
     @staticmethod
     def _split_message_content(
-        messages: List[Dict[str, Any]],
-    ) -> List[Dict[str, Any]]:
+        messages: list[dict[str, Any]],
+    ) -> list[dict[str, Any]]:
         """Split message content strings at newlines for readability.
 
         Converts content strings containing newlines into lists of strings,
@@ -137,7 +137,7 @@ class GenerationMetadata:
             result.append(new_msg)
         return result
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         """Convert generation metadata to a dictionary.
 
         Returns a dictionary suitable for JSON serialisation, containing
@@ -194,13 +194,13 @@ class GeneratedGraph:
         Generated 2 edges
     """
 
-    edges: List[ProposedEdge]
-    variables: List[str]
+    edges: list[ProposedEdge]
+    variables: list[str]
     reasoning: str = ""
-    metadata: Optional[GenerationMetadata] = None
-    raw_response: Optional[Dict[str, Any]] = field(default=None, repr=False)
+    metadata: GenerationMetadata | None = None
+    raw_response: dict[str, Any] | None = field(default=None, repr=False)
 
-    def get_adjacency_matrix(self) -> List[List[float]]:
+    def get_adjacency_matrix(self) -> list[list[float]]:
         """Convert edges to an adjacency matrix.
 
         Creates a square matrix where entry (i,j) represents the
@@ -221,7 +221,7 @@ class GeneratedGraph:
 
         return matrix
 
-    def get_edge_list(self) -> List[tuple[str, str, float]]:
+    def get_edge_list(self) -> list[tuple[str, str, float]]:
         """Get edges as a list of tuples.
 
         Returns:
@@ -265,4 +265,4 @@ class PDGGenerationResult:
 
     pdg: PDG
     metadata: GenerationMetadata
-    raw_response: Optional[str] = field(default=None, repr=False)
+    raw_response: str | None = field(default=None, repr=False)

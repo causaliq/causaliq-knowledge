@@ -3,7 +3,7 @@
 import logging
 import os
 from dataclasses import dataclass
-from typing import Any, Dict, List, NoReturn, Optional
+from typing import Any, NoReturn
 
 import httpx
 
@@ -36,7 +36,7 @@ class AnthropicConfig(LLMConfig):
     temperature: float = 0.1
     max_tokens: int = 500
     timeout: float = 30.0
-    api_key: Optional[str] = None
+    api_key: str | None = None
 
     def __post_init__(self) -> None:
         """Set API key from environment if not provided."""
@@ -50,7 +50,7 @@ class AnthropicConfig(LLMConfig):
             self.max_tokens = self.MAX_OUTPUT_TOKENS
 
 
-def _sorted_model_ids(data: Dict[str, Any]) -> List[str]:
+def _sorted_model_ids(data: dict[str, Any]) -> list[str]:
     """Return the sorted model identifiers of an Anthropic models payload."""
     models = []
     for model_info in data.get("data", []):
@@ -77,7 +77,7 @@ class AnthropicClient(BaseLLMClient):
     BASE_URL = "https://api.anthropic.com/v1"
     API_VERSION = "2023-06-01"
 
-    def __init__(self, config: Optional[AnthropicConfig] = None) -> None:
+    def __init__(self, config: AnthropicConfig | None = None) -> None:
         """Initialize Anthropic client.
 
         Args:
@@ -93,7 +93,7 @@ class AnthropicClient(BaseLLMClient):
         return "anthropic"
 
     def completion(
-        self, messages: List[Dict[str, str]], **kwargs: Any
+        self, messages: list[dict[str, str]], **kwargs: Any
     ) -> LLMResponse:
         """Make a chat completion request to Anthropic.
 
@@ -131,8 +131,8 @@ class AnthropicClient(BaseLLMClient):
             raise ValueError(f"Anthropic API error: {str(e)}")
 
     def _build_payload(
-        self, messages: List[Dict[str, str]], **kwargs: Any
-    ) -> Dict[str, Any]:
+        self, messages: list[dict[str, str]], **kwargs: Any
+    ) -> dict[str, Any]:
         """Build the Anthropic request payload from chat messages."""
         # Anthropic uses separate system parameter, not in messages
         system_content = None
@@ -145,7 +145,7 @@ class AnthropicClient(BaseLLMClient):
                 filtered_messages.append(msg)
 
         # Build request payload in Anthropic's format
-        payload: Dict[str, Any] = {
+        payload: dict[str, Any] = {
             "model": self.config.model,
             "messages": filtered_messages,
             "max_tokens": kwargs.get("max_tokens", self.config.max_tokens),
@@ -167,7 +167,7 @@ class AnthropicClient(BaseLLMClient):
             "Content-Type": "application/json",
         }
 
-    def _parse_response(self, data: Dict[str, Any]) -> LLMResponse:
+    def _parse_response(self, data: dict[str, Any]) -> LLMResponse:
         """Build an LLMResponse from an Anthropic response payload."""
         # Extract response content from Anthropic format
         content_blocks = data.get("content", [])
@@ -218,8 +218,8 @@ class AnthropicClient(BaseLLMClient):
         )
 
     def complete_json(
-        self, messages: List[Dict[str, str]], **kwargs: Any
-    ) -> tuple[Optional[Dict[str, Any]], LLMResponse]:
+        self, messages: list[dict[str, str]], **kwargs: Any
+    ) -> tuple[dict[str, Any] | None, LLMResponse]:
         """Make a completion request and parse response as JSON.
 
         Args:
@@ -246,7 +246,7 @@ class AnthropicClient(BaseLLMClient):
         """
         return bool(self.config.api_key)
 
-    def list_models(self) -> List[str]:
+    def list_models(self) -> list[str]:
         """List available Claude models from Anthropic API.
 
         Queries the Anthropic /v1/models endpoint to get available models.

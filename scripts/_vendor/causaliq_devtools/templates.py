@@ -1,14 +1,10 @@
-# generated from causaliq@49a27b66b20d src/causaliq/devtools/templates.py - do not edit
+# generated from causaliq@c7917d9e7fa8466b07548514cdf37d494b861321 src/causaliq/devtools/templates.py - do not edit
 """Text templates for the generated scripts.
 
 Rendering is a plain placeholder replacement rather than ``str.format`` because
 the PowerShell templates contain braces of their own. ``sync`` prepends the
 provenance header to every rendered file.
 """
-
-from __future__ import annotations
-
-from typing import Dict
 
 from .config import CausaliqConfig
 
@@ -47,9 +43,9 @@ Write-Host "Activating Python $($Environments[$Version]) environment..."
 & "$EnvPath\\Scripts\\Activate.ps1"
 """
 
-SETUP_ENV = """# Usage: .\\scripts\\setup-env.ps1 [-InstallOnly] [-Help]
+SETUP_ENV = """# Usage: .\\scripts\\setup-env.ps1 [-ExistingOnly] [-Help]
 param(
-    [switch]$InstallOnly,
+    [switch]$ExistingOnly,
     [switch]$Help
 )
 
@@ -58,7 +54,7 @@ $Environments = [ordered]@{
 }
 
 if ($Help) {
-    Write-Host "Usage: .\\scripts\\setup-env.ps1 [-InstallOnly] [-Help]"
+    Write-Host "Usage: .\\scripts\\setup-env.ps1 [-ExistingOnly] [-Help]"
     Write-Host "Creates one virtual environment per supported Python version."
     exit 0
 }
@@ -66,7 +62,7 @@ if ($Help) {
 foreach ($key in $Environments.Keys) {
     $version = $Environments[$key]
     $envPath = "venv\\py$key"
-    if ($InstallOnly -and -not (Test-Path $envPath)) {
+    if ($ExistingOnly -and -not (Test-Path $envPath)) {
         Write-Host "Skipping $envPath (missing)"
         continue
     }
@@ -79,8 +75,9 @@ foreach ($key in $Environments.Keys) {
         continue
     }
     $python = "$envPath\\Scripts\\python.exe"
+@@EXTRA_INDEX@@
     & $python -m pip install --upgrade pip setuptools wheel --quiet
-    & $python -m pip install -e ".[@@EXTRAS@@]"
+    & $python -m pip install @index -e ".[@@EXTRAS@@]"
 }
 
 Write-Host "Environment setup complete."
@@ -187,7 +184,14 @@ def entry_point(module: str, function: str, doc: str) -> str:
     )
 
 
-def _values(config: CausaliqConfig) -> Dict[str, str]:
+def _extra_index_line(url: str) -> str:
+    """Return the PowerShell line that builds the pip index arguments."""
+    if not url:
+        return "    $index = @()"
+    return f'    $index = @("--extra-index-url", "{url}")'
+
+
+def _values(config: CausaliqConfig) -> dict[str, str]:
     """Return the placeholder values shared by the script templates."""
     pairs = [
         (version.replace(".", ""), version)
@@ -200,12 +204,13 @@ def _values(config: CausaliqConfig) -> Dict[str, str]:
         "DEFAULT_KEY": config.default_python.replace(".", ""),
         "DEFAULT_PYTHON": config.default_python,
         "EXTRAS": config.extras_spec,
+        "EXTRA_INDEX": _extra_index_line(config.extra_index_url),
         "PACKAGE": config.package,
         "DISTRIBUTION": config.distribution,
     }
 
 
-def _fill(template: str, values: Dict[str, str]) -> str:
+def _fill(template: str, values: dict[str, str]) -> str:
     """Replace every ``@@NAME@@`` placeholder in ``template``."""
     rendered = template
     for name, value in values.items():

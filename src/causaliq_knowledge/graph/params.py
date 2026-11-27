@@ -7,7 +7,7 @@ parameters, shared between CLI commands and workflow actions.
 from __future__ import annotations
 
 from pathlib import Path
-from typing import Any, Optional
+from typing import Any
 
 from pydantic import BaseModel, Field, field_validator
 
@@ -82,7 +82,7 @@ class GenerateGraphParams(BaseModel):
         le=600.0,
         description="LLM request timeout in seconds (10-600)",
     )
-    llm_seed: Optional[int] = Field(
+    llm_seed: int | None = Field(
         default=None,
         description=(
             "Seed index for multi-sampling. Included in cache key "
@@ -175,7 +175,7 @@ class GenerateGraphParams(BaseModel):
 
         return cls(**processed)
 
-    def get_effective_cache_path(self) -> Optional[Path]:
+    def get_effective_cache_path(self) -> Path | None:
         """Get the effective cache path.
 
         Returns:
@@ -185,7 +185,7 @@ class GenerateGraphParams(BaseModel):
             return None
         return Path(self.llm_cache)
 
-    def get_effective_output_path(self) -> Optional[Path]:
+    def get_effective_output_path(self) -> Path | None:
         """Get the effective output path.
 
         Returns:

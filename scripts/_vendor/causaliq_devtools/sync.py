@@ -1,4 +1,4 @@
-# generated from causaliq@49a27b66b20d src/causaliq/devtools/sync.py - do not edit
+# generated from causaliq@c7917d9e7fa8466b07548514cdf37d494b861321 src/causaliq/devtools/sync.py - do not edit
 """Verify or refresh the generated development scripts in a repository.
 
 Packages never import the umbrella: ``update`` copies the devtools modules and
@@ -8,15 +8,13 @@ check is offline, so a clone, fork or CI job can verify provenance without
 network access.
 """
 
-from __future__ import annotations
-
 import argparse
 import hashlib
 import json
 import subprocess
 import sys
 from pathlib import Path
-from typing import Dict, List, Optional, Sequence
+from typing import Sequence
 
 from . import templates
 from .config import CausaliqConfig, load_config
@@ -30,7 +28,7 @@ DEVTOOLS = Path("src") / "causaliq" / "devtools"
 UMBRELLA_ONLY = "devenv"
 
 
-def main(argv: Optional[Sequence[str]] = None) -> int:
+def main(argv: Sequence[str] | None = None) -> int:
     """Verify the generated files or refresh them from a source checkout."""
     arguments = list(sys.argv[1:] if argv is None else argv)
     options = _parse(arguments)
@@ -51,7 +49,7 @@ def main(argv: Optional[Sequence[str]] = None) -> int:
 def update(
     target: Path,
     source: Path,
-    ref: Optional[str] = None,
+    ref: str | None = None,
     bootstrap: bool = False,
 ) -> int:
     """Write the generated files and manifest for ``target``.
@@ -93,7 +91,7 @@ def render(
     source: Path,
     ref: str,
     bootstrap: bool = False,
-) -> Dict[str, str]:
+) -> dict[str, str]:
     """Return the generated file contents keyed by relative path."""
     if bootstrap:
         files = _bootstrap_files(config)
@@ -108,7 +106,7 @@ def render(
     }
 
 
-def _bootstrap_files(config: CausaliqConfig) -> Dict[str, str]:
+def _bootstrap_files(config: CausaliqConfig) -> dict[str, str]:
     """Return only the environment and wrapper scripts."""
     return {
         "scripts/check_ci.ps1": templates.check_ci_wrapper(),
@@ -117,7 +115,7 @@ def _bootstrap_files(config: CausaliqConfig) -> Dict[str, str]:
     }
 
 
-def _package_files(config: CausaliqConfig, source: Path) -> Dict[str, str]:
+def _package_files(config: CausaliqConfig, source: Path) -> dict[str, str]:
     """Return the full generated set for a package."""
     files = {
         "scripts/check_ci.py": templates.entry_point(
@@ -166,12 +164,12 @@ def _parse(argv: Sequence[str]) -> argparse.Namespace:
     return options
 
 
-def _vendor_files(source: Path) -> Dict[str, str]:
+def _vendor_files(source: Path) -> dict[str, str]:
     """Return the vendored devtools modules keyed by relative path."""
     root = source / DEVTOOLS
     if not root.is_dir():
         raise SystemExit(f"sync: no devtools package under {root}")
-    files: Dict[str, str] = {}
+    files: dict[str, str] = {}
     for path in sorted(root.glob("*.py")):
         if path.stem.startswith(UMBRELLA_ONLY):
             continue
@@ -202,7 +200,7 @@ def _hash(text: str) -> str:
     return hashlib.sha256(normalised.encode("utf-8")).hexdigest()
 
 
-def _manifest_text(ref: str, files: Dict[str, str]) -> str:
+def _manifest_text(ref: str, files: dict[str, str]) -> str:
     """Return the JSON manifest for a set of generated files."""
     payload = {
         "source": ref,
@@ -211,7 +209,7 @@ def _manifest_text(ref: str, files: Dict[str, str]) -> str:
     return json.dumps(payload, indent=2, sort_keys=True) + "\n"
 
 
-def _read_manifest(target: Path) -> Optional[Dict[str, Dict[str, str]]]:
+def _read_manifest(target: Path) -> dict[str, dict[str, str]] | None:
     """Return the parsed manifest, or None when it is absent or invalid."""
     path = target / MANIFEST
     try:
@@ -226,9 +224,9 @@ def _read_manifest(target: Path) -> Optional[Dict[str, Dict[str, str]]]:
     return payload
 
 
-def _compare(target: Path, files: Dict[str, str]) -> List[str]:
+def _compare(target: Path, files: dict[str, str]) -> list[str]:
     """Return one message per missing or modified generated file."""
-    problems: List[str] = []
+    problems: list[str] = []
     for name, expected in sorted(files.items()):
         path = target / name
         if not path.is_file():

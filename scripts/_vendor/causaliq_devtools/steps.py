@@ -1,14 +1,12 @@
-# generated from causaliq@49a27b66b20d src/causaliq/devtools/steps.py - do not edit
+# generated from causaliq@c7917d9e7fa8466b07548514cdf37d494b861321 src/causaliq/devtools/steps.py - do not edit
 """Build and execute the individual quality-gate steps."""
-
-from __future__ import annotations
 
 import shlex
 import subprocess
 import sys
 from dataclasses import dataclass
 from pathlib import Path
-from typing import List, Optional, Sequence, Tuple
+from typing import Sequence
 
 from . import code_rules
 from .config import CausaliqConfig
@@ -20,7 +18,7 @@ class Step:
     """One gate step; ``command`` is None for the in-process rules check."""
 
     name: str
-    command: Optional[Tuple[str, ...]] = None
+    command: tuple[str, ...] | None = None
 
 
 @dataclass(frozen=True)
@@ -32,7 +30,7 @@ class StepResult:
     detail: str = ""
 
 
-def build_steps(config: CausaliqConfig, options: GateOptions) -> List[Step]:
+def build_steps(config: CausaliqConfig, options: GateOptions) -> list[Step]:
     """Return the ordered steps selected by the options."""
     if options.rules_only:
         return [Step("code rules")]
@@ -52,9 +50,9 @@ def run_step(step: Step, root: Path) -> StepResult:
     return StepResult(step.name, code == 0, f"exit {code}")
 
 
-def run_all(steps: Sequence[Step], root: Path) -> List[StepResult]:
+def run_all(steps: Sequence[Step], root: Path) -> list[StepResult]:
     """Execute every step, printing a heading before each one."""
-    results: List[StepResult] = []
+    results: list[StepResult] = []
     for step in steps:
         print(f"\n== {step.name} ==")
         result = run_step(step, root)
@@ -64,7 +62,7 @@ def run_all(steps: Sequence[Step], root: Path) -> List[StepResult]:
     return results
 
 
-def _quality_steps(options: GateOptions) -> List[Step]:
+def _quality_steps(options: GateOptions) -> list[Step]:
     """Return formatting, linting, rules and typing steps."""
     steps = [
         Step("black", _black_command(options.fix)),
@@ -77,18 +75,18 @@ def _quality_steps(options: GateOptions) -> List[Step]:
     return steps
 
 
-def _module_command(module: str, *paths: str) -> Tuple[str, ...]:
-    """Return a ``python -m <module>`` command for the current interpreter."""
-    return (sys.executable, "-m", module, *paths)
+def _module_command(module: str, *paths: str) -> tuple[str, ...]:
+    """Return a UTF-8 ``python -m <module>`` command for this interpreter."""
+    return (sys.executable, "-X", "utf8", "-m", module, *paths)
 
 
-def _black_command(fix: bool) -> Tuple[str, ...]:
+def _black_command(fix: bool) -> tuple[str, ...]:
     """Return the black command, writing changes only in fix mode."""
     check = () if fix else ("--check",)
     return _module_command("black", *check, "src/", "tests/")
 
 
-def _isort_command(fix: bool) -> Tuple[str, ...]:
+def _isort_command(fix: bool) -> tuple[str, ...]:
     """Return the isort command, writing changes only in fix mode."""
     check = () if fix else ("--check-only",)
     return _module_command("isort", *check, "src/", "tests/")
@@ -96,7 +94,7 @@ def _isort_command(fix: bool) -> Tuple[str, ...]:
 
 def _pytest_command(
     config: CausaliqConfig, options: GateOptions
-) -> Tuple[str, ...]:
+) -> tuple[str, ...]:
     """Return the pytest command for the selected test selection."""
     paths = config.fast_testpaths if options.fast else config.testpaths
     args = [sys.executable, "-m", "pytest", "-v", "-rfE", "--tb=short"]
@@ -113,7 +111,7 @@ def _pytest_command(
 
 def _slow_expression(
     config: CausaliqConfig, options: GateOptions
-) -> Tuple[str, ...]:
+) -> tuple[str, ...]:
     """Return the marker expression for the selected slow-test mode.
 
     ``--include-slow`` passes a matching expression rather than omitting the
@@ -127,9 +125,9 @@ def _slow_expression(
     return ("-m", f"{marker} or not {marker}")
 
 
-def _extra_steps(config: CausaliqConfig) -> List[Step]:
+def _extra_steps(config: CausaliqConfig) -> list[Step]:
     """Return steps declared by ``extra_steps`` in the configuration."""
-    steps: List[Step] = []
+    steps: list[Step] = []
     for command in config.extra_steps:
         parts = shlex.split(command)
         if parts:

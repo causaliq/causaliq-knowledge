@@ -31,7 +31,7 @@ from __future__ import annotations
 import json
 import struct
 from pathlib import Path
-from typing import TYPE_CHECKING, Any, Dict, List, Optional
+from typing import TYPE_CHECKING, Any
 
 from causaliq_core.cache.compressors import JsonCompressor
 from causaliq_core.graph import SDG
@@ -91,7 +91,7 @@ def _read_blob(
     return blob_type, blob_data, offset
 
 
-def _extract_sdg(blobs: Dict[str, bytes]) -> SDG:
+def _extract_sdg(blobs: dict[str, bytes]) -> SDG:
     """Pop and decompress the graph blob."""
     if BLOB_TYPE_GRAPH not in blobs:
         raise ValueError("No graph blob found in compressed data")
@@ -111,8 +111,8 @@ def _proposed_edge_from_data(edge_data: Any) -> ProposedEdge:
 
 
 def _read_cached_metadata(
-    data: Dict[str, Any],
-) -> Optional[GenerationMetadata]:
+    data: dict[str, Any],
+) -> GenerationMetadata | None:
     """Return the metadata recorded in a cached graph payload."""
     if "metadata" not in data or not data["metadata"]:
         return None
@@ -178,8 +178,8 @@ class GraphCompressor(JsonCompressor):
 
     def compress_multi(
         self,
-        blobs: Dict[str, bytes],
-        metadata: Dict[str, Any],
+        blobs: dict[str, bytes],
+        metadata: dict[str, Any],
         cache: "TokenCache",
     ) -> bytes:
         """Encode multiple named blobs with shared metadata.
@@ -222,7 +222,7 @@ class GraphCompressor(JsonCompressor):
 
     def decompress_multi(
         self, blob: bytes, cache: "TokenCache"
-    ) -> tuple[Dict[str, bytes], Dict[str, Any]]:
+    ) -> tuple[dict[str, bytes], dict[str, Any]]:
         """Decompress multiple named blobs with shared metadata.
 
         Args:
@@ -243,7 +243,7 @@ class GraphCompressor(JsonCompressor):
         offset, blob_count = _read_blob_header(blob)
 
         # Read each blob
-        blobs_dict: Dict[str, bytes] = {}
+        blobs_dict: dict[str, bytes] = {}
         for _ in range(blob_count):
             blob_type, blob_data, offset = _read_blob(blob, offset, cache)
             blobs_dict[blob_type] = blob_data
@@ -281,9 +281,9 @@ class GraphCompressor(JsonCompressor):
     def _sdg_to_edges(
         self,
         sdg: SDG,
-        confidence_map: Dict[str, float],
-        reasoning_map: Dict[str, str],
-    ) -> List[ProposedEdge]:
+        confidence_map: dict[str, float],
+        reasoning_map: dict[str, str],
+    ) -> list[ProposedEdge]:
         """Convert SDG edges back to ProposedEdge list.
 
         Args:
@@ -307,7 +307,7 @@ class GraphCompressor(JsonCompressor):
             )
         return edges
 
-    def _build_metadata_dict(self, graph: GeneratedGraph) -> Dict[str, Any]:
+    def _build_metadata_dict(self, graph: GeneratedGraph) -> dict[str, Any]:
         """Build metadata dictionary for JSON encoding.
 
         Note: Edge confidences are stored in a separate blob, not in
@@ -327,7 +327,7 @@ class GraphCompressor(JsonCompressor):
                 reasoning_map[key] = edge.reasoning
 
         # Build metadata dict (no confidences - they go in separate blob)
-        meta: Dict[str, Any] = {
+        meta: dict[str, Any] = {
             "variables": graph.variables,
             "llm_reasoning": graph.reasoning,
         }
@@ -342,7 +342,7 @@ class GraphCompressor(JsonCompressor):
 
     def _build_confidences_dict(
         self, graph: GeneratedGraph
-    ) -> Optional[Dict[str, float]]:
+    ) -> dict[str, float] | None:
         """Build edge confidences dictionary.
 
         Returns None if no edges have non-default confidences, allowing
@@ -372,7 +372,7 @@ class GraphCompressor(JsonCompressor):
         self,
         graph: GeneratedGraph,
         cache: "TokenCache",
-        extra_blobs: Optional[Dict[str, bytes]] = None,
+        extra_blobs: dict[str, bytes] | None = None,
         include_confidences: bool = True,
     ) -> bytes:
         """Compress a GeneratedGraph to compact binary format.
@@ -417,7 +417,7 @@ class GraphCompressor(JsonCompressor):
         self,
         blob: bytes,
         cache: "TokenCache",
-    ) -> tuple[GeneratedGraph, Dict[str, bytes]]:
+    ) -> tuple[GeneratedGraph, dict[str, bytes]]:
         """Decompress a GeneratedGraph from binary format.
 
         Returns both the reconstructed graph and any extra blobs that
@@ -468,14 +468,14 @@ class GraphCompressor(JsonCompressor):
 
     def _extract_confidences(
         self,
-        blobs: Dict[str, bytes],
+        blobs: dict[str, bytes],
         cache: "TokenCache",
-    ) -> Dict[str, float]:
+    ) -> dict[str, float]:
         """Pop and decompress the confidences blob when present."""
         if BLOB_TYPE_CONFIDENCES not in blobs:
             return {}
         conf_blob = blobs.pop(BLOB_TYPE_CONFIDENCES)
-        confidence_map: Dict[str, float] = super().decompress(conf_blob, cache)
+        confidence_map: dict[str, float] = super().decompress(conf_blob, cache)
         return confidence_map
 
     def compress(self, data: Any, cache: "TokenCache") -> bytes:
@@ -497,7 +497,7 @@ class GraphCompressor(JsonCompressor):
 
     def decompress(
         self, blob: bytes, cache: "TokenCache"
-    ) -> tuple[GeneratedGraph, Dict[str, bytes]]:
+    ) -> tuple[GeneratedGraph, dict[str, bytes]]:
         """Decompress binary data to GeneratedGraph and extra blobs.
 
         Args:
@@ -509,7 +509,7 @@ class GraphCompressor(JsonCompressor):
         """
         return self.decompress_entry(blob, cache)
 
-    def _dict_to_graph(self, data: Dict[str, Any]) -> GeneratedGraph:
+    def _dict_to_graph(self, data: dict[str, Any]) -> GeneratedGraph:
         """Convert dictionary to GeneratedGraph.
 
         Args:
@@ -529,7 +529,7 @@ class GraphCompressor(JsonCompressor):
             metadata=metadata,
         )
 
-    def _graph_to_export_dict(self, graph: GeneratedGraph) -> Dict[str, Any]:
+    def _graph_to_export_dict(self, graph: GeneratedGraph) -> dict[str, Any]:
         """Convert GeneratedGraph to export dictionary.
 
         Args:
@@ -538,7 +538,7 @@ class GraphCompressor(JsonCompressor):
         Returns:
             Dictionary suitable for JSON export.
         """
-        result: Dict[str, Any] = {
+        result: dict[str, Any] = {
             "edges": [
                 {
                     "source": e.source,
@@ -553,7 +553,7 @@ class GraphCompressor(JsonCompressor):
         }
 
         if graph.metadata:
-            meta_dict: Dict[str, Any] = {
+            meta_dict: dict[str, Any] = {
                 "llm_model": graph.metadata.model,
                 "llm_provider": graph.metadata.provider,
                 "timestamp": graph.metadata.timestamp.isoformat(),

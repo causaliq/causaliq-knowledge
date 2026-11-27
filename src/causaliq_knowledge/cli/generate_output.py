@@ -10,7 +10,7 @@ from __future__ import annotations
 import json
 import xml.etree.ElementTree as ET
 from pathlib import Path
-from typing import TYPE_CHECKING, Any, Dict
+from typing import TYPE_CHECKING, Any
 
 if TYPE_CHECKING:  # pragma: no cover
     from causaliq_core.graph.pdg import PDG
@@ -104,7 +104,7 @@ def _build_metadata(
     pdg: "PDG",
     context: "NetworkContext",
     generation_metadata: "GenerationMetadata",
-) -> Dict[str, Any]:
+) -> dict[str, Any]:
     """Build the metadata document written beside the graph."""
     # Count edges with significant existence probability
     edge_count = sum(1 for probs in pdg.edges.values() if probs.p_exist > 0.01)

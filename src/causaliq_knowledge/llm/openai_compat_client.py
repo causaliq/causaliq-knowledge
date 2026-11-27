@@ -7,7 +7,7 @@ the OpenAI API format (OpenAI, DeepSeek, Mistral, etc.).
 import logging
 from abc import abstractmethod
 from dataclasses import dataclass
-from typing import Any, Dict, List, NoReturn, Optional
+from typing import Any, NoReturn
 
 import httpx
 
@@ -36,7 +36,7 @@ class OpenAICompatConfig(LLMConfig):
     temperature: float = 0.1
     max_tokens: int = 500
     timeout: float = 30.0
-    api_key: Optional[str] = None
+    api_key: str | None = None
 
 
 class OpenAICompatClient(BaseLLMClient):
@@ -64,7 +64,7 @@ class OpenAICompatClient(BaseLLMClient):
     PROVIDER_NAME: str = "openai-compat"
     ENV_VAR: str = "API_KEY"
 
-    def __init__(self, config: Optional[OpenAICompatConfig] = None) -> None:
+    def __init__(self, config: OpenAICompatConfig | None = None) -> None:
         """Initialize the client.
 
         Args:
@@ -85,7 +85,7 @@ class OpenAICompatClient(BaseLLMClient):
         return self.PROVIDER_NAME
 
     def completion(
-        self, messages: List[Dict[str, str]], **kwargs: Any
+        self, messages: list[dict[str, str]], **kwargs: Any
     ) -> LLMResponse:
         """Make a chat completion request.
 
@@ -130,8 +130,8 @@ class OpenAICompatClient(BaseLLMClient):
         raise ValueError(f"{msg} - {error.response.text}")
 
     def _build_payload(
-        self, messages: List[Dict[str, str]], **kwargs: Any
-    ) -> Dict[str, Any]:
+        self, messages: list[dict[str, str]], **kwargs: Any
+    ) -> dict[str, Any]:
         """Build the OpenAI-compatible request payload."""
         return {
             "model": self.config.model,
@@ -141,14 +141,14 @@ class OpenAICompatClient(BaseLLMClient):
             "stream": False,
         }
 
-    def _build_headers(self) -> Dict[str, str]:
+    def _build_headers(self) -> dict[str, str]:
         """Build the OpenAI-compatible request headers."""
         return {
             "Authorization": f"Bearer {self.config.api_key}",
             "Content-Type": "application/json",
         }
 
-    def _parse_response(self, data: Dict[str, Any]) -> LLMResponse:
+    def _parse_response(self, data: dict[str, Any]) -> LLMResponse:
         """Build an LLMResponse from an OpenAI-compatible payload."""
         # Extract response data
         content = data["choices"][0]["message"]["content"] or ""
@@ -210,7 +210,7 @@ class OpenAICompatClient(BaseLLMClient):
         return input_cost + output_cost
 
     @abstractmethod
-    def _get_pricing(self) -> Dict[str, Dict[str, float]]:
+    def _get_pricing(self) -> dict[str, dict[str, float]]:
         """Return pricing dict for this provider.
 
         Returns:
@@ -220,8 +220,8 @@ class OpenAICompatClient(BaseLLMClient):
         pass
 
     def complete_json(
-        self, messages: List[Dict[str, str]], **kwargs: Any
-    ) -> tuple[Optional[Dict[str, Any]], LLMResponse]:
+        self, messages: list[dict[str, str]], **kwargs: Any
+    ) -> tuple[dict[str, Any] | None, LLMResponse]:
         """Make a completion request and parse response as JSON.
 
         Args:
@@ -248,7 +248,7 @@ class OpenAICompatClient(BaseLLMClient):
         """
         return bool(self.config.api_key)
 
-    def list_models(self) -> List[str]:
+    def list_models(self) -> list[str]:
         """List available models from the API.
 
         Queries the API to get models accessible with the current
@@ -287,7 +287,7 @@ class OpenAICompatClient(BaseLLMClient):
                 f"Failed to list {self.PROVIDER_NAME} models: {e}"
             )
 
-    def _filter_models(self, models: List[str]) -> List[str]:
+    def _filter_models(self, models: list[str]) -> list[str]:
         """Filter model list to relevant models.
 
         Override in subclasses to customize filtering.

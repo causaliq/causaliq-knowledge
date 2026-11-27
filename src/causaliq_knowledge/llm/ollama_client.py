@@ -2,7 +2,7 @@
 
 import logging
 from dataclasses import dataclass
-from typing import Any, Dict, List, NoReturn, Optional
+from typing import Any, NoReturn
 
 import httpx
 
@@ -34,7 +34,7 @@ class OllamaConfig(LLMConfig):
     temperature: float = 0.1
     max_tokens: int = 500
     timeout: float = 120.0  # Local inference can be slow
-    api_key: Optional[str] = None  # Not needed for local Ollama
+    api_key: str | None = None  # Not needed for local Ollama
     base_url: str = "http://localhost:11434"
 
 
@@ -55,7 +55,7 @@ class OllamaClient(BaseLLMClient):
         >>> print(response.content)
     """
 
-    def __init__(self, config: Optional[OllamaConfig] = None) -> None:
+    def __init__(self, config: OllamaConfig | None = None) -> None:
         """Initialize Ollama client.
 
         Args:
@@ -71,7 +71,7 @@ class OllamaClient(BaseLLMClient):
         return "ollama"
 
     def completion(
-        self, messages: List[Dict[str, str]], **kwargs: Any
+        self, messages: list[dict[str, str]], **kwargs: Any
     ) -> LLMResponse:
         """Make a chat completion request to Ollama.
 
@@ -92,7 +92,7 @@ class OllamaClient(BaseLLMClient):
 
         return self._post_chat(payload)
 
-    def _post_chat(self, payload: Dict[str, Any]) -> LLMResponse:
+    def _post_chat(self, payload: dict[str, Any]) -> LLMResponse:
         """POST a chat request and translate transport errors."""
         try:
             with httpx.Client(timeout=self.config.timeout) as client:
@@ -123,8 +123,8 @@ class OllamaClient(BaseLLMClient):
             raise ValueError(f"Ollama API error: {str(e)}")
 
     def _build_payload(
-        self, messages: List[Dict[str, str]], **kwargs: Any
-    ) -> Dict[str, Any]:
+        self, messages: list[dict[str, str]], **kwargs: Any
+    ) -> dict[str, Any]:
         """Build the Ollama request payload."""
         return {
             "model": self.config.model,
@@ -140,7 +140,7 @@ class OllamaClient(BaseLLMClient):
             },
         }
 
-    def _parse_response(self, data: Dict[str, Any]) -> LLMResponse:
+    def _parse_response(self, data: dict[str, Any]) -> LLMResponse:
         """Build an LLMResponse from an Ollama response payload."""
         # Extract response content
         content = data.get("message", {}).get("content", "")
@@ -184,8 +184,8 @@ class OllamaClient(BaseLLMClient):
         )
 
     def complete_json(
-        self, messages: List[Dict[str, str]], **kwargs: Any
-    ) -> tuple[Optional[Dict[str, Any]], LLMResponse]:
+        self, messages: list[dict[str, str]], **kwargs: Any
+    ) -> tuple[dict[str, Any] | None, LLMResponse]:
         """Make a completion request and parse response as JSON.
 
         Args:
@@ -229,7 +229,7 @@ class OllamaClient(BaseLLMClient):
         except Exception:
             return False
 
-    def list_models(self) -> List[str]:
+    def list_models(self) -> list[str]:
         """List installed models from Ollama.
 
         Queries the local Ollama server to get installed models.

@@ -5,7 +5,7 @@ then using cached_completion to serve responses without API calls.
 """
 
 from pathlib import Path
-from typing import Any, Dict, List
+from typing import Any
 
 from causaliq_core.cache import TokenCache
 
@@ -37,7 +37,7 @@ class MockLLMClient(BaseLLMClient):
         return "openai"
 
     def completion(
-        self, messages: List[Dict[str, str]], **kwargs: Any
+        self, messages: list[dict[str, str]], **kwargs: Any
     ) -> LLMResponse:
         self._call_count += 1
         return LLMResponse(
@@ -55,7 +55,7 @@ class MockLLMClient(BaseLLMClient):
     def is_available(self) -> bool:
         return True
 
-    def list_models(self) -> List[str]:
+    def list_models(self) -> list[str]:
         return ["gpt-4"]
 
 

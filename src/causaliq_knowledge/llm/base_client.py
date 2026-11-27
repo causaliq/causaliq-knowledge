@@ -14,7 +14,7 @@ import time
 from abc import ABC, abstractmethod
 from dataclasses import dataclass, field
 from datetime import datetime, timezone
-from typing import TYPE_CHECKING, Any, Dict, List, Optional
+from typing import TYPE_CHECKING, Any
 
 if TYPE_CHECKING:  # pragma: no cover
     from causaliq_core.cache import TokenCache
@@ -34,7 +34,7 @@ def _strip_code_fence(text: str) -> str:
     return text.strip()
 
 
-def _parse_cached_timestamp(timestamp: Optional[str]) -> Optional[datetime]:
+def _parse_cached_timestamp(timestamp: str | None) -> datetime | None:
     """Parse a cached ISO timestamp, returning None when absent or invalid."""
     try:
         return datetime.fromisoformat(str(timestamp).replace("Z", "+00:00"))
@@ -43,8 +43,8 @@ def _parse_cached_timestamp(timestamp: Optional[str]) -> Optional[datetime]:
 
 
 def _pop_cache_options(
-    kwargs: Dict[str, Any],
-) -> tuple[str, Optional[int]]:
+    kwargs: dict[str, Any],
+) -> tuple[str, int | None]:
     """Remove the cache-control options from the request keyword arguments."""
     request_id = kwargs.pop("request_id", "")
     sample_index = kwargs.pop("sample_index", None)
@@ -71,7 +71,7 @@ class LLMConfig:
     temperature: float = 0.1
     max_tokens: int = 500
     timeout: float = 30.0
-    api_key: Optional[str] = None
+    api_key: str | None = None
 
 
 @dataclass
@@ -99,11 +99,11 @@ class LLMResponse:
     output_tokens: int = 0
     cost: float = 0.0
     finish_reason: str = "stop"
-    raw_response: Optional[Dict[str, Any]] = field(default=None, repr=False)
-    llm_timestamp: Optional[datetime] = field(default=None, repr=False)
-    llm_latency_ms: Optional[int] = field(default=None, repr=False)
+    raw_response: dict[str, Any] | None = field(default=None, repr=False)
+    llm_timestamp: datetime | None = field(default=None, repr=False)
+    llm_latency_ms: int | None = field(default=None, repr=False)
 
-    def parse_json(self) -> Optional[Dict[str, Any]]:
+    def parse_json(self) -> dict[str, Any] | None:
         """Parse content as JSON, handling common formatting issues.
 
         LLMs sometimes wrap JSON in markdown code blocks. This method
@@ -167,7 +167,7 @@ class BaseLLMClient(ABC):
 
     @abstractmethod
     def completion(
-        self, messages: List[Dict[str, str]], **kwargs: Any
+        self, messages: list[dict[str, str]], **kwargs: Any
     ) -> LLMResponse:
         """Make a chat completion request.
 
@@ -189,8 +189,8 @@ class BaseLLMClient(ABC):
         pass
 
     def complete_json(
-        self, messages: List[Dict[str, str]], **kwargs: Any
-    ) -> tuple[Optional[Dict[str, Any]], LLMResponse]:
+        self, messages: list[dict[str, str]], **kwargs: Any
+    ) -> tuple[dict[str, Any] | None, LLMResponse]:
         """Make a completion request and parse response as JSON.
 
         Convenience method that calls completion() and attempts to parse
@@ -231,7 +231,7 @@ class BaseLLMClient(ABC):
         pass
 
     @abstractmethod
-    def list_models(self) -> List[str]:
+    def list_models(self) -> list[str]:
         """List available models from the provider.
 
         Queries the provider's API to get the list of models accessible
@@ -257,10 +257,10 @@ class BaseLLMClient(ABC):
 
     def _build_cache_key(
         self,
-        messages: List[Dict[str, str]],
-        temperature: Optional[float] = None,
-        max_tokens: Optional[int] = None,
-        sample_index: Optional[int] = None,
+        messages: list[dict[str, str]],
+        temperature: float | None = None,
+        max_tokens: int | None = None,
+        sample_index: int | None = None,
     ) -> str:
         """Build a deterministic cache key for the request.
 
@@ -294,7 +294,7 @@ class BaseLLMClient(ABC):
 
     def set_cache(
         self,
-        cache: Optional["TokenCache"],
+        cache: TokenCache | None,
         use_cache: bool = True,
     ) -> None:
         """Configure caching for this client.
@@ -307,7 +307,7 @@ class BaseLLMClient(ABC):
         self._use_cache = use_cache
 
     @property
-    def cache(self) -> Optional["TokenCache"]:
+    def cache(self) -> TokenCache | None:
         """Return the configured cache, if any."""
         return getattr(self, "_cache", None)
 
@@ -318,7 +318,7 @@ class BaseLLMClient(ABC):
 
     def cached_completion(
         self,
-        messages: List[Dict[str, str]],
+        messages: list[dict[str, str]],
         **kwargs: Any,
     ) -> LLMResponse:
         """Make a completion request with caching.
@@ -376,7 +376,7 @@ class BaseLLMClient(ABC):
 
     def _timed_completion(
         self,
-        messages: List[Dict[str, str]],
+        messages: list[dict[str, str]],
         **kwargs: Any,
     ) -> tuple[LLMResponse, datetime, int]:
         """Call the provider and record its request time and latency."""
@@ -395,7 +395,7 @@ class BaseLLMClient(ABC):
         self,
         cache: "TokenCache",
         cache_key: str,
-    ) -> Optional[LLMResponse]:
+    ) -> LLMResponse | None:
         """Return the cached response for a key, if one is stored."""
         from causaliq_knowledge.llm.cache import LLMCacheEntry, LLMCompressor
 
@@ -428,12 +428,12 @@ class BaseLLMClient(ABC):
         self,
         cache: "TokenCache",
         cache_key: str,
-        messages: List[Dict[str, str]],
+        messages: list[dict[str, str]],
         response: LLMResponse,
         request_id: str,
         latency_ms: int,
-        temperature: Optional[float],
-        max_tokens: Optional[int],
+        temperature: float | None,
+        max_tokens: int | None,
     ) -> None:
         """Store a completed response in the cache."""
         from causaliq_knowledge.llm.cache import LLMCacheEntry

@@ -12,7 +12,7 @@ import logging
 import time
 from dataclasses import dataclass
 from datetime import datetime, timezone
-from typing import TYPE_CHECKING, Any, Callable, Dict, List, Optional, Union
+from typing import TYPE_CHECKING, Any, Callable, Union
 
 from causaliq_knowledge.graph.prompts import GraphQueryPrompt, OutputFormat
 from causaliq_knowledge.graph.response import (
@@ -96,7 +96,7 @@ class GraphGeneratorConfig:
     prompt_detail: PromptDetail = PromptDetail.STANDARD
     use_llm_names: bool = True
     request_id: str = ""
-    sample_index: Optional[int] = None
+    sample_index: int | None = None
 
 
 class GraphGenerator:
@@ -129,8 +129,8 @@ class GraphGenerator:
     def __init__(
         self,
         model: str = "groq/llama-3.1-8b-instant",
-        config: Optional[GraphGeneratorConfig] = None,
-        cache: Optional["TokenCache"] = None,
+        config: GraphGeneratorConfig | None = None,
+        cache: TokenCache | None = None,
     ) -> None:
         """Initialise the GraphGenerator.
 
@@ -197,7 +197,7 @@ class GraphGenerator:
 
     def set_cache(
         self,
-        cache: Optional["TokenCache"],
+        cache: TokenCache | None,
         use_cache: bool = True,
     ) -> None:
         """Configure caching for this generator.
@@ -243,11 +243,11 @@ class GraphGenerator:
 
     def generate_graph(
         self,
-        variables: List[Dict[str, Any]],
-        level: Optional[PromptDetail] = None,
-        domain: Optional[str] = None,
-        output_format: Optional[OutputFormat] = None,
-        system_prompt: Optional[str] = None,
+        variables: list[dict[str, Any]],
+        level: PromptDetail | None = None,
+        domain: str | None = None,
+        output_format: OutputFormat | None = None,
+        system_prompt: str | None = None,
     ) -> GeneratedGraph:
         """Generate a causal graph from variable dictionaries.
 
@@ -281,10 +281,10 @@ class GraphGenerator:
     def generate_from_context(
         self,
         context: "NetworkContext",
-        level: Optional[PromptDetail] = None,
-        output_format: Optional[OutputFormat] = None,
-        system_prompt: Optional[str] = None,
-        use_llm_names: Optional[bool] = None,
+        level: PromptDetail | None = None,
+        output_format: OutputFormat | None = None,
+        system_prompt: str | None = None,
+        use_llm_names: bool | None = None,
     ) -> GeneratedGraph:
         """Generate a causal graph from a NetworkContext.
 
@@ -327,9 +327,9 @@ class GraphGenerator:
     def generate_pdg_from_context(
         self,
         context: "NetworkContext",
-        level: Optional[PromptDetail] = None,
-        system_prompt: Optional[str] = None,
-        use_llm_names: Optional[bool] = None,
+        level: PromptDetail | None = None,
+        system_prompt: str | None = None,
+        use_llm_names: bool | None = None,
     ) -> PDGGenerationResult:
         """Generate a PDG (Probabilistic Dependency Graph) from context.
 
@@ -463,9 +463,9 @@ class GraphGenerator:
         self,
         system_prompt: str,
         user_prompt: str,
-    ) -> List[Dict[str, str]]:
+    ) -> list[dict[str, str]]:
         """Build the chat message list for a prompt."""
-        messages: List[Dict[str, str]] = []
+        messages: list[dict[str, str]] = []
         if system_prompt:
             messages.append({"role": "system", "content": system_prompt})
         messages.append({"role": "user", "content": user_prompt})
@@ -473,7 +473,7 @@ class GraphGenerator:
 
     def _invoke_client(
         self,
-        messages: List[Dict[str, str]],
+        messages: list[dict[str, str]],
     ) -> tuple[LLMResponse, int, bool]:
         """Call the configured client, reporting latency and cache use."""
         start_time = time.perf_counter()
@@ -506,7 +506,7 @@ class GraphGenerator:
 
     def _build_generation_metadata(
         self,
-        messages: List[Dict[str, str]],
+        messages: list[dict[str, str]],
         response: LLMResponse,
         request_timestamp: datetime,
         latency_ms: int,
@@ -537,7 +537,7 @@ class GraphGenerator:
             llm_cost_usd=response.cost,
         )
 
-    def get_stats(self) -> Dict[str, Any]:
+    def get_stats(self) -> dict[str, Any]:
         """Get statistics about generation calls.
 
         Returns:
@@ -663,7 +663,7 @@ def _create_openai_client(
 
 
 # Client factory per supported provider prefix
-_CLIENT_FACTORIES: Dict[
+_CLIENT_FACTORIES: dict[
     str,
     Callable[[GraphGenerator, str], LLMClientType],
 ] = {

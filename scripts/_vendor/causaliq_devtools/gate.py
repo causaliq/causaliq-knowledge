@@ -1,13 +1,11 @@
-# generated from causaliq@49a27b66b20d src/causaliq/devtools/gate.py - do not edit
+# generated from causaliq@c7917d9e7fa8466b07548514cdf37d494b861321 src/causaliq/devtools/gate.py - do not edit
 """Run the CausalIQ quality gates for the current package."""
-
-from __future__ import annotations
 
 import os
 import sys
 from dataclasses import replace
 from pathlib import Path
-from typing import Optional, Sequence
+from typing import Sequence
 
 from .config import CausaliqConfig, ConfigError, find_pyproject, load_config
 from .options import GateOptions, OptionError, parse_args
@@ -16,7 +14,7 @@ from .steps import StepResult, build_steps, run_all
 CI_DIR = Path("build") / "ci"
 
 
-def run_gate(argv: Optional[Sequence[str]] = None) -> int:
+def run_gate(argv: Sequence[str] | None = None) -> int:
     """Run the gate and return a process exit code."""
     arguments = list(sys.argv[1:] if argv is None else argv)
     try:
@@ -34,7 +32,7 @@ def run_gate(argv: Optional[Sequence[str]] = None) -> int:
     return _report(results)
 
 
-def main(argv: Optional[Sequence[str]] = None) -> int:
+def main(argv: Sequence[str] | None = None) -> int:
     """Alias used by generated entry points."""
     return run_gate(argv)
 

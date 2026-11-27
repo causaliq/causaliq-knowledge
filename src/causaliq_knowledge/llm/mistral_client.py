@@ -3,7 +3,6 @@
 import logging
 import os
 from dataclasses import dataclass
-from typing import Dict, List, Optional
 
 from causaliq_knowledge.llm.openai_compat_client import (
     OpenAICompatClient,
@@ -31,7 +30,7 @@ class MistralConfig(OpenAICompatConfig):
     temperature: float = 0.1
     max_tokens: int = 500
     timeout: float = 30.0
-    api_key: Optional[str] = None
+    api_key: str | None = None
 
     def __post_init__(self) -> None:
         """Set API key from environment if not provided."""
@@ -67,7 +66,7 @@ class MistralClient(OpenAICompatClient):
     PROVIDER_NAME = "mistral"
     ENV_VAR = "MISTRAL_API_KEY"
 
-    def __init__(self, config: Optional[MistralConfig] = None) -> None:
+    def __init__(self, config: MistralConfig | None = None) -> None:
         """Initialize Mistral client.
 
         Args:
@@ -80,7 +79,7 @@ class MistralClient(OpenAICompatClient):
         """Return default Mistral configuration."""
         return MistralConfig()
 
-    def _get_pricing(self) -> Dict[str, Dict[str, float]]:
+    def _get_pricing(self) -> dict[str, dict[str, float]]:
         """Return Mistral pricing per 1M tokens.
 
         Returns:
@@ -99,7 +98,7 @@ class MistralClient(OpenAICompatClient):
             "ministral-8b": {"input": 0.10, "output": 0.10},
         }
 
-    def _filter_models(self, models: List[str]) -> List[str]:
+    def _filter_models(self, models: list[str]) -> list[str]:
         """Filter to Mistral chat models only.
 
         Args:

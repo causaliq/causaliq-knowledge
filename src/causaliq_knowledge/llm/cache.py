@@ -15,7 +15,7 @@ import re
 from dataclasses import asdict, dataclass, field
 from datetime import datetime, timezone
 from pathlib import Path
-from typing import TYPE_CHECKING, Any, Optional
+from typing import TYPE_CHECKING, Any
 
 from causaliq_core.cache.compressors import JsonCompressor
 
@@ -23,7 +23,7 @@ if TYPE_CHECKING:  # pragma: no cover
     from causaliq_core.cache.token_cache import TokenCache
 
 
-def _sanitise_request_id(request_id: Optional[str], cache_key: str) -> str:
+def _sanitise_request_id(request_id: str | None, cache_key: str) -> str:
     """Sanitise a request id, falling back to the cache key prefix."""
     cleaned = re.sub(r"[^a-zA-Z0-9_-]", "", request_id or cache_key[:8])
     if cleaned:
@@ -31,7 +31,7 @@ def _sanitise_request_id(request_id: Optional[str], cache_key: str) -> str:
     return cache_key[:8] if cache_key else "unknown"
 
 
-def _format_export_timestamp(timestamp: Optional[str]) -> str:
+def _format_export_timestamp(timestamp: str | None) -> str:
     """Format a cached ISO timestamp for use in a filename."""
     if not timestamp:
         return "unknown"
@@ -42,7 +42,7 @@ def _format_export_timestamp(timestamp: Optional[str]) -> str:
         return "unknown"
 
 
-def _sanitise_provider(provider: Optional[str]) -> str:
+def _sanitise_provider(provider: str | None) -> str:
     """Sanitise a provider name for use in a filename."""
     cleaned = re.sub(r"[^a-z0-9]", "", (provider or "unknown").lower())
     if cleaned:

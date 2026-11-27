@@ -1,5 +1,5 @@
 [build-system]
-requires = ["setuptools>=61.0", "wheel"]
+requires = ["setuptools>=77.0.0", "wheel"]
 build-backend = "setuptools.build_meta"
 
 [project]
@@ -8,6 +8,7 @@ dynamic = ["version"]
 description = "Incorporating LLM and human knowledge into causal discovery"
 readme = "README.md"
 license = "MIT"
+license-files = ["LICENSE"]
 authors = [
     {name = "CausalIQ", email = "info@causaliq.org"},
 ]
@@ -46,8 +47,8 @@ dev = [
     "pytest-mock>=3.10.0",
     "black>=25.0.0,<26.0.0",
     "isort>=5.10.0,<9.0.0",
-    "flake8>=5.0.0",
-    "mypy>=1.0.0",
+    "flake8>=7.0.0,<8.0.0",
+    "mypy>=2.0.0,<3.0.0",
     "types-requests>=2.32.0",
     "pre-commit>=2.20.0",
     "build>=0.8.0",
@@ -102,6 +103,7 @@ testpaths = ["tests/unit", "tests/functional", "tests/integration"]
 fast_testpaths = ["tests/unit", "tests/functional"]
 slow_marker = "slow"
 extra_steps = []
+extra_index_url = "https://test.pypi.org/simple/"
 
 [tool.pytest.ini_options]
 minversion = "7.0"

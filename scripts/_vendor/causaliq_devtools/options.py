@@ -1,10 +1,8 @@
-# generated from causaliq@49a27b66b20d src/causaliq/devtools/options.py - do not edit
+# generated from causaliq@c7917d9e7fa8466b07548514cdf37d494b861321 src/causaliq/devtools/options.py - do not edit
 """Command-line options for the CausalIQ gate."""
 
-from __future__ import annotations
-
 from dataclasses import dataclass
-from typing import Dict, List, Optional, Sequence
+from typing import Sequence
 
 
 class OptionError(Exception):
@@ -21,8 +19,8 @@ class GateOptions:
     ci: bool = False
     rules_only: bool = False
     no_tests: bool = False
-    junit: Optional[str] = None
-    coverage_xml: Optional[str] = None
+    junit: str | None = None
+    coverage_xml: str | None = None
 
 
 FLAGS = {
@@ -48,7 +46,7 @@ def parse_args(argv: Sequence[str]) -> GateOptions:
     unknown = sorted(names - set(FLAGS) - set(VALUE_FLAGS))
     if unknown:
         raise OptionError(f"unsupported option(s): {', '.join(unknown)}")
-    values: Dict[str, object] = {
+    values: dict[str, object] = {
         attribute: flag in names for flag, attribute in FLAGS.items()
     }
     for flag, attribute in VALUE_FLAGS.items():
@@ -56,14 +54,14 @@ def parse_args(argv: Sequence[str]) -> GateOptions:
     return GateOptions(**values)  # type: ignore[arg-type]
 
 
-def _normalise(argv: Sequence[str]) -> List[str]:
+def _normalise(argv: Sequence[str]) -> list[str]:
     """Accept the PowerShell switch spellings used before the Python gate."""
     return [LEGACY_FLAGS.get(item.lower(), item) for item in argv]
 
 
-def _flag_names(argv: Sequence[str]) -> List[str]:
+def _flag_names(argv: Sequence[str]) -> list[str]:
     """Return option names, skipping the values attached to value flags."""
-    names: List[str] = []
+    names: list[str] = []
     expect_value = False
     for item in argv:
         if expect_value:
@@ -76,7 +74,7 @@ def _flag_names(argv: Sequence[str]) -> List[str]:
     return names
 
 
-def _value_of(argv: Sequence[str], flag: str) -> Optional[str]:
+def _value_of(argv: Sequence[str], flag: str) -> str | None:
     """Return the value supplied for a value flag, if any."""
     for index, item in enumerate(argv):
         if item == flag and index + 1 < len(argv):

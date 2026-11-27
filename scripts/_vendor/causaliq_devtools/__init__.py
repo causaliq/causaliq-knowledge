@@ -1,4 +1,4 @@
-# generated from causaliq@49a27b66b20d src/causaliq/devtools/__init__.py - do not edit
+# generated from causaliq@c7917d9e7fa8466b07548514cdf37d494b861321 src/causaliq/devtools/__init__.py - do not edit
 """Development tooling shared by every CausalIQ package.
 
 Everything here is stdlib-only so that a package can vendor the modules and

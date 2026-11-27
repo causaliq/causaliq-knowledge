@@ -3,7 +3,6 @@
 import logging
 import os
 from dataclasses import dataclass
-from typing import Dict, List, Optional
 
 from causaliq_knowledge.llm.openai_compat_client import (
     OpenAICompatClient,
@@ -33,7 +32,7 @@ class OpenAIConfig(OpenAICompatConfig):
     temperature: float = 0.1
     max_tokens: int = 500
     timeout: float = 30.0
-    api_key: Optional[str] = None
+    api_key: str | None = None
 
     def __post_init__(self) -> None:
         """Set API key from environment if not provided."""
@@ -63,7 +62,7 @@ class OpenAIClient(OpenAICompatClient):
     PROVIDER_NAME = "openai"
     ENV_VAR = "OPENAI_API_KEY"
 
-    def __init__(self, config: Optional[OpenAIConfig] = None) -> None:
+    def __init__(self, config: OpenAIConfig | None = None) -> None:
         """Initialize OpenAI client.
 
         Args:
@@ -76,7 +75,7 @@ class OpenAIClient(OpenAICompatClient):
         """Return default OpenAI configuration."""
         return OpenAIConfig()
 
-    def _get_pricing(self) -> Dict[str, Dict[str, float]]:
+    def _get_pricing(self) -> dict[str, dict[str, float]]:
         """Return OpenAI pricing per 1M tokens.
 
         Returns:
@@ -99,7 +98,7 @@ class OpenAIClient(OpenAICompatClient):
             "o1": {"input": 15.00, "output": 60.00},
         }
 
-    def _filter_models(self, models: List[str]) -> List[str]:
+    def _filter_models(self, models: list[str]) -> list[str]:
         """Filter to OpenAI chat models only.
 
         Args:

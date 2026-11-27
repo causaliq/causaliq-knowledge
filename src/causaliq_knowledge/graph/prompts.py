@@ -9,7 +9,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 from enum import Enum
-from typing import TYPE_CHECKING, Any, Optional
+from typing import TYPE_CHECKING, Any
 
 if TYPE_CHECKING:  # pragma: no cover
     from causaliq_knowledge.graph.models import NetworkContext
@@ -307,9 +307,9 @@ class GraphQueryPrompt:
 
     variables: list[dict[str, Any]]
     level: PromptDetail = PromptDetail.STANDARD
-    domain: Optional[str] = None
+    domain: str | None = None
     output_format: OutputFormat = OutputFormat.EDGE_LIST
-    system_prompt: Optional[str] = None
+    system_prompt: str | None = None
 
     def build(self) -> tuple[str, str]:
         """Build the system and user prompts for LLM graph generation.
@@ -416,7 +416,7 @@ class GraphQueryPrompt:
         context: "NetworkContext",
         level: PromptDetail = PromptDetail.STANDARD,
         output_format: OutputFormat = OutputFormat.EDGE_LIST,
-        system_prompt: Optional[str] = None,
+        system_prompt: str | None = None,
         use_llm_names: bool = True,
     ) -> "GraphQueryPrompt":
         """Create a GraphQueryPrompt from a NetworkContext.

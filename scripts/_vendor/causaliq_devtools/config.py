@@ -1,4 +1,4 @@
-# generated from causaliq@49a27b66b20d src/causaliq/devtools/config.py - do not edit
+# generated from causaliq@c7917d9e7fa8466b07548514cdf37d494b861321 src/causaliq/devtools/config.py - do not edit
 """Read the ``[tool.causaliq]`` block from a package ``pyproject.toml``.
 
 ``devtools`` must stay stdlib-only on Python 3.10, where ``tomllib`` does not
@@ -7,11 +7,9 @@ strings, booleans, integers and arrays of those values; anything else is
 reported as a configuration error rather than guessed at.
 """
 
-from __future__ import annotations
-
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Dict, List, Mapping, Optional, Tuple
+from typing import Mapping
 
 SECTION = "[tool.causaliq]"
 DEFAULT_PYTHONS = ("3.10",)
@@ -32,16 +30,17 @@ class CausaliqConfig:
 
     distribution: str
     package: str
-    python_versions: Tuple[str, ...]
+    python_versions: tuple[str, ...]
     default_python: str
-    dev_extras: Tuple[str, ...]
-    testpaths: Tuple[str, ...]
-    fast_testpaths: Tuple[str, ...]
+    dev_extras: tuple[str, ...]
+    testpaths: tuple[str, ...]
+    fast_testpaths: tuple[str, ...]
     slow_marker: str = "slow"
-    extra_steps: Tuple[str, ...] = ()
+    extra_steps: tuple[str, ...] = ()
+    extra_index_url: str = ""
 
     @property
-    def slow_filter(self) -> Tuple[str, ...]:
+    def slow_filter(self) -> tuple[str, ...]:
         """Return the pytest arguments that exclude marked slow tests."""
         return ("-m", f"not {self.slow_marker}")
 
@@ -59,17 +58,17 @@ class SharedConfig:
     through their own accessor rather than widening :class:`CausaliqConfig`.
     """
 
-    python_versions: Tuple[str, ...]
-    extras: Tuple[str, ...]
+    python_versions: tuple[str, ...]
+    extras: tuple[str, ...]
 
 
-def load_config(root: Optional[Path] = None) -> CausaliqConfig:
+def load_config(root: Path | None = None) -> CausaliqConfig:
     """Return the configuration declared by the nearest pyproject.toml."""
     path = find_pyproject(root or Path.cwd())
     return build_config(read_section(path))
 
 
-def load_shared(root: Optional[Path] = None) -> SharedConfig:
+def load_shared(root: Path | None = None) -> SharedConfig:
     """Return the shared-environment settings of the nearest pyproject."""
     path = find_pyproject(root or Path.cwd())
     return build_shared(read_section(path))
@@ -97,7 +96,7 @@ def find_pyproject(start: Path) -> Path:
     raise ConfigError(f"no pyproject.toml found at or above {start}")
 
 
-def read_section(path: Path) -> Dict[str, object]:
+def read_section(path: Path) -> dict[str, object]:
     """Return the key/value pairs declared inside ``[tool.causaliq]``."""
     pairs = _parse_pairs(_section_lines(path), path)
     if not pairs:
@@ -123,13 +122,14 @@ def build_config(values: Mapping[str, object]) -> CausaliqConfig:
         ),
         slow_marker=_optional_str(values, "slow_marker", "slow"),
         extra_steps=_str_tuple(values, "extra_steps", ()),
+        extra_index_url=_optional_text(values, "extra_index_url", ""),
     )
 
 
-def _section_lines(path: Path) -> List[str]:
+def _section_lines(path: Path) -> list[str]:
     """Return the non-comment lines that belong to the section."""
     text = path.read_text(encoding="utf-8")
-    collected: List[str] = []
+    collected: list[str] = []
     inside = False
     found = False
     for raw in text.splitlines():
@@ -152,7 +152,7 @@ def _is_header(line: str) -> bool:
 
 def _strip_comment(line: str) -> str:
     """Remove a TOML comment that does not sit inside a string."""
-    kept: List[str] = []
+    kept: list[str] = []
     quoted = False
     for char in line:
         if char == '"':
@@ -163,9 +163,9 @@ def _strip_comment(line: str) -> str:
     return "".join(kept).rstrip()
 
 
-def _parse_pairs(lines: List[str], path: Path) -> Dict[str, object]:
+def _parse_pairs(lines: list[str], path: Path) -> dict[str, object]:
     """Parse ``key = value`` lines, joining values that span lines."""
-    pairs: Dict[str, object] = {}
+    pairs: dict[str, object] = {}
     pending = ""
     for line in lines:
         pending = f"{pending} {line}".strip()
@@ -201,7 +201,7 @@ def _bracket_delta(char: str) -> int:
     return 0
 
 
-def _split_pair(text: str, path: Path) -> Tuple[str, str]:
+def _split_pair(text: str, path: Path) -> tuple[str, str]:
     """Split ``key = value`` into its two parts."""
     key, separator, raw = text.partition("=")
     if not separator or not key.strip():
@@ -219,7 +219,7 @@ def _parse_value(raw: str, path: Path) -> object:
     return _parse_scalar(text, path)
 
 
-def _split_items(text: str) -> List[str]:
+def _split_items(text: str) -> list[str]:
     """Return the non-empty items of an array literal."""
     body = text[1:-1].strip()
     if not body:
@@ -255,11 +255,21 @@ def _optional_str(values: Mapping[str, object], key: str, default: str) -> str:
     return value
 
 
+def _optional_text(
+    values: Mapping[str, object], key: str, default: str
+) -> str:
+    """Return an optional string setting, allowing an empty value."""
+    value = values.get(key, default)
+    if not isinstance(value, str):
+        raise ConfigError(f"{SECTION}.{key} must be a string")
+    return value
+
+
 def _str_tuple(
     values: Mapping[str, object],
     key: str,
-    default: Tuple[str, ...],
-) -> Tuple[str, ...]:
+    default: tuple[str, ...],
+) -> tuple[str, ...]:
     """Return an optional array of non-empty strings as a tuple."""
     value = values.get(key, default)
     if not isinstance(value, (list, tuple)):

@@ -5,7 +5,7 @@ validation for CLI and workflow action parameters.
 """
 
 from pathlib import Path
-from typing import Any, Dict
+from typing import Any
 
 import pytest
 from pydantic import ValidationError
@@ -173,7 +173,7 @@ def test_params_llm_temperature_above_maximum() -> None:
 # Test from_dict with string values.
 def test_params_from_dict_strings() -> None:
     """Test from_dict converts string values to correct types."""
-    data: Dict[str, Any] = {
+    data: dict[str, Any] = {
         "network_context": "test/model.json",
         "prompt_detail": "rich",
         "output": "output/workflow_cache.db",
@@ -192,7 +192,7 @@ def test_params_from_dict_strings() -> None:
 # Test from_dict with already-typed values.
 def test_params_from_dict_typed() -> None:
     """Test from_dict accepts already-typed values."""
-    data: Dict[str, Any] = {
+    data: dict[str, Any] = {
         "network_context": Path("test/model.json"),
         "prompt_detail": PromptDetail.MINIMAL,
         "output": "none",
@@ -209,7 +209,7 @@ def test_params_from_dict_typed() -> None:
 # Test from_dict with case-insensitive enum values.
 def test_params_from_dict_case_insensitive() -> None:
     """Test from_dict handles case-insensitive enum values."""
-    data: Dict[str, Any] = {
+    data: dict[str, Any] = {
         "network_context": "model.json",
         "prompt_detail": "STANDARD",
         "output": "none",
@@ -224,7 +224,7 @@ def test_params_from_dict_case_insensitive() -> None:
 # Test from_dict validation error propagation.
 def test_params_from_dict_validation_error() -> None:
     """Test from_dict propagates validation errors."""
-    data: Dict[str, Any] = {
+    data: dict[str, Any] = {
         "network_context": "model.json",
         "llm_model": "invalid/provider",
         "output": "none",
