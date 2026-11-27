@@ -135,7 +135,7 @@ cqknow generate-graph -n asia.json -c none -o none
 
 ## Workflow Usage
 
-In a CausalIQ workflow, `generate_graph` operates as a CREATE action that
+In a CausalIQ workflow, `generate_graph` operates as a PRODUCE action that
 generates a new PDG entry in the workflow cache:
 
 ```yaml

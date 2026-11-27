@@ -1,6 +1,6 @@
 # CausalIQ Knowledge - Development Roadmap
 
-**Last updated**: October 28, 2026  
+**Last updated**: November 27, 2026  
 
 This project roadmap fits into the [overall ecosystem roadmap](https://causaliq.org/projects/ecosystem_roadmap/)
 
@@ -10,7 +10,7 @@ This project roadmap fits into the [overall ecosystem roadmap](https://causaliq.
 
 1. ✅ [Refactor all modules to meet development guidelines](current_task.md)
 1. ✅ Support Python 3.10-14, with 3.12 as default
-1. 🛣️ Adopt SPEC 0 minimum dependency versions and badge
+1. ✅ Adopt SPEC 0 minimum dependency versions and badge
 
 ---
    

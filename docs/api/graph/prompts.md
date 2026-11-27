@@ -53,9 +53,9 @@ variable specifications.
 GraphQueryPrompt(
     variables: list[dict[str, Any]],
     level: PromptDetail = PromptDetail.STANDARD,
-    domain: Optional[str] = None,
+    domain: str | None = None,
     output_format: OutputFormat = OutputFormat.EDGE_LIST,
-    system_prompt: Optional[str] = None,
+    system_prompt: str | None = None,
 )
 ```
 
@@ -65,9 +65,9 @@ GraphQueryPrompt(
 |-----------|------|---------|-------------|
 | `variables` | `list[dict[str, Any]]` | Required | List of filtered variable dictionaries |
 | `level` | `PromptDetail` | `STANDARD` | The prompt detail level (minimal, standard, rich) |
-| `domain` | `Optional[str]` | `None` | Optional domain context for the query |
+| `domain` | `str \| None` | `None` | Optional domain context for the query |
 | `output_format` | `OutputFormat` | `EDGE_LIST` | Desired output format |
-| `system_prompt` | `Optional[str]` | `None` | Custom system prompt (uses default if None) |
+| `system_prompt` | `str \| None` | `None` | Custom system prompt (uses default if None) |
 
 **Example:**
 
@@ -146,7 +146,7 @@ def from_context(
     context: NetworkContext,
     level: PromptDetail = PromptDetail.STANDARD,
     output_format: OutputFormat = OutputFormat.EDGE_LIST,
-    system_prompt: Optional[str] = None,
+    system_prompt: str | None = None,
 ) -> GraphQueryPrompt
 ```
 
@@ -157,7 +157,7 @@ def from_context(
 | `context` | `NetworkContext` | Required | The network context |
 | `level` | `PromptDetail` | `STANDARD` | The prompt detail level |
 | `output_format` | `OutputFormat` | `EDGE_LIST` | Desired output format |
-| `system_prompt` | `Optional[str]` | `None` | Custom system prompt |
+| `system_prompt` | `str \| None` | `None` | Custom system prompt |
 
 **Returns:**
 
